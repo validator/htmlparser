@@ -83,7 +83,7 @@ public final class Tokenizer implements Locator {
 
     private ErrorHandler errorHandler;
 
-    private TokenHandler tokenHandler;
+    private final TokenHandler tokenHandler;
 
     private Reader reader;
 
@@ -125,7 +125,8 @@ public final class Tokenizer implements Locator {
 
     private NormalizationChecker normalizationChecker = null;
 
-    public Tokenizer() {
+    public Tokenizer(TokenHandler tokenHandler) {
+        this.tokenHandler = tokenHandler;
     }
 
     private void clearStrBuf() {
@@ -334,8 +335,9 @@ public final class Tokenizer implements Locator {
                 fatal("Unmatched high surrogate.");
             }
             if (isForbidden(c)) {
-                fatal("Forbidden character.");
-            } else if (c == '\r') {
+                warn("Forbidden character: " + ((int)c));
+            }
+            if (c == '\r') {
                 prev = '\r';
                 c = buf[pos] = '\n';
                 line++;
@@ -588,6 +590,12 @@ public final class Tokenizer implements Locator {
         emitComments = tokenHandler.wantsComments();
         // TODO reset stuff
         inMarkup = false;
+        pos = -1;
+        cstart = -1;
+        line = 1;
+        col = 0;
+        prev = '\u0000';
+        bufLen = 0;
         try {
             dataState();
         } finally {
@@ -634,6 +642,7 @@ public final class Tokenizer implements Locator {
                 /*
                  * EOF Emit an end-of-file token.
                  */
+                flushChars();
                 return; // eof() called in parent finally block
             } else {
                 /*
