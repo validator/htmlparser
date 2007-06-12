@@ -72,9 +72,9 @@ public final class Tokenizer implements Locator {
     private static final char[] LT_GT = { '<', '>' };
 
     private static final char[] LT_SOLIDUS = { '<', '/' };
-
-    private static final char[] APOS = { '\'' };
-
+   
+    private static final char[] REPLACEMENT_CHARACTER = { '\uFFFD' };
+    
     private static final int BUFFER_GROW_BY = 1024;
 
     private String publicId;
@@ -161,6 +161,18 @@ public final class Tokenizer implements Locator {
             System.arraycopy(longStrBuf, 0, newBuf, 0, longStrBuf.length);
         } else {
             longStrBuf[longStrBufLen++] = c;
+        }
+    }
+
+    private void appendLongStrBuf(char[] arr) throws SAXException, IOException {
+        for (int i = 0; i < arr.length; i++) {
+            appendLongStrBuf(arr[i]);
+        }
+    }
+
+    private void appendStrBufToLongStrBuf() throws SAXException, IOException {
+        for (int i = 0; i < strBufLen; i++) {
+            appendLongStrBuf(strBuf[i]);
         }
     }
 
@@ -541,6 +553,8 @@ public final class Tokenizer implements Locator {
 
     private boolean shouldAddAttributes;
 
+    private boolean inMarkup;
+
     private boolean isSpace(char c) {
         return c == ' ' || c == '\n' || c == '\t' || c == '\u000C'
                 || c == '\u000B';
@@ -573,6 +587,7 @@ public final class Tokenizer implements Locator {
         }
         emitComments = tokenHandler.wantsComments();
         // TODO reset stuff
+        inMarkup = false;
         try {
             dataState();
         } finally {
@@ -611,7 +626,9 @@ public final class Tokenizer implements Locator {
                  * entry below.
                  */
                 flushChars();
+                inMarkup = true;
                 tagOpenState();
+                inMarkup = false;
                 continue;
             } else if (c == '\u0000') {
                 /*
@@ -637,8 +654,11 @@ public final class Tokenizer implements Locator {
     /**
      * 
      * Entity data state
+     * 
+     * @throws IOException
+     * @throws SAXException
      */
-    private void entityDataState() {
+    private void entityDataState() throws SAXException, IOException {
         /*
          * (This cannot happen if the content model flag is set to the CDATA
          * state.)
@@ -1725,8 +1745,13 @@ public final class Tokenizer implements Locator {
         }
     }
 
-    /** Entity in attribute value state */
-    private void entityInAttributeValueState() {
+    /**
+     * Entity in attribute value state
+     * 
+     * @throws IOException
+     * @throws SAXException
+     */
+    private void entityInAttributeValueState() throws SAXException, IOException {
         /*
          * Attempt to consume an entity.
          */
@@ -2397,121 +2422,281 @@ public final class Tokenizer implements Locator {
      * and never requires the caller to backtrack. This method takes care of
      * emitting characters or appending to the current attribute value. It also
      * takes care of that in the case when consuming the entity fails.
+     * 
+     * @throws IOException
+     * @throws SAXException
      */
-    private void consumeEntity() {
+    private void consumeEntity() throws SAXException, IOException {
+        clearStrBuf();
+        appendStrBuf('&');
         /*
          * This section defines how to consume an entity. This definition is
          * used when parsing entities in text and in attributes.
          * 
          * The behaviour depends on the identity of the next character (the one
          * immediately after the U+0026 AMPERSAND character):
-         * 
+         */
+        char c = read();
+        /*
          * U+0023 NUMBER SIGN (#) Consume the U+0023 NUMBER SIGN.
          */
-        consumeNCR();
+        if (c == '#') {
+            appendStrBuf('#');
+            consumeNCR();
+        } else {
+            unread(c);
+            int entCol = -1;
+            int hi = Entities.NAMES.length;
+            int lo = 0;
+            for (;;) {
+                entCol++;
+                c = read();
+                /*
+                 * Anything else Consume the maximum number of characters
+                 * possible, with the consumed characters case-sensitively
+                 * matching one of the identifiers in the first column of the
+                 * entities table.
+                 */
+                for (;;) {
+                    if (lo == Entities.NAMES.length) {
+                        break;
+                    } else if (entCol >= Entities.NAMES[lo].length()) {
+                        lo++;
+                    } else if (c > Entities.NAMES[lo].charAt(entCol)) {
+                        lo++;
+                    } else {
+                        break;
+                    }
+                }
 
-        /*
-         * Anything else Consume the maximum number of characters possible, with
-         * the consumed characters case-sensitively matching one of the
-         * identifiers in the first column of the entities table.
-         * 
-         * If no match can be made, then this is a parse error. No characters
-         * are consumed, and nothing is returned.
-         * 
-         * Otherwise, if the next character is a U+003B SEMICOLON, consume that
-         * too. If it isn't, there is a parse error.
-         * 
-         * Return a character token for the character corresponding to the
-         * entity name (as given by the second column of the entities table).
-         * 
-         * If the markup contains I'm &notit without you, the entity is parsed
-         * as "not", as in, I'm ¬it without you. But if the markup was I'm
-         * &notin without you, the entity would be parsed as "notin", resulting
-         * in I'm ∉ without you.
-         * 
-         * This isn't quite right. For some entities, UAs require a semicolon,
-         * for others they don't. We probably need to do the same for backwards
-         * compatibility. If we do that we might be able to add more entities,
-         * e.g. for mathematics. Probably the way to mark whether or not an
-         * entity requires a semicolon is with an additional column in the
-         * entity table lower down.
-         * 
-         * 
-         */
+                for (;;) {
+                    if (hi == -1) {
+                        break;
+                    } else if (entCol >= Entities.NAMES[hi].length()) {
+                        break;
+                    } else if (c < Entities.NAMES[hi].charAt(entCol)) {
+                        hi--;
+                    } else {
+                        break;
+                    }
+                }
+                if (hi < lo) {
+                    /* If no match can be made, then this is a parse error. */
+                    err("Text after \u201C&\u201D did not match an entity name.");
+                    /*
+                     * No characters are consumed, and nothing is returned.
+                     */
+                    emitStrBuf();
+                    unread(c);
+                    return;
+                } else if (hi == lo
+                        && Entities.NAMES[hi].length() == entCol + 1
+                        && Entities.NAMES[hi].charAt(entCol) == c) {
+                    /*
+                     * Otherwise, if the next character is a U+003B SEMICOLON,
+                     * consume that too. If it isn't, there is a parse error.
+                     */
+                    c = read();
+                    if (c != ';') {
+                        err("Entity name was not terminated with a semicolon.");
+                        unread(c);
+                    }
+                    /*
+                     * Return a character token for the character corresponding
+                     * to the entity name (as given by the second column of the
+                     * entities table).
+                     */
+                    char[] val = Entities.VALUES[hi];
+                    emitOrAppend(val);
+                    return;
+                    /* If the markup contains I'm &notit without you, the entity
+                     * is parsed as "not", as in, I'm ¬it without you. But if
+                     * the markup was I'm &notin without you, the entity would
+                     * be parsed as "notin", resulting in I'm ∉ without you.
+                     * 
+                     * This isn't quite right. For some entities, UAs require a
+                     * semicolon, for others they don't. We probably need to do
+                     * the same for backwards compatibility. If we do that we
+                     * might be able to add more entities, e.g. for mathematics.
+                     * Probably the way to mark whether or not an entity
+                     * requires a semicolon is with an additional column in the
+                     * entity table lower down.
+                     */
+                } else {
+                    appendStrBuf(c);
+                }
+            }
+        }
     }
 
-    private void consumeNCR() {
+    private void consumeNCR() throws SAXException, IOException {
+        int value = 0;
+        boolean seenDigits = false;
+        boolean hex = false;
         /*
          * The behaviour further depends on the character after the U+0023
          * NUMBER SIGN:
-         * 
-         * U+0078 LATIN SMALL LETTER X U+0058 LATIN CAPITAL LETTER X Consume the
-         * X.
-         * 
-         * Follow the steps below, but using the range of characters U+0030
-         * DIGIT ZERO through to U+0039 DIGIT NINE, U+0061 LATIN SMALL LETTER A
-         * through to U+0066 LATIN SMALL LETTER F, and U+0041 LATIN CAPITAL
-         * LETTER A, through to U+0046 LATIN CAPITAL LETTER F (in other words,
-         * 0-9, A-F, a-f).
-         * 
-         * When it comes to interpreting the number, interpret it as a
-         * hexadecimal number.
-         * 
-         * Anything else Follow the steps below, but using the range of
-         * characters U+0030 DIGIT ZERO through to U+0039 DIGIT NINE (i.e. just
-         * 0-9).
-         * 
-         * When it comes to interpreting the number, interpret it as a decimal
-         * number.
-         * 
-         * Consume as many characters as match the range of characters given
-         * above.
-         * 
-         * If no characters match the range, then don't consume any characters
-         * (and unconsume the U+0023 NUMBER SIGN character and, if appropriate,
-         * the X character). This is a parse error; nothing is returned.
-         * 
-         * Otherwise, if the next character is a U+003B SEMICOLON, consume that
-         * too. If it isn't, there is a parse error.
-         * 
-         * If one or more characters match the range, then take them all and
+         */
+        char c = read();
+        if (c == 'x' || c == 'X') {
+            /* U+0078 LATIN SMALL LETTER X U+0058 LATIN CAPITAL LETTER X Consume the
+             * X.
+             * 
+             * Follow the steps below, but using the range of characters U+0030
+             * DIGIT ZERO through to U+0039 DIGIT NINE, U+0061 LATIN SMALL LETTER A
+             * through to U+0066 LATIN SMALL LETTER F, and U+0041 LATIN CAPITAL
+             * LETTER A, through to U+0046 LATIN CAPITAL LETTER F (in other words,
+             * 0-9, A-F, a-f).
+             * 
+             * When it comes to interpreting the number, interpret it as a
+             * hexadecimal number.
+             */
+            hex = true;
+        } else {
+            unread(c);
+            /* Anything else Follow the steps below, but using the range of
+             * characters U+0030 DIGIT ZERO through to U+0039 DIGIT NINE (i.e. just
+             * 0-9).
+             * 
+             * When it comes to interpreting the number, interpret it as a decimal
+             * number.
+             */
+        }
+        for (;;) {
+            /* Consume as many characters as match the range of characters given
+             * above.
+             */
+            c = read();
+            if (c >= '0' && c <= '9') {
+                seenDigits = true;
+                if (hex) {
+                    value *= 16;
+                } else {
+                    value *= 10;
+                }
+                value += c - '0';
+            } else if (hex && c >= 'A' && c <= 'F') {
+                seenDigits = true;
+                value *= 16;
+                value += c - 'A' + 10;
+            } else if (hex && c >= 'a' && c <= 'f') {
+                seenDigits = true;
+                value *= 16;
+                value += c - 'a' + 10;
+            } else if (c == ';') {
+                if (seenDigits) {
+                    handleNCRValue(value);
+                    return;
+                } else {
+                    err("No digits after \u201C" + strBufToString() + "\u201D.");
+                    appendStrBuf(';');
+                    if (inMarkup) {
+                        appendStrBufToLongStrBuf();
+                    } else {
+                        emitStrBuf();
+                    }
+                    return;
+                }
+            } else {
+                /* If no characters match the range, then don't consume any characters
+                 * (and unconsume the U+0023 NUMBER SIGN character and, if appropriate,
+                 * the X character). This is a parse error; nothing is returned.
+                 * 
+                 * Otherwise, if the next character is a U+003B SEMICOLON, consume that
+                 * too. If it isn't, there is a parse error.
+                 */
+                unread(c);
+                if (seenDigits) {
+                    err("Character reference was not terminated by a semicolon.");
+                    handleNCRValue(value);
+                    return;
+                } else {
+                    err("No digits after \u201C" + strBufToString() + "\u201D.");
+                    if (inMarkup) {
+                        appendStrBufToLongStrBuf();
+                    } else {
+                        emitStrBuf();
+                    }
+                    return;
+                }
+            }
+        }
+    }
+
+    private void handleNCRValue(int value) throws SAXException, IOException {
+        /* If one or more characters match the range, then take them all and
          * interpret the string of characters as a number (either hexadecimal or
          * decimal as appropriate).
-         * 
-         * If that number is in the range 128 to 159 (0x80 to 0x9F), then this
-         * is a parse error. In the following table, find the row with that
+         */
+        if (value >= 0x80 && value <= 0x9f) {
+         /* If that number is in the range 128 to 159 (0x80 to 0x9F), then this
+         * is a parse error.*/
+            err("A numeric character reference expanded to the C1 controls range.");
+            /* In the following table, find the row with that
          * number in the first column, and return a character token for the
          * Unicode character given in the second column of that row.
-         * 
-         * Number Unicode character 0x80 U+20AC EURO SIGN ('€') 0x81 U+FFFD
-         * REPLACEMENT CHARACTER 0x82 U+201A SINGLE LOW-9 QUOTATION MARK ('‚')
-         * 0x83 U+0192 LATIN SMALL LETTER F WITH HOOK ('ƒ') 0x84 U+201E DOUBLE
-         * LOW-9 QUOTATION MARK ('„') 0x85 U+2026 HORIZONTAL ELLIPSIS ('…') 0x86
-         * U+2020 DAGGER ('†') 0x87 U+2021 DOUBLE DAGGER ('‡') 0x88 U+02C6
-         * MODIFIER LETTER CIRCUMFLEX ACCENT ('ˆ') 0x89 U+2030 PER MILLE SIGN
-         * ('‰') 0x8A U+0160 LATIN CAPITAL LETTER S WITH CARON ('Š') 0x8B U+2039
-         * SINGLE LEFT-POINTING ANGLE QUOTATION MARK ('‹') 0x8C U+0152 LATIN
-         * CAPITAL LIGATURE OE ('Œ') 0x8D U+FFFD REPLACEMENT CHARACTER 0x8E
-         * U+017D LATIN CAPITAL LETTER Z WITH CARON ('Ž') 0x8F U+FFFD
-         * REPLACEMENT CHARACTER 0x90 U+FFFD REPLACEMENT CHARACTER 0x91 U+2018
-         * LEFT SINGLE QUOTATION MARK ('‘') 0x92 U+2019 RIGHT SINGLE QUOTATION
-         * MARK ('’') 0x93 U+201C LEFT DOUBLE QUOTATION MARK ('“') 0x94 U+201D
-         * RIGHT DOUBLE QUOTATION MARK ('”') 0x95 U+2022 BULLET ('•') 0x96
-         * U+2013 EN DASH ('–') 0x97 U+2014 EM DASH ('—') 0x98 U+02DC SMALL
-         * TILDE ('˜') 0x99 U+2122 TRADE MARK SIGN ('™') 0x9A U+0161 LATIN SMALL
-         * LETTER S WITH CARON ('š') 0x9B U+203A SINGLE RIGHT-POINTING ANGLE
-         * QUOTATION MARK ('›') 0x9C U+0153 LATIN SMALL LIGATURE OE ('œ') 0x9D
-         * U+FFFD REPLACEMENT CHARACTER 0x9E U+017E LATIN SMALL LETTER Z WITH
-         * CARON ('ž') 0x9F U+0178 LATIN CAPITAL LETTER Y WITH DIAERESIS ('Ÿ')
-         * 
-         * Otherwise, if the number is not a valid Unicode character (e.g. if
-         * the number is higher than 1114111), or if the number is zero, then
-         * return a character token for the U+FFFD REPLACEMENT CHARACTER
-         * character instead.
-         * 
-         * Otherwise, return a character token for the Unicode character whose
-         * code point is that number.
-         * 
          */
+            char[] val = Entities.WINDOWS_1252[value - 0x80];
+            emitOrAppend(val);
+            return;
+        } else if (value == 0) {
+            /* 
+             * Otherwise, if the number is not a valid Unicode character (e.g. if
+             * the number is higher than 1114111), or if the number is zero, then
+             * return a character token for the U+FFFD REPLACEMENT CHARACTER
+             * character instead.
+             */
+            err("Character reference expands to U+0000.");
+            emitOrAppend(REPLACEMENT_CHARACTER);
+            return;
+        } else if ((value & 0xF800) == 0xD800) {
+            err("Character reference expands to a surrogate.");
+            emitOrAppend(REPLACEMENT_CHARACTER);
+            return;
+        } else if (value <= 0xFFFF) {
+            /* Otherwise, return a character token for the Unicode character whose
+             * code point is that number.
+             */
+            char c = (char) value;
+// XXX additional XML WF check here
+            //            if (isForbidden(c)) {
+//                fatal("Character reference expands to a forbidden character.");
+//            }
+            if (isPrivateUse(c)) {
+                warnAboutPrivateUseChar();
+            }
+            bmpChar[0] = c;
+            emitOrAppend(bmpChar);
+            return;
+        } else if (value <= 0x10FFFF) {
+            // XXX astral non-characters are not banned
+            if (isNonCharacter(value)) {
+                warn("Character reference expands to an astral non-character.");
+            }
+            if (isAstralPrivateUse(value)) {
+                warnAboutPrivateUseChar();
+            }
+            astralChar[0] = (char) (LEAD_OFFSET + (value >> 10));
+            astralChar[1] = (char) (0xDC00 + (value & 0x3FF));
+            emitOrAppend(astralChar);
+            return;
+        } else {
+            err("Character reference outside the permissible Unicode range.");
+            emitOrAppend(REPLACEMENT_CHARACTER);
+            return;
+        }        
+    }
+
+    /**
+     * @param val
+     * @throws SAXException
+     * @throws IOException
+     */
+    private void emitOrAppend(char[] val) throws SAXException, IOException {
+        if (inMarkup) {
+            appendLongStrBuf(val);
+        } else {
+            tokenHandler.characters(val, 0, val.length);
+        }
     }
 }
