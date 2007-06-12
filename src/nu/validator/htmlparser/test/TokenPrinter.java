@@ -1,22 +1,48 @@
 package nu.validator.htmlparser.test;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 
 import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+
+import fi.iki.hsivonen.xml.SystemErrErrorHandler;
 
 import nu.validator.htmlparser.TokenHandler;
 import nu.validator.htmlparser.Tokenizer;
 
 public class TokenPrinter implements TokenHandler {
 
-    private Writer writer;
+    private final Writer writer;
     
     public void characters(char[] buf, int start, int length)
             throws SAXException {
-        // TODO Auto-generated method stub
-
+        try {
+        boolean lineStarted = true;
+        writer.write('-');
+        for (int i = start; i < start + length; i++) {
+            if (!lineStarted) {
+                writer.write("\n-");                
+                lineStarted = true;
+            }
+            char c = buf[i];
+            if (c == '\n') {
+                writer.write("\\n");                                
+                lineStarted = false;                
+            } else {
+                writer.write(c);                
+            }
+        }
+        writer.write('\n');
+        } catch (IOException e) {
+            throw new SAXException(e);
+        }
     }
 
     public void comment(String content) throws SAXException {
@@ -59,12 +85,16 @@ public class TokenPrinter implements TokenHandler {
     }
 
     public void eof() throws SAXException {
-        // TODO Auto-generated method stub
-
+    try {
+        writer.write("E\n");
+        writer.flush();
+        writer.close();
+    } catch (IOException e) {
+        throw new SAXException(e);
+    }        
     }
 
     public void start(Tokenizer self) throws SAXException {
-        // TODO Auto-generated method stub
 
     }
 
@@ -90,4 +120,20 @@ public class TokenPrinter implements TokenHandler {
         return true;
     }
 
+    public static void main(String[] args) throws SAXException, IOException {
+        Tokenizer tokenizer = new Tokenizer(new TokenPrinter(new OutputStreamWriter(System.out, "UTF-8")));
+        tokenizer.setErrorHandler(new SystemErrErrorHandler());
+        File file = new File(args[0]);
+        InputSource is = new InputSource(new FileInputStream(file));
+        is.setSystemId(file.toURI().toASCIIString());
+        tokenizer.tokenize(is);
+    }
+
+    /**
+     * @param writer
+     */
+    public TokenPrinter(final Writer writer) {
+        this.writer = writer;
+    }
+    
 }

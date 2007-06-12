@@ -143,12 +143,13 @@ public class HtmlInputStreamReader extends Reader implements ByteReadable,
                     charsetBoundaryPassed ? byteArray.length
                             - byteBuffer.limit() : SNIFFING_LIMIT - bytesRead
                             - byteBuffer.limit());
-            if (num == 0) {
+            if (num == -1) {
                 eofSeen = true;
                 inputStream.close();
+            } else {
+                byteBuffer.position(0);
+                byteBuffer.limit(byteBuffer.limit() + num);
             }
-            byteBuffer.position(0);
-            byteBuffer.limit(byteBuffer.limit() + num);
             shouldReadBytes = false;
         }
         boolean finalDecode = false;
@@ -264,7 +265,7 @@ public class HtmlInputStreamReader extends Reader implements ByteReadable,
             return byteArray[position++] & 0xFF;
         } else {
             int num = inputStream.read(byteArray, limit, SNIFFING_LIMIT - limit);
-            if (num == 0) {
+            if (num == -1) {
                 return -1;
             } else {
                 limit += num;
