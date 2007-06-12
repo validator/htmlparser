@@ -2486,7 +2486,11 @@ public final class Tokenizer implements Locator {
                     /*
                      * No characters are consumed, and nothing is returned.
                      */
-                    emitStrBuf();
+                    if (inMarkup) {
+                        appendStrBufToLongStrBuf();
+                    } else {
+                        emitStrBuf();
+                    }
                     unread(c);
                     return;
                 } else if (hi == lo
