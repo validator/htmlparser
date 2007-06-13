@@ -311,7 +311,6 @@ public class MetaSniffer implements Locator {
             unread(b);
             return true;
         }
-        unread(b); // ugly again
         value: for (;;) {
             b = read();
             switch (b) {
@@ -377,7 +376,7 @@ public class MetaSniffer implements Locator {
     private void checkAttribute() throws SAXException, StopSniffingException {
         if (metaState == MetaState.A) {
             String name = attributeName.toString();
-            if ("charsetDecoder".equals(name)) {
+            if ("charset".equals(name)) {
                 tryCharset(attributeValue.toString());
             } else if ("content".equals(name)) {
                 Matcher m = CONTENT.matcher(attributeValue);
