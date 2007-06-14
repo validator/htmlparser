@@ -377,7 +377,8 @@ public class MetaSniffer implements Locator {
         if (metaState == MetaState.A) {
             String name = attributeName.toString();
             if ("charset".equals(name)) {
-                tryCharset(attributeValue.toString());
+                // XXX revisit trim() to trime only space characters
+                tryCharset(attributeValue.toString().trim());
             } else if ("content".equals(name)) {
                 Matcher m = CONTENT.matcher(attributeValue);
                 if (m.matches()) {
