@@ -129,7 +129,7 @@ public class MetaSniffer implements Locator {
      * @throws IOException
      * @throws
      */
-    CharsetDecoder sniff() throws SAXException, IOException {
+    public CharsetDecoder sniff() throws SAXException, IOException {
         try {
             for (;;) {
                 if (read() == 0x3C) { // <
