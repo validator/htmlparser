@@ -43,7 +43,7 @@ public class MetaSniffer implements Locator {
 
     }
 
-    private static final Pattern CONTENT = Pattern.compile("^[^;]*;[\\x09\\x0A\\x0B\\x0C\\x0D\\x20]*[cC][hH][aA][rR][sS][eE][tT][\\x09\\x0A\\x0B\\x0C\\x0D\\x20]*=(?:(?:([^'\"\\x09\\x0A\\x0B\\x0C\\x0D\\x20][^\\x09\\x0A\\x0B\\x0C\\x0D\\x20]*)(?:[\\x09\\x0A\\x0B\\x0C\\x0D\\x20].*)?)|(?:\"([^\"]*)\".*)|(?:'([^']*)'.*))$", Pattern.DOTALL);
+    private static final Pattern CONTENT = Pattern.compile("^[^;]*;[\\x09\\x0A\\x0B\\x0C\\x0D\\x20]*[cC][hH][aA][rR][sS][eE][tT][\\x09\\x0A\\x0B\\x0C\\x0D\\x20]*=[\\x09\\x0A\\x0B\\x0C\\x0D\\x20]*(?:(?:([^'\"\\x09\\x0A\\x0B\\x0C\\x0D\\x20][^\\x09\\x0A\\x0B\\x0C\\x0D\\x20]*)(?:[\\x09\\x0A\\x0B\\x0C\\x0D\\x20].*)?)|(?:\"([^\"]*)\".*)|(?:'([^']*)'.*))$", Pattern.DOTALL);
     
     private enum MetaState {
         NO, M, E, T, A
