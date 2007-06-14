@@ -5,6 +5,8 @@ import java.io.InputStream;
 
 public class UntilHashInputStream extends InputStream {
 
+    private final StringBuilder builder = new StringBuilder();
+    
     private final InputStream delegate;
 
     private boolean closed = false;
@@ -21,10 +23,16 @@ public class UntilHashInputStream extends InputStream {
             return -1;
         }
         int rv = delegate.read();
-        if (rv == 0x23) {
+        if (rv == 0x23 || rv == -1) {
             closed = true;
             return -1;
         } else {
+            if (rv >= 0x20 && rv < 0x80) {
+                builder.append(((char)rv));
+            } else {
+                builder.append("0x");
+                builder.append(Integer.toHexString(rv));
+            }
             return rv;
         }
     }
@@ -45,6 +53,14 @@ public class UntilHashInputStream extends InputStream {
             }
         }
         closed = true;
+    }
+
+    /**
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return builder.toString();
     }
 
 }

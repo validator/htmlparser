@@ -4,17 +4,15 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
-
-import org.xml.sax.SAXException;
 
 import nu.validator.htmlparser.HtmlInputStreamReader;
-import nu.validator.htmlparser.MetaSniffer;
+
+import org.xml.sax.SAXException;
 
 public class EncodingTester {
 
     private final InputStream aggregateStream;
-    
+
     private final StringBuilder builder = new StringBuilder();
 
     /**
@@ -34,7 +32,8 @@ public class EncodingTester {
             return false;
         }
         UntilHashInputStream stream = new UntilHashInputStream(aggregateStream);
-        HtmlInputStreamReader reader = new HtmlInputStreamReader(stream, null, null);
+        HtmlInputStreamReader reader = new HtmlInputStreamReader(stream, null,
+                null);
         Charset charset = reader.getCharset();
         stream.close();
         if (skipLabel()) {
@@ -51,15 +50,18 @@ public class EncodingTester {
                     System.err.println("Premature end of test data.");
                     return false;
                 default:
-                    builder.append(((char)b));
+                    builder.append(((char) b));
             }
         }
         String sniffed = charset.name();
         String expected = builder.toString();
         if (expected.equalsIgnoreCase(sniffed)) {
-            System.err.println("Success.");            
+            System.err.println("Success.");
+//            System.err.println(stream);
         } else {
-            System.err.println("Failure. Expected: " + expected + " got " + sniffed + ".");                        
+            System.err.println("Failure. Expected: " + expected + " got "
+                    + sniffed + ".");
+            System.err.println(stream);
         }
         return true;
     }
@@ -86,9 +88,10 @@ public class EncodingTester {
      */
     public static void main(String[] args) throws IOException, SAXException {
         for (int i = 0; i < args.length; i++) {
-            EncodingTester tester = new EncodingTester(new FileInputStream(args[i]));
+            EncodingTester tester = new EncodingTester(new FileInputStream(
+                    args[i]));
             tester.runTests();
-        } 
+        }
     }
 
 }
