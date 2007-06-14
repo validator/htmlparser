@@ -27,7 +27,7 @@ public class AttributesImpl implements Attributes {
     }
 
     public final int getLength() {
-        return length / 2;
+        return length;
     }
 
     public String getLocalName(int index) {

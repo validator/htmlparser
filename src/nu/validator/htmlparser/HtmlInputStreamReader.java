@@ -136,7 +136,9 @@ public class HtmlInputStreamReader extends Reader implements ByteReadable,
         charBuffer.position(0);
         if (flushing) {
             decoder.flush(charBuffer);
-            return byteBuffer.position();
+            // return -1 if zero
+            int cPos = charBuffer.position();
+            return cPos == 0 ? -1 : cPos;                    
         }
         if (shouldReadBytes) {
             int num = inputStream.read(byteArray, 0,
@@ -179,7 +181,8 @@ public class HtmlInputStreamReader extends Reader implements ByteReadable,
                 if (flushing) {
                     // The final decode was successful. Not sure if this ever happens. 
                     // Let's get out in any case.
-                    return charBuffer.position();                    
+                    int cPos = charBuffer.position();
+                    return cPos == 0 ? -1 : cPos;                    
                 } else if (eofSeen) {
                     // If there's something left, it isn't something that would be 
                     // consumed in the middle of the stream. Rerun the loop once 
@@ -352,6 +355,10 @@ public class HtmlInputStreamReader extends Reader implements ByteReadable,
         } catch (SAXException e) {
             throw (IOException) new IOException(e.getMessage()).initCause(e);
         }
+    }
+    
+    public Charset getCharset() {
+        return decoder.charset();
     }
 
 }
