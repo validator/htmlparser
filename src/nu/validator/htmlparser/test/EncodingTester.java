@@ -1,5 +1,6 @@
 package nu.validator.htmlparser.test;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -13,6 +14,8 @@ import nu.validator.htmlparser.MetaSniffer;
 public class EncodingTester {
 
     private final InputStream aggregateStream;
+    
+    private final StringBuilder builder = new StringBuilder();
 
     /**
      * @param aggregateStream
@@ -30,12 +33,34 @@ public class EncodingTester {
         if (skipLabel()) {
             return false;
         }
-        HtmlInputStreamReader reader = new HtmlInputStreamReader(new UntilHashInputStream(aggregateStream), null, null);
+        UntilHashInputStream stream = new UntilHashInputStream(aggregateStream);
+        HtmlInputStreamReader reader = new HtmlInputStreamReader(stream, null, null);
         Charset charset = reader.getCharset();
+        stream.close();
         if (skipLabel()) {
+            System.err.println("Premature end of test data.");
             return false;
         }
-        
+        builder.setLength(0);
+        loop: for (;;) {
+            int b = aggregateStream.read();
+            switch (b) {
+                case '\n':
+                    break loop;
+                case -1:
+                    System.err.println("Premature end of test data.");
+                    return false;
+                default:
+                    builder.append(((char)b));
+            }
+        }
+        String sniffed = charset.name();
+        String expected = builder.toString();
+        if (expected.equalsIgnoreCase(sniffed)) {
+            System.err.println("Success.");            
+        } else {
+            System.err.println("Failure. Expected: " + expected + " got " + sniffed + ".");                        
+        }
         return true;
     }
 
@@ -56,10 +81,14 @@ public class EncodingTester {
 
     /**
      * @param args
+     * @throws SAXException 
+     * @throws IOException 
      */
-    public static void main(String[] args) {
-        // TODO Auto-generated method stub
-
+    public static void main(String[] args) throws IOException, SAXException {
+        for (int i = 0; i < args.length; i++) {
+            EncodingTester tester = new EncodingTester(new FileInputStream(args[i]));
+            tester.runTests();
+        } 
     }
 
 }
