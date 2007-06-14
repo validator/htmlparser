@@ -88,6 +88,18 @@ public class HtmlInputStreamReader extends Reader implements ByteReadable,
         bytesRead = limit;
         byteBuffer.position(position);
         byteBuffer.limit(limit);
+        initDecoder();
+    }
+
+    /**
+     * 
+     */
+    private void initDecoder() {
+        if ("ISO-8859-1".equals(this.decoder.charset().name())) {
+            this.decoder = Charset.forName("Windows-1252").newDecoder(); 
+        }
+        this.decoder.onMalformedInput(CodingErrorAction.REPORT);
+        this.decoder.onUnmappableCharacter(CodingErrorAction.REPORT);
     }
 
     public HtmlInputStreamReader(InputStream inputStream,
@@ -102,6 +114,7 @@ public class HtmlInputStreamReader extends Reader implements ByteReadable,
         bytesRead = limit;
         byteBuffer.position(position);
         byteBuffer.limit(limit);
+        initDecoder();
     }
 
     

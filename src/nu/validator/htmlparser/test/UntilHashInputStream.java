@@ -6,9 +6,9 @@ import java.io.InputStream;
 public class UntilHashInputStream extends InputStream {
 
     private final InputStream delegate;
-    
+
     private boolean closed = false;
-    
+
     /**
      * @param delegate
      */
@@ -27,6 +27,24 @@ public class UntilHashInputStream extends InputStream {
         } else {
             return rv;
         }
+    }
+
+    /**
+     * @see java.io.InputStream#close()
+     */
+    @Override
+    public void close() throws IOException {
+        super.close();
+        if (closed) {
+            return;
+        }
+        for (;;) {
+            int b = delegate.read();
+            if (b == 0x23 || b == -1) {
+                break;
+            }
+        }
+        closed = true;
     }
 
 }
