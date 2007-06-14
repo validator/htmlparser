@@ -526,8 +526,7 @@ public class MetaSniffer implements Locator {
                 int b = read();
                 if (b == 0x2D) { // -
                     hyphensSeen++;
-                }
-                if (b == 0x3E) { // >
+                } else if (b == 0x3E) { // >
                     if (hyphensSeen >= 2) {
                         return;
                     } else {
