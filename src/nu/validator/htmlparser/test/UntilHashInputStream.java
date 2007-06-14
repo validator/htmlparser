@@ -9,21 +9,27 @@ public class UntilHashInputStream extends InputStream {
     
     private final InputStream delegate;
 
+    private int buffer = -1;
+    
     private boolean closed = false;
 
     /**
      * @param delegate
+     * @throws IOException 
      */
-    public UntilHashInputStream(final InputStream delegate) {
+    public UntilHashInputStream(final InputStream delegate) throws IOException {
         this.delegate = delegate;
+        this.buffer = delegate.read();
     }
 
     public int read() throws IOException {
         if (closed) {
             return -1;
         }
-        int rv = delegate.read();
-        if (rv == 0x23 || rv == -1) {
+        int rv = buffer;
+        buffer = delegate.read();
+        if (buffer == '#' && rv == '\n') {
+            // end of stream
             closed = true;
             return -1;
         } else {
