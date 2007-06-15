@@ -596,6 +596,7 @@ public final class Tokenizer implements Locator {
         col = 0;
         prev = '\u0000';
         bufLen = 0;
+        tokenHandler.start(this);
         try {
             dataState();
         } finally {
@@ -634,6 +635,7 @@ public final class Tokenizer implements Locator {
                  * entry below.
                  */
                 flushChars();
+                resetAttributes();
                 inMarkup = true;
                 tagOpenState();
                 inMarkup = false;
@@ -1103,7 +1105,6 @@ public final class Tokenizer implements Locator {
      * @throws SAXException
      */
     private void beforeAttributeNameState() throws SAXException, IOException {
-        resetAttributes();
         while (beforeAttributeNameStateImpl())
             ;
     }
@@ -1887,28 +1888,18 @@ public final class Tokenizer implements Locator {
                     }
                     if (folded == OCTYPE[i]) {
                         appendLongStrBuf(c);
-                    } else if (c == '\u0000') {
-                        err("Bogus comment.");
-                        unread(c);
-                        bogusCommentState();
-                        return;
                     } else {
                         err("Bogus comment.");
-                        appendLongStrBuf(c);
+                        unread(c);
                         bogusCommentState();
                         return;
                     }
                 }
                 doctypeState();
                 return;
-            case '\u0000':
-                err("Bogus comment.");
-                unread(c);
-                bogusCommentState();
-                return;
             default:
                 err("Bogus comment.");
-                appendLongStrBuf(c);
+                unread(c);
                 bogusCommentState();
                 return;
         }
@@ -2226,7 +2217,7 @@ public final class Tokenizer implements Locator {
                          * Set the token's name name to the current input
                          * character,
                          */
-                        appendLongStrBuf(c);
+                        appendStrBuf(c);
                     }
                     /* and mark it as being in error. */
                     // Dealing with this when the token is complete.
@@ -2455,7 +2446,7 @@ public final class Tokenizer implements Locator {
         } else {
             unread(c);
             int entCol = -1;
-            int hi = Entities.NAMES.length;
+            int hi = Entities.NAMES.length - 1;
             int lo = 0;
             for (;;) {
                 entCol++;

@@ -4,7 +4,11 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
+import java.io.Writer;
 import java.util.Iterator;
 
 import org.xml.sax.InputSource;
@@ -51,35 +55,43 @@ public class TokenizerTester {
     private JSONArray tests;
     private final JSONArrayTokenHandler tokenHandler;
     private final Tokenizer tokenizer;
+    private final Writer writer;
     
-    private TokenizerTester(InputStream stream) throws TokenStreamException, RecognitionException {
-        JSONParser jsonParser = new JSONParser(stream);
+    private TokenizerTester(InputStream stream) throws TokenStreamException, RecognitionException, UnsupportedEncodingException {
+        JSONParser jsonParser = new JSONParser(new InputStreamReader(stream, "UTF-8"));
         tests = (JSONArray) ((JSONObject)jsonParser.nextValue()).get("tests");
         tokenHandler = new JSONArrayTokenHandler();
         tokenizer = new Tokenizer(tokenHandler);
+        tokenizer.setErrorHandler(tokenHandler);
+        writer = new OutputStreamWriter(System.out, "UTF-8");
     }
     
     private void runTests() throws SAXException, IOException {
         for (JSONValue val : tests.getValue()) {
             runTest((JSONObject) val);
         }
+        writer.flush();
+        writer.close();
     }
     
     private void runTest(JSONObject test) throws SAXException, IOException {
-        JSONString inputString = (JSONString) test.get("input");
-        InputSource is = new InputSource(new StringReader(inputString.getValue()));
+        String inputString = ((JSONString) test.get("input")).getValue();
+        InputSource is = new InputSource(new StringReader(inputString));
         tokenizer.tokenize(is);
         JSONArray actualTokens = tokenHandler.getArray();
         JSONArray expectedTokens = (JSONArray) test.get("output");
         if (jsonDeepEquals(actualTokens, expectedTokens)) {
-            System.out.println("Success");
+            writer.write("Success\n");
         } else {
-            System.out.println("Failure");
-            System.out.println(((JSONString)test.get("description")).getValue());
-            System.out.println("Expected tokens:");
-            System.out.println(expectedTokens.render(false));
-            System.out.println("Actual tokens:");
-            System.out.println(actualTokens.render(false));
+            writer.write("Failure\n");
+            writer.write(((JSONString)test.get("description")).getValue());
+            writer.write("\nInput:\n");
+            writer.write(inputString);            
+            writer.write("\nExpected tokens:\n");
+            writer.write(expectedTokens.render(false));
+            writer.write("\nActual tokens:\n");
+            writer.write(actualTokens.render(false));
+            writer.write("\n");
         }
     }
     
