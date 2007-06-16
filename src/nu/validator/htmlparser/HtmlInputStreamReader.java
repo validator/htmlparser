@@ -121,7 +121,7 @@ public class HtmlInputStreamReader extends Reader implements ByteReadable,
     @Override
     public void close() throws IOException {
         // TODO Auto-generated method stub
-
+        inputStream.close();
     }
 
     @Override
