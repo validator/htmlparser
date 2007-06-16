@@ -2584,6 +2584,10 @@ public final class Tokenizer implements Locator {
              */
         }
         for (;;) {
+            // Deal with overflow gracefully
+            if (value < 0) {
+                value = 0x110000; // Value above Unicode range but within int range
+            }
             /* Consume as many characters as match the range of characters given
              * above.
              */
