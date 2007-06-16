@@ -72,9 +72,9 @@ public final class Tokenizer implements Locator {
     private static final char[] LT_GT = { '<', '>' };
 
     private static final char[] LT_SOLIDUS = { '<', '/' };
-   
+
     private static final char[] REPLACEMENT_CHARACTER = { '\uFFFD' };
-    
+
     private static final int BUFFER_GROW_BY = 1024;
 
     private String publicId;
@@ -335,7 +335,7 @@ public final class Tokenizer implements Locator {
                 fatal("Unmatched high surrogate.");
             }
             if (isForbidden(c)) {
-                warn("Forbidden character: " + ((int)c));
+                warn("Forbidden character: " + ((int) c));
             }
             if (c == '\r') {
                 prev = '\r';
@@ -1873,7 +1873,7 @@ public final class Tokenizer implements Locator {
                 } else {
                     err("Bogus comment.");
                     appendLongStrBuf('-');
-                    appendLongStrBuf(c);
+                    unread(c);
                     bogusCommentState();
                     return;
                 }
@@ -2446,9 +2446,11 @@ public final class Tokenizer implements Locator {
         } else {
             unread(c);
             int entCol = -1;
-            int hi = Entities.NAMES.length - 1;
             int lo = 0;
-            for (;;) {
+            int hi = (Entities.NAMES.length - 1);
+            int candidate = -1;
+            boolean wasSemicolonTerminated = false;
+            outer: for (;;) {
                 entCol++;
                 c = read();
                 /*
@@ -2457,79 +2459,93 @@ public final class Tokenizer implements Locator {
                  * matching one of the identifiers in the first column of the
                  * entities table.
                  */
-                for (;;) {
-                    if (lo == Entities.NAMES.length) {
+                hiloop: for (;;) {
+                    if (hi == -1) {
                         break;
-                    } else if (entCol >= Entities.NAMES[lo].length()) {
-                        lo++;
-                    } else if (c > Entities.NAMES[lo].charAt(entCol)) {
-                        lo++;
-                    } else {
-                        break;
+                    } if (entCol == Entities.NAMES[hi].length()) {
+                        break hiloop;
+                    } if (entCol > Entities.NAMES[hi].length()) {
+                        break outer;
+                    } else if (c < Entities.NAMES[hi].charAt(entCol)) {
+                        hi--;
+                    } else  {
+                        break hiloop;
                     }
                 }
 
-                for (;;) {
-                    if (hi == -1) {
-                        break;
-                    } else if (entCol >= Entities.NAMES[hi].length()) {
-                        break;
-                    } else if (c < Entities.NAMES[hi].charAt(entCol)) {
-                        hi--;
+                loloop: for (;;) {
+                    if (hi < lo) {
+                        break outer;
+                    } if (entCol == Entities.NAMES[lo].length()) {
+                        wasSemicolonTerminated = (c == ';');
+                        candidate = lo;
+                        clearStrBuf();
+                        lo++;
+                    } else if (entCol > Entities.NAMES[lo].length()) {
+                        break outer;
+                    } else if (c > Entities.NAMES[lo].charAt(entCol)) {
+                        lo++;
                     } else {
-                        break;
+                        break loloop;
                     }
                 }
-                if (hi < lo) {
-                    /* If no match can be made, then this is a parse error. */
-                    err("Text after \u201C&\u201D did not match an entity name.");
-                    /*
-                     * No characters are consumed, and nothing is returned.
-                     */
+
+                if (!wasSemicolonTerminated) {
+                    appendStrBuf(c);
+                }
+            }
+            if (candidate == -1) {
+                /* If no match can be made, then this is a parse error. */
+                err("Text after \u201C&\u201D did not match an entity name.");
+                /*
+                 * No characters are consumed, and nothing is returned.
+                 */
+                if (inMarkup) {
+                    appendStrBufToLongStrBuf();
+                } else {
+                    emitStrBuf();
+                }
+                unread(c);
+                return;
+            } else {
+                /*
+                 * Otherwise, if the next character is a U+003B SEMICOLON,
+                 * consume that too. If it isn't, there is a parse error.
+                 */
+                if (!wasSemicolonTerminated) {
+                    err("Entity name was not terminated with a semicolon.");
+                }
+                /*
+                 * Return a character token for the character corresponding
+                 * to the entity name (as given by the second column of the
+                 * entities table).
+                 */
+                char[] val = Entities.VALUES[candidate];
+                emitOrAppend(val);
+                if (!wasSemicolonTerminated) {
                     if (inMarkup) {
                         appendStrBufToLongStrBuf();
                     } else {
                         emitStrBuf();
                     }
                     unread(c);
-                    return;
-                } else if (hi == lo
-                        && Entities.NAMES[hi].length() == entCol + 1
-                        && Entities.NAMES[hi].charAt(entCol) == c) {
-                    /*
-                     * Otherwise, if the next character is a U+003B SEMICOLON,
-                     * consume that too. If it isn't, there is a parse error.
-                     */
-                    c = read();
-                    if (c != ';') {
-                        err("Entity name was not terminated with a semicolon.");
-                        unread(c);
-                    }
-                    /*
-                     * Return a character token for the character corresponding
-                     * to the entity name (as given by the second column of the
-                     * entities table).
-                     */
-                    char[] val = Entities.VALUES[hi];
-                    emitOrAppend(val);
-                    return;
-                    /* If the markup contains I'm &notit without you, the entity
-                     * is parsed as "not", as in, I'm ¬it without you. But if
-                     * the markup was I'm &notin without you, the entity would
-                     * be parsed as "notin", resulting in I'm ∉ without you.
-                     * 
-                     * This isn't quite right. For some entities, UAs require a
-                     * semicolon, for others they don't. We probably need to do
-                     * the same for backwards compatibility. If we do that we
-                     * might be able to add more entities, e.g. for mathematics.
-                     * Probably the way to mark whether or not an entity
-                     * requires a semicolon is with an additional column in the
-                     * entity table lower down.
-                     */
-                } else {
-                    appendStrBuf(c);
                 }
+                return;
+                /* If the markup contains I'm &notit without you, the entity
+                 * is parsed as "not", as in, I'm ¬it without you. But if
+                 * the markup was I'm &notin without you, the entity would
+                 * be parsed as "notin", resulting in I'm ∉ without you.
+                 * 
+                 * This isn't quite right. For some entities, UAs require a
+                 * semicolon, for others they don't. We probably need to do
+                 * the same for backwards compatibility. If we do that we
+                 * might be able to add more entities, e.g. for mathematics.
+                 * Probably the way to mark whether or not an entity
+                 * requires a semicolon is with an additional column in the
+                 * entity table lower down.
+                 */
             }
+
         }
     }
 
@@ -2555,6 +2571,7 @@ public final class Tokenizer implements Locator {
              * When it comes to interpreting the number, interpret it as a
              * hexadecimal number.
              */
+            appendStrBuf(c);
             hex = true;
         } else {
             unread(c);
@@ -2633,13 +2650,13 @@ public final class Tokenizer implements Locator {
          * decimal as appropriate).
          */
         if (value >= 0x80 && value <= 0x9f) {
-         /* If that number is in the range 128 to 159 (0x80 to 0x9F), then this
-         * is a parse error.*/
+            /* If that number is in the range 128 to 159 (0x80 to 0x9F), then this
+             * is a parse error.*/
             err("A numeric character reference expanded to the C1 controls range.");
             /* In the following table, find the row with that
-         * number in the first column, and return a character token for the
-         * Unicode character given in the second column of that row.
-         */
+             * number in the first column, and return a character token for the
+             * Unicode character given in the second column of that row.
+             */
             char[] val = Entities.WINDOWS_1252[value - 0x80];
             emitOrAppend(val);
             return;
@@ -2662,10 +2679,10 @@ public final class Tokenizer implements Locator {
              * code point is that number.
              */
             char c = (char) value;
-// XXX additional XML WF check here
+            // XXX additional XML WF check here
             //            if (isForbidden(c)) {
-//                fatal("Character reference expands to a forbidden character.");
-//            }
+            //                fatal("Character reference expands to a forbidden character.");
+            //            }
             if (isPrivateUse(c)) {
                 warnAboutPrivateUseChar();
             }
@@ -2688,7 +2705,7 @@ public final class Tokenizer implements Locator {
             err("Character reference outside the permissible Unicode range.");
             emitOrAppend(REPLACEMENT_CHARACTER);
             return;
-        }        
+        }
     }
 
     /**

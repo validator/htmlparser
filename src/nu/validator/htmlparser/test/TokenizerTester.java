@@ -76,6 +76,9 @@ public class TokenizerTester {
     
     private void runTest(JSONObject test) throws SAXException, IOException {
         String inputString = ((JSONString) test.get("input")).getValue();
+        if ("I'm &notit".equals(inputString)) {
+            int i = 1;
+        }
         InputSource is = new InputSource(new StringReader(inputString));
         tokenizer.tokenize(is);
         JSONArray actualTokens = tokenHandler.getArray();
