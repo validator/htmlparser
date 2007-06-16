@@ -117,10 +117,6 @@ public final class Tokenizer implements Locator {
 
     private char[] astralChar = { '\u0000', '\u0000' };
 
-    private String encoding = null;
-
-    private InputStream stream;
-
     private boolean alreadyWarnedAboutPrivateUseCharacters;
 
     private NormalizationChecker normalizationChecker = null;
@@ -179,106 +175,6 @@ public final class Tokenizer implements Locator {
 
     private String longStrBufToString() {
         return new String(longStrBuf, 0, longStrBufLen);
-    }
-
-    /**
-     * @param c
-     * @return
-     */
-    private boolean isWhiteSpace(char c) {
-        return (c == ' ') || (c == '\t') || (c == '\n');
-    }
-
-    /**
-     * @throws SAXException
-     * 
-     */
-    private char[] consumeCharRefOld() throws SAXException, IOException {
-        char c = read();
-        if (c == '#') {
-            return consumeNCROld();
-            // } else if (isNameStart(c)) {
-            // return null;
-        } else {
-            // XXX should we err or continue here
-            fatal("& not followed by # or name start.");
-        }
-        throw new RuntimeException("Unreachable");
-    }
-
-    /**
-     * @throws SAXException
-     * 
-     */
-    private char[] consumeNCROld() throws SAXException, IOException {
-        clearStrBuf();
-        int intVal = 0;
-        char c = read();
-        if (c == 'x' || c == 'X') {
-            for (int i = 0;; i++) {
-                if (i == 6) {
-                    fatal("Hexadecimal character reference too long.");
-                }
-                c = read();
-                if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')
-                        || (c >= 'A' && c <= 'F')) {
-                    appendStrBuf(c);
-                } else if (c == ';') {
-                    if (i == 0) {
-                        fatal("No digits in hexadecimal character reference.");
-                    }
-                    intVal = Integer.parseInt(strBufToString(), 16);
-                    break;
-                } else {
-                    fatal("Bad character in hexadecimal character reference.");
-                }
-            }
-        } else if (c >= '0' && c <= '9') {
-            appendStrBuf(c);
-            for (int i = 0;; i++) {
-                if (i == 6) {
-                    fatal("Decimal character reference too long.");
-                }
-                c = read();
-                if (c >= '0' && c <= '9') {
-                    appendStrBuf(c);
-                } else if (c == ';') {
-                    intVal = Integer.parseInt(strBufToString());
-                    break;
-                } else {
-                    fatal("Bad character in decimal character reference.");
-                }
-            }
-        } else {
-            fatal("Bad character in numeric character reference.");
-        }
-        if ((intVal & 0xF800) == 0xD800) {
-            fatal("Character reference expands to a surrogate.");
-        } else if (intVal <= 0xFFFF) {
-            c = (char) intVal;
-            if (isForbidden(c)) {
-                fatal("Character reference expands to a forbidden character.");
-            }
-            if (isPrivateUse(c)) {
-                warnAboutPrivateUseChar();
-            }
-            bmpChar[0] = c;
-            return bmpChar;
-        } else if (intVal <= 0x10FFFF) {
-            // XXX astral non-characters are not banned
-            if (isNonCharacter(intVal)) {
-                warn("Character reference expands to an astral non-character.");
-            }
-            if (isAstralPrivateUse(intVal)) {
-                warnAboutPrivateUseChar();
-            }
-            astralChar[0] = (char) (LEAD_OFFSET + (intVal >> 10));
-            astralChar[1] = (char) (0xDC00 + (intVal & 0x3FF));
-            return astralChar;
-        } else {
-            fatal("Character reference outside the permissible Unicode range.");
-        }
-        throw new RuntimeException("Unreachable");
     }
 
     private void unread(char c) {
@@ -557,11 +453,6 @@ public final class Tokenizer implements Locator {
 
     private boolean inMarkup;
 
-    private boolean isSpace(char c) {
-        return c == ' ' || c == '\n' || c == '\t' || c == '\u000C'
-                || c == '\u000B';
-    }
-
     private boolean currentIsVoid() {
         return Arrays.binarySearch(VOID_ELEMENTS, tagName) > -1;
     }
@@ -571,9 +462,6 @@ public final class Tokenizer implements Locator {
         this.publicId = is.getPublicId();
         this.reader = is.getCharacterStream();
         CharsetDecoder decoder = decoderFromExternalDeclaration(is.getEncoding());
-        if (decoder != null) {
-            this.encoding = decoder.charset().name();
-        }
         if (this.reader == null) {
             InputStream inputStream = is.getByteStream();
             if (inputStream == null) {
@@ -601,6 +489,7 @@ public final class Tokenizer implements Locator {
             dataState();
         } finally {
             tokenHandler.eof();
+            reader.close();
         }
     }
 
@@ -1105,8 +994,9 @@ public final class Tokenizer implements Locator {
      * @throws SAXException
      */
     private void beforeAttributeNameState() throws SAXException, IOException {
-        while (beforeAttributeNameStateImpl())
-            ;
+        while (beforeAttributeNameStateImpl()) {
+            // Spin.
+        }
     }
 
     /**
