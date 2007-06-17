@@ -123,7 +123,9 @@ public final class Tokenizer implements Locator {
 
     private NormalizationChecker normalizationChecker = null;
 
-    private XmlViolationPolicy spacePolicy;
+    private XmlViolationPolicy contentSpacePolicy;
+
+    private XmlViolationPolicy contentNonXmlCharPolicy;
 
     public Tokenizer(TokenHandler tokenHandler) {
         this.tokenHandler = tokenHandler;
@@ -251,10 +253,12 @@ public final class Tokenizer implements Locator {
                     break;
                 case '\u000B':
                 case '\u000C':
-                    if (spacePolicy == XmlViolationPolicy.ALTER_INFOSET) {
-                        c = buf[pos] = ' ';                                                    
-                    } else if (spacePolicy == XmlViolationPolicy.FATAL) {
-                        fatal("Found a space character that is not legal XML 1.0 white space.");
+                    if (inContent) {
+                        if (contentSpacePolicy == XmlViolationPolicy.ALTER_INFOSET) {
+                            c = buf[pos] = ' ';
+                        } else if (contentSpacePolicy == XmlViolationPolicy.FATAL) {
+                            fatal("Found a space character that is not legal XML 1.0 white space.");
+                        }
                     }
                     break;
                 default:
@@ -274,8 +278,15 @@ public final class Tokenizer implements Locator {
                             c = buf[pos] = '\uFFFD';                            
                         }
                         prev = c;
-                    } else if (isForbidden(c)) {
-                        warn("Forbidden character: " + ((int) c));
+                    } else if (inContent && (c < ' ' || isNonCharacter(c))) {
+                        if (contentNonXmlCharPolicy != XmlViolationPolicy.FATAL) {
+                            if (contentNonXmlCharPolicy == XmlViolationPolicy.ALTER_INFOSET) {
+                                c = buf[pos] = '\uFFFD';
+                            }
+                            warn("Found a character that is not a legal XML 1.0 character.");
+                        } else {
+                            fatal("Found a character that is not a legal XML 1.0 character.");
+                        }
                     } else if (isPrivateUse(c)) {
                         warnAboutPrivateUseChar();
                     }
@@ -307,16 +318,6 @@ public final class Tokenizer implements Locator {
      */
     private boolean isNonCharacter(int c) {
         return (c & 0xFFFE) == 0xFFFE;
-    }
-
-    /**
-     * @param c
-     * @return
-     */
-    private boolean isForbidden(char c) {
-        return !(c == '\t' || c == '\n' || c == '\r'
-                || (c >= '\u0020' && c < '\u007F')
-                || (c >= '\u00A0' && c < '\uFDD0') || (c > '\uFDDF' && c <= '\uFFFD'));
     }
 
     /**
@@ -2612,10 +2613,10 @@ public final class Tokenizer implements Locator {
             err("Character reference expands to U+0000.");
             emitOrAppend(REPLACEMENT_CHARACTER, inAttribute);
             return;
-        } else if ((spacePolicy != XmlViolationPolicy.ALLOW) && (value == 0xB || value == 0xC)) {
-            if (spacePolicy == XmlViolationPolicy.ALTER_INFOSET) {
+        } else if ((contentSpacePolicy != XmlViolationPolicy.ALLOW) && (value == 0xB || value == 0xC)) {
+            if (contentSpacePolicy == XmlViolationPolicy.ALTER_INFOSET) {
                 emitOrAppend(SPACE, inAttribute);                                                    
-            } else if (spacePolicy == XmlViolationPolicy.FATAL) {
+            } else if (contentSpacePolicy == XmlViolationPolicy.FATAL) {
                 fatal("A character reference expanded to a space character that is not legal XML 1.0 white space.");
             }            
         } else if ((value & 0xF800) == 0xD800) {
@@ -2628,10 +2629,16 @@ public final class Tokenizer implements Locator {
              * whose code point is that number.
              */
             char c = (char) value;
-            // XXX additional XML WF check here
-            // if (isForbidden(c)) {
-            // fatal("Character reference expands to a forbidden character.");
-            // }
+            if (c < '\t' || (c > '\r' || c < ' ') || isNonCharacter(c)) {
+                if (contentNonXmlCharPolicy != XmlViolationPolicy.FATAL) {
+                    if (contentNonXmlCharPolicy == XmlViolationPolicy.ALTER_INFOSET) {
+                        c = '\uFFFD';
+                    }
+                    warn("Character reference expanded to a character that is not a legal XML 1.0 character.");
+                } else {
+                    fatal("Character reference expanded to a character that is not a legal XML 1.0 character.");
+                }
+            }
             if (isPrivateUse(c)) {
                 warnAboutPrivateUseChar();
             }
