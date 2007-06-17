@@ -75,6 +75,8 @@ public final class Tokenizer implements Locator {
 
     private static final char[] REPLACEMENT_CHARACTER = { '\uFFFD' };
 
+    private static final char[] SPACE = { ' ' };
+    
     private static final int BUFFER_GROW_BY = 1024;
 
     private String publicId;
@@ -120,6 +122,8 @@ public final class Tokenizer implements Locator {
     private boolean alreadyWarnedAboutPrivateUseCharacters;
 
     private NormalizationChecker normalizationChecker = null;
+
+    private XmlViolationPolicy spacePolicy;
 
     public Tokenizer(TokenHandler tokenHandler) {
         this.tokenHandler = tokenHandler;
@@ -182,83 +186,103 @@ public final class Tokenizer implements Locator {
     }
 
     private char read() throws SAXException, IOException {
-        if (unreadBuffer != -1) {
-            char c = (char) unreadBuffer;
-            unreadBuffer = -1;
-            return c;
-        }
-        pos++;
-        col++;
-        if (pos == bufLen) {
-            boolean charDataContinuation = false;
-            if (cstart > -1) {
-                flushChars();
-                charDataContinuation = true;
+        for (;;) { // the loop is here to the CRLF case
+            if (unreadBuffer != -1) {
+                char c = (char) unreadBuffer;
+                unreadBuffer = -1;
+                return c;
             }
-            try {
+            pos++;
+            col++;
+            if (pos == bufLen) {
+                boolean charDataContinuation = false;
+                if (cstart > -1) {
+                    flushChars();
+                    charDataContinuation = true;
+                }
                 bufLen = reader.read(buf);
-            } catch (CharacterCodingException cce) {
-                fatal("Input data does not conform to the input encoding.");
-            }
-            if (bufLen == -1) {
-                return '\u0000';
-            } else if (normalizationChecker != null) {
-                normalizationChecker.characters(buf, 0, bufLen);
-            }
-            if (charDataContinuation) {
-                cstart = 0;
-            }
-            pos = 0;
-        }
-        char c = buf[pos];
-        if ((c & 0xFC00) == 0xDC00) {
-            // Got a low surrogate. See if prev was high surrogate
-            if ((prev & 0xFC00) == 0xD800) {
-                int intVal = (prev << 10) + c + SURROGATE_OFFSET;
-                if (isNonCharacter(intVal)) {
-                    warn("Astral non-character.");
+                if (bufLen == -1) {
+                    return '\u0000';
+                } else if (normalizationChecker != null) {
+                    normalizationChecker.characters(buf, 0, bufLen);
                 }
-                if (isAstralPrivateUse(intVal)) {
-                    warnAboutPrivateUseChar();
+                if (charDataContinuation) {
+                    cstart = 0;
                 }
-            } else {
-                fatal("Unmatched low surrogate.");
+                pos = 0;
             }
-            prev = c;
-        } else {
-            // see if there was a lone high surrogate
-            if ((prev & 0xFC00) == 0xD800) {
-                fatal("Unmatched high surrogate.");
-            }
-            if (isForbidden(c)) {
-                warn("Forbidden character: " + ((int) c));
-            }
-            if (c == '\r') {
-                prev = '\r';
-                c = buf[pos] = '\n';
-                line++;
-                col = 0;
-            } else if (c == '\n') {
-                if (prev != '\r') {
-                    prev = c;
+            char c = buf[pos];
+            switch (c) {
+                case '\n':
+                    /*
+                     * U+000D CARRIAGE RETURN (CR) characters, and U+000A LINE
+                     * FEED (LF) characters, are treated specially. Any CR
+                     * characters that are followed by LF characters must be
+                     * removed, and any CR characters not followed by LF
+                     * characters must be converted to LF characters.
+                     */
+                    if (prev == '\r') {
+                        // swallow the LF
+                        col = 0;
+                        if (cstart != -1) {
+                            flushChars();
+                            cstart = pos + 1;
+                        }
+                        prev = c;
+                        continue;
+                    } else {
+                        line++;
+                        col = 0;
+                    }
+                    break;
+                case '\r':
+                    c = buf[pos] = '\n';
                     line++;
                     col = 0;
-                } else {
-                    prev = c;
-                    // swallow the LF
-                    col = 0;
-                    int tmpCstart = cstart;
-                    flushChars();
-                    if (tmpCstart != -1) {
-                        cstart = pos + 1;
+                    break;
+                case '\u0000':
+                    /*
+                     * All U+0000 NULL characters in the input must be replaced
+                     * by U+FFFD REPLACEMENT CHARACTERs. Any occurrences of such
+                     * characters is a parse error.
+                     */
+                    err("Found U+0000 in the character stream.");
+                    c = buf[pos] = '\uFFFD';
+                    break;
+                case '\u000B':
+                case '\u000C':
+                    if (spacePolicy == XmlViolationPolicy.ALTER_INFOSET) {
+                        c = buf[pos] = ' ';                                                    
+                    } else if (spacePolicy == XmlViolationPolicy.FATAL) {
+                        fatal("Found a space character that is not legal XML 1.0 white space.");
                     }
-                    return read();
-                }
-            } else if (isPrivateUse(c)) {
-                warnAboutPrivateUseChar();
+                    break;
+                default:
+                    if ((c & 0xFC00) == 0xDC00) {
+                        // Got a low surrogate. See if prev was high surrogate
+                        if ((prev & 0xFC00) == 0xD800) {
+                            int intVal = (prev << 10) + c + SURROGATE_OFFSET;
+                            if (isNonCharacter(intVal)) {
+                                warn("Astral non-character.");
+                            }
+                            if (isAstralPrivateUse(intVal)) {
+                                warnAboutPrivateUseChar();
+                            }
+                        } else {
+                            // XXX figure out what to do about lone high surrogates
+                            err("Found low surrogate without high surrogate.");
+                            c = buf[pos] = '\uFFFD';                            
+                        }
+                        prev = c;
+                    } else if (isForbidden(c)) {
+                        warn("Forbidden character: " + ((int) c));
+                    } else if (isPrivateUse(c)) {
+                        warnAboutPrivateUseChar();
+                    }
             }
+            prev = c;
+            return c;
         }
-        return c;
     }
 
     private void warnAboutPrivateUseChar() throws SAXException {
@@ -451,7 +475,7 @@ public final class Tokenizer implements Locator {
 
     private boolean shouldAddAttributes;
 
-    private boolean inMarkup;
+    private boolean inContent;
 
     private boolean currentIsVoid() {
         return Arrays.binarySearch(VOID_ELEMENTS, tagName) > -1;
@@ -477,7 +501,7 @@ public final class Tokenizer implements Locator {
         }
         emitComments = tokenHandler.wantsComments();
         // TODO reset stuff
-        inMarkup = false;
+        inContent = true;
         pos = -1;
         cstart = -1;
         line = 1;
@@ -525,9 +549,9 @@ public final class Tokenizer implements Locator {
                  */
                 flushChars();
                 resetAttributes();
-                inMarkup = true;
+                inContent = false;
                 tagOpenState();
-                inMarkup = false;
+                inContent = true;
                 continue;
             } else if (c == '\u0000') {
                 /*
@@ -565,7 +589,7 @@ public final class Tokenizer implements Locator {
          * 
          * Attempt to consume an entity.
          */
-        consumeEntity();
+        consumeEntity(false);
         /*
          * If nothing is returned, emit a U+0026 AMPERSAND character token.
          * 
@@ -1465,6 +1489,7 @@ public final class Tokenizer implements Locator {
      */
     private boolean attributeValueDoubleQuotedState() throws SAXException,
             IOException {
+        inContent = true;
         for (;;) {
             /*
              * Consume the next input character:
@@ -1477,6 +1502,7 @@ public final class Tokenizer implements Locator {
                      * name state.
                      */
                     addAttributeWithValue();
+                    inContent = false;
                     return true;
                 case '&':
                     /*
@@ -1495,6 +1521,7 @@ public final class Tokenizer implements Locator {
                      * Reconsume the character in the data state.
                      */
                     unread(c);
+                    inContent = false;
                     return false;
                 default:
                     /*
@@ -1518,6 +1545,7 @@ public final class Tokenizer implements Locator {
      */
     private boolean attributeValueSingleQuotedState() throws SAXException,
             IOException {
+        inContent = true;
         for (;;) {
             /*
              * Consume the next input character:
@@ -1530,6 +1558,7 @@ public final class Tokenizer implements Locator {
                      * state.
                      */
                     addAttributeWithValue();
+                    inContent = false;
                     return true;
                 case '&':
                     /*
@@ -1548,6 +1577,7 @@ public final class Tokenizer implements Locator {
                      * Reconsume the character in the data state.
                      */
                     unread(c);
+                    inContent = false;
                     return false;
                 default:
                     /*
@@ -1572,6 +1602,7 @@ public final class Tokenizer implements Locator {
     private boolean attributeValueUnquotedState() throws SAXException,
             IOException {
         // XXX HTML 4 mode requires more errors here
+        inContent = true;
         for (;;) {
             /*
              * Consume the next input character:
@@ -1589,6 +1620,7 @@ public final class Tokenizer implements Locator {
                      * to the before attribute name state.
                      */
                     addAttributeWithValue();
+                    inContent = false;
                     return true;
                 case '&':
                     /*
@@ -1604,6 +1636,7 @@ public final class Tokenizer implements Locator {
                     /*
                      * Switch to the data state.
                      */
+                    inContent = false;
                     return false;
                 case '<':
                     /* U+003C LESS-THAN SIGN (<) Parse error. */
@@ -1617,6 +1650,7 @@ public final class Tokenizer implements Locator {
                      * Reconsume the character in the data state.
                      */
                     unread(c);
+                    inContent = false;
                     return false;
                 case '\u0000':
                     /* EOF Parse error. */
@@ -1630,6 +1664,7 @@ public final class Tokenizer implements Locator {
                      * Reconsume the character in the data state.
                      */
                     unread(c);
+                    inContent = false;
                     return false;
                 default:
                     /*
@@ -1655,7 +1690,7 @@ public final class Tokenizer implements Locator {
         /*
          * Attempt to consume an entity.
          */
-        consumeEntity();
+        consumeEntity(true);
         /*
          * If nothing is returned, append a U+0026 AMPERSAND character to the
          * current attribute's value.
@@ -2316,7 +2351,7 @@ public final class Tokenizer implements Locator {
      * @throws IOException
      * @throws SAXException
      */
-    private void consumeEntity() throws SAXException, IOException {
+    private void consumeEntity(boolean inAttribute) throws SAXException, IOException {
         clearStrBuf();
         appendStrBuf('&');
         /*
@@ -2332,7 +2367,7 @@ public final class Tokenizer implements Locator {
          */
         if (c == '#') {
             appendStrBuf('#');
-            consumeNCR();
+            consumeNCR(inAttribute);
         } else {
             unread(c);
             int entCol = -1;
@@ -2352,13 +2387,15 @@ public final class Tokenizer implements Locator {
                 hiloop: for (;;) {
                     if (hi == -1) {
                         break;
-                    } if (entCol == Entities.NAMES[hi].length()) {
+                    }
+                    if (entCol == Entities.NAMES[hi].length()) {
                         break hiloop;
-                    } if (entCol > Entities.NAMES[hi].length()) {
+                    }
+                    if (entCol > Entities.NAMES[hi].length()) {
                         break outer;
                     } else if (c < Entities.NAMES[hi].charAt(entCol)) {
                         hi--;
-                    } else  {
+                    } else {
                         break hiloop;
                     }
                 }
@@ -2366,7 +2403,8 @@ public final class Tokenizer implements Locator {
                 loloop: for (;;) {
                     if (hi < lo) {
                         break outer;
-                    } if (entCol == Entities.NAMES[lo].length()) {
+                    }
+                    if (entCol == Entities.NAMES[lo].length()) {
                         wasSemicolonTerminated = (c == ';');
                         candidate = lo;
                         clearStrBuf();
@@ -2390,7 +2428,7 @@ public final class Tokenizer implements Locator {
                 /*
                  * No characters are consumed, and nothing is returned.
                  */
-                if (inMarkup) {
+                if (inAttribute) {
                     appendStrBufToLongStrBuf();
                 } else {
                     emitStrBuf();
@@ -2406,14 +2444,14 @@ public final class Tokenizer implements Locator {
                     err("Entity name was not terminated with a semicolon.");
                 }
                 /*
-                 * Return a character token for the character corresponding
-                 * to the entity name (as given by the second column of the
+                 * Return a character token for the character corresponding to
+                 * the entity name (as given by the second column of the
                  * entities table).
                  */
                 char[] val = Entities.VALUES[candidate];
-                emitOrAppend(val);
+                emitOrAppend(val, inAttribute);
                 if (!wasSemicolonTerminated) {
-                    if (inMarkup) {
+                    if (inAttribute) {
                         appendStrBufToLongStrBuf();
                     } else {
                         emitStrBuf();
@@ -2421,25 +2459,25 @@ public final class Tokenizer implements Locator {
                     unread(c);
                 }
                 return;
-                /* If the markup contains I'm &notit without you, the entity
-                 * is parsed as "not", as in, I'm ¬it without you. But if
-                 * the markup was I'm &notin without you, the entity would
-                 * be parsed as "notin", resulting in I'm ∉ without you.
+                /*
+                 * If the markup contains I'm &notit without you, the entity is
+                 * parsed as "not", as in, I'm ¬it without you. But if the
+                 * markup was I'm &notin without you, the entity would be parsed
+                 * as "notin", resulting in I'm ∉ without you.
                  * 
                  * This isn't quite right. For some entities, UAs require a
-                 * semicolon, for others they don't. We probably need to do
-                 * the same for backwards compatibility. If we do that we
-                 * might be able to add more entities, e.g. for mathematics.
-                 * Probably the way to mark whether or not an entity
-                 * requires a semicolon is with an additional column in the
-                 * entity table lower down.
+                 * semicolon, for others they don't. We probably need to do the
+                 * same for backwards compatibility. If we do that we might be
+                 * able to add more entities, e.g. for mathematics. Probably the
+                 * way to mark whether or not an entity requires a semicolon is
+                 * with an additional column in the entity table lower down.
                  */
             }
 
         }
     }
 
-    private void consumeNCR() throws SAXException, IOException {
+    private void consumeNCR(boolean inAttribute) throws SAXException, IOException {
         int value = 0;
         boolean seenDigits = false;
         boolean hex = false;
@@ -2449,14 +2487,15 @@ public final class Tokenizer implements Locator {
          */
         char c = read();
         if (c == 'x' || c == 'X') {
-            /* U+0078 LATIN SMALL LETTER X U+0058 LATIN CAPITAL LETTER X Consume the
-             * X.
+            /*
+             * U+0078 LATIN SMALL LETTER X U+0058 LATIN CAPITAL LETTER X Consume
+             * the X.
              * 
              * Follow the steps below, but using the range of characters U+0030
-             * DIGIT ZERO through to U+0039 DIGIT NINE, U+0061 LATIN SMALL LETTER A
-             * through to U+0066 LATIN SMALL LETTER F, and U+0041 LATIN CAPITAL
-             * LETTER A, through to U+0046 LATIN CAPITAL LETTER F (in other words,
-             * 0-9, A-F, a-f).
+             * DIGIT ZERO through to U+0039 DIGIT NINE, U+0061 LATIN SMALL
+             * LETTER A through to U+0066 LATIN SMALL LETTER F, and U+0041 LATIN
+             * CAPITAL LETTER A, through to U+0046 LATIN CAPITAL LETTER F (in
+             * other words, 0-9, A-F, a-f).
              * 
              * When it comes to interpreting the number, interpret it as a
              * hexadecimal number.
@@ -2465,20 +2504,23 @@ public final class Tokenizer implements Locator {
             hex = true;
         } else {
             unread(c);
-            /* Anything else Follow the steps below, but using the range of
-             * characters U+0030 DIGIT ZERO through to U+0039 DIGIT NINE (i.e. just
-             * 0-9).
+            /*
+             * Anything else Follow the steps below, but using the range of
+             * characters U+0030 DIGIT ZERO through to U+0039 DIGIT NINE (i.e.
+             * just 0-9).
              * 
-             * When it comes to interpreting the number, interpret it as a decimal
-             * number.
+             * When it comes to interpreting the number, interpret it as a
+             * decimal number.
              */
         }
         for (;;) {
             // Deal with overflow gracefully
             if (value < 0) {
-                value = 0x110000; // Value above Unicode range but within int range
+                value = 0x110000; // Value above Unicode range but within int
+                // range
             }
-            /* Consume as many characters as match the range of characters given
+            /*
+             * Consume as many characters as match the range of characters given
              * above.
              */
             c = read();
@@ -2500,12 +2542,12 @@ public final class Tokenizer implements Locator {
                 value += c - 'a' + 10;
             } else if (c == ';') {
                 if (seenDigits) {
-                    handleNCRValue(value);
+                    handleNCRValue(value, inAttribute);
                     return;
                 } else {
                     err("No digits after \u201C" + strBufToString() + "\u201D.");
                     appendStrBuf(';');
-                    if (inMarkup) {
+                    if (inAttribute) {
                         appendStrBufToLongStrBuf();
                     } else {
                         emitStrBuf();
@@ -2513,21 +2555,23 @@ public final class Tokenizer implements Locator {
                     return;
                 }
             } else {
-                /* If no characters match the range, then don't consume any characters
-                 * (and unconsume the U+0023 NUMBER SIGN character and, if appropriate,
-                 * the X character). This is a parse error; nothing is returned.
+                /*
+                 * If no characters match the range, then don't consume any
+                 * characters (and unconsume the U+0023 NUMBER SIGN character
+                 * and, if appropriate, the X character). This is a parse error;
+                 * nothing is returned.
                  * 
-                 * Otherwise, if the next character is a U+003B SEMICOLON, consume that
-                 * too. If it isn't, there is a parse error.
+                 * Otherwise, if the next character is a U+003B SEMICOLON,
+                 * consume that too. If it isn't, there is a parse error.
                  */
                 unread(c);
                 if (seenDigits) {
                     err("Character reference was not terminated by a semicolon.");
-                    handleNCRValue(value);
+                    handleNCRValue(value, inAttribute);
                     return;
                 } else {
                     err("No digits after \u201C" + strBufToString() + "\u201D.");
-                    if (inMarkup) {
+                    if (inAttribute) {
                         appendStrBufToLongStrBuf();
                     } else {
                         emitStrBuf();
@@ -2538,50 +2582,61 @@ public final class Tokenizer implements Locator {
         }
     }
 
-    private void handleNCRValue(int value) throws SAXException, IOException {
-        /* If one or more characters match the range, then take them all and
+    private void handleNCRValue(int value, boolean inAttribute) throws SAXException, IOException {
+        /*
+         * If one or more characters match the range, then take them all and
          * interpret the string of characters as a number (either hexadecimal or
          * decimal as appropriate).
          */
         if (value >= 0x80 && value <= 0x9f) {
-            /* If that number is in the range 128 to 159 (0x80 to 0x9F), then this
-             * is a parse error.*/
+            /*
+             * If that number is in the range 128 to 159 (0x80 to 0x9F), then
+             * this is a parse error.
+             */
             err("A numeric character reference expanded to the C1 controls range.");
-            /* In the following table, find the row with that
-             * number in the first column, and return a character token for the
-             * Unicode character given in the second column of that row.
+            /*
+             * In the following table, find the row with that number in the
+             * first column, and return a character token for the Unicode
+             * character given in the second column of that row.
              */
             char[] val = Entities.WINDOWS_1252[value - 0x80];
-            emitOrAppend(val);
+            emitOrAppend(val, inAttribute);
             return;
         } else if (value == 0) {
-            /* 
-             * Otherwise, if the number is not a valid Unicode character (e.g. if
-             * the number is higher than 1114111), or if the number is zero, then
-             * return a character token for the U+FFFD REPLACEMENT CHARACTER
-             * character instead.
+            /*
+             * Otherwise, if the number is not a valid Unicode character (e.g.
+             * if the number is higher than 1114111), or if the number is zero,
+             * then return a character token for the U+FFFD REPLACEMENT
+             * CHARACTER character instead.
              */
             err("Character reference expands to U+0000.");
-            emitOrAppend(REPLACEMENT_CHARACTER);
+            emitOrAppend(REPLACEMENT_CHARACTER, inAttribute);
             return;
+        } else if ((spacePolicy != XmlViolationPolicy.ALLOW) && (value == 0xB || value == 0xC)) {
+            if (spacePolicy == XmlViolationPolicy.ALTER_INFOSET) {
+                emitOrAppend(SPACE, inAttribute);                                                    
+            } else if (spacePolicy == XmlViolationPolicy.FATAL) {
+                fatal("A character reference expanded to a space character that is not legal XML 1.0 white space.");
+            }            
         } else if ((value & 0xF800) == 0xD800) {
             err("Character reference expands to a surrogate.");
-            emitOrAppend(REPLACEMENT_CHARACTER);
+            emitOrAppend(REPLACEMENT_CHARACTER, inAttribute);
             return;
         } else if (value <= 0xFFFF) {
-            /* Otherwise, return a character token for the Unicode character whose
-             * code point is that number.
+            /*
+             * Otherwise, return a character token for the Unicode character
+             * whose code point is that number.
              */
             char c = (char) value;
             // XXX additional XML WF check here
-            //            if (isForbidden(c)) {
-            //                fatal("Character reference expands to a forbidden character.");
-            //            }
+            // if (isForbidden(c)) {
+            // fatal("Character reference expands to a forbidden character.");
+            // }
             if (isPrivateUse(c)) {
                 warnAboutPrivateUseChar();
             }
             bmpChar[0] = c;
-            emitOrAppend(bmpChar);
+            emitOrAppend(bmpChar, inAttribute);
             return;
         } else if (value <= 0x10FFFF) {
             // XXX astral non-characters are not banned
@@ -2593,11 +2648,11 @@ public final class Tokenizer implements Locator {
             }
             astralChar[0] = (char) (LEAD_OFFSET + (value >> 10));
             astralChar[1] = (char) (0xDC00 + (value & 0x3FF));
-            emitOrAppend(astralChar);
+            emitOrAppend(astralChar, inAttribute);
             return;
         } else {
             err("Character reference outside the permissible Unicode range.");
-            emitOrAppend(REPLACEMENT_CHARACTER);
+            emitOrAppend(REPLACEMENT_CHARACTER, inAttribute);
             return;
         }
     }
@@ -2607,8 +2662,8 @@ public final class Tokenizer implements Locator {
      * @throws SAXException
      * @throws IOException
      */
-    private void emitOrAppend(char[] val) throws SAXException, IOException {
-        if (inMarkup) {
+    private void emitOrAppend(char[] val, boolean inAttribute) throws SAXException, IOException {
+        if (inAttribute) {
             appendLongStrBuf(val);
         } else {
             tokenHandler.characters(val, 0, val.length);
