@@ -491,6 +491,8 @@ public final class Tokenizer implements Locator {
 
     private String publicIdentifier;
 
+    private String systemIdentifier;
+
     private boolean currentIsVoid() {
         return Arrays.binarySearch(VOID_ELEMENTS, tagName) > -1;
     }
@@ -528,6 +530,11 @@ public final class Tokenizer implements Locator {
         try {
             dataState();
         } finally {
+            systemIdentifier = null;
+            publicIdentifier = null;
+            doctypeName = null;
+            tagName = null;
+            attributeName = null;
             tokenHandler.eof();
             reader.close();
         }
@@ -2087,6 +2094,9 @@ public final class Tokenizer implements Locator {
      * @throws SAXException
      */
     private void doctypeState() throws SAXException, IOException {
+        systemIdentifier = null;
+        publicIdentifier = null;
+        doctypeName = null;
         /*
          * Consume the next input character:
          */
@@ -2621,91 +2631,251 @@ public final class Tokenizer implements Locator {
         }
     }
 
-    private void beforeDoctypeSystemIdentifierState() {
-        // TODO Auto-generated method stub
-        /*
-         * Before DOCTYPE system identifier state Consume the next input
-         * character:
-         * 
-         * U+0009 CHARACTER TABULATION U+000A LINE FEED (LF) U+000B LINE
-         * TABULATION U+000C FORM FEED (FF) U+0020 SPACE Stay in the before
-         * DOCTYPE system identifier state.
-         * 
-         * U+0022 QUOTATION MARK (") Set the DOCTYPE token's system identifier
-         * to the empty string, then switch to the DOCTYPE system identifier
-         * (double-quoted) state.
-         * 
-         * U+0027 APOSTROPHE (') Set the DOCTYPE token's system identifier to
-         * the empty string, then switch to the DOCTYPE system identifier
-         * (single-quoted) state.
-         * 
-         * U+003E GREATER-THAN SIGN (>) Parse error. Set the DOCTYPE token's
-         * correctness flag to incorrect. Emit that DOCTYPE token. Switch to the
-         * data state.
-         * 
-         * EOF Parse error. Set the DOCTYPE token's correctness flag to
-         * incorrect. Emit that DOCTYPE token. Reconsume the EOF character in
-         * the data state.
-         * 
-         * Anything else Parse error. Switch to the bogus DOCTYPE state.
-         */
+    /**
+     * Before DOCTYPE system identifier state
+     * 
+     * @throws IOException
+     * @throws SAXException
+     */
+    private void beforeDoctypeSystemIdentifierState() throws SAXException,
+            IOException {
+        for (;;) {
+            /*
+             * Consume the next input character:
+             */
+            char c = read();
+            switch (c) {
+                case '\t':
+                case '\n':
+                case '\u000B':
+                case '\u000C':
+                case ' ':
+                    /*
+                     * U+0009 CHARACTER TABULATION U+000A LINE FEED (LF) U+000B
+                     * LINE TABULATION U+000C FORM FEED (FF) U+0020 SPACE Stay
+                     * in the before DOCTYPE system identifier state.
+                     */
+                    continue;
+                case '"':
+                    /*
+                     * U+0022 QUOTATION MARK (") Set the DOCTYPE token's system
+                     * identifier to the empty string,
+                     */
+                    clearLongStrBuf();
+                    /*
+                     * then switch to the DOCTYPE system identifier
+                     * (double-quoted) state.
+                     */
+                    doctypeSystemIdentifierDoubleQuotedState();
+                    return;
+                case '\'':
+                    /*
+                     * U+0027 APOSTROPHE (') Set the DOCTYPE token's system
+                     * identifier to the empty string,
+                     */
+                    clearLongStrBuf();
+                    /*
+                     * then switch to the DOCTYPE system identifier
+                     * (single-quoted) state.
+                     */
+                    doctypeSystemIdentifierSingleQuotedState();
+                    return;
+                case '>':
+                    /* U+003E GREATER-THAN SIGN (>) Parse error. */
+                    err("Expected a system identifier but the doctype ended.");
+                    /*
+                     * Set the DOCTYPE token's correctness flag to incorrect.
+                     * Emit that DOCTYPE token.
+                     */
+                    tokenHandler.doctype(doctypeName, null, null, true);
+                    /*
+                     * Switch to the data state.
+                     */
+                    return;
+                case '\u0000':
+                    /* EOF Parse error. */
+                    err("End of file inside a doctype.");
+                    /*
+                     * Set the DOCTYPE token's correctness flag to incorrect.
+                     * Emit that DOCTYPE token.
+                     */
+                    tokenHandler.doctype(doctypeName, null, null, true);
+                    /*
+                     * Reconsume the EOF character in the data state.
+                     */
+                    unread(c);
+                    return;
+                default:
+                    /* Anything else Parse error. */
+                    err("Bogus doctype.");
+                    /*
+                     * Switch to the bogus DOCTYPE state.
+                     */
+                    bogusCommentState();
+                    return;
+            }
+        }
     }
 
-    private void doctypeSystemIdentifierDoubleQuotedState() {
-        /*
-         * DOCTYPE system identifier (double-quoted) state Consume the next
-         * input character:
-         * 
-         * U+0022 QUOTATION MARK (") Switch to the after DOCTYPE system
-         * identifier state.
-         * 
-         * EOF Parse error. Set the DOCTYPE token's correctness flag to
-         * incorrect. Emit that DOCTYPE token. Reconsume the EOF character in
-         * the data state.
-         * 
-         * Anything else Append the current input character to the current
-         * DOCTYPE token's system identifier. Stay in the DOCTYPE system
-         * identifier (double-quoted) state.
-         */
+    /**
+     * DOCTYPE system identifier (double-quoted) state
+     * 
+     * @throws IOException
+     * @throws SAXException
+     */
+    private void doctypeSystemIdentifierDoubleQuotedState()
+            throws SAXException, IOException {
+        for (;;) {
+            /*
+             * Consume the next input character:
+             */
+            char c = read();
+            switch (c) {
+                case '"':
+                    /*
+                     * U+0022 QUOTATION MARK (") Switch to the after DOCTYPE
+                     * system identifier state.
+                     */
+                    systemIdentifier = longStrBufToString();
+                    afterDoctypeSystemIdentifierState();
+                    return;
+                case '\u0000':
+                    /* EOF Parse error. */
+                    err("End of file inside system identifier.");
+                    /*
+                     * Set the DOCTYPE token's correctness flag to incorrect.
+                     * Emit that DOCTYPE token.
+                     */
+                    tokenHandler.doctype(doctypeName, publicIdentifier,
+                            longStrBufToString(), true);
+                    /*
+                     * Reconsume the EOF character in the data state.
+                     */
+                    unread(c);
+                    return;
+                default:
+                    /*
+                     * Anything else Append the current input character to the
+                     * current DOCTYPE token's system identifier.
+                     */
+                    appendLongStrBuf(c);
+                    /*
+                     * Stay in the DOCTYPE system identifier (double-quoted)
+                     * state.
+                     */
+                    continue;
+            }
+        }
+    }
+    /**
+     * DOCTYPE system identifier (single-quoted) state
+     * 
+     * @throws IOException
+     * @throws SAXException
+     */
+    private void doctypeSystemIdentifierSingleQuotedState()
+            throws SAXException, IOException {
+        for (;;) {
+            /*
+             * Consume the next input character:
+             */
+            char c = read();
+            switch (c) {
+                case '\'':
+                    /*
+                     * U+0027 APOSTROPHE (') Switch to the after DOCTYPE
+                     * system identifier state.
+                     */
+                    systemIdentifier = longStrBufToString();
+                    afterDoctypeSystemIdentifierState();
+                    return;
+                case '\u0000':
+                    /* EOF Parse error. */
+                    err("End of file inside system identifier.");
+                    /*
+                     * Set the DOCTYPE token's correctness flag to incorrect.
+                     * Emit that DOCTYPE token.
+                     */
+                    tokenHandler.doctype(doctypeName, publicIdentifier,
+                            longStrBufToString(), true);
+                    /*
+                     * Reconsume the EOF character in the data state.
+                     */
+                    unread(c);
+                    return;
+                default:
+                    /*
+                     * Anything else Append the current input character to the
+                     * current DOCTYPE token's system identifier.
+                     */
+                    appendLongStrBuf(c);
+                    /*
+                     * Stay in the DOCTYPE system identifier (double-quoted)
+                     * state.
+                     */
+                    continue;
+            }
+        }
     }
 
-    private void doctypeSystemIdentifierSingleQuotedState() {
-        /*
-         * DOCTYPE system identifier (single-quoted) state Consume the next
-         * input character:
-         * 
-         * U+0027 APOSTROPHE (') Switch to the after DOCTYPE system identifier
-         * state.
-         * 
-         * EOF Parse error. Set the DOCTYPE token's correctness flag to
-         * incorrect. Emit that DOCTYPE token. Reconsume the EOF character in
-         * the data state.
-         * 
-         * Anything else Append the current input character to the current
-         * DOCTYPE token's system identifier. Stay in the DOCTYPE system
-         * identifier (single-quoted) state.
-         */
-    }
-
-    private void afterDoctypeSystemIdentifierState() {
-        /*
-         * After DOCTYPE system identifier state Consume the next input
-         * character:
-         * 
-         * U+0009 CHARACTER TABULATION U+000A LINE FEED (LF) U+000B LINE
-         * TABULATION U+000C FORM FEED (FF) U+0020 SPACE Stay in the after
-         * DOCTYPE system identifier state.
-         * 
-         * U+003E GREATER-THAN SIGN (>) Emit the current DOCTYPE token. Switch
-         * to the data state.
-         * 
-         * EOF Parse error. Set the DOCTYPE token's correctness flag to
-         * incorrect. Emit that DOCTYPE token. Reconsume the EOF character in
-         * the data state.
-         * 
-         * Anything else Parse error. Switch to the bogus DOCTYPE state.
-         * 
-         */
+/**
+ * After DOCTYPE system identifier state 
+ * @throws IOException 
+ * @throws SAXException 
+ */
+    private void afterDoctypeSystemIdentifierState() throws SAXException,
+            IOException {
+        for (;;) {
+            /*
+             * Consume the next input character:
+             */
+            char c = read();
+            switch (c) {
+                case '\t':
+                case '\n':
+                case '\u000B':
+                case '\u000C':
+                case ' ':
+                    /*
+                     * U+0009 CHARACTER TABULATION U+000A LINE FEED (LF) U+000B
+                     * LINE TABULATION U+000C FORM FEED (FF) U+0020 SPACE Stay
+                     * in the after DOCTYPE system identifier state.
+                     */
+                    continue;
+                case '>':
+                    /*
+                     * U+003E GREATER-THAN SIGN (>) Emit the current DOCTYPE
+                     * token.
+                     */
+                    tokenHandler.doctype(doctypeName, publicIdentifier,
+                            systemIdentifier, false);
+                    /*
+                     * Switch to the data state.
+                     */
+                    return;
+                case '\u0000':
+                    /* EOF Parse error. */
+                    err("End of file inside doctype.");
+                    /*
+                     * Set the DOCTYPE token's correctness flag to incorrect.
+                     * Emit that DOCTYPE token.
+                     */
+                    tokenHandler.doctype(doctypeName, publicIdentifier,
+                            systemIdentifier, true);
+                    /*
+                     * Reconsume the EOF character in the data state.
+                     */
+                    unread(c);
+                    return;
+                default:
+                    /* Anything else Parse error. */
+                    err("Bogus doctype.");
+                    /* Switch to the bogus DOCTYPE state.
+                     */
+                    bogusDoctypeState();
+                    return;
+            }
+        }
     }
 
     /**
@@ -2726,7 +2896,7 @@ public final class Tokenizer implements Locator {
                      * U+003E GREATER-THAN SIGN (>) Set the DOCTYPE token's
                      * correctness flag to incorrect. Emit that DOCTYPE token.
                      */
-                    tokenHandler.doctype(strBufToString(), null, null, true);
+                    tokenHandler.doctype(doctypeName, publicIdentifier, systemIdentifier, true);
                     /*
                      * Switch to the data state.
                      */
@@ -2738,7 +2908,7 @@ public final class Tokenizer implements Locator {
                      * Set the DOCTYPE token's correctness flag to incorrect.
                      * Emit that DOCTYPE token.
                      */
-                    tokenHandler.doctype(strBufToString(), null, null, true);
+                    tokenHandler.doctype(doctypeName, publicIdentifier, systemIdentifier, true);
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -2836,6 +3006,7 @@ public final class Tokenizer implements Locator {
                     appendStrBuf(c);
                 }
             }
+            // TODO warn about apos (IE) and TRADE (Opera)
             if (candidate == -1) {
                 /* If no match can be made, then this is a parse error. */
                 err("Text after \u201C&\u201D did not match an entity name.");
