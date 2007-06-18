@@ -2431,12 +2431,13 @@ public final class Tokenizer implements Locator {
             }
         }
     }
-    
-/**
- * DOCTYPE public identifier (double-quoted) state
- * @throws IOException 
- * @throws SAXException 
- */
+
+    /**
+     * DOCTYPE public identifier (double-quoted) state
+     * 
+     * @throws IOException
+     * @throws SAXException
+     */
     private void doctypePublicIdentifierDoubleQuotedState()
             throws SAXException, IOException {
         for (;;) {
@@ -2473,8 +2474,9 @@ public final class Tokenizer implements Locator {
                      * current DOCTYPE token's public identifier.
                      */
                     appendLongStrBuf(c);
-                    /* Stay in the DOCTYPE public
-                     * identifier (double-quoted) state.
+                    /*
+                     * Stay in the DOCTYPE public identifier (double-quoted)
+                     * state.
                      */
                     continue;
             }
@@ -2483,80 +2485,140 @@ public final class Tokenizer implements Locator {
 
     /**
      * DOCTYPE public identifier (single-quoted) state
-     * @throws IOException 
-     * @throws SAXException 
+     * 
+     * @throws IOException
+     * @throws SAXException
      */
-        private void doctypePublicIdentifierSingleQuotedState()
-                throws SAXException, IOException {
-            for (;;) {
-                /*
-                 * Consume the next input character:
-                 */
-                char c = read();
-                switch (c) {
-                    case '\'':
-                        /*
-                         * U+0027 APOSTROPHE (') Switch to the after DOCTYPE
-                         * public identifier state.
-                         */
-                        publicIdentifier = longStrBufToString();
-                        afterDoctypePublicIdentifierState();
-                        return;
-                    case '\u0000':
-                        /* EOF Parse error. */
-                        err("End of file inside public identifier.");
-                        /*
-                         * Set the DOCTYPE token's correctness flag to incorrect.
-                         * Emit that DOCTYPE token.
-                         */
-                        tokenHandler.doctype(doctypeName, longStrBufToString(),
-                                null, true);
-                        /*
-                         * Reconsume the EOF character in the data state.
-                         */
-                        unread(c);
-                        return;
-                    default:
-                        /*
-                         * Anything else Append the current input character to the
-                         * current DOCTYPE token's public identifier.
-                         */
-                        appendLongStrBuf(c);
-                        /* Stay in the DOCTYPE public
-                         * identifier (single-quoted) state.
-                         */
-                        continue;
-                }
+    private void doctypePublicIdentifierSingleQuotedState()
+            throws SAXException, IOException {
+        for (;;) {
+            /*
+             * Consume the next input character:
+             */
+            char c = read();
+            switch (c) {
+                case '\'':
+                    /*
+                     * U+0027 APOSTROPHE (') Switch to the after DOCTYPE public
+                     * identifier state.
+                     */
+                    publicIdentifier = longStrBufToString();
+                    afterDoctypePublicIdentifierState();
+                    return;
+                case '\u0000':
+                    /* EOF Parse error. */
+                    err("End of file inside public identifier.");
+                    /*
+                     * Set the DOCTYPE token's correctness flag to incorrect.
+                     * Emit that DOCTYPE token.
+                     */
+                    tokenHandler.doctype(doctypeName, longStrBufToString(),
+                            null, true);
+                    /*
+                     * Reconsume the EOF character in the data state.
+                     */
+                    unread(c);
+                    return;
+                default:
+                    /*
+                     * Anything else Append the current input character to the
+                     * current DOCTYPE token's public identifier.
+                     */
+                    appendLongStrBuf(c);
+                    /*
+                     * Stay in the DOCTYPE public identifier (single-quoted)
+                     * state.
+                     */
+                    continue;
             }
         }
+    }
 
-    private void afterDoctypePublicIdentifierState() {
-        /*
-         * After DOCTYPE public identifier state Consume the next input
-         * character:
-         * 
-         * U+0009 CHARACTER TABULATION U+000A LINE FEED (LF) U+000B LINE
-         * TABULATION U+000C FORM FEED (FF) U+0020 SPACE Stay in the after
-         * DOCTYPE public identifier state.
-         * 
-         * U+0022 QUOTATION MARK (") Set the DOCTYPE token's system identifier
-         * to the empty string, then switch to the DOCTYPE system identifier
-         * (double-quoted) state.
-         * 
-         * U+0027 APOSTROPHE (') Set the DOCTYPE token's system identifier to
-         * the empty string, then switch to the DOCTYPE system identifier
-         * (single-quoted) state.
-         * 
-         * U+003E GREATER-THAN SIGN (>) Emit the current DOCTYPE token. Switch
-         * to the data state.
-         * 
-         * EOF Parse error. Set the DOCTYPE token's correctness flag to
-         * incorrect. Emit that DOCTYPE token. Reconsume the EOF character in
-         * the data state.
-         * 
-         * Anything else Parse error. Switch to the bogus DOCTYPE state.
-         * 
-         */
+    /**
+     * After DOCTYPE public identifier state
+     * 
+     * @throws IOException
+     * @throws SAXException
+     * 
+     */
+    private void afterDoctypePublicIdentifierState() throws SAXException,
+            IOException {
+        for (;;) {
+            /*
+             * Consume the next input character:
+             */
+            char c = read();
+            switch (c) {
+                case '\t':
+                case '\n':
+                case '\u000B':
+                case '\u000C':
+                case ' ':
+                    /*
+                     * U+0009 CHARACTER TABULATION U+000A LINE FEED (LF) U+000B
+                     * LINE TABULATION U+000C FORM FEED (FF) U+0020 SPACE Stay
+                     * in the after DOCTYPE public identifier state.
+                     */
+                    continue;
+                case '"':
+                    /*
+                     * U+0022 QUOTATION MARK (") Set the DOCTYPE token's system
+                     * identifier to the empty string,
+                     */
+                    clearLongStrBuf();
+                    /*
+                     * then switch to the DOCTYPE system identifier
+                     * (double-quoted) state.
+                     */
+                    doctypeSystemIdentifierDoubleQuotedState();
+                    return;
+                case '\'':
+                    /*
+                     * U+0027 APOSTROPHE (') Set the DOCTYPE token's system
+                     * identifier to the empty string,
+                     */
+                    clearLongStrBuf();
+                    /*
+                     * then switch to the DOCTYPE system identifier
+                     * (single-quoted) state.
+                     */
+                    doctypeSystemIdentifierSingleQuotedState();
+                    return;
+                case '>':
+                    /*
+                     * U+003E GREATER-THAN SIGN (>) Emit the current DOCTYPE
+                     * token.
+                     */
+                    tokenHandler.doctype(doctypeName, publicIdentifier, null,
+                            false);
+                    /*
+                     * Switch to the data state.
+                     */
+                    return;
+                case '\u0000':
+                    /* EOF Parse error. */
+                    err("End of file inside doctype.");
+                    /*
+                     * Set the DOCTYPE token's correctness flag to incorrect.
+                     * Emit that DOCTYPE token.
+                     */
+                    tokenHandler.doctype(doctypeName, publicIdentifier, null,
+                            true);
+                    /*
+                     * Reconsume the EOF character in the data state.
+                     */
+                    unread(c);
+                    return;
+                default:
+                    /* Anything else Parse error. */
+                    err("Bogus doctype.");
+                    /*
+                     * Switch to the bogus DOCTYPE state.
+                     */
+                    bogusDoctypeState();
+                    return;
+            }
+        }
     }
 
     private void beforeDoctypeSystemIdentifierState() {
