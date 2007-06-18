@@ -1,4 +1,4 @@
-package fi.iki.hsivonen.htmlparser;
+package nu.validator.htmlparser;
 
 public enum ContentModelFlag {
     PCDATA, RCDATA, CDATA, PLAINTEXT
