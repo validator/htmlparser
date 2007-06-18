@@ -462,8 +462,14 @@ public final class Tokenizer implements Locator {
 
     private static final char[] OCTYPE = "octype".toCharArray();
 
+    private static final char[] UBLIC = "ublic".toCharArray();
+
+    private static final char[] YSTEM = "ystem".toCharArray();
+    
     private ContentModelFlag contentModelFlag = ContentModelFlag.PCDATA;
 
+    private boolean escapeFlag = false;
+    
     private String contentModelElement = "";
 
     private boolean endTag;
@@ -502,6 +508,8 @@ public final class Tokenizer implements Locator {
         }
         emitComments = tokenHandler.wantsComments();
         // TODO reset stuff
+        contentModelFlag = ContentModelFlag.PCDATA;
+        escapeFlag = false;
         inContent = true;
         pos = -1;
         cstart = -1;
@@ -541,10 +549,13 @@ public final class Tokenizer implements Locator {
                 entityDataState();
                 continue;
             } else if (c == '<'
-                    && contentModelFlag != ContentModelFlag.PLAINTEXT) {
+                    && contentModelFlag != ContentModelFlag.PLAINTEXT
+                    && !escapeFlag) {
                 /*
                  * U+003C LESS-THAN SIGN (<) When the content model flag is set
-                 * to a state other than the PLAINTEXT state: switch to the tag
+                 * to the PCDATA state: switch to the tag open state. When the
+                 * content model flag is set to either the RCDATA state or the
+                 * CDATA state and the escape flag is false: switch to the tag
                  * open state. Otherwise: treat it as per the "anything else"
                  * entry below.
                  */
@@ -561,6 +572,37 @@ public final class Tokenizer implements Locator {
                 flushChars();
                 return; // eof() called in parent finally block
             } else {
+                if (c == '-'
+                        && !escapeFlag
+                        && (contentModelFlag == ContentModelFlag.RCDATA || contentModelFlag == ContentModelFlag.CDATA) && lastFourLtExclHyphHyph()) {
+                    /*
+                     * U+002D HYPHEN-MINUS (-) If the content model flag is set to
+                     * either the RCDATA state or the CDATA state, and the escape
+                     * flag is false, and there are at least three characters before
+                     * this one in the input stream, and the last four characters in
+                     * the input stream, including this one, are U+003C LESS-THAN
+                     * SIGN, U+0021 EXCLAMATION MARK, U+002D HYPHEN-MINUS, and
+                     * U+002D HYPHEN-MINUS ("<!--"), then set the escape flag to
+                     * true.
+                     * 
+                     * In any case, emit the input character as a character token.
+                     * Stay in the data state.
+                     */
+                    escapeFlag = true;
+                } else if (c == '>' && escapeFlag && lastThreeHyphHyphGt()) {
+                    /*
+                     * U+003E GREATER-THAN SIGN (>) If the content model flag is
+                     * set to either the RCDATA state or the CDATA state, and
+                     * the escape flag is true, and the last three characters in
+                     * the input stream including this one are U+002D
+                     * HYPHEN-MINUS, U+002D HYPHEN-MINUS, U+003E GREATER-THAN
+                     * SIGN ("-->"), set the escape flag to false.
+                     * 
+                     * In any case, emit the input character as a character
+                     * token. Stay in the data state.
+                     */
+                    escapeFlag = false;
+                }
                 /*
                  * Anything else Emit the input character as a character token.
                  */
@@ -574,6 +616,16 @@ public final class Tokenizer implements Locator {
                 continue;
             }
         }
+    }
+
+    private boolean lastThreeHyphHyphGt() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    private boolean lastFourLtExclHyphHyph() {
+        // TODO Auto-generated method stub
+        return false;
     }
 
     /**
@@ -633,9 +685,9 @@ public final class Tokenizer implements Locator {
                  */
                 tokenHandler.characters(LT_GT, 0, 1);
                 /*
-                 * and reconsume the current input character in the data state.
+                 * and switch to the data state to process the next input
+                 * character.
                  */
-                unread(c);
                 return;
             }
         } else {
@@ -805,18 +857,6 @@ public final class Tokenizer implements Locator {
                      * Switch to the data state.
                      */
                     return;
-                case '<':
-                    /*
-                     * U+003C LESS-THAN SIGN (<) Parse error.
-                     */
-                    err("Expected \u201C>\u201D but saw \u201C<\u201D instead.");
-                    /*
-                     * Emit the current tag token.
-                     */
-                    emitCurrentTagToken();
-                    /* Reconsume the character in the data state. */
-                    unread(c);
-                    return;
                 case '\u0000':
                     /*
                      * EOF Parse error.
@@ -847,7 +887,6 @@ public final class Tokenizer implements Locator {
                             + "\u201D contained the string \u201C</\u201D, but it was not the start of the end tag.");
                     tokenHandler.characters(LT_SOLIDUS, 0, 2);
                     emitStrBuf();
-                    unread(c);
                     return;
             }
         } else {
@@ -959,9 +998,9 @@ public final class Tokenizer implements Locator {
                      * Switch to the data state.
                      */
                     return;
-                case '<':
+                case '\u0000':
                     /*
-                     * U+003C LESS-THAN SIGN (<) EOF Parse error.
+                     * EOF Parse error.
                      */
                     err("End of file seen when looking for tag name");
                     /*
@@ -970,7 +1009,7 @@ public final class Tokenizer implements Locator {
                     tagName = strBufToString();
                     emitCurrentTagToken();
                     /*
-                     * Reconsume the character in the data state.
+                     * Reconsume the EOF character in the data state.
                      */
                     unread(c);
                     return;
@@ -986,6 +1025,9 @@ public final class Tokenizer implements Locator {
                     tagName = strBufToString();
                     beforeAttributeNameState();
                     return;
+                case '<':
+                    warn("\u201C<\u201D in tag name. This does not end the tag.");
+                    // fall through
                 default:
                     if (c >= 'A' && c <= 'Z') {
                         /*
@@ -1075,18 +1117,6 @@ public final class Tokenizer implements Locator {
                      * Stay in the before attribute name state.
                      */
                     continue;
-                case '<':
-                    /* U+003C LESS-THAN SIGN (<) Parse error. */
-                    err("Saw \u201C<\u201C without the previous tag ending with \u201C>\u201C.");
-                    /*
-                     * Emit the current tag token.
-                     */
-                    emitCurrentTagToken();
-                    /*
-                     * Reconsume the character in the data state.
-                     */
-                    unread(c);
-                    return false;
                 case '\u0000':
                     /* EOF Parse error. */
                     err("Saw end of file without the previous tag ending with \u201C>\u201C.");
@@ -1095,10 +1125,13 @@ public final class Tokenizer implements Locator {
                      */
                     emitCurrentTagToken();
                     /*
-                     * Reconsume the character in the data state.
+                     * Reconsume the EOF character in the data state.
                      */
                     unread(c);
                     return false;
+                case '<':
+                    warn("\u201C<\u201D in attribute name. This does not end the tag.");
+                    // fall through
                 default:
                     /*
                      * Anything else Start a new attribute in the current tag
@@ -1225,20 +1258,23 @@ public final class Tokenizer implements Locator {
                     /* Switch to the before attribute name state. */
                     attributeNameComplete();
                     return true;
-                case '<':
+                case '\u0000':
                     /*
-                     * U+003C LESS-THAN SIGN (<) EOF Parse error.
+                     * EOF Parse error.
                      */
-                    err("Saw \u201C<\u201C without the previous tag ending with \u201C>\u201C.");
+                    err("End of file occurred in an attribute name.");
                     /*
                      * Emit the current tag token.
                      */
                     attributeNameComplete();
                     addAttributeWithoutValue();
                     emitCurrentTagToken();
-                    /* Reconsume the character in the data state. */
+                    /* Reconsume the EOF character in the data state. */
                     unread(c);
                     return false;
+                case '<':
+                    warn("\u201C<\u201D in attribute name. This does not end the tag.");
+                    // fall through                    
                 default:
                     if (c >= 'A' && c <= 'Z') {
                         /*
@@ -1639,20 +1675,6 @@ public final class Tokenizer implements Locator {
                      */
                     inContent = false;
                     return false;
-                case '<':
-                    /* U+003C LESS-THAN SIGN (<) Parse error. */
-                    err("Saw \u201C<\u201C without the previous tag ending with \u201C>\u201C.");
-                    /*
-                     * Emit the current tag token.
-                     */
-                    addAttributeWithValue();
-                    emitCurrentTagToken();
-                    /*
-                     * Reconsume the character in the data state.
-                     */
-                    unread(c);
-                    inContent = false;
-                    return false;
                 case '\u0000':
                     /* EOF Parse error. */
                     err("Saw end of file without the previous tag ending with \u201C>\u201C.");
@@ -1667,6 +1689,9 @@ public final class Tokenizer implements Locator {
                     unread(c);
                     inContent = false;
                     return false;
+                case '<':
+                    warn("\u201C<\u201D in an unquoted attribute value. This does not end the tag.");
+                    // fall through                    
                 default:
                     /*
                      * Anything else Append the current input character to the
@@ -1781,7 +1806,7 @@ public final class Tokenizer implements Locator {
          * characters, consume those two characters, create a comment token
          * whose data is the empty string, and switch to the comment state.
          * 
-         * Otherwise if the next seven chacacters are a case-insensitive match
+         * Otherwise if the next seven characters are a case-insensitive match
          * for the word "DOCTYPE", then consume those characters and switch to
          * the DOCTYPE state.
          * 
@@ -2105,10 +2130,10 @@ public final class Tokenizer implements Locator {
                      */
                     err("Nameless doctype.");
                     /*
-                     * Emit a DOCTYPE token whose name is the empty string and
-                     * that is marked as being in error.
+                     * Create a new DOCTYPE token. Set its correctness flag to
+                     * incorrect. Emit the token.
                      */
-                    tokenHandler.doctype("", true);
+                    tokenHandler.doctype("", null, null, true);
                     /*
                      * Switch to the data state.
                      */
@@ -2117,10 +2142,10 @@ public final class Tokenizer implements Locator {
                     /* EOF Parse error. */
                     err("End of file inside doctype.");
                     /*
-                     * Emit a DOCTYPE token whose name is the empty string and
-                     * that is marked as being in error.
+                     * Create a new DOCTYPE token. Set its correctness flag to
+                     * incorrect. Emit the token.
                      */
-                    tokenHandler.doctype("", true);
+                    tokenHandler.doctype("", null, null, true);
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -2129,24 +2154,11 @@ public final class Tokenizer implements Locator {
                 default:
                     /* Anything else Create a new DOCTYPE token. */
                     clearStrBuf();
-                    if (c >= 'a' && c <= 'z') {
-                        /*
-                         * U+0061 LATIN SMALL LETTER A through to U+007A LATIN
-                         * SMALL LETTER Z Create a new DOCTYPE token. Set the
-                         * token's name name to the uppercase version of the
-                         * current input character (subtract 0x0020 from the
-                         * character's code point),
-                         */
-                        appendStrBuf((char) (c - 0x20));
-                    } else {
                         /*
                          * Set the token's name name to the current input
-                         * character,
+                         * character.
                          */
                         appendStrBuf(c);
-                    }
-                    /* and mark it as being in error. */
-                    // Dealing with this when the token is complete.
                     /*
                      * Switch to the DOCTYPE name state.
                      */
@@ -2202,22 +2214,11 @@ public final class Tokenizer implements Locator {
                     unread(c);
                     return;
                 default:
-                    if (c >= 'a' && c <= 'z') {
-                        /*
-                         * U+0061 LATIN SMALL LETTER A through to U+007A LATIN
-                         * SMALL LETTER Z Append the uppercase version of the
-                         * current input character (subtract 0x0020 from the
-                         * character's code point) to the current DOCTYPE
-                         * token's name.
-                         */
-                        appendStrBuf((char) (c - 0x20));
-                    } else {
                         /*
                          * Anything else Append the current input character to
                          * the current DOCTYPE token's name.
                          */
                         appendStrBuf(c);
-                    }
                     /*
                      * Stay in the DOCTYPE name state.
                      */
@@ -2227,17 +2228,8 @@ public final class Tokenizer implements Locator {
     }
 
     private void emitCurrentDoctypeToken() throws SAXException {
-        /*
-         * Then, if the name of the DOCTYPE token is exactly the four letters
-         * "HTML", then mark the token as being correct. Otherwise, mark it as
-         * being in error.
-         * 
-         * Because lowercase letters in the name are uppercased by the algorithm
-         * above, the "HTML" letters are actually case-insensitive relative to
-         * the markup.
-         */
         String name = strBufToString();
-        tokenHandler.doctype(name, !"HTML".equals(name));
+        tokenHandler.doctype(name, null, null, !"HTML".equals(name));
     }
 
     /**
@@ -2284,16 +2276,55 @@ public final class Tokenizer implements Locator {
                      */
                     unread(c);
                     return;
-                default:
-                    /* Anything else Parse error. */
-                    err("Bogus doctype.");
+                case 'p':
+                case 'P':
                     /*
-                     * Mark the DOCTYPE token as being in error, if it is not
-                     * already.
+                     * If the next six characters are a case-insensitive match
+                     * for the word "PUBLIC", then consume those characters and
+                     * switch to the before DOCTYPE public identifier state.
                      */
-                    // Will deal with this in the bogus doctype state.
+                    for (int i = 0; i < UBLIC.length; i++) {
+                        c = read();
+                        char folded = c;
+                        if (c >= 'A' && c <= 'Z') {
+                            folded += 0x20;
+                        }
+                        if (folded != UBLIC[i]) {
+                            err("Bogus doctype.");
+                            unread(c);
+                            bogusDoctypeState();
+                            return;
+                        }
+                    }
+                    beforeDoctypePublicIdentifierState();
+                    return;
+                case 's':
+                case 'S':
                     /*
-                     * Switch to the bogus DOCTYPE state.
+                     * Otherwise, if the next six characters are a
+                     * case-insensitive match for the word "SYSTEM", then
+                     * consume those characters and switch to the before DOCTYPE
+                     * system identifier state.
+                     */
+                    for (int i = 0; i < YSTEM.length; i++) {
+                        c = read();
+                        char folded = c;
+                        if (c >= 'A' && c <= 'Z') {
+                            folded += 0x20;
+                        }
+                        if (folded != YSTEM[i]) {
+                            err("Bogus doctype.");
+                            unread(c);
+                            bogusDoctypeState();
+                            return;
+                        }
+                    }
+                    beforeDoctypeSystemIdentifierState();
+                    return;
+                default:
+                    /*
+                     * Otherwise, this is the parse error. Switch to the bogus
+                     * DOCTYPE state.
                      */
                     bogusDoctypeState();
                     return;
@@ -2301,6 +2332,129 @@ public final class Tokenizer implements Locator {
         }
     }
 
+    private void beforeDoctypePublicIdentifierState() {
+        // TODO Auto-generated method stub
+/*
+ *    Before DOCTYPE public identifier state
+          Consume the next input character:
+
+        U+0009 CHARACTER TABULATION
+        U+000A LINE FEED (LF)
+        U+000B LINE TABULATION
+        U+000C FORM FEED (FF)
+        U+0020 SPACE
+                Stay in the before DOCTYPE public identifier state.
+
+        U+0022 QUOTATION MARK (")
+                Set the DOCTYPE token's public identifier to the empty
+                string, then switch to the DOCTYPE public identifier
+                (double-quoted) state.
+
+        U+0027 APOSTROPHE (')
+                Set the DOCTYPE token's public identifier to the empty
+                string, then switch to the DOCTYPE public identifier
+                (single-quoted) state.
+
+        U+003E GREATER-THAN SIGN (>)
+                Parse error. Set the DOCTYPE token's correctness flag to
+                incorrect. Emit that DOCTYPE token. Switch to the data
+                state.
+
+        EOF
+                Parse error. Set the DOCTYPE token's correctness flag to
+                incorrect. Emit that DOCTYPE token. Reconsume the EOF
+                character in the data state.
+
+        Anything else
+                Parse error. Switch to the bogus DOCTYPE state.
+
+ */        
+    }
+
+    private void doctypePublicIdentifierDoubleQuotedState() {
+        /*
+         *   DOCTYPE public identifier (double-quoted) state
+          Consume the next input character:
+
+        U+0022 QUOTATION MARK (")
+                Switch to the after DOCTYPE public identifier state.
+
+        EOF
+                Parse error. Set the DOCTYPE token's correctness flag to
+                incorrect. Emit that DOCTYPE token. Reconsume the EOF
+                character in the data state.
+
+        Anything else
+                Append the current input character to the current DOCTYPE
+                token's public identifier. Stay in the DOCTYPE public
+                identifier (double-quoted) state.
+
+         */
+    }
+
+    private void doctypePublicIdentifierSingleQuotedState() {
+        /*
+         *   DOCTYPE public identifier (single-quoted) state
+          Consume the next input character:
+
+        U+0027 APOSTROPHE (')
+                Switch to the after DOCTYPE public identifier state.
+
+        EOF
+                Parse error. Set the DOCTYPE token's correctness flag to
+                incorrect. Emit that DOCTYPE token. Reconsume the EOF
+                character in the data state.
+
+        Anything else
+                Append the current input character to the current DOCTYPE
+                token's public identifier. Stay in the DOCTYPE public
+                identifier (single-quoted) state.
+         */
+    }
+    
+    private void afterDoctypePublicIdentifierState() {
+        /*
+         *  After DOCTYPE public identifier state
+          Consume the next input character:
+
+        U+0009 CHARACTER TABULATION
+        U+000A LINE FEED (LF)
+        U+000B LINE TABULATION
+        U+000C FORM FEED (FF)
+        U+0020 SPACE
+                Stay in the after DOCTYPE public identifier state.
+
+        U+0022 QUOTATION MARK (")
+                Set the DOCTYPE token's system identifier to the empty
+                string, then switch to the DOCTYPE system identifier
+                (double-quoted) state.
+
+        U+0027 APOSTROPHE (')
+                Set the DOCTYPE token's system identifier to the empty
+                string, then switch to the DOCTYPE system identifier
+                (single-quoted) state.
+
+        U+003E GREATER-THAN SIGN (>)
+                Emit the current DOCTYPE token. Switch to the data state.
+
+        EOF
+                Parse error. Set the DOCTYPE token's correctness flag to
+                incorrect. Emit that DOCTYPE token. Reconsume the EOF
+                character in the data state.
+
+        Anything else
+                Parse error. Switch to the bogus DOCTYPE state.
+
+         */
+    }
+
+    private void beforeDoctypeSystemIdentifierState() {
+        // TODO Auto-generated method stub
+        
+    }
+
+    
+    
     /**
      * Bogus DOCTYPE state
      * 
@@ -2319,14 +2473,14 @@ public final class Tokenizer implements Locator {
                      * U+003E GREATER-THAN SIGN (>) Emit the current DOCTYPE
                      * token.
                      */
-                    tokenHandler.doctype(strBufToString(), true);
+                    tokenHandler.doctype(strBufToString(), null, null, true);
                     /*
                      * Switch to the data state.
                      */
                     return;
                 case '\u0000':
                     /* EOF Parse error. Emit the current DOCTYPE token. */
-                    tokenHandler.doctype(strBufToString(), true);
+                    tokenHandler.doctype(strBufToString(), null, null, true);
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -2646,7 +2800,6 @@ public final class Tokenizer implements Locator {
             emitOrAppend(bmpChar, inAttribute);
             return;
         } else if (value <= 0x10FFFF) {
-            // XXX astral non-characters are not banned
             if (isNonCharacter(value)) {
                 warn("Character reference expands to an astral non-character.");
             }

@@ -55,7 +55,7 @@ public class TokenPrinter implements TokenHandler {
         }
     }
 
-    public void doctype(String name, boolean inError) throws SAXException {
+    public void doctype(String name, String publicIdentifier, String systemIdentifier, boolean inError) throws SAXException {
         try {
             writer.write('D');
             writer.write(name);
