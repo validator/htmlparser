@@ -54,7 +54,7 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
         array.getValue().add(token);
     }
 
-    public void doctype(String name, boolean inError) throws SAXException {
+    public void doctype(String name, String publicIdentifier, String systemIdentifier, boolean inError) throws SAXException {
         flushCharacters();
         JSONArray token = new JSONArray();
         token.getValue().add(DOCTYPE);

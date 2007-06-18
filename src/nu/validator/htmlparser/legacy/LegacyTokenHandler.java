@@ -22,7 +22,7 @@ public class LegacyTokenHandler implements TokenHandler {
 
     }
 
-    public void doctype(String name, boolean inError) throws SAXException {
+    public void doctype(String name, String publicIdentifier, String systemIdentifier, boolean inError) throws SAXException {
         // TODO Auto-generated method stub
 
     }
