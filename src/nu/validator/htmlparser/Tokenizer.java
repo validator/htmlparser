@@ -34,7 +34,6 @@ package nu.validator.htmlparser;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
-import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.IllegalCharsetNameException;
@@ -61,10 +60,6 @@ import fi.iki.hsivonen.xml.EmptyAttributes;
  */
 public final class Tokenizer implements Locator {
 
-    private enum ContentModelFlag {
-        PCDATA, RCDATA, CDATA, PLAINTEXT
-    }
-
     private static final int LEAD_OFFSET = 0xD800 - (0x10000 >> 10);
 
     private static final int SURROGATE_OFFSET = 0x10000 - (0xD800 << 10) - 0xDC00;
@@ -78,10 +73,6 @@ public final class Tokenizer implements Locator {
     private static final char[] SPACE = { ' ' };
 
     private static final int BUFFER_GROW_BY = 1024;
-
-    private String publicId;
-
-    private String systemId;
 
     private ErrorHandler errorHandler;
 
@@ -100,6 +91,10 @@ public final class Tokenizer implements Locator {
     private int line;
 
     private int col;
+
+    private String publicId;
+
+    private String systemId;
 
     private char prev;
 
@@ -1657,7 +1652,6 @@ public final class Tokenizer implements Locator {
      */
     private boolean attributeValueUnquotedState() throws SAXException,
             IOException {
-        // XXX HTML 4 mode requires more errors here
         inContent = true;
         for (;;) {
             /*
