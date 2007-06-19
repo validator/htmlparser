@@ -6,10 +6,42 @@ import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.ext.LexicalHandler;
 
-public class TreeParser implements Locator {
-    private ContentHandler contentHandler;
-    private LexicalHandler lexicalHandler;
-    private Locator locator;
+public final class TreeParser implements Locator {
+    private final ContentHandler contentHandler;
+    private final LexicalHandler lexicalHandler;
+    private Locator locatorDelegate;
+    
+    /**
+     * @param contentHandler
+     * @param lexicalHandler
+     */
+    public TreeParser(final ContentHandler contentHandler, final LexicalHandler lexicalHandler) {
+        this.contentHandler = contentHandler;
+        this.lexicalHandler = lexicalHandler;
+    }
+
+    public void parse(Node node) throws SAXException {
+        Node current = node;
+        Node next;
+        for (;;) {
+            node.visit(this);
+            if ((next = current.getFirstChild()) != null) {
+                current = next;
+                continue;
+            }
+            for (;;) {
+                node.revisit(this);
+                if ((next = current.getNextSibling()) != null) {
+                    current = next;
+                    break;
+                }
+                current = current.getParentNode();
+                if (current == node) {
+                    return;
+                }
+            }
+        }
+    }
     
     /**
      * @param ch
@@ -18,14 +50,16 @@ public class TreeParser implements Locator {
      * @throws SAXException
      * @see org.xml.sax.ContentHandler#characters(char[], int, int)
      */
-    public void characters(char[] ch, int start, int length, Locator locator) throws SAXException {
+    void characters(char[] ch, int start, int length, Locator locator) throws SAXException {
+        this.locatorDelegate = locator;
         contentHandler.characters(ch, start, length);
     }
     /**
      * @throws SAXException
      * @see org.xml.sax.ContentHandler#endDocument()
      */
-    public void endDocument(Locator locator) throws SAXException {
+    void endDocument(Locator locator) throws SAXException {
+        this.locatorDelegate = locator;
         contentHandler.endDocument();
     }
     /**
@@ -35,7 +69,8 @@ public class TreeParser implements Locator {
      * @throws SAXException
      * @see org.xml.sax.ContentHandler#endElement(java.lang.String, java.lang.String, java.lang.String)
      */
-    public void endElement(String uri, String localName, String qName, Locator locator) throws SAXException {
+    void endElement(String uri, String localName, String qName, Locator locator) throws SAXException {
+        this.locatorDelegate = locator;
         contentHandler.endElement(uri, localName, qName);
     }
     /**
@@ -43,7 +78,8 @@ public class TreeParser implements Locator {
      * @throws SAXException
      * @see org.xml.sax.ContentHandler#endPrefixMapping(java.lang.String)
      */
-    public void endPrefixMapping(String prefix, Locator locator) throws SAXException {
+    void endPrefixMapping(String prefix, Locator locator) throws SAXException {
+        this.locatorDelegate = locator;
         contentHandler.endPrefixMapping(prefix);
     }
     /**
@@ -53,7 +89,8 @@ public class TreeParser implements Locator {
      * @throws SAXException
      * @see org.xml.sax.ContentHandler#ignorableWhitespace(char[], int, int)
      */
-    public void ignorableWhitespace(char[] ch, int start, int length, Locator locator) throws SAXException {
+    void ignorableWhitespace(char[] ch, int start, int length, Locator locator) throws SAXException {
+        this.locatorDelegate = locator;
         contentHandler.ignorableWhitespace(ch, start, length);
     }
     /**
@@ -62,29 +99,25 @@ public class TreeParser implements Locator {
      * @throws SAXException
      * @see org.xml.sax.ContentHandler#processingInstruction(java.lang.String, java.lang.String)
      */
-    public void processingInstruction(String target, String data, Locator locator) throws SAXException {
+    void processingInstruction(String target, String data, Locator locator) throws SAXException {
+        this.locatorDelegate = locator;
         contentHandler.processingInstruction(target, data);
-    }
-    /**
-     * @param locator
-     * @see org.xml.sax.ContentHandler#setDocumentLocator(org.xml.sax.Locator)
-     */
-    public void setDocumentLocator(Locator locator) {
-        contentHandler.setDocumentLocator(locator);
     }
     /**
      * @param name
      * @throws SAXException
      * @see org.xml.sax.ContentHandler#skippedEntity(java.lang.String)
      */
-    public void skippedEntity(String name, Locator locator) throws SAXException {
+    void skippedEntity(String name, Locator locator) throws SAXException {
+        this.locatorDelegate = locator;
         contentHandler.skippedEntity(name);
     }
     /**
      * @throws SAXException
      * @see org.xml.sax.ContentHandler#startDocument()
      */
-    public void startDocument(Locator locator) throws SAXException {
+    void startDocument(Locator locator) throws SAXException {
+        this.locatorDelegate = locator;
         contentHandler.startDocument();
     }
     /**
@@ -95,7 +128,8 @@ public class TreeParser implements Locator {
      * @throws SAXException
      * @see org.xml.sax.ContentHandler#startElement(java.lang.String, java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
-    public void startElement(String uri, String localName, String qName, Attributes atts, Locator locator) throws SAXException {
+    void startElement(String uri, String localName, String qName, Attributes atts, Locator locator) throws SAXException {
+        this.locatorDelegate = locator;
         contentHandler.startElement(uri, localName, qName, atts);
     }
     /**
@@ -104,7 +138,8 @@ public class TreeParser implements Locator {
      * @throws SAXException
      * @see org.xml.sax.ContentHandler#startPrefixMapping(java.lang.String, java.lang.String)
      */
-    public void startPrefixMapping(String prefix, String uri, Locator locator) throws SAXException {
+    void startPrefixMapping(String prefix, String uri, Locator locator) throws SAXException {
+        this.locatorDelegate = locator;
         contentHandler.startPrefixMapping(prefix, uri);
     }
     /**
@@ -114,21 +149,24 @@ public class TreeParser implements Locator {
      * @throws SAXException
      * @see org.xml.sax.ext.LexicalHandler#comment(char[], int, int)
      */
-    public void comment(char[] ch, int start, int length, Locator locator) throws SAXException {
+    void comment(char[] ch, int start, int length, Locator locator) throws SAXException {
+        this.locatorDelegate = locator;
         lexicalHandler.comment(ch, start, length);
     }
     /**
      * @throws SAXException
      * @see org.xml.sax.ext.LexicalHandler#endCDATA()
      */
-    public void endCDATA(Locator locator) throws SAXException {
+    void endCDATA(Locator locator) throws SAXException {
+        this.locatorDelegate = locator;
         lexicalHandler.endCDATA();
     }
     /**
      * @throws SAXException
      * @see org.xml.sax.ext.LexicalHandler#endDTD()
      */
-    public void endDTD(Locator locator) throws SAXException {
+    void endDTD(Locator locator) throws SAXException {
+        this.locatorDelegate = locator;
         lexicalHandler.endDTD();
     }
     /**
@@ -136,14 +174,16 @@ public class TreeParser implements Locator {
      * @throws SAXException
      * @see org.xml.sax.ext.LexicalHandler#endEntity(java.lang.String)
      */
-    public void endEntity(String name, Locator locator) throws SAXException {
+    void endEntity(String name, Locator locator) throws SAXException {
+        this.locatorDelegate = locator;
         lexicalHandler.endEntity(name);
     }
     /**
      * @throws SAXException
      * @see org.xml.sax.ext.LexicalHandler#startCDATA()
      */
-    public void startCDATA(Locator locator) throws SAXException {
+    void startCDATA(Locator locator) throws SAXException {
+        this.locatorDelegate = locator;
         lexicalHandler.startCDATA();
     }
     /**
@@ -153,7 +193,8 @@ public class TreeParser implements Locator {
      * @throws SAXException
      * @see org.xml.sax.ext.LexicalHandler#startDTD(java.lang.String, java.lang.String, java.lang.String)
      */
-    public void startDTD(String name, String publicId, String systemId, Locator locator) throws SAXException {
+    void startDTD(String name, String publicId, String systemId, Locator locator) throws SAXException {
+        this.locatorDelegate = locator;
         lexicalHandler.startDTD(name, publicId, systemId);
     }
     /**
@@ -161,7 +202,8 @@ public class TreeParser implements Locator {
      * @throws SAXException
      * @see org.xml.sax.ext.LexicalHandler#startEntity(java.lang.String)
      */
-    public void startEntity(String name, Locator locator) throws SAXException {
+    void startEntity(String name, Locator locator) throws SAXException {
+        this.locatorDelegate = locator;
         lexicalHandler.startEntity(name);
     }
     /**
@@ -169,27 +211,27 @@ public class TreeParser implements Locator {
      * @see org.xml.sax.Locator#getColumnNumber()
      */
     public int getColumnNumber() {
-        return locator.getColumnNumber();
+        return locatorDelegate.getColumnNumber();
     }
     /**
      * @return
      * @see org.xml.sax.Locator#getLineNumber()
      */
     public int getLineNumber() {
-        return locator.getLineNumber();
+        return locatorDelegate.getLineNumber();
     }
     /**
      * @return
      * @see org.xml.sax.Locator#getPublicId()
      */
     public String getPublicId() {
-        return locator.getPublicId();
+        return locatorDelegate.getPublicId();
     }
     /**
      * @return
      * @see org.xml.sax.Locator#getSystemId()
      */
     public String getSystemId() {
-        return locator.getSystemId();
+        return locatorDelegate.getSystemId();
     }
 }

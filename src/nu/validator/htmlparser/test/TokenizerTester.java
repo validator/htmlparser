@@ -77,7 +77,6 @@ public class TokenizerTester {
             runTest((JSONObject) val);
         }
         writer.flush();
-        writer.close();
     }
     
     private void runTest(JSONObject test) throws SAXException, IOException {

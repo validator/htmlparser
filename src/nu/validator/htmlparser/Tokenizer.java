@@ -770,8 +770,7 @@ public final class Tokenizer implements Locator {
                 entityDataState();
                 continue;
             } else if (c == '<'
-                    && contentModelFlag != ContentModelFlag.PLAINTEXT
-                    && !escapeFlag) {
+                    && ((contentModelFlag == ContentModelFlag.PCDATA) || (escapeFlag == false && (contentModelFlag == ContentModelFlag.CDATA || contentModelFlag == ContentModelFlag.RCDATA)))) {
                 /*
                  * U+003C LESS-THAN SIGN (<) When the content model flag is set
                  * to the PCDATA state: switch to the tag open state. When the
@@ -794,7 +793,7 @@ public final class Tokenizer implements Locator {
                 return; // eof() called in parent finally block
             } else {
                 if (c == '-'
-                        && !escapeFlag
+                        && (escapeFlag == false)
                         && (contentModelFlag == ContentModelFlag.RCDATA || contentModelFlag == ContentModelFlag.CDATA)
                         && lastLtExclHyph()) {
                     /*
@@ -899,7 +898,7 @@ public final class Tokenizer implements Locator {
                  * If the next input character is a U+002F SOLIDUS (/)
                  * character, consume it and switch to the close tag open state.
                  */
-                tagOpenState();
+                closeTagOpenState();
                 return;
             } else {
                 /*
@@ -911,6 +910,7 @@ public final class Tokenizer implements Locator {
                  * and switch to the data state to process the next input
                  * character.
                  */
+                unread(c);
                 return;
             }
         } else {
@@ -1417,6 +1417,7 @@ public final class Tokenizer implements Locator {
              * When an end tag token is emitted, the content model flag must be
              * switched to the PCDATA state.
              */
+            escapeFlag = false;
             contentModelFlag = ContentModelFlag.PCDATA;
             if (attrs.getLength() != 0) {
                 /*
