@@ -71,13 +71,13 @@ public final class Tokenizer implements Locator {
     private static final int SURROGATE_OFFSET = 0x10000 - (0xD800 << 10) - 0xDC00;
 
     /**
-     * UTF-16 code unit array containing less than and greater than for emitting 
+     * UTF-16 code unit array containing less than and greater than for emitting
      * those characters on certain parse errors.
      */
     private static final char[] LT_GT = { '<', '>' };
 
     /**
-     * UTF-16 code unit array containing less than and solidus for emitting 
+     * UTF-16 code unit array containing less than and solidus for emitting
      * those characters on certain parse errors.
      */
     private static final char[] LT_SOLIDUS = { '<', '/' };
@@ -101,70 +101,123 @@ public final class Tokenizer implements Locator {
      * The token handler.
      */
     private final TokenHandler tokenHandler;
-    
+
     /**
      * The error handler.
      */
     private ErrorHandler errorHandler;
 
     /**
-     * The input UTF-16 code unit stream. If a byte stream was given, this object is an 
-     * instance of <code>HtmlInputStreamReader</code>.
+     * The input UTF-16 code unit stream. If a byte stream was given, this
+     * object is an instance of <code>HtmlInputStreamReader</code>.
      */
     private Reader reader;
 
     /**
-     * The main input buffer that the tokenizer reads from. Filled from <code>reader</code>.
+     * The main input buffer that the tokenizer reads from. Filled from
+     * <code>reader</code>.
      */
     private char[] buf = new char[2048];
-    
+
     /**
      * The index of the last <code>char</code> read from <code>buf</code>.
      */
     private int pos;
 
     /**
-     * The index of the first <code>char</code> in <code>buf</code> that is part of 
-     * a coalesced run of character tokens or <code>-1</code> if there is not a current 
-     * run being coalesced.
+     * The index of the first <code>char</code> in <code>buf</code> that is
+     * part of a coalesced run of character tokens or <code>-1</code> if there
+     * is not a current run being coalesced.
      */
     private int cstart;
-    
+
     /**
-     * The number of <code>char</code>s in <code>buf</code> that have meaning. 
-     * (The rest of the array is garbage and should not be examined.)
+     * The number of <code>char</code>s in <code>buf</code> that have
+     * meaning. (The rest of the array is garbage and should not be examined.)
      */
     private int bufLen;
 
     /**
-     * The previous <code>char</code> read from the buffer with infoset alteration 
-     * applied except for CR. Used for CRLF normalization and surrogate pair checking.
+     * The previous <code>char</code> read from the buffer with infoset
+     * alteration applied except for CR. Used for CRLF normalization and
+     * surrogate pair checking.
      */
     private char prev;
 
-    
+    /**
+     * Lookbehind buffer for magic RCDATA/CDATA escaping.
+     */
+    private char[] prevFour = { '\u0000', '\u0000', '\u0000', '\u0000' };
+
+    /**
+     * Points to the last <code>char</code> written to <code>prevFour</code>.
+     */
+    private int prevFourPtr = 0;
+
+    /**
+     * Single code unit buffer for reconsuming an input character. If
+     * <code>-1</code> the next <code>read()</code> returns from the real
+     * buffer, otherwise from here.
+     */
     private int unreadBuffer = -1;
 
+    /**
+     * The current line number in the current resource being parsed. (First line
+     * is 1.) Passed on as locator data.
+     */
     private int line;
 
+    /**
+     * The current column number in the current resource being tokenized. (First
+     * column is 1, counted by UTF-16 code units.) Passed on as locator data.
+     */
     private int col;
 
+    /**
+     * The SAX public id for the resource being tokenized. (Only passed to back
+     * as part of locator data.)
+     */
     private String publicId;
 
+    /**
+     * The SAX system id for the resource being tokenized. (Only passed to back
+     * as part of locator data.)
+     */
     private String systemId;
 
+    /**
+     * Buffer for short identifiers.
+     */
     private char[] strBuf = new char[64];
 
+    /**
+     * Number of significant <code>char</code>s in <code>strBuf</code>.
+     */
     private int strBufLen = 0;
 
+    /**
+     * Buffer for long strings.
+     */
     private char[] longStrBuf = new char[1024];
 
+    /**
+     * Number of significant <code>char</code>s in <code>longStrBuf</code>.
+     */
     private int longStrBufLen = 0;
 
-    private AttributesImpl attributes = new AttributesImpl();
+    /**
+     * The attribute holder.
+     */
+    private AttributesImpl attributes;
 
+    /**
+     * Buffer for expanding NCRs falling into the Basic Multilingual Plane.
+     */
     private char[] bmpChar = { '\u0000' };
 
+    /**
+     * Buffer for expanding astral NCRs.
+     */
     private char[] astralChar = { '\u0000', '\u0000' };
 
     private boolean alreadyWarnedAboutPrivateUseCharacters;
@@ -340,6 +393,11 @@ public final class Tokenizer implements Locator {
                     }
             }
             prev = c;
+            if (contentModelFlag != ContentModelFlag.PCDATA) {
+                prevFourPtr++;
+                prevFourPtr %= 4;
+                prevFour[prevFourPtr] = c;
+            }
             return c;
         }
     }
@@ -544,11 +602,12 @@ public final class Tokenizer implements Locator {
         return Arrays.binarySearch(VOID_ELEMENTS, tagName) > -1;
     }
 
-    public void setContentModelFlag(ContentModelFlag contentModelFlag, String contentModelElement) {
+    public void setContentModelFlag(ContentModelFlag contentModelFlag,
+            String contentModelElement) {
         this.contentModelFlag = contentModelFlag;
         this.contentModelElement = contentModelElement;
     }
-    
+
     public void tokenize(InputSource is) throws SAXException, IOException {
         this.systemId = is.getSystemId();
         this.publicId = is.getPublicId();
@@ -578,6 +637,7 @@ public final class Tokenizer implements Locator {
         col = 0;
         prev = '\u0000';
         bufLen = 0;
+        alreadyWarnedAboutPrivateUseCharacters = false;
         tokenHandler.start(this);
         try {
             dataState();
@@ -686,13 +746,14 @@ public final class Tokenizer implements Locator {
     }
 
     private boolean lastThreeHyphHyphGt() {
-        // TODO Auto-generated method stub
-        return false;
+        return prevFour[(prevFourPtr - 1) % 4] == '-'
+                && prevFour[(prevFourPtr - 2) % 4] == '-';
     }
 
     private boolean lastFourLtExclHyphHyph() {
-        // TODO Auto-generated method stub
-        return false;
+        return prevFour[(prevFourPtr - 1) % 4] == '-'
+                && prevFour[(prevFourPtr - 2) % 4] == '!'
+                && prevFour[(prevFourPtr - 3) % 4] == '<';
     }
 
     /**
@@ -2819,6 +2880,7 @@ public final class Tokenizer implements Locator {
             }
         }
     }
+
     /**
      * DOCTYPE system identifier (single-quoted) state
      * 
@@ -2835,8 +2897,8 @@ public final class Tokenizer implements Locator {
             switch (c) {
                 case '\'':
                     /*
-                     * U+0027 APOSTROPHE (') Switch to the after DOCTYPE
-                     * system identifier state.
+                     * U+0027 APOSTROPHE (') Switch to the after DOCTYPE system
+                     * identifier state.
                      */
                     systemIdentifier = longStrBufToString();
                     afterDoctypeSystemIdentifierState();
@@ -2870,11 +2932,12 @@ public final class Tokenizer implements Locator {
         }
     }
 
-/**
- * After DOCTYPE system identifier state 
- * @throws IOException 
- * @throws SAXException 
- */
+    /**
+     * After DOCTYPE system identifier state
+     * 
+     * @throws IOException
+     * @throws SAXException
+     */
     private void afterDoctypeSystemIdentifierState() throws SAXException,
             IOException {
         for (;;) {
@@ -2922,7 +2985,8 @@ public final class Tokenizer implements Locator {
                 default:
                     /* Anything else Parse error. */
                     err("Bogus doctype.");
-                    /* Switch to the bogus DOCTYPE state.
+                    /*
+                     * Switch to the bogus DOCTYPE state.
                      */
                     bogusDoctypeState();
                     return;
@@ -2948,7 +3012,8 @@ public final class Tokenizer implements Locator {
                      * U+003E GREATER-THAN SIGN (>) Set the DOCTYPE token's
                      * correctness flag to incorrect. Emit that DOCTYPE token.
                      */
-                    tokenHandler.doctype(doctypeName, publicIdentifier, systemIdentifier, false);
+                    tokenHandler.doctype(doctypeName, publicIdentifier,
+                            systemIdentifier, false);
                     /*
                      * Switch to the data state.
                      */
@@ -2960,7 +3025,8 @@ public final class Tokenizer implements Locator {
                      * Set the DOCTYPE token's correctness flag to incorrect.
                      * Emit that DOCTYPE token.
                      */
-                    tokenHandler.doctype(doctypeName, publicIdentifier, systemIdentifier, false);
+                    tokenHandler.doctype(doctypeName, publicIdentifier,
+                            systemIdentifier, false);
                     /*
                      * Reconsume the EOF character in the data state.
                      */
