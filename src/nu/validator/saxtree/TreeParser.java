@@ -24,13 +24,13 @@ public final class TreeParser implements Locator {
         Node current = node;
         Node next;
         for (;;) {
-            node.visit(this);
+            current.visit(this);
             if ((next = current.getFirstChild()) != null) {
                 current = next;
                 continue;
             }
             for (;;) {
-                node.revisit(this);
+                current.revisit(this);
                 if ((next = current.getNextSibling()) != null) {
                     current = next;
                     break;
