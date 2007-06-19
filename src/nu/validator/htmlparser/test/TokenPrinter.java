@@ -45,10 +45,10 @@ public class TokenPrinter implements TokenHandler {
         }
     }
 
-    public void comment(String content) throws SAXException {
+    public void comment(char[] buf, int length) throws SAXException {
         try {
             writer.write('!');
-            writer.write(content);
+            writer.write(buf, 0, length);
             writer.write('\n');
         } catch (IOException e) {
             throw new SAXException(e);

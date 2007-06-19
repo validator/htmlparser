@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2005, 2006, 2007 Henri Sivonen
+ * Portions of comments Copyright 2004-2007 Apple Computer, Inc., Mozilla 
+ * Foundation, and Opera Software ASA.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -21,7 +23,8 @@
  */
 
 /*
- * Some comments are quotes from the WHATWG HTML 5 spec as of 2 June 2007 
+ * The comments following this one that use the same comment syntax as this 
+ * comment are quotes from the WHATWG HTML 5 spec as of 2 June 2007 
  * amended as of June 17 2007.
  * That document came with this statement:
  * "© Copyright 2004-2007 Apple Computer, Inc., Mozilla Foundation, and 
@@ -147,7 +150,7 @@ public final class Tokenizer implements Locator {
     /**
      * Lookbehind buffer for magic RCDATA/CDATA escaping.
      */
-    private char[] prevFour = { '\u0000', '\u0000', '\u0000', '\u0000' };
+    private final char[] prevFour = new char[4];
 
     /**
      * Points to the last <code>char</code> written to <code>prevFour</code>.
@@ -213,30 +216,187 @@ public final class Tokenizer implements Locator {
     /**
      * Buffer for expanding NCRs falling into the Basic Multilingual Plane.
      */
-    private char[] bmpChar = { '\u0000' };
+    private final char[] bmpChar = new char[1];
 
     /**
      * Buffer for expanding astral NCRs.
      */
-    private char[] astralChar = { '\u0000', '\u0000' };
+    private final char[] astralChar = new char[2];
 
+    /**
+     * Keeps track of PUA warnings.
+     */
     private boolean alreadyWarnedAboutPrivateUseCharacters;
 
+    /**
+     * Used for NFC checking if non-<code>null</code>.
+     */
     private NormalizationChecker normalizationChecker = null;
 
-    private XmlViolationPolicy contentSpacePolicy;
+    /**
+     * The policy for vertical tab and form feed.
+     */
+    private XmlViolationPolicy contentSpacePolicy = XmlViolationPolicy.ALLOW;
 
-    private XmlViolationPolicy contentNonXmlCharPolicy;
+    /**
+     * The policy for non-space non-XML characters.
+     */
+    private XmlViolationPolicy contentNonXmlCharPolicy = XmlViolationPolicy.ALLOW;
 
+    // start public API
+    
+    /**
+     * The constuctor.
+     * @param tokenHandler the handler for receiving tokens
+     */
     public Tokenizer(TokenHandler tokenHandler) {
         this.tokenHandler = tokenHandler;
     }
 
+    /**
+     * Turns NFC checking on or off.
+     * @param enable <code>true</code> if checking on
+     */
+    public void setCheckingNormalization(boolean enable) {
+        if (enable) {
+            normalizationChecker = new NormalizationChecker(true);
+            normalizationChecker.setDocumentLocator(this);
+            normalizationChecker.setErrorHandler(errorHandler);
+        } else {
+            normalizationChecker = null;
+        }
+    }
+
+    /**
+     * Query if checking normalization.
+     * @return <code>true</code> if checking on
+     */
+    public boolean isCheckingNormalization() {
+        return normalizationChecker != null;
+    }
+
+    /**
+     * Sets the error handler.
+     * @see org.xml.sax.XMLReader#setErrorHandler(org.xml.sax.ErrorHandler)
+     */
+    public void setErrorHandler(ErrorHandler eh) {
+        this.errorHandler = eh;
+        if (this.normalizationChecker != null) {
+            this.normalizationChecker.setErrorHandler(eh);
+        }
+    }
+
+    /**
+     * Runs the tokenization. This is the main entry point.
+     * 
+     * @param is the input source
+     * @throws SAXException on fatal error (if configured to treat XML violations 
+     * as fatal) or if the token handler threw
+     * @throws IOException if the stream threw
+     */
+    public void tokenize(InputSource is) throws SAXException, IOException {
+        this.systemId = is.getSystemId();
+        this.publicId = is.getPublicId();
+        this.reader = is.getCharacterStream();
+        CharsetDecoder decoder = decoderFromExternalDeclaration(is.getEncoding());
+        if (this.reader == null) {
+            InputStream inputStream = is.getByteStream();
+            if (inputStream == null) {
+                throw new SAXException("Both streams in InputSource were null.");
+            }
+            if (decoder == null) {
+                this.reader = new HtmlInputStreamReader(inputStream,
+                        errorHandler, this);
+            } else {
+                this.reader = new HtmlInputStreamReader(inputStream,
+                        errorHandler, this, decoder);
+            }
+        }
+        emitComments = tokenHandler.wantsComments();
+        // TODO reset stuff
+        contentModelFlag = ContentModelFlag.PCDATA;
+        escapeFlag = false;
+        inContent = true;
+        pos = -1;
+        cstart = -1;
+        line = 1;
+        col = 0;
+        prev = '\u0000';
+        bufLen = 0;
+        alreadyWarnedAboutPrivateUseCharacters = false;
+        tokenHandler.start(this);
+        try {
+            dataState();
+        } finally {
+            systemIdentifier = null;
+            publicIdentifier = null;
+            doctypeName = null;
+            tagName = null;
+            attributeName = null;
+            tokenHandler.eof();
+            reader.close();
+        }
+    }
+    
+    // For the token handler to call
+    /**
+     * Sets the content model flag and the associated element name.
+     * @param contentModelFlag the flag
+     * @param contentModelElement the element causing the flag to be set
+     */
+    public void setContentModelFlag(ContentModelFlag contentModelFlag,
+            String contentModelElement) {
+        this.contentModelFlag = contentModelFlag;
+        this.contentModelElement = contentModelElement;
+    }
+    
+    // start Locator impl
+    
+    /**
+     * @see org.xml.sax.Locator#getPublicId()
+     */
+    public String getPublicId() {
+        return publicId;
+    }
+
+    /**
+     * @see org.xml.sax.Locator#getSystemId()
+     */
+    public String getSystemId() {
+        return systemId;
+    }
+
+    /**
+     * @see org.xml.sax.Locator#getLineNumber()
+     */
+    public int getLineNumber() {
+        return line;
+    }
+
+    /**
+     * @see org.xml.sax.Locator#getColumnNumber()
+     */
+    public int getColumnNumber() {
+        return col;
+    }
+
+    // end Locator impl
+    
+    // end public API
+    
+    /**
+     * Clears the smaller buffer.
+     */
     private void clearStrBuf() {
         strBufLen = 0;
     }
 
-    private void appendStrBuf(char c) throws SAXException, IOException {
+    /**
+     * Appends to the smaller buffer.
+     * 
+     * @param c the UTF-16 code unit to append
+     */
+    private void appendStrBuf(char c) {
         if (strBufLen == strBuf.length) {
             char[] newBuf = new char[strBuf.length + BUFFER_GROW_BY];
             System.arraycopy(strBuf, 0, newBuf, 0, strBuf.length);
@@ -245,21 +405,37 @@ public final class Tokenizer implements Locator {
         }
     }
 
+    /**
+     * The smaller buffer as a string.
+     * @return the smaller buffer as a string
+     */
     private String strBufToString() {
         return new String(strBuf, 0, strBufLen);
     }
 
+    /**
+     * Emits the smaller buffer as character tokens.
+     * @throws SAXException if the token handler threw
+     */
     private void emitStrBuf() throws SAXException {
         if (strBufLen > 0) {
             tokenHandler.characters(strBuf, 0, strBufLen);
         }
     }
 
+    /**
+     * Clears the larger buffer.
+     */    
     private void clearLongStrBuf() {
         longStrBufLen = 0;
     }
 
-    private void appendLongStrBuf(char c) throws SAXException, IOException {
+    /**
+     * Appends to the larger buffer.
+     * 
+     * @param c the UTF-16 code unit to append
+     */
+    private void appendLongStrBuf(char c) {
         if (longStrBufLen == longStrBuf.length) {
             char[] newBuf = new char[longStrBuf.length + BUFFER_GROW_BY];
             System.arraycopy(longStrBuf, 0, newBuf, 0, longStrBuf.length);
@@ -268,28 +444,46 @@ public final class Tokenizer implements Locator {
         }
     }
 
-    private void appendLongStrBuf(char[] arr) throws SAXException, IOException {
+    /**
+     * Appends to the larger buffer.
+     * 
+     * @param arr the UTF-16 code units to append
+     */
+    private void appendLongStrBuf(char[] arr) {
         for (int i = 0; i < arr.length; i++) {
             appendLongStrBuf(arr[i]);
         }
     }
 
-    private void appendStrBufToLongStrBuf() throws SAXException, IOException {
+    /**
+     * Append the contents of the smaller buffer to the larger one.
+     */
+    private void appendStrBufToLongStrBuf() {
         for (int i = 0; i < strBufLen; i++) {
             appendLongStrBuf(strBuf[i]);
         }
     }
 
+    /**
+     * The larger buffer as a string.
+     * @return the larger buffer as a string
+     */
     private String longStrBufToString() {
         return new String(longStrBuf, 0, longStrBufLen);
     }
 
+    /**
+     * Unreads a code unit so that it is returned the next time 
+     * <code>read()</code> is called.
+     * @param c the code unit to unread
+     */
     private void unread(char c) {
         unreadBuffer = c;
     }
 
+    
     private char read() throws SAXException, IOException {
-        for (;;) { // the loop is here to the CRLF case
+        for (;;) { // the loop is here for the CRLF case
             if (unreadBuffer != -1) {
                 char c = (char) unreadBuffer;
                 unreadBuffer = -1;
@@ -468,55 +662,6 @@ public final class Tokenizer implements Locator {
     }
 
     /**
-     * @see org.xml.sax.Locator#getPublicId()
-     */
-    public String getPublicId() {
-        return publicId;
-    }
-
-    /**
-     * @see org.xml.sax.Locator#getSystemId()
-     */
-    public String getSystemId() {
-        return systemId;
-    }
-
-    /**
-     * @see org.xml.sax.Locator#getLineNumber()
-     */
-    public int getLineNumber() {
-        return line;
-    }
-
-    /**
-     * @see org.xml.sax.Locator#getColumnNumber()
-     */
-    public int getColumnNumber() {
-        return col;
-    }
-
-    public void setCheckingNormalization(boolean enable) {
-        if (enable) {
-            normalizationChecker = new NormalizationChecker(true);
-            normalizationChecker.setDocumentLocator(this);
-            normalizationChecker.setErrorHandler(errorHandler);
-        } else {
-            normalizationChecker = null;
-        }
-    }
-
-    public boolean isCheckingNormalization() {
-        return normalizationChecker != null;
-    }
-
-    /**
-     * @see org.xml.sax.XMLReader#setErrorHandler(org.xml.sax.ErrorHandler)
-     */
-    public void setErrorHandler(ErrorHandler eh) {
-        this.errorHandler = eh;
-    }
-
-    /**
      * 
      */
     private CharsetDecoder decoderFromExternalDeclaration(String encoding)
@@ -602,56 +747,6 @@ public final class Tokenizer implements Locator {
         return Arrays.binarySearch(VOID_ELEMENTS, tagName) > -1;
     }
 
-    public void setContentModelFlag(ContentModelFlag contentModelFlag,
-            String contentModelElement) {
-        this.contentModelFlag = contentModelFlag;
-        this.contentModelElement = contentModelElement;
-    }
-
-    public void tokenize(InputSource is) throws SAXException, IOException {
-        this.systemId = is.getSystemId();
-        this.publicId = is.getPublicId();
-        this.reader = is.getCharacterStream();
-        CharsetDecoder decoder = decoderFromExternalDeclaration(is.getEncoding());
-        if (this.reader == null) {
-            InputStream inputStream = is.getByteStream();
-            if (inputStream == null) {
-                throw new SAXException("Both streams in InputSource were null.");
-            }
-            if (decoder == null) {
-                this.reader = new HtmlInputStreamReader(inputStream,
-                        errorHandler, this);
-            } else {
-                this.reader = new HtmlInputStreamReader(inputStream,
-                        errorHandler, this, decoder);
-            }
-        }
-        emitComments = tokenHandler.wantsComments();
-        // TODO reset stuff
-        contentModelFlag = ContentModelFlag.PCDATA;
-        escapeFlag = false;
-        inContent = true;
-        pos = -1;
-        cstart = -1;
-        line = 1;
-        col = 0;
-        prev = '\u0000';
-        bufLen = 0;
-        alreadyWarnedAboutPrivateUseCharacters = false;
-        tokenHandler.start(this);
-        try {
-            dataState();
-        } finally {
-            systemIdentifier = null;
-            publicIdentifier = null;
-            doctypeName = null;
-            tagName = null;
-            attributeName = null;
-            tokenHandler.eof();
-            reader.close();
-        }
-    }
-
     /**
      * Data state
      * 
@@ -701,7 +796,7 @@ public final class Tokenizer implements Locator {
                 if (c == '-'
                         && !escapeFlag
                         && (contentModelFlag == ContentModelFlag.RCDATA || contentModelFlag == ContentModelFlag.CDATA)
-                        && lastFourLtExclHyphHyph()) {
+                        && lastLtExclHyph()) {
                     /*
                      * U+002D HYPHEN-MINUS (-) If the content model flag is set
                      * to either the RCDATA state or the CDATA state, and the
@@ -716,7 +811,7 @@ public final class Tokenizer implements Locator {
                      * token. Stay in the data state.
                      */
                     escapeFlag = true;
-                } else if (c == '>' && escapeFlag && lastThreeHyphHyphGt()) {
+                } else if (c == '>' && escapeFlag && lastHyphHyph()) {
                     /*
                      * U+003E GREATER-THAN SIGN (>) If the content model flag is
                      * set to either the RCDATA state or the CDATA state, and
@@ -745,15 +840,15 @@ public final class Tokenizer implements Locator {
         }
     }
 
-    private boolean lastThreeHyphHyphGt() {
-        return prevFour[(prevFourPtr - 1) % 4] == '-'
-                && prevFour[(prevFourPtr - 2) % 4] == '-';
+    private boolean lastHyphHyph() {
+        return prevFour[(prevFourPtr - 1 + 4) % 4] == '-'
+                && prevFour[(prevFourPtr - 2 + 4) % 4] == '-';
     }
 
-    private boolean lastFourLtExclHyphHyph() {
-        return prevFour[(prevFourPtr - 1) % 4] == '-'
-                && prevFour[(prevFourPtr - 2) % 4] == '!'
-                && prevFour[(prevFourPtr - 3) % 4] == '<';
+    private boolean lastLtExclHyph() {
+        return prevFour[(prevFourPtr - 1 + 4) % 4] == '-'
+                && prevFour[(prevFourPtr - 2 + 4) % 4] == '!'
+                && prevFour[(prevFourPtr - 3 + 4) % 4] == '<';
     }
 
     /**
@@ -1900,10 +1995,10 @@ public final class Tokenizer implements Locator {
                 char c = read();
                 switch (c) {
                     case '>':
-                        tokenHandler.comment(longStrBufToString());
+                        tokenHandler.comment(longStrBuf, longStrBufLen);
                         return;
                     case '\u0000':
-                        tokenHandler.comment(longStrBufToString());
+                        tokenHandler.comment(longStrBuf, longStrBufLen);
                         unread(c);
                         return;
                     default:
@@ -2022,7 +2117,7 @@ public final class Tokenizer implements Locator {
                         /* EOF Parse error. */
                         err("End of file inside comment.");
                         /* Emit the comment token. */
-                        tokenHandler.comment(longStrBufToString());
+                        tokenHandler.comment(longStrBuf, longStrBufLen);
                         /*
                          * Reconsume the EOF character in the data state.
                          */
@@ -2063,7 +2158,7 @@ public final class Tokenizer implements Locator {
                         /* EOF Parse error. */
                         err("End of file inside comment.");
                         /* Emit the comment token. */
-                        tokenHandler.comment(longStrBufToString());
+                        tokenHandler.comment(longStrBuf, longStrBufLen);
                         /*
                          * Reconsume the EOF character in the data state.
                          */
@@ -2106,7 +2201,7 @@ public final class Tokenizer implements Locator {
                 err("End of file inside comment.");
                 /* Emit the comment token. */
                 if (emitComments) {
-                    tokenHandler.comment(longStrBufToString());
+                    tokenHandler.comment(longStrBuf, longStrBufLen);
                 }
                 /*
                  * Reconsume the EOF character in the data state.
@@ -2143,7 +2238,7 @@ public final class Tokenizer implements Locator {
                 case '>':
                     /* U+003E GREATER-THAN SIGN (>) Emit the comment token. */
                     if (emitComments) {
-                        tokenHandler.comment(longStrBufToString());
+                        tokenHandler.comment(longStrBuf, longStrBufLen);
                     }
                     /*
                      * Switch to the data state.
@@ -2170,7 +2265,7 @@ public final class Tokenizer implements Locator {
                     err("End of file inside comment.");
                     /* Emit the comment token. */
                     if (emitComments) {
-                        tokenHandler.comment(longStrBufToString());
+                        tokenHandler.comment(longStrBuf, longStrBufLen);
                     }
                     /*
                      * Reconsume the EOF character in the data state.
