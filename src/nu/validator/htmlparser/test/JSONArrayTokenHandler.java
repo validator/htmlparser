@@ -10,6 +10,7 @@ import org.xml.sax.SAXParseException;
 
 import com.sdicons.json.model.JSONArray;
 import com.sdicons.json.model.JSONBoolean;
+import com.sdicons.json.model.JSONNull;
 import com.sdicons.json.model.JSONObject;
 import com.sdicons.json.model.JSONString;
 
@@ -54,12 +55,14 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
         array.getValue().add(token);
     }
 
-    public void doctype(String name, String publicIdentifier, String systemIdentifier, boolean inError) throws SAXException {
+    public void doctype(String name, String publicIdentifier, String systemIdentifier, boolean correct) throws SAXException {
         flushCharacters();
         JSONArray token = new JSONArray();
         token.getValue().add(DOCTYPE);
         token.getValue().add(new JSONString(name));
-        token.getValue().add(new JSONBoolean(inError));
+        token.getValue().add(publicIdentifier == null ? JSONNull.NULL : new JSONString(publicIdentifier));
+        token.getValue().add(systemIdentifier == null ? JSONNull.NULL : new JSONString(systemIdentifier));
+        token.getValue().add(new JSONBoolean(correct));
         array.getValue().add(token);
     }
 

@@ -6,7 +6,7 @@ import org.xml.sax.SAXException;
 public interface TokenHandler {
     public void start(Tokenizer self) throws SAXException;
     
-    public void doctype(String name, String publicIdentifier, String systemIdentifier, boolean inError) throws SAXException;
+    public void doctype(String name, String publicIdentifier, String systemIdentifier, boolean correct) throws SAXException;
     
     public void startTag(String name, Attributes attributes) throws SAXException;
     
