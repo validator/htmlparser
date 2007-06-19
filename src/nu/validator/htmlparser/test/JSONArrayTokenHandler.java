@@ -1,5 +1,6 @@
 package nu.validator.htmlparser.test;
 
+import nu.validator.htmlparser.ContentModelFlag;
 import nu.validator.htmlparser.TokenHandler;
 import nu.validator.htmlparser.Tokenizer;
 
@@ -31,6 +32,15 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
     private final StringBuilder builder = new StringBuilder();
 
     private JSONArray array = null;
+
+    private ContentModelFlag contentModelFlag;
+
+    private String contentModelElement;
+    
+    public void setContentModelFlag(ContentModelFlag contentModelFlag, String contentModelElement) {
+        this.contentModelFlag = contentModelFlag;
+        this.contentModelElement = contentModelElement;
+    }
 
     public void characters(char[] buf, int start, int length)
             throws SAXException {
@@ -80,6 +90,7 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
 
     public void start(Tokenizer self) throws SAXException {
         array = new JSONArray();
+        self.setContentModelFlag(contentModelFlag, contentModelElement);
     }
 
     public void startTag(String name, Attributes attributes)
