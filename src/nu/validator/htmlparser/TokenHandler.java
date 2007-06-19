@@ -12,7 +12,7 @@ public interface TokenHandler {
     
     public void endTag(String name, Attributes attributes) throws SAXException;
     
-    public void comment(String content) throws SAXException;
+    public void comment(char[] buf, int length) throws SAXException;
     
     public void characters(char[] buf, int start, int length) throws SAXException;
     

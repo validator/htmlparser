@@ -57,11 +57,11 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
         }
     }
 
-    public void comment(String content) throws SAXException {
+    public void comment(char[] buf, int length) throws SAXException {
         flushCharacters();
         JSONArray token = new JSONArray();
         token.getValue().add(COMMENT);
-        token.getValue().add(new JSONString(content));
+        token.getValue().add(new JSONString(new String(buf, 0, length)));
         array.getValue().add(token);
     }
 

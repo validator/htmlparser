@@ -18,7 +18,7 @@ public class LegacyTokenHandler implements TokenHandler {
         contentHandler.characters(buf, start, length);
     }
 
-    public void comment(String content) throws SAXException {
+    public void comment(char[] buf, int length) throws SAXException {
 
     }
 
