@@ -14,6 +14,7 @@ import java.util.Iterator;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import nu.validator.htmlparser.ContentModelFlag;
 import nu.validator.htmlparser.TokenHandler;
 import nu.validator.htmlparser.Tokenizer;
 
@@ -28,6 +29,11 @@ import antlr.RecognitionException;
 
 public class TokenizerTester {
 
+    private static JSONString PLAINTEXT = new JSONString("PLAINTEXT");
+    private static JSONString PCDATA = new JSONString("PCDATA");
+    private static JSONString RCDATA = new JSONString("RCDATA");
+    private static JSONString CDATA = new JSONString("CDATA");
+    
     private static boolean jsonDeepEquals(JSONValue one, JSONValue other) {
         if (one.isSimple()) {
             return one.equals(other);
@@ -76,18 +82,47 @@ public class TokenizerTester {
     
     private void runTest(JSONObject test) throws SAXException, IOException {
         String inputString = ((JSONString) test.get("input")).getValue();
-        if ("I'm &notit".equals(inputString)) {
-            int i = 1;
+        JSONArray expectedTokens = (JSONArray) test.get("output");
+        String description = ((JSONString)test.get("description")).getValue();
+        JSONString lastStartTagJSON = ((JSONString)test.get("lastStartTag"));
+        String lastStartTag = lastStartTagJSON == null ? null : lastStartTagJSON.getValue();
+        JSONArray contentModelFlags = (JSONArray) test.get("contentModelFlags");
+        if (contentModelFlags == null) {
+            runTestInner(inputString, expectedTokens, description, ContentModelFlag.PCDATA, null);            
+        } else {
+            for (JSONValue value : contentModelFlags.getValue()) {
+                if (PCDATA.equals(value)) {
+                    runTestInner(inputString, expectedTokens, description, ContentModelFlag.PCDATA, lastStartTag);                                
+                } else if (CDATA.equals(value)) {
+                    runTestInner(inputString, expectedTokens, description, ContentModelFlag.CDATA, lastStartTag);                                
+                } else if (RCDATA.equals(value)) {
+                    runTestInner(inputString, expectedTokens, description, ContentModelFlag.RCDATA, lastStartTag);                                
+                } else if (PLAINTEXT.equals(value)) {
+                    runTestInner(inputString, expectedTokens, description, ContentModelFlag.PLAINTEXT, lastStartTag);                                
+                } else {
+                    throw new RuntimeException("Broken test data.");
+                }
+            }
         }
+    }
+
+    /**
+     * @param contentModelElement 
+     * @param contentModelFlag 
+     * @param test
+     * @throws SAXException
+     * @throws IOException
+     */
+    private void runTestInner(String inputString, JSONArray expectedTokens, String description, ContentModelFlag contentModelFlag, String contentModelElement) throws SAXException, IOException {
+        tokenHandler.setContentModelFlag(contentModelFlag, contentModelElement);
         InputSource is = new InputSource(new StringReader(inputString));
         tokenizer.tokenize(is);
         JSONArray actualTokens = tokenHandler.getArray();
-        JSONArray expectedTokens = (JSONArray) test.get("output");
         if (jsonDeepEquals(actualTokens, expectedTokens)) {
             writer.write("Success\n");
         } else {
             writer.write("Failure\n");
-            writer.write(((JSONString)test.get("description")).getValue());
+            writer.write(description);
             writer.write("\nInput:\n");
             writer.write(inputString);            
             writer.write("\nExpected tokens:\n");

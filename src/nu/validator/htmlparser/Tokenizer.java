@@ -60,33 +60,90 @@ import fi.iki.hsivonen.xml.EmptyAttributes;
  */
 public final class Tokenizer implements Locator {
 
+    /**
+     * Magic value for UTF-16 operations.
+     */
     private static final int LEAD_OFFSET = 0xD800 - (0x10000 >> 10);
 
+    /**
+     * Magic value for UTF-16 operations.
+     */
     private static final int SURROGATE_OFFSET = 0x10000 - (0xD800 << 10) - 0xDC00;
 
+    /**
+     * UTF-16 code unit array containing less than and greater than for emitting 
+     * those characters on certain parse errors.
+     */
     private static final char[] LT_GT = { '<', '>' };
 
+    /**
+     * UTF-16 code unit array containing less than and solidus for emitting 
+     * those characters on certain parse errors.
+     */
     private static final char[] LT_SOLIDUS = { '<', '/' };
 
+    /**
+     * Array version of U+FFFD.
+     */
     private static final char[] REPLACEMENT_CHARACTER = { '\uFFFD' };
 
+    /**
+     * Array version of space.
+     */
     private static final char[] SPACE = { ' ' };
 
+    /**
+     * Buffer growth parameter.
+     */
     private static final int BUFFER_GROW_BY = 1024;
 
+    /**
+     * The token handler.
+     */
+    private final TokenHandler tokenHandler;
+    
+    /**
+     * The error handler.
+     */
     private ErrorHandler errorHandler;
 
-    private final TokenHandler tokenHandler;
-
+    /**
+     * The input UTF-16 code unit stream. If a byte stream was given, this object is an 
+     * instance of <code>HtmlInputStreamReader</code>.
+     */
     private Reader reader;
 
+    /**
+     * The main input buffer that the tokenizer reads from. Filled from <code>reader</code>.
+     */
+    private char[] buf = new char[2048];
+    
+    /**
+     * The index of the last <code>char</code> read from <code>buf</code>.
+     */
     private int pos;
 
+    /**
+     * The index of the first <code>char</code> in <code>buf</code> that is part of 
+     * a coalesced run of character tokens or <code>-1</code> if there is not a current 
+     * run being coalesced.
+     */
     private int cstart;
-
-    private char[] buf = new char[2048];
-
+    
+    /**
+     * The number of <code>char</code>s in <code>buf</code> that have meaning. 
+     * (The rest of the array is garbage and should not be examined.)
+     */
     private int bufLen;
+
+    /**
+     * The previous <code>char</code> read from the buffer with infoset alteration 
+     * applied except for CR. Used for CRLF normalization and surrogate pair checking.
+     */
+    private char prev;
+
+    
+    private int unreadBuffer = -1;
 
     private int line;
 
@@ -95,10 +152,6 @@ public final class Tokenizer implements Locator {
     private String publicId;
 
     private String systemId;
-
-    private char prev;
-
-    private int unreadBuffer = -1;
 
     private char[] strBuf = new char[64];
 
@@ -273,7 +326,6 @@ public final class Tokenizer implements Locator {
                             err("Found low surrogate without high surrogate.");
                             c = buf[pos] = '\uFFFD';
                         }
-                        prev = c;
                     } else if (inContent && (c < ' ' || isNonCharacter(c))) {
                         if (contentNonXmlCharPolicy != XmlViolationPolicy.FATAL) {
                             if (contentNonXmlCharPolicy == XmlViolationPolicy.ALTER_INFOSET) {
@@ -492,6 +544,11 @@ public final class Tokenizer implements Locator {
         return Arrays.binarySearch(VOID_ELEMENTS, tagName) > -1;
     }
 
+    public void setContentModelFlag(ContentModelFlag contentModelFlag, String contentModelElement) {
+        this.contentModelFlag = contentModelFlag;
+        this.contentModelElement = contentModelElement;
+    }
+    
     public void tokenize(InputSource is) throws SAXException, IOException {
         this.systemId = is.getSystemId();
         this.publicId = is.getPublicId();
@@ -1028,11 +1085,11 @@ public final class Tokenizer implements Locator {
                      * U+002F SOLIDUS (/) Parse error unless this is a permitted
                      * slash.
                      */
+                    tagName = strBufToString();
                     parseErrorUnlessPermittedSlash();
                     /*
                      * Switch to the before attribute name state.
                      */
-                    tagName = strBufToString();
                     beforeAttributeNameState();
                     return;
                 default:
