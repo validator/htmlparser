@@ -2156,7 +2156,7 @@ public final class Tokenizer implements Locator {
                      * Create a new DOCTYPE token. Set its correctness flag to
                      * incorrect. Emit the token.
                      */
-                    tokenHandler.doctype("", null, null, true);
+                    tokenHandler.doctype("", null, null, false);
                     /*
                      * Switch to the data state.
                      */
@@ -2168,7 +2168,7 @@ public final class Tokenizer implements Locator {
                      * Create a new DOCTYPE token. Set its correctness flag to
                      * incorrect. Emit the token.
                      */
-                    tokenHandler.doctype("", null, null, true);
+                    tokenHandler.doctype("", null, null, false);
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -2221,7 +2221,7 @@ public final class Tokenizer implements Locator {
                      * U+003E GREATER-THAN SIGN (>) Emit the current DOCTYPE
                      * token.
                      */
-                    tokenHandler.doctype(strBufToString(), null, null, false);
+                    tokenHandler.doctype(strBufToString(), null, null, true);
                     /*
                      * Switch to the data state.
                      */
@@ -2230,7 +2230,8 @@ public final class Tokenizer implements Locator {
                     /* EOF Parse error. */
                     err("End of file inside doctype.");
                     /* Emit the current DOCTYPE token. */
-                    tokenHandler.doctype(strBufToString(), null, null, false);
+                    // XXX shouldn't this be in error?
+                    tokenHandler.doctype(strBufToString(), null, null, true);
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -2279,7 +2280,7 @@ public final class Tokenizer implements Locator {
                      * U+003E GREATER-THAN SIGN (>) Emit the current DOCTYPE
                      * token.
                      */
-                    tokenHandler.doctype(doctypeName, null, null, false);
+                    tokenHandler.doctype(doctypeName, null, null, true);
                     /*
                      * Switch to the data state.
                      */
@@ -2288,7 +2289,7 @@ public final class Tokenizer implements Locator {
                     /* EOF Parse error. */
                     err("End of file inside doctype.");
                     /* Emit the current DOCTYPE token. */
-                    tokenHandler.doctype(doctypeName, null, null, false);
+                    tokenHandler.doctype(doctypeName, null, null, true);
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -2406,7 +2407,7 @@ public final class Tokenizer implements Locator {
                      * Set the DOCTYPE token's correctness flag to incorrect.
                      * Emit that DOCTYPE token.
                      */
-                    tokenHandler.doctype(doctypeName, null, null, true);
+                    tokenHandler.doctype(doctypeName, null, null, false);
                     /*
                      * Switch to the data state.
                      */
@@ -2418,7 +2419,7 @@ public final class Tokenizer implements Locator {
                      * Set the DOCTYPE token's correctness flag to incorrect.
                      * Emit that DOCTYPE token.
                      */
-                    tokenHandler.doctype(doctypeName, null, null, true);
+                    tokenHandler.doctype(doctypeName, null, null, false);
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -2466,7 +2467,7 @@ public final class Tokenizer implements Locator {
                      * Emit that DOCTYPE token.
                      */
                     tokenHandler.doctype(doctypeName, longStrBufToString(),
-                            null, true);
+                            null, false);
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -2517,7 +2518,7 @@ public final class Tokenizer implements Locator {
                      * Emit that DOCTYPE token.
                      */
                     tokenHandler.doctype(doctypeName, longStrBufToString(),
-                            null, true);
+                            null, false);
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -2594,7 +2595,7 @@ public final class Tokenizer implements Locator {
                      * token.
                      */
                     tokenHandler.doctype(doctypeName, publicIdentifier, null,
-                            false);
+                            true);
                     /*
                      * Switch to the data state.
                      */
@@ -2607,7 +2608,7 @@ public final class Tokenizer implements Locator {
                      * Emit that DOCTYPE token.
                      */
                     tokenHandler.doctype(doctypeName, publicIdentifier, null,
-                            true);
+                            false);
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -2681,7 +2682,7 @@ public final class Tokenizer implements Locator {
                      * Set the DOCTYPE token's correctness flag to incorrect.
                      * Emit that DOCTYPE token.
                      */
-                    tokenHandler.doctype(doctypeName, null, null, true);
+                    tokenHandler.doctype(doctypeName, null, null, false);
                     /*
                      * Switch to the data state.
                      */
@@ -2693,7 +2694,7 @@ public final class Tokenizer implements Locator {
                      * Set the DOCTYPE token's correctness flag to incorrect.
                      * Emit that DOCTYPE token.
                      */
-                    tokenHandler.doctype(doctypeName, null, null, true);
+                    tokenHandler.doctype(doctypeName, null, null, false);
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -2741,7 +2742,7 @@ public final class Tokenizer implements Locator {
                      * Emit that DOCTYPE token.
                      */
                     tokenHandler.doctype(doctypeName, publicIdentifier,
-                            longStrBufToString(), true);
+                            longStrBufToString(), false);
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -2791,7 +2792,7 @@ public final class Tokenizer implements Locator {
                      * Emit that DOCTYPE token.
                      */
                     tokenHandler.doctype(doctypeName, publicIdentifier,
-                            longStrBufToString(), true);
+                            longStrBufToString(), false);
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -2842,7 +2843,7 @@ public final class Tokenizer implements Locator {
                      * token.
                      */
                     tokenHandler.doctype(doctypeName, publicIdentifier,
-                            systemIdentifier, false);
+                            systemIdentifier, true);
                     /*
                      * Switch to the data state.
                      */
@@ -2855,7 +2856,7 @@ public final class Tokenizer implements Locator {
                      * Emit that DOCTYPE token.
                      */
                     tokenHandler.doctype(doctypeName, publicIdentifier,
-                            systemIdentifier, true);
+                            systemIdentifier, false);
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -2890,7 +2891,7 @@ public final class Tokenizer implements Locator {
                      * U+003E GREATER-THAN SIGN (>) Set the DOCTYPE token's
                      * correctness flag to incorrect. Emit that DOCTYPE token.
                      */
-                    tokenHandler.doctype(doctypeName, publicIdentifier, systemIdentifier, true);
+                    tokenHandler.doctype(doctypeName, publicIdentifier, systemIdentifier, false);
                     /*
                      * Switch to the data state.
                      */
@@ -2902,7 +2903,7 @@ public final class Tokenizer implements Locator {
                      * Set the DOCTYPE token's correctness flag to incorrect.
                      * Emit that DOCTYPE token.
                      */
-                    tokenHandler.doctype(doctypeName, publicIdentifier, systemIdentifier, true);
+                    tokenHandler.doctype(doctypeName, publicIdentifier, systemIdentifier, false);
                     /*
                      * Reconsume the EOF character in the data state.
                      */
