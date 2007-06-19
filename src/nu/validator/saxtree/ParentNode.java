@@ -59,7 +59,7 @@ public abstract class ParentNode extends Node {
         this.lastChild = lastChild;
     }
 
-    public void appendChild(Node child) {
+    public Node appendChild(Node child) {
         if (firstChild == null) {
             firstChild = child;
             lastChild = child;
@@ -67,5 +67,6 @@ public abstract class ParentNode extends Node {
             lastChild.setNextSibling(child);
             lastChild = child;
         }
+        return child;
     }
 }
