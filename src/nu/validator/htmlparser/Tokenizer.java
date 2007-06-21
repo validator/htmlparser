@@ -2177,8 +2177,7 @@ public final class Tokenizer implements Locator {
      * @throws IOException
      * @throws SAXException
      */
-    private void commentStates() throws SAXException,
-            IOException {
+    private void commentStates() throws SAXException, IOException {
         CommentState state = CommentState.COMMENT_START_STATE;
         for (;;) {
             char c = read();
@@ -2188,43 +2187,43 @@ public final class Tokenizer implements Locator {
                      * Comment start state
                      * 
 
-                         * Consume the next input character:
+                     * Consume the next input character:
                      */
                     switch (c) {
                         case '-':
                             /*
                              * U+002D HYPHEN-MINUS (-) Switch to the comment start dash state.
-                         */
+                             */
                             state = CommentState.COMMENT_START_DASH_STATE;
                             continue;
                         case '>':
                             /* 
-                         * U+003E GREATER-THAN SIGN (>) Parse error.*/
-                            err("Degenerate comment.");
+                             * U+003E GREATER-THAN SIGN (>) Parse error.*/
+                            err("Premature end of comment.");
                             /* Emit the comment token.*/
                             emitComment();
                             /*
-                         * Switch to the data state.
-                         */
+                             * Switch to the data state.
+                             */
                             return;
-                            case '\u0000':
-                                /*
-                                 * EOF Parse error.
-                                 */
-                                err("End of file inside comment.");
-                                /* Emit the comment token. */
-                                emitComment();
-                                /*
-                                 * Reconsume the EOF character in the data state.
-                                 */
-                                unread(c);
-                                return;
-                            default:
-                                /* Anything else Append the input character to the comment token's data.*/
-                                appendToComment(c);
-                                /*
-                         * Switch to the comment state.
-                         */
+                        case '\u0000':
+                            /*
+                             * EOF Parse error.
+                             */
+                            err("End of file inside comment.");
+                            /* Emit the comment token. */
+                            emitComment();
+                            /*
+                             * Reconsume the EOF character in the data state.
+                             */
+                            unread(c);
+                            return;
+                        default:
+                            /* Anything else Append the input character to the comment token's data.*/
+                            appendToComment(c);
+                            /*
+                             * Switch to the comment state.
+                             */
                             state = CommentState.COMMENT_STATE;
                             continue;
                     }
@@ -2232,16 +2231,25 @@ public final class Tokenizer implements Locator {
                     /*
                      * Comment start dash state
                      * 
-                       * Consume the next input character:
+                     * Consume the next input character:
                      */
                     switch (c) {
                         case '-':
                             /*
                              * U+002D HYPHEN-MINUS (-) Switch to the comment end state
-                         * 
-                         * U+003E GREATER-THAN SIGN (>) Parse error. Emit the comment token.
-                         * Switch to the data state.
-                         */ 
+                             */
+                            state = CommentState.COMMENT_END_STATE;
+                            continue;
+                        case '>':
+                            /* 
+                             * U+003E GREATER-THAN SIGN (>) Parse error.*/
+                            err("Premature end of comment.");
+                            /* Emit the comment token.*/
+                            emitComment();
+                            /*
+                             * Switch to the data state.
+                             */
+                            return;
                         case '\u0000':
                             /*
                              * EOF Parse error.
@@ -2256,9 +2264,14 @@ public final class Tokenizer implements Locator {
                             return;
                         default:
                             /* Anything else Append a U+002D HYPHEN-MINUS (-) character and the
-                         * input character to the comment token's data. Switch to the comment
-                         * state.
-                         */
+                             * input character to the comment token's data. */
+                            appendToComment('-');
+                            appendToComment(c);
+                            /*Switch to the comment
+                             * state.
+                             */
+                            state = CommentState.COMMENT_STATE;
+                            continue;
                     }
                 case COMMENT_STATE:
                     /*
