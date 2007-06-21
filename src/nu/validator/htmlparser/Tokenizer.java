@@ -25,7 +25,7 @@
 /*
  * The comments following this one that use the same comment syntax as this 
  * comment are quotes from the WHATWG HTML 5 spec as of 2 June 2007 
- * amended as of June 17 2007.
+ * amended as of June 20 2007.
  * That document came with this statement:
  * "© Copyright 2004-2007 Apple Computer, Inc., Mozilla Foundation, and 
  * Opera Software ASA. You are granted a license to use, reproduce and 
@@ -99,6 +99,15 @@ public final class Tokenizer implements Locator {
      * Buffer growth parameter.
      */
     private static final int BUFFER_GROW_BY = 1024;
+
+    private static final String[] VOID_ELEMENTS = { "area", "base", "br",
+            "col", "embed", "hr", "img", "input", "link", "meta", "param" };
+
+    private static final char[] OCTYPE = "octype".toCharArray();
+
+    private static final char[] UBLIC = "ublic".toCharArray();
+
+    private static final char[] YSTEM = "ystem".toCharArray();
 
     /**
      * The token handler.
@@ -208,6 +217,8 @@ public final class Tokenizer implements Locator {
      */
     private int longStrBufLen = 0;
 
+    private char longStrBufPending = '\u0000';
+
     /**
      * The attribute holder.
      */
@@ -228,6 +239,32 @@ public final class Tokenizer implements Locator {
      */
     private boolean alreadyWarnedAboutPrivateUseCharacters;
 
+    private ContentModelFlag contentModelFlag = ContentModelFlag.PCDATA;
+
+    private boolean escapeFlag = false;
+
+    private String contentModelElement = "";
+
+    private boolean endTag;
+
+    private String tagName = null;
+
+    private String attributeName = null;
+
+    private boolean emitComments = false;
+
+    private boolean shouldAddAttributes;
+
+    private boolean inContent;
+
+    private String doctypeName;
+
+    private boolean html4;
+
+    private String publicIdentifier;
+
+    private String systemIdentifier;
+
     /**
      * Used for NFC checking if non-<code>null</code>.
      */
@@ -243,11 +280,15 @@ public final class Tokenizer implements Locator {
      */
     private XmlViolationPolicy contentNonXmlCharPolicy = XmlViolationPolicy.ALLOW;
 
+    private XmlViolationPolicy commentNonXmlPolicy;
+
     // start public API
-    
+
     /**
      * The constuctor.
-     * @param tokenHandler the handler for receiving tokens
+     * 
+     * @param tokenHandler
+     *            the handler for receiving tokens
      */
     public Tokenizer(TokenHandler tokenHandler) {
         this.tokenHandler = tokenHandler;
@@ -255,7 +296,9 @@ public final class Tokenizer implements Locator {
 
     /**
      * Turns NFC checking on or off.
-     * @param enable <code>true</code> if checking on
+     * 
+     * @param enable
+     *            <code>true</code> if checking on
      */
     public void setCheckingNormalization(boolean enable) {
         if (enable) {
@@ -269,6 +312,7 @@ public final class Tokenizer implements Locator {
 
     /**
      * Query if checking normalization.
+     * 
      * @return <code>true</code> if checking on
      */
     public boolean isCheckingNormalization() {
@@ -277,6 +321,7 @@ public final class Tokenizer implements Locator {
 
     /**
      * Sets the error handler.
+     * 
      * @see org.xml.sax.XMLReader#setErrorHandler(org.xml.sax.ErrorHandler)
      */
     public void setErrorHandler(ErrorHandler eh) {
@@ -289,10 +334,13 @@ public final class Tokenizer implements Locator {
     /**
      * Runs the tokenization. This is the main entry point.
      * 
-     * @param is the input source
-     * @throws SAXException on fatal error (if configured to treat XML violations 
-     * as fatal) or if the token handler threw
-     * @throws IOException if the stream threw
+     * @param is
+     *            the input source
+     * @throws SAXException
+     *             on fatal error (if configured to treat XML violations as
+     *             fatal) or if the token handler threw
+     * @throws IOException
+     *             if the stream threw
      */
     public void tokenize(InputSource is) throws SAXException, IOException {
         this.systemId = is.getSystemId();
@@ -337,21 +385,24 @@ public final class Tokenizer implements Locator {
             reader.close();
         }
     }
-    
+
     // For the token handler to call
     /**
      * Sets the content model flag and the associated element name.
-     * @param contentModelFlag the flag
-     * @param contentModelElement the element causing the flag to be set
+     * 
+     * @param contentModelFlag
+     *            the flag
+     * @param contentModelElement
+     *            the element causing the flag to be set
      */
     public void setContentModelFlag(ContentModelFlag contentModelFlag,
             String contentModelElement) {
         this.contentModelFlag = contentModelFlag;
         this.contentModelElement = contentModelElement;
     }
-    
+
     // start Locator impl
-    
+
     /**
      * @see org.xml.sax.Locator#getPublicId()
      */
@@ -381,9 +432,9 @@ public final class Tokenizer implements Locator {
     }
 
     // end Locator impl
-    
+
     // end public API
-    
+
     /**
      * Clears the smaller buffer.
      */
@@ -394,7 +445,8 @@ public final class Tokenizer implements Locator {
     /**
      * Appends to the smaller buffer.
      * 
-     * @param c the UTF-16 code unit to append
+     * @param c
+     *            the UTF-16 code unit to append
      */
     private void appendStrBuf(char c) {
         if (strBufLen == strBuf.length) {
@@ -407,6 +459,7 @@ public final class Tokenizer implements Locator {
 
     /**
      * The smaller buffer as a string.
+     * 
      * @return the smaller buffer as a string
      */
     private String strBufToString() {
@@ -415,7 +468,9 @@ public final class Tokenizer implements Locator {
 
     /**
      * Emits the smaller buffer as character tokens.
-     * @throws SAXException if the token handler threw
+     * 
+     * @throws SAXException
+     *             if the token handler threw
      */
     private void emitStrBuf() throws SAXException {
         if (strBufLen > 0) {
@@ -425,15 +480,17 @@ public final class Tokenizer implements Locator {
 
     /**
      * Clears the larger buffer.
-     */    
+     */
     private void clearLongStrBuf() {
         longStrBufLen = 0;
+        longStrBufPending = '\u0000';
     }
 
     /**
      * Appends to the larger buffer.
      * 
-     * @param c the UTF-16 code unit to append
+     * @param c
+     *            the UTF-16 code unit to append
      */
     private void appendLongStrBuf(char c) {
         if (longStrBufLen == longStrBuf.length) {
@@ -444,10 +501,44 @@ public final class Tokenizer implements Locator {
         }
     }
 
+    private void appendToComment(char c) throws SAXException {
+        if (longStrBufPending == '-' && c == '-') {
+            if (commentNonXmlPolicy == XmlViolationPolicy.FATAL) {
+                fatal("This document is not mappable to XML 1.0 without data loss to \u201C--\u201D in a comment.");
+            } else {
+                warn("This document is not mappable to XML 1.0 without data loss to \u201C--\u201D in a comment.");
+                if (emitComments) {
+                    if (commentNonXmlPolicy == XmlViolationPolicy.ALLOW) {
+                        appendLongStrBuf('-');
+                    } else {
+                        appendLongStrBuf('-');
+                        appendLongStrBuf(' ');
+                    }
+                }
+                longStrBufPending = '-';
+            }
+        } else {
+            if (longStrBufPending != '\u0000') {
+                if (emitComments) {
+                    appendLongStrBuf(longStrBufPending);
+                }
+                longStrBufPending = '\u0000';
+            }
+            if (c == '-') {
+                longStrBufPending = '-';
+            } else {
+                if (emitComments) {
+                    appendLongStrBuf(c);
+                }
+            }
+        }
+    }
+
     /**
      * Appends to the larger buffer.
      * 
-     * @param arr the UTF-16 code units to append
+     * @param arr
+     *            the UTF-16 code units to append
      */
     private void appendLongStrBuf(char[] arr) {
         for (int i = 0; i < arr.length; i++) {
@@ -466,22 +557,39 @@ public final class Tokenizer implements Locator {
 
     /**
      * The larger buffer as a string.
+     * 
      * @return the larger buffer as a string
      */
     private String longStrBufToString() {
+        if (longStrBufPending != '\u0000') {
+            appendLongStrBuf(longStrBufPending);
+        }
         return new String(longStrBuf, 0, longStrBufLen);
     }
 
     /**
-     * Unreads a code unit so that it is returned the next time 
+     * @throws SAXException
+     */
+    private void emitComment() throws SAXException {
+        if (emitComments) {
+            if (longStrBufPending != '\u0000') {
+                appendLongStrBuf(longStrBufPending);
+            }
+            tokenHandler.comment(longStrBuf, longStrBufLen);
+        }
+    }
+
+    /**
+     * Unreads a code unit so that it is returned the next time
      * <code>read()</code> is called.
-     * @param c the code unit to unread
+     * 
+     * @param c
+     *            the code unit to unread
      */
     private void unread(char c) {
         unreadBuffer = c;
     }
 
-    
     private char read() throws SAXException, IOException {
         for (;;) { // the loop is here for the CRLF case
             if (unreadBuffer != -1) {
@@ -549,10 +657,13 @@ public final class Tokenizer implements Locator {
                 case '\u000B':
                 case '\u000C':
                     if (inContent) {
-                        if (contentSpacePolicy == XmlViolationPolicy.ALTER_INFOSET) {
-                            c = buf[pos] = ' ';
-                        } else if (contentSpacePolicy == XmlViolationPolicy.FATAL) {
-                            fatal("Found a space character that is not legal XML 1.0 white space.");
+                        if (contentNonXmlCharPolicy == XmlViolationPolicy.FATAL) {
+                            fatal("This document is not mappable to XML 1.0 without data loss due to a character that is not a legal XML 1.0 character.");
+                        } else {
+                            if (contentNonXmlCharPolicy == XmlViolationPolicy.ALTER_INFOSET) {
+                                c = buf[pos] = ' ';
+                            }
+                            warn("This document is not mappable to XML 1.0 without data loss due to a character that is not a legal XML 1.0 character.");
                         }
                     }
                     break;
@@ -574,13 +685,13 @@ public final class Tokenizer implements Locator {
                             c = buf[pos] = '\uFFFD';
                         }
                     } else if (inContent && (c < ' ' || isNonCharacter(c))) {
-                        if (contentNonXmlCharPolicy != XmlViolationPolicy.FATAL) {
+                        if (contentNonXmlCharPolicy == XmlViolationPolicy.FATAL) {
+                            fatal("This document is not mappable to XML 1.0 without data loss due to a character that is not a legal XML 1.0 character.");
+                        } else {
                             if (contentNonXmlCharPolicy == XmlViolationPolicy.ALTER_INFOSET) {
                                 c = buf[pos] = '\uFFFD';
                             }
-                            warn("Found a character that is not a legal XML 1.0 character.");
-                        } else {
-                            fatal("Found a character that is not a legal XML 1.0 character.");
+                            warn("This document is not mappable to XML 1.0 without data loss due to a character that is not a legal XML 1.0 character.");
                         }
                     } else if (isPrivateUse(c)) {
                         warnAboutPrivateUseChar();
@@ -705,43 +816,6 @@ public final class Tokenizer implements Locator {
         }
         return null; // keep the compiler happy
     }
-
-    // = New Code = //
-
-    private static final String[] VOID_ELEMENTS = { "area", "base", "br",
-            "col", "embed", "hr", "img", "input", "link", "meta", "param" };
-
-    private static final char[] OCTYPE = "octype".toCharArray();
-
-    private static final char[] UBLIC = "ublic".toCharArray();
-
-    private static final char[] YSTEM = "ystem".toCharArray();
-
-    private ContentModelFlag contentModelFlag = ContentModelFlag.PCDATA;
-
-    private boolean escapeFlag = false;
-
-    private String contentModelElement = "";
-
-    private boolean endTag;
-
-    private String tagName = null;
-
-    private String attributeName = null;
-
-    private boolean emitComments = false;
-
-    private boolean shouldAddAttributes;
-
-    private boolean inContent;
-
-    private String doctypeName;
-
-    private boolean html4;
-
-    private String publicIdentifier;
-
-    private String systemIdentifier;
 
     private boolean currentIsVoid() {
         return Arrays.binarySearch(VOID_ELEMENTS, tagName) > -1;
@@ -1017,20 +1091,23 @@ public final class Tokenizer implements Locator {
      */
     private void closeTagOpenState() throws SAXException, IOException {
         // this can't happen in PLAINTEXT, so using not PCDATA as the condition
-        if (contentModelFlag != ContentModelFlag.PCDATA) {
+        if (contentModelFlag != ContentModelFlag.PCDATA
+                && contentModelElement != null) {
             /*
              * If the content model flag is set to the RCDATA or CDATA states
-             * then examine the next few characters. If they do not match the
-             * tag name of the last start tag token emitted (case
+             * but no start tag token has ever been emitted by this instance of
+             * the tokeniser (fragment case), or, if the content model flag is
+             * set to the RCDATA or CDATA states and the next few characters do
+             * not match the tag name of the last start tag token emitted (case
              * insensitively), or if they do but they are not immediately
-             * followed by one of the following characters: + U+0009 CHARACTER
-             * TABULATION + U+000A LINE FEED (LF) + U+000B LINE TABULATION +
-             * U+000C FORM FEED (FF) + U+0020 SPACE + U+003E GREATER-THAN SIGN
-             * (>) + U+002F SOLIDUS (/) + U+003C LESS-THAN SIGN (<) + EOF
+             * followed by one of the following characters:
+             *  + U+0009 CHARACTER TABULATION + U+000A LINE FEED (LF) + U+000B
+             * LINE TABULATION + U+000C FORM FEED (FF) + U+0020 SPACE + U+003E
+             * GREATER-THAN SIGN (>) + U+002F SOLIDUS (/) + EOF
              * 
-             * ...then there is a parse error. Emit a U+003C LESS-THAN SIGN
-             * character token, a U+002F SOLIDUS character token, and reconsume
-             * the current input character in the data state.
+             * ...then emit a U+003C LESS-THAN SIGN character token, a U+002F
+             * SOLIDUS character token, and switch to the data state to process
+             * the next input character.
              */
             // Let's implement the above without lookahead. strBuf holds
             // characters that need to be emitted if looking for an end tag
@@ -1045,11 +1122,19 @@ public final class Tokenizer implements Locator {
                     folded += 0x20;
                 }
                 if (folded != e) {
-                    err((contentModelFlag == ContentModelFlag.CDATA ? "CDATA"
-                            : "RCDATA")
-                            + " element \u201C"
-                            + contentModelElement
-                            + "\u201D contained the string \u201C</\u201D, but it was not the start of the end tag.");
+                    if (html4) {
+                        err((contentModelFlag == ContentModelFlag.CDATA ? "CDATA"
+                                : "RCDATA")
+                                + " element \u201C"
+                                + contentModelElement
+                                + "\u201D contained the string \u201C</\u201D, but it was not the start of the end tag. (HTML4-only error)");
+                    } else {
+                        warn((contentModelFlag == ContentModelFlag.CDATA ? "CDATA"
+                                : "RCDATA")
+                                + " element \u201C"
+                                + contentModelElement
+                                + "\u201D contained the string \u201C</\u201D, but this did not close the element.");
+                    }
                     tokenHandler.characters(LT_SOLIDUS, 0, 2);
                     emitStrBuf();
                     unread(c);
@@ -1103,11 +1188,19 @@ public final class Tokenizer implements Locator {
                     beforeAttributeNameState();
                     return;
                 default:
-                    err((contentModelFlag == ContentModelFlag.CDATA ? "CDATA"
-                            : "RCDATA")
-                            + " element \u201C"
-                            + contentModelElement
-                            + "\u201D contained the string \u201C</\u201D, but it was not the start of the end tag.");
+                    if (html4) {
+                        err((contentModelFlag == ContentModelFlag.CDATA ? "CDATA"
+                                : "RCDATA")
+                                + " element \u201C"
+                                + contentModelElement
+                                + "\u201D contained the string \u201C</\u201D, but it was not the start of the end tag. (HTML4-only error)");
+                    } else {
+                        warn((contentModelFlag == ContentModelFlag.CDATA ? "CDATA"
+                                : "RCDATA")
+                                + " element \u201C"
+                                + contentModelElement
+                                + "\u201D contained the string \u201C</\u201D, but this did not close the element.");
+                    }
                     tokenHandler.characters(LT_SOLIDUS, 0, 2);
                     emitStrBuf();
                     return;
@@ -1990,36 +2083,19 @@ public final class Tokenizer implements Locator {
          * 
          * If the end of the file was reached, reconsume the EOF character.
          */
-        if (emitComments) {
-            // XXX figure out how to coerce to well-formed if --
-            for (;;) {
-                char c = read();
-                switch (c) {
-                    case '>':
-                        tokenHandler.comment(longStrBuf, longStrBufLen);
-                        return;
-                    case '\u0000':
-                        tokenHandler.comment(longStrBuf, longStrBufLen);
-                        unread(c);
-                        return;
-                    default:
-                        appendLongStrBuf(c);
-                }
+        for (;;) {
+            char c = read();
+            switch (c) {
+                case '>':
+                    emitComment();
+                    return;
+                case '\u0000':
+                    emitComment();
+                    unread(c);
+                    return;
+                default:
+                    appendToComment(c);
             }
-        } else {
-            // make sure to keep this else branch in sync with the previous
-            // branch
-            for (;;) {
-                char c = read();
-                switch (c) {
-                    case '>':
-                        return;
-                    case '\u0000':
-                        unread(c);
-                        return;
-                }
-            }
-
         }
     }
 
@@ -2038,7 +2114,8 @@ public final class Tokenizer implements Locator {
         /*
          * If the next two characters are both U+002D HYPHEN-MINUS (-)
          * characters, consume those two characters, create a comment token
-         * whose data is the empty string, and switch to the comment state.
+         * whose data is the empty string, and switch to the comment start
+         * state.
          * 
          * Otherwise if the next seven characters are a case-insensitive match
          * for the word "DOCTYPE", then consume those characters and switch to
@@ -2053,7 +2130,7 @@ public final class Tokenizer implements Locator {
             case '-':
                 c = read();
                 if (c == '-') {
-                    commentState();
+                    commentStates();
                     return;
                 } else {
                     err("Bogus comment.");
@@ -2090,207 +2167,228 @@ public final class Tokenizer implements Locator {
         }
     }
 
-    /**
-     * Comment state
-     * 
-     * @throws IOException
-     * @throws SAXException
-     */
-    private void commentState() throws SAXException, IOException {
-        if (emitComments) {
-            for (;;) {
-                /*
-                 * Consume the next input character:
-                 */
-                char c = read();
-                switch (c) {
-                    case '-':
-                        /*
-                         * U+002D HYPHEN-MINUS (-) Switch to the comment dash
-                         * state
-                         */
-                        if (commentDashState()) {
-                            continue;
-                        } else {
-                            return;
-                        }
-                    case '\u0000':
-                        /* EOF Parse error. */
-                        err("End of file inside comment.");
-                        /* Emit the comment token. */
-                        tokenHandler.comment(longStrBuf, longStrBufLen);
-                        /*
-                         * Reconsume the EOF character in the data state.
-                         */
-                        unread(c);
-                        return;
-                    default:
-                        /*
-                         * Anything else Append the input character to the
-                         * comment token's data.
-                         */
-                        appendLongStrBuf(c);
-                        /*
-                         * Stay in the comment state.
-                         */
-                        continue;
-                }
-            }
-        } else {
-            // make sure to keep this else branch in sync with the previous
-            // branch
-            for (;;) {
-                /*
-                 * Consume the next input character:
-                 */
-                char c = read();
-                switch (c) {
-                    case '-':
-                        /*
-                         * U+002D HYPHEN-MINUS (-) Switch to the comment dash
-                         * state
-                         */
-                        if (commentDashState()) {
-                            continue;
-                        } else {
-                            return;
-                        }
-                    case '\u0000':
-                        /* EOF Parse error. */
-                        err("End of file inside comment.");
-                        /* Emit the comment token. */
-                        tokenHandler.comment(longStrBuf, longStrBufLen);
-                        /*
-                         * Reconsume the EOF character in the data state.
-                         */
-                        unread(c);
-                        return;
-                    default:
-                        /*
-                         * Anything else Append the input character to the
-                         * comment token's data.
-                         */
-                        // not buffering the comment
-                        /*
-                         * Stay in the comment state.
-                         */
-                        continue;
-                }
-            }
-        }
+    private enum CommentState {
+        COMMENT_START_STATE, COMMENT_START_DASH_STATE, COMMENT_STATE, COMMENT_END_DASH_STATE, COMMENT_END_STATE
     }
 
     /**
-     * Comment dash state
-     * 
-     * @throws SAXException
-     * @throws IOException
-     */
-    private boolean commentDashState() throws SAXException, IOException {
-        /*
-         * Consume the next input character:
-         */
-        char c = read();
-        switch (c) {
-            case '-':
-                /*
-                 * U+002D HYPHEN-MINUS (-) Switch to the comment end state
-                 */
-                return commentEndState();
-            case '\u0000':
-                /* EOF Parse error. */
-                err("End of file inside comment.");
-                /* Emit the comment token. */
-                if (emitComments) {
-                    tokenHandler.comment(longStrBuf, longStrBufLen);
-                }
-                /*
-                 * Reconsume the EOF character in the data state.
-                 */
-                unread(c);
-                return false;
-            default:
-                /*
-                 * Anything else Append a U+002D HYPHEN-MINUS (-) character and
-                 * the input character to the comment token's data. Switch to
-                 * the comment state.
-                 */
-                if (emitComments) {
-                    appendLongStrBuf('-');
-                    appendLongStrBuf(c);
-                }
-                return true;
-        }
-    }
-
-    /**
-     * Comment end state
+     * Comment start state, Comment start dash state, Comment state, Comment end dash state and Comment end state
      * 
      * @throws IOException
      * @throws SAXException
      */
-    private boolean commentEndState() throws SAXException, IOException {
+    private void commentStates() throws SAXException,
+            IOException {
+        CommentState state = CommentState.COMMENT_START_STATE;
         for (;;) {
-            /*
-             * Consume the next input character:
-             */
             char c = read();
-            switch (c) {
-                case '>':
-                    /* U+003E GREATER-THAN SIGN (>) Emit the comment token. */
-                    if (emitComments) {
-                        tokenHandler.comment(longStrBuf, longStrBufLen);
+            switch (state) {
+                case COMMENT_START_STATE:
+                    /*
+                     * Comment start state
+                     * 
+
+                         * Consume the next input character:
+                     */
+                    switch (c) {
+                        case '-':
+                            /*
+                             * U+002D HYPHEN-MINUS (-) Switch to the comment start dash state.
+                         */
+                            state = CommentState.COMMENT_START_DASH_STATE;
+                            continue;
+                        case '>':
+                            /* 
+                         * U+003E GREATER-THAN SIGN (>) Parse error.*/
+                            err("Degenerate comment.");
+                            /* Emit the comment token.*/
+                            emitComment();
+                            /*
+                         * Switch to the data state.
+                         */
+                            return;
+                            case '\u0000':
+                                /*
+                                 * EOF Parse error.
+                                 */
+                                err("End of file inside comment.");
+                                /* Emit the comment token. */
+                                emitComment();
+                                /*
+                                 * Reconsume the EOF character in the data state.
+                                 */
+                                unread(c);
+                                return;
+                            default:
+                                /* Anything else Append the input character to the comment token's data.*/
+                                appendToComment(c);
+                                /*
+                         * Switch to the comment state.
+                         */
+                            state = CommentState.COMMENT_STATE;
+                            continue;
                     }
+                case COMMENT_START_DASH_STATE:
                     /*
-                     * Switch to the data state.
+                     * Comment start dash state
+                     * 
+                       * Consume the next input character:
                      */
-                    return false;
-                case '-':
-                    /*
-                     * U+002D HYPHEN-MINUS (-) Parse error.
-                     */
-                    err("Expected \u201C-->\u201D but saw \u201C---\u201D.");
-                    /*
-                     * Append a U+002D HYPHEN-MINUS (-) character to the comment
-                     * token's data.
-                     */
-                    if (emitComments) {
-                        appendLongStrBuf('-');
+                    switch (c) {
+                        case '-':
+                            /*
+                             * U+002D HYPHEN-MINUS (-) Switch to the comment end state
+                         * 
+                         * U+003E GREATER-THAN SIGN (>) Parse error. Emit the comment token.
+                         * Switch to the data state.
+                         */ 
+                        case '\u0000':
+                            /*
+                             * EOF Parse error.
+                             */
+                            err("End of file inside comment.");
+                            /* Emit the comment token. */
+                            emitComment();
+                            /*
+                             * Reconsume the EOF character in the data state.
+                             */
+                            unread(c);
+                            return;
+                        default:
+                            /* Anything else Append a U+002D HYPHEN-MINUS (-) character and the
+                         * input character to the comment token's data. Switch to the comment
+                         * state.
+                         */
                     }
+                case COMMENT_STATE:
                     /*
-                     * Stay in the comment end state.
+                     * Comment state Consume the next input character:
                      */
-                    continue;
-                case '\u0000':
-                    /* EOF Parse error. */
-                    err("End of file inside comment.");
-                    /* Emit the comment token. */
-                    if (emitComments) {
-                        tokenHandler.comment(longStrBuf, longStrBufLen);
+                    switch (c) {
+                        case '-':
+                            /*
+                             * U+002D HYPHEN-MINUS (-) Switch to the comment end
+                             * dash state
+                             */
+                            state = CommentState.COMMENT_END_DASH_STATE;
+                            continue;
+                        case '\u0000':
+                            /*
+                             * EOF Parse error.
+                             */
+                            err("End of file inside comment.");
+                            /* Emit the comment token. */
+                            emitComment();
+                            /*
+                             * Reconsume the EOF character in the data state.
+                             */
+                            unread(c);
+                            return;
+                        default:
+                            /*
+                             * Anything else Append the input character to the
+                             * comment token's data.
+                             */
+                            appendToComment(c);
+                            /*
+                             * Stay in the comment state.
+                             */
+                            continue;
                     }
+                case COMMENT_END_DASH_STATE:
                     /*
-                     * Reconsume the EOF character in the data state.
+                     * Comment end dash state Consume the next input character:
                      */
-                    unread(c);
-                    return false;
-                default:
-                    /*
-                     * Anything else Parse error.
-                     */
-                    err("Saw \u201C--\u201D but the comment did not end.");
-                    /*
-                     * Append two U+002D HYPHEN-MINUS (-) characters and the
-                     * input character to the comment token's data.
-                     */
-                    if (emitComments) {
-                        appendLongStrBuf('-');
-                        appendLongStrBuf('-');
-                        appendLongStrBuf(c);
+                    switch (c) {
+                        case '-':
+                            /*
+                             * U+002D HYPHEN-MINUS (-) Switch to the comment end
+                             * state
+                             */
+                            state = CommentState.COMMENT_END_STATE;
+                            continue;
+                        case '\u0000':
+                            /*
+                             * EOF Parse error.
+                             */
+                            err("End of file inside comment.");
+                            /* Emit the comment token. */
+                            emitComment();
+                            /*
+                             * Reconsume the EOF character in the data state.
+                             */
+                            unread(c);
+                            return;
+                        default:
+                            /*
+                             * Anything else Append a U+002D HYPHEN-MINUS (-)
+                             * character and the input character to the comment
+                             * token's data.
+                             */
+                            appendToComment('-');
+                            appendToComment(c);
+                            /*
+                             * Switch to the comment state.
+                             */
+                            state = CommentState.COMMENT_STATE;
+                            continue;
                     }
+                case COMMENT_END_STATE:
                     /*
-                     * Switch to the comment state.
+                     * Comment end dash state Consume the next input character:
                      */
-                    return true;
+                    switch (c) {
+                        case '>':
+                            /*
+                             * U+003E GREATER-THAN SIGN (>) Emit the comment
+                             * token.
+                             */
+                            emitComment();
+                            /*
+                             * Switch to the data state.
+                             */
+                            return;
+                        case '-':
+                            /* U+002D HYPHEN-MINUS (-) Parse error. */
+                            err("Consecutive hyphens did not terminate a comment.");
+                            /*
+                             * Append a U+002D HYPHEN-MINUS (-) character to the
+                             * comment token's data.
+                             */
+                            appendToComment('-');
+                            /*
+                             * Stay in the comment end state.
+                             */
+                            continue;
+                        case '\u0000':
+                            /*
+                             * EOF Parse error.
+                             */
+                            err("End of file inside comment.");
+                            /* Emit the comment token. */
+                            emitComment();
+                            /*
+                             * Reconsume the EOF character in the data state.
+                             */
+                            unread(c);
+                            return;
+                        default:
+                            /*
+                             * Anything else Parse error.
+                             */
+                            err("Consecutive hyphens did not terminate a comment.");
+                            /*
+                             * Append two U+002D HYPHEN-MINUS (-) characters and
+                             * the input character to the comment token's data.
+                             */
+                            appendToComment('-');
+                            appendToComment('-');
+                            /*
+                             * Switch to the comment state.
+                             */
+                            state = CommentState.COMMENT_STATE;
+                            continue;
+                    }
             }
         }
     }

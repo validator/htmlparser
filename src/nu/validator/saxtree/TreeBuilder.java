@@ -19,6 +19,10 @@ public class TreeBuilder implements ContentHandler, LexicalHandler {
 
     private List<PrefixMapping> prefixMappings;
     
+    public TreeBuilder() {
+        this(false, false);
+    }
+    
     /**
      * 
      */
@@ -106,5 +110,14 @@ public class TreeBuilder implements ContentHandler, LexicalHandler {
 
     public void startEntity(String name) throws SAXException {
         current = (ParentNode) current.appendChild(new Entity(locator, name));        
+    }
+
+    /**
+     * Returns the root.
+     * 
+     * @return the current
+     */
+    public ParentNode getRoot() {
+        return current;
     }
 }
