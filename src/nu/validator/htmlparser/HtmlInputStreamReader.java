@@ -111,9 +111,10 @@ public class HtmlInputStreamReader extends Reader implements ByteReadable,
         this.decoder = decoder;
         this.sniffing = false;
         position = 0;
-        bytesRead = limit;
+        bytesRead = 0;
         byteBuffer.position(position);
-        byteBuffer.limit(limit);
+        byteBuffer.limit(byteArray.length);
+        shouldReadBytes = true;
         initDecoder();
     }
 
@@ -176,7 +177,7 @@ public class HtmlInputStreamReader extends Reader implements ByteReadable,
                 // Decoder will remember surrogates
                 return charBuffer.position();
             } else if (cr == CoderResult.UNDERFLOW) {
-                // If the buffer was not fully consumed, there's an
+                // If the buffer was not fully consumed, there may be an
                 // incomplete byte sequence that needs to seed the next
                 // buffer.
                 int remaining = byteBuffer.remaining();

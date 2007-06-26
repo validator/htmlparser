@@ -6,7 +6,7 @@
 
 HTML 5
 
-Working Draft — 17 June 2007
+Working Draft — 20 June 2007
 
    < 8.2. Parsing HTML documents – Table of contents – 8.2.4. Tree
    construction >
@@ -173,10 +173,12 @@ Working Draft — 17 June 2007
 
    Close tag open state
           If the content model flag is set to the RCDATA or CDATA states
-          then examine the next few characters. If they do not match the
-          tag name of the last start tag token emitted (case
-          insensitively), or if they do but they are not immediately
-          followed by one of the following characters:
+          but no start tag token has ever been emitted by this instance
+          of the tokeniser (fragment case), or, if the content model flag
+          is set to the RCDATA or CDATA states and the next few
+          characters do not match the tag name of the last start tag
+          token emitted (case insensitively), or if they do but they are
+          not immediately followed by one of the following characters:
 
           + U+0009 CHARACTER TABULATION
           + U+000A LINE FEED (LF)
@@ -187,9 +189,9 @@ Working Draft — 17 June 2007
           + U+002F SOLIDUS (/)
           + EOF
 
-          ...then there is a parse error. Emit a U+003C LESS-THAN SIGN
-          character token, a U+002F SOLIDUS character token, and switch
-          to the data state to process the next input character.
+          ...then emit a U+003C LESS-THAN SIGN character token, a U+002F
+          SOLIDUS character token, and switch to the data state to
+          process the next input character.
 
           Otherwise, if the content model flag is set to the PCDATA
           state, or if the next few characters do match that tag name,
@@ -392,6 +394,10 @@ Working Draft — 17 June 2007
         U+003E GREATER-THAN SIGN (>)
                 Emit the current tag token. Switch to the data state.
 
+        EOF
+                Parse error. Emit the current tag token. Reconsume the
+                character in the data state.
+
         Anything else
                 Append the current input character to the current
                 attribute's value. Switch to the attribute value
@@ -449,6 +455,10 @@ Working Draft — 17 June 2007
         U+003E GREATER-THAN SIGN (>)
                 Emit the current tag token. Switch to the data state.
 
+        EOF
+                Parse error. Emit the current tag token. Reconsume the
+                character in the data state.
+
         Anything else
                 Append the current input character to the current
                 attribute's value. Stay in the attribute value (unquoted)
@@ -492,7 +502,7 @@ Working Draft — 17 June 2007
           If the next two characters are both U+002D HYPHEN-MINUS (-)
           characters, consume those two characters, create a comment
           token whose data is the empty string, and switch to the comment
-          state.
+          start state.
 
           Otherwise if the next seven characters are a case-insensitive
           match for the word "DOCTYPE", then consume those characters and
@@ -502,11 +512,48 @@ Working Draft — 17 June 2007
           state. The next character that is consumed, if any, is the
           first character that will be in the comment.
 
+   Comment start state
+          Consume the next input character:
+
+        U+002D HYPHEN-MINUS (-)
+                Switch to the comment start dash state.
+
+        U+003E GREATER-THAN SIGN (>)
+                Parse error. Emit the comment token. Switch to the data
+                state.
+
+        EOF
+                Parse error. Emit the comment token. Reconsume the EOF
+                character in the data state.
+
+        Anything else
+                Append the input character to the comment token's data.
+                Switch to the comment state.
+
+   Comment start dash state
+          Consume the next input character:
+
+        U+002D HYPHEN-MINUS (-)
+                Switch to the comment end state
+
+        U+003E GREATER-THAN SIGN (>)
+                Parse error. Emit the comment token. Switch to the data
+                state.
+
+        EOF
+                Parse error. Emit the comment token. Reconsume the EOF
+                character in the data state.
+
+        Anything else
+                Append a U+002D HYPHEN-MINUS (-) character and the input
+                character to the comment token's data. Switch to the
+                comment state.
+
    Comment state
           Consume the next input character:
 
         U+002D HYPHEN-MINUS (-)
-                Switch to the comment dash state
+                Switch to the comment end dash state
 
         EOF
                 Parse error. Emit the comment token. Reconsume the EOF
@@ -516,7 +563,7 @@ Working Draft — 17 June 2007
                 Append the input character to the comment token's data.
                 Stay in the comment state.
 
-   Comment dash state
+   Comment end dash state
           Consume the next input character:
 
         U+002D HYPHEN-MINUS (-)
