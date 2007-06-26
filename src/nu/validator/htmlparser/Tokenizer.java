@@ -55,8 +55,12 @@ import fi.iki.hsivonen.io.EncodingInfo;
 import fi.iki.hsivonen.xml.EmptyAttributes;
 
 /**
- * WARNING: This parser is incomplete. It does not perform tag inference, yet.
- * It does not yet perform case folding for attribute value like method="POST".
+ * An implementatition of 
+ * http://www.whatwg.org/specs/web-apps/current-work/multipage/section-tokenisation.html
+ * 
+ * This class implements the <code>Locator</code> interface. This is not an 
+ * incidental implementation detail: Users of this class are encouraged to make 
+ * use of the <code>Locator</code> nature.
  * 
  * @version $Id$
  * @author hsivonen
@@ -96,17 +100,34 @@ public final class Tokenizer implements Locator {
     private static final char[] SPACE = { ' ' };
 
     /**
+     * Array version of line feed.
+     */
+    private static final char[] LF = { '\n' };
+
+    /**
      * Buffer growth parameter.
      */
     private static final int BUFFER_GROW_BY = 1024;
 
+    /**
+     * Lexically sorted void element names
+     */
     private static final String[] VOID_ELEMENTS = { "area", "base", "br",
             "col", "embed", "hr", "img", "input", "link", "meta", "param" };
 
+    /**
+     * "octype" as <code>char[]</code>
+     */
     private static final char[] OCTYPE = "octype".toCharArray();
 
+    /**
+     * "ublic" as <code>char[]</code>
+     */
     private static final char[] UBLIC = "ublic".toCharArray();
 
+    /**
+     * "ystem" as <code>char[]</code>
+     */
     private static final char[] YSTEM = "ystem".toCharArray();
 
     /**
@@ -217,6 +238,9 @@ public final class Tokenizer implements Locator {
      */
     private int longStrBufLen = 0;
 
+    /**
+     * If not U+0000, a pending code unit to be appended to <code>longStrBuf</code>.
+     */
     private char longStrBufPending = '\u0000';
 
     /**
@@ -239,30 +263,69 @@ public final class Tokenizer implements Locator {
      */
     private boolean alreadyWarnedAboutPrivateUseCharacters;
 
+    /**
+     * http://www.whatwg.org/specs/web-apps/current-work/#content2
+     */
     private ContentModelFlag contentModelFlag = ContentModelFlag.PCDATA;
 
+    /**
+     * http://www.whatwg.org/specs/web-apps/current-work/#escape
+     */
     private boolean escapeFlag = false;
 
+    /**
+     * The element whose end tag closes the current CDATA or RCDATA element.
+     */
     private String contentModelElement = "";
 
+    /**
+     * <code>true</code> if tokenizing an end tag
+     */
     private boolean endTag;
 
+    /**
+     * The current tag token name.
+     */
     private String tagName = null;
 
+    /**
+     * The current attribute name.
+     */
     private String attributeName = null;
 
+    /**
+     * Whether comment tokens are emitted.
+     */
     private boolean emitComments = false;
 
+    /**
+     * If <code>false</code>, <code>addAttribute*()</code> are no-ops.
+     */
     private boolean shouldAddAttributes;
 
+    /**
+     * <code>true</code> when in text content or in attribute value.
+     */
     private boolean inContent;
 
-    private String doctypeName;
-
+    /**
+     * <code>true</code> when HTML4-specific additional errors are requested.
+     */
     private boolean html4;
 
+    /**
+     * The name of the current doctype token.
+     */
+    private String doctypeName;
+
+    /**
+     * The public id of the current doctype token.
+     */
     private String publicIdentifier;
 
+    /**
+     * The system id of the current doctype token.
+     */
     private String systemIdentifier;
 
     /**
@@ -280,7 +343,10 @@ public final class Tokenizer implements Locator {
      */
     private XmlViolationPolicy contentNonXmlCharPolicy = XmlViolationPolicy.ALLOW;
 
-    private XmlViolationPolicy commentNonXmlPolicy;
+    /**
+     * The policy for comments.
+     */
+    private XmlViolationPolicy commentPolicy = XmlViolationPolicy.ALLOW;
 
     // start public API
 
@@ -503,12 +569,12 @@ public final class Tokenizer implements Locator {
 
     private void appendToComment(char c) throws SAXException {
         if (longStrBufPending == '-' && c == '-') {
-            if (commentNonXmlPolicy == XmlViolationPolicy.FATAL) {
+            if (commentPolicy == XmlViolationPolicy.FATAL) {
                 fatal("This document is not mappable to XML 1.0 without data loss to \u201C--\u201D in a comment.");
             } else {
                 warn("This document is not mappable to XML 1.0 without data loss to \u201C--\u201D in a comment.");
                 if (emitComments) {
-                    if (commentNonXmlPolicy == XmlViolationPolicy.ALLOW) {
+                    if (commentPolicy == XmlViolationPolicy.ALLOW) {
                         appendLongStrBuf('-');
                     } else {
                         appendLongStrBuf('-');
@@ -3507,6 +3573,10 @@ public final class Tokenizer implements Locator {
              */
             char[] val = Entities.WINDOWS_1252[value - 0x80];
             emitOrAppend(val, inAttribute);
+            return;
+        } else if (value == 0x0D) {
+            err("A numeric character reference expanded to carriage return.");
+            emitOrAppend(LF, inAttribute);
             return;
         } else if (value == 0) {
             /*
