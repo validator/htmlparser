@@ -3414,9 +3414,13 @@ public final class Tokenizer implements Locator {
                 int lo = 0;
                 int hi = (Entities.NAMES.length - 1);
                 int candidate = -1;
+                int strBufMark = 0;
                 outer: for (;;) {
                     entCol++;
                     c = read();
+                    if (entCol == 3) {
+                        int foo = 0;
+                    }
                     /*
                      * Anything else Consume the maximum number of characters
                      * possible, with the consumed characters case-sensitively
@@ -3431,7 +3435,6 @@ public final class Tokenizer implements Locator {
                             break hiloop;
                         }
                         if (entCol > Entities.NAMES[hi].length()) {
-                            unread(c);
                             break outer;
                         } else if (c < Entities.NAMES[hi].charAt(entCol)) {
                             hi--;
@@ -3442,12 +3445,11 @@ public final class Tokenizer implements Locator {
 
                     loloop: for (;;) {
                         if (hi < lo) {
-                            unread(c);
                             break outer;
                         }
                         if (entCol == Entities.NAMES[lo].length()) {
                             candidate = lo;
-                            clearStrBuf();
+                            strBufMark = strBufLen;
                             lo++;
                         } else if (entCol > Entities.NAMES[lo].length()) {
                             break outer;
@@ -3457,9 +3459,12 @@ public final class Tokenizer implements Locator {
                             break loloop;
                         }
                     }
-
+                    if (hi < lo) {
+                        break outer;
+                    }
                     appendStrBuf(c);
                 }
+                unread(c);
                 // TODO warn about apos (IE) and TRADE (Opera)
                 if (candidate == -1) {
                     /* If no match can be made, then this is a parse error. */
@@ -3509,6 +3514,16 @@ public final class Tokenizer implements Locator {
                      */
                     char[] val = Entities.VALUES[candidate];
                     emitOrAppend(val, inAttribute);
+                    // this is so complicated!
+                    if (strBufMark < strBufLen) {
+                        if (inAttribute) {
+                            for (int i = strBufMark; i < strBufLen; i++) {
+                                appendLongStrBuf(strBuf[i]);
+                            }
+                        } else {
+                            tokenHandler.characters(strBuf, strBufMark, strBufLen - strBufMark);
+                        }
+                    }
                     return;
                     /*
                      * If the markup contains I'm &notit; I tell you, the entity is
