@@ -6,7 +6,7 @@
 
 HTML 5
 
-Working Draft — 20 June 2007
+Working Draft — 23 June 2007
 
    < 8.2. Parsing HTML documents – Table of contents – 8.2.4. Tree
    construction >
@@ -51,6 +51,12 @@ Working Draft — 20 June 2007
 
    When an end tag token is emitted with attributes, that is a parse
    error.
+
+   A permitted slash is a U+002F SOLIDUS character that is immediately
+   followed by a U+003E GREATER-THAN SIGN, if, and only if, the current
+   token being processed is a start tag token whose tag name is one of
+   the following: base, link, meta, hr, br, img, embed, param, area, col,
+   input
 
    Before each step of the tokeniser, the user agent may check to see if
    either one of the scripts in the list of scripts that will execute as
@@ -126,12 +132,11 @@ Working Draft — 20 June 2007
           The behaviour of this state depends on the content model flag.
 
         If the content model flag is set to the RCDATA or CDATA states
-                If the next input character is a U+002F SOLIDUS (/)
-                character, consume it and switch to the close tag open
-                state. If the next input character is not a U+002F
-                SOLIDUS (/) character, emit a U+003C LESS-THAN SIGN
-                character token and switch to the data state to process
-                the next input character.
+                Consume the next input character. If it is a U+002F
+                SOLIDUS (/) character, switch to the close tag open
+                state. Otherwise, emit a U+003C LESS-THAN SIGN character
+                token and reconsume the current input character in the
+                data state.
 
         If the content model flag is set to the PCDATA state
                 Consume the next input character:
@@ -651,8 +656,9 @@ Working Draft — 20 June 2007
                 Emit the current DOCTYPE token. Switch to the data state.
 
         EOF
-                Parse error. Emit the current DOCTYPE token. Reconsume
-                the EOF character in the data state.
+                Parse error. Set the DOCTYPE token's correctness flag to
+                incorrect. Emit that DOCTYPE token. Reconsume the EOF
+                character in the data state.
 
         Anything else
                 Append the current input character to the current DOCTYPE
@@ -672,8 +678,9 @@ Working Draft — 20 June 2007
                 Emit the current DOCTYPE token. Switch to the data state.
 
         EOF
-                Parse error. Emit the current DOCTYPE token. Reconsume
-                the EOF character in the data state.
+                Parse error. Set the DOCTYPE token's correctness flag to
+                incorrect. Emit that DOCTYPE token. Reconsume the EOF
+                character in the data state.
 
         Anything else
                 If the next six characters are a case-insensitive match
@@ -885,12 +892,6 @@ Working Draft — 20 June 2007
         Anything else
                 Stay in the bogus DOCTYPE state.
 
-   A permitted slash is a U+002F SOLIDUS character that is immediately
-   followed by a U+003E GREATER-THAN SIGN, if, and only if, the current
-   token being processed is a start tag token whose tag name is one of
-   the following: base, link, meta, hr, br, img, embed, param, area, col,
-   input
-
       8.2.3.1. Tokenising entities
 
    This section defines how to consume an entity. This definition is used
@@ -898,6 +899,17 @@ Working Draft — 20 June 2007
 
    The behaviour depends on the identity of the next character (the one
    immediately after the U+0026 AMPERSAND character):
+
+   U+0009 CHARACTER TABULATION
+   U+000A LINE FEED (LF)
+   U+000B LINE TABULATION
+   U+000C FORM FEED (FF)
+   U+0020 SPACE
+   U+003C LESS-THAN SIGN
+   U+0026 AMPERSAND
+   EOF
+          Not an entity. No characters are consumed, and nothing is
+          returned. (This is not an error, either.)
 
    U+0023 NUMBER SIGN (#)
           Consume the U+0023 NUMBER SIGN.
@@ -941,13 +953,14 @@ Working Draft — 20 June 2007
           and interpret the string of characters as a number (either
           hexadecimal or decimal as appropriate).
 
-          If that number is in the range 128 to 159 (0x80 to 0x9F), then
-          this is a parse error. In the following table, find the row
-          with that number in the first column, and return a character
-          token for the Unicode character given in the second column of
-          that row.
+          If that number is one of the numbers in the first column of the
+          following table, then this is a parse error. Find the row with
+          that number in the first column, and return a character token
+          for the Unicode character given in the second column of that
+          row.
 
           Number                   Unicode character
+          0x0D   U+000A LINE FEED (LF)
           0x80   U+20AC EURO SIGN ('€')
           0x81   U+FFFD REPLACEMENT CHARACTER
           0x82   U+201A SINGLE LOW-9 QUOTATION MARK ('‚')
@@ -981,10 +994,11 @@ Working Draft — 20 June 2007
           0x9E   U+017E LATIN SMALL LETTER Z WITH CARON ('ž')
           0x9F   U+0178 LATIN CAPITAL LETTER Y WITH DIAERESIS ('Ÿ')
 
-          Otherwise, if the number is not a valid Unicode character (e.g.
-          if the number is higher than 1114111), or if the number is
-          zero, then return a character token for the U+FFFD REPLACEMENT
-          CHARACTER character instead.
+          Otherwise, if the number is zero, if the number is higher than
+          0x10FFFF, or if it's one of the surrogate characters
+          (characters in the range 0xD800 to 0xDFFF), then this is a
+          parse error; return a character token for the U+FFFD
+          REPLACEMENT CHARACTER character instead.
 
           Otherwise, return a character token for the Unicode character
           whose code point is that number.
@@ -997,18 +1011,23 @@ Working Draft — 20 June 2007
           If no match can be made, then this is a parse error. No
           characters are consumed, and nothing is returned.
 
-          Otherwise, if the next character is a U+003B SEMICOLON, consume
-          that too. If it isn't, there is a parse error.
+          If the last character matched is not a U+003B SEMICOLON (;),
+          there is a parse error.
 
-          Return a character token for the character corresponding to the
-          entity name (as given by the second column of the entities
-          table).
+          If the entity is being consumed as part of an attribute, and
+          the last character matched is not a U+003B SEMICOLON (;), and
+          the next character is in the range U+0030 DIGIT ZERO to U+0039
+          DIGIT NINE, U+0041 LATIN CAPITAL LETTER A to U+005A LATIN
+          CAPITAL LETTER Z, or U+0061 LATIN SMALL LETTER A to U+007A
+          LATIN SMALL LETTER Z, then, for historical reasons, all the
+          characters that were matched after the U+0026 AMPERSAND (&)
+          must be unconsumed, and nothing is returned.
+
+          Otherwise, return a character token for the character
+          corresponding to the entity name (as given by the second column
+          of the entities table).
 
           If the markup contains I'm &notit; I tell you, the entity is
           parsed as "not", as in, I'm ¬it; I tell you. But if the markup
           was I'm &notin; I tell you, the entity would be parsed as
           "notin;", resulting in I'm ∉ I tell you.
-
-   It seems browsers convert CRs to LFs even as entities. Should we also
-   do that? If so, we should remove the CRs in the tree construction
-   phase.
