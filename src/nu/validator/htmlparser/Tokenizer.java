@@ -568,6 +568,13 @@ public final class Tokenizer implements Locator {
         }
     }
 
+    /**
+     * Appends to the larger buffer when it is used to buffer a comment. Checks for 
+     * two consecutive hyphens.
+     * 
+     * @param c the UTF-16 code unit to append
+     * @throws SAXException
+     */
     private void appendToComment(char c) throws SAXException {
         if (longStrBufPending == '-' && c == '-') {
             if (commentPolicy == XmlViolationPolicy.FATAL) {
@@ -657,6 +664,13 @@ public final class Tokenizer implements Locator {
         unreadBuffer = c;
     }
 
+    /**
+     * Reads the next UTF-16 code unit.
+     * 
+     * @return
+     * @throws SAXException
+     * @throws IOException
+     */
     private char read() throws SAXException, IOException {
         for (;;) { // the loop is here for the CRLF case
             if (unreadBuffer != -1) {
@@ -774,6 +788,10 @@ public final class Tokenizer implements Locator {
         }
     }
 
+    /**
+     * Emits a warning about private use characters if the warning has not been emitted yet.
+     * @throws SAXException
+     */
     private void warnAboutPrivateUseChar() throws SAXException {
         if (!alreadyWarnedAboutPrivateUseCharacters) {
             warn("Document uses the Unicode Private Use Area(s), which should not be used in publicly exchanged documents. (Charmod C073)");
@@ -781,17 +799,28 @@ public final class Tokenizer implements Locator {
         }
     }
 
+    /**
+     * Tells if the argument is a BMP PUA character.
+     * @param c
+     * @return
+     */
     private boolean isPrivateUse(char c) {
         return c >= '\uE000' && c <= '\uF8FF';
     }
 
+    /**
+     * Tells if the argument is an astral PUA character.
+     * @param c
+     * @return
+     */
     private boolean isAstralPrivateUse(int c) {
         return (c >= 0xF0000 && c <= 0xFFFFD)
                 || (c >= 0x100000 && c <= 0x10FFFD);
     }
 
     /**
-     * @param intVal
+     * Tells if the argument is a non-character (works for BMP and astral).
+     * @param c
      * @return
      */
     private boolean isNonCharacter(int c) {
