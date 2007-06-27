@@ -46,6 +46,15 @@ public abstract class ParentNode extends Node {
     }
 
     /**
+     * Copies the endLocator from another node.
+     * 
+     * @param another the another node
+     */
+    public void copyEndLocator(ParentNode another) {
+        this.endLocator = another.endLocator;
+    }
+    
+    /**
      * Returns the firstChild.
      * 
      * @return the firstChild
