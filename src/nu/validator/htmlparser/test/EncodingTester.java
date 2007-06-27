@@ -33,7 +33,7 @@ public class EncodingTester {
         }
         UntilHashInputStream stream = new UntilHashInputStream(aggregateStream);
         HtmlInputStreamReader reader = new HtmlInputStreamReader(stream, null,
-                null);
+                null, null);
         Charset charset = reader.getCharset();
         stream.close();
         if (skipLabel()) {

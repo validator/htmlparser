@@ -25,6 +25,8 @@ public class HtmlInputStreamReader extends Reader implements ByteReadable,
     private final ErrorHandler errorHandler;
 
     private final Locator locator;
+    
+    private final Tokenizer tokenizer;
 
     private CharsetDecoder decoder = null;
 
@@ -66,11 +68,12 @@ public class HtmlInputStreamReader extends Reader implements ByteReadable,
      * @throws SAXException
      */
     public HtmlInputStreamReader(InputStream inputStream,
-            ErrorHandler errorHandler, Locator locator) throws SAXException,
+            ErrorHandler errorHandler, Locator locator, Tokenizer tokenizer) throws SAXException,
             IOException {
         this.inputStream = inputStream;
         this.errorHandler = errorHandler;
         this.locator = locator;
+        this.tokenizer = tokenizer;
         this.sniffing = true;
         this.decoder = (new BomSniffer(this)).sniff();
         if (this.decoder == null) {
@@ -103,11 +106,12 @@ public class HtmlInputStreamReader extends Reader implements ByteReadable,
     }
 
     public HtmlInputStreamReader(InputStream inputStream,
-            ErrorHandler errorHandler, Locator locator, CharsetDecoder decoder) throws SAXException,
+            ErrorHandler errorHandler, Locator locator, Tokenizer tokenizer, CharsetDecoder decoder) throws SAXException,
             IOException {
         this.inputStream = inputStream;
         this.errorHandler = errorHandler;
         this.locator = locator;
+        this.tokenizer = tokenizer;
         this.decoder = decoder;
         this.sniffing = false;
         position = 0;
@@ -126,27 +130,22 @@ public class HtmlInputStreamReader extends Reader implements ByteReadable,
     }
 
     @Override
-    public int read(char[] charArray, int offset, int length)
+    public int read(char[] charArray)
             throws IOException {
         lineColPos = 0;
         if (sniffing) {
             throw new IllegalStateException(
                     "read() called when in the sniffing state.");
         }
-        if (offset != 0) {
-            // Deal only with buffers that start at zero
-            throw new IllegalArgumentException("Offset was not zero.");
-        }
-        if (length < 2) {
-            // Deal only with buffers that can take a surrogate
-            throw new IllegalArgumentException("Length less than two.");
-        }
+        assert charArray.length >= 2;
         if (needToNotifyTokenizer) {
-            // TODO NOTIFY
+            if (tokenizer != null) {
+                tokenizer.notifyAboutMetaBoundary();
+            }
             needToNotifyTokenizer = false;
         }
         CharBuffer charBuffer = CharBuffer.wrap(charArray);
-        charBuffer.limit(length);
+        charBuffer.limit(charArray.length);
         charBuffer.position(0);
         if (flushing) {
             decoder.flush(charBuffer);
@@ -377,6 +376,30 @@ public class HtmlInputStreamReader extends Reader implements ByteReadable,
     
     public Charset getCharset() {
         return decoder.charset();
+    }
+    
+    /**
+     * @see java.io.Reader#read()
+     */
+    @Override
+    public int read() throws IOException {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @see java.io.Reader#read(char[], int, int)
+     */
+    @Override
+    public int read(char[] cbuf, int off, int len) throws IOException {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @see java.io.Reader#read(java.nio.CharBuffer)
+     */
+    @Override
+    public int read(CharBuffer target) throws IOException {
+        throw new UnsupportedOperationException();
     }
 
 }

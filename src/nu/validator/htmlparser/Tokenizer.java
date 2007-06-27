@@ -315,6 +315,11 @@ public final class Tokenizer implements Locator {
     private boolean html4;
 
     /**
+     * Whether the stream is past the first 512 bytes.
+     */
+    private boolean metaBoundaryPassed;
+    
+    /**
      * The name of the current doctype token.
      */
     private String doctypeName;
@@ -421,10 +426,10 @@ public final class Tokenizer implements Locator {
             }
             if (decoder == null) {
                 this.reader = new HtmlInputStreamReader(inputStream,
-                        errorHandler, this);
+                        errorHandler, this, this);
             } else {
                 this.reader = new HtmlInputStreamReader(inputStream,
-                        errorHandler, this, decoder);
+                        errorHandler, this, this, decoder);
             }
         }
         emitComments = tokenHandler.wantsComments();
@@ -439,6 +444,7 @@ public final class Tokenizer implements Locator {
         prev = '\u0000';
         bufLen = 0;
         alreadyWarnedAboutPrivateUseCharacters = false;
+        metaBoundaryPassed = false;
         tokenHandler.start(this);
         try {
             dataState();
@@ -502,6 +508,10 @@ public final class Tokenizer implements Locator {
 
     // end public API
 
+    void notifyAboutMetaBoundary() {
+        metaBoundaryPassed = true;
+    }
+    
     /**
      * Clears the smaller buffer.
      */
