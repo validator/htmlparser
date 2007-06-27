@@ -25,7 +25,7 @@
 /*
  * The comments following this one that use the same comment syntax as this 
  * comment are quotes from the WHATWG HTML 5 spec as of 2 June 2007 
- * amended as of June 20 2007.
+ * amended as of June 23 2007.
  * That document came with this statement:
  * "© Copyright 2004-2007 Apple Computer, Inc., Mozilla Foundation, and 
  * Opera Software ASA. You are granted a license to use, reproduce and 
@@ -55,11 +55,11 @@ import fi.iki.hsivonen.io.EncodingInfo;
 import fi.iki.hsivonen.xml.EmptyAttributes;
 
 /**
- * An implementatition of 
+ * An implementatition of
  * http://www.whatwg.org/specs/web-apps/current-work/multipage/section-tokenisation.html
  * 
- * This class implements the <code>Locator</code> interface. This is not an 
- * incidental implementation detail: Users of this class are encouraged to make 
+ * This class implements the <code>Locator</code> interface. This is not an
+ * incidental implementation detail: Users of this class are encouraged to make
  * use of the <code>Locator</code> nature.
  * 
  * @version $Id$
@@ -239,7 +239,8 @@ public final class Tokenizer implements Locator {
     private int longStrBufLen = 0;
 
     /**
-     * If not U+0000, a pending code unit to be appended to <code>longStrBuf</code>.
+     * If not U+0000, a pending code unit to be appended to
+     * <code>longStrBuf</code>.
      */
     private char longStrBufPending = '\u0000';
 
@@ -1031,24 +1032,23 @@ public final class Tokenizer implements Locator {
         if (contentModelFlag != ContentModelFlag.PCDATA) {
             /*
              * If the content model flag is set to the RCDATA or CDATA states
+             * Consume the next input character.
              */
             char c = read();
             if (c == '/') {
                 /*
-                 * If the next input character is a U+002F SOLIDUS (/)
-                 * character, consume it and switch to the close tag open state.
+                 * If it is a U+002F SOLIDUS (/) character, switch to the close
+                 * tag open state.
                  */
                 closeTagOpenState();
                 return;
             } else {
                 /*
-                 * If the next input character is not a U+002F SOLIDUS (/)
-                 * character, emit a U+003C LESS-THAN SIGN character token
+                 * Otherwise, emit a U+003C LESS-THAN SIGN character token
                  */
                 tokenHandler.characters(LT_GT, 0, 1);
                 /*
-                 * and switch to the data state to process the next input
-                 * character.
+                 * and reconsume the current input character in the data state.
                  */
                 unread(c);
                 return;
@@ -1166,10 +1166,10 @@ public final class Tokenizer implements Locator {
              * set to the RCDATA or CDATA states and the next few characters do
              * not match the tag name of the last start tag token emitted (case
              * insensitively), or if they do but they are not immediately
-             * followed by one of the following characters:
-             *  + U+0009 CHARACTER TABULATION + U+000A LINE FEED (LF) + U+000B
-             * LINE TABULATION + U+000C FORM FEED (FF) + U+0020 SPACE + U+003E
-             * GREATER-THAN SIGN (>) + U+002F SOLIDUS (/) + EOF
+             * followed by one of the following characters: + U+0009 CHARACTER
+             * TABULATION + U+000A LINE FEED (LF) + U+000B LINE TABULATION +
+             * U+000C FORM FEED (FF) + U+0020 SPACE + U+003E GREATER-THAN SIGN
+             * (>) + U+002F SOLIDUS (/) + EOF
              * 
              * ...then emit a U+003C LESS-THAN SIGN character token, a U+002F
              * SOLIDUS character token, and switch to the data state to process
@@ -2238,7 +2238,8 @@ public final class Tokenizer implements Locator {
     }
 
     /**
-     * Comment start state, Comment start dash state, Comment state, Comment end dash state and Comment end state
+     * Comment start state, Comment start dash state, Comment state, Comment end
+     * dash state and Comment end state
      * 
      * @throws IOException
      * @throws SAXException
@@ -2252,21 +2253,23 @@ public final class Tokenizer implements Locator {
                     /*
                      * Comment start state
                      * 
-
+                     * 
                      * Consume the next input character:
                      */
                     switch (c) {
                         case '-':
                             /*
-                             * U+002D HYPHEN-MINUS (-) Switch to the comment start dash state.
+                             * U+002D HYPHEN-MINUS (-) Switch to the comment
+                             * start dash state.
                              */
                             state = CommentState.COMMENT_START_DASH_STATE;
                             continue;
                         case '>':
-                            /* 
-                             * U+003E GREATER-THAN SIGN (>) Parse error.*/
+                            /*
+                             * U+003E GREATER-THAN SIGN (>) Parse error.
+                             */
                             err("Premature end of comment.");
-                            /* Emit the comment token.*/
+                            /* Emit the comment token. */
                             emitComment();
                             /*
                              * Switch to the data state.
@@ -2285,7 +2288,10 @@ public final class Tokenizer implements Locator {
                             unread(c);
                             return;
                         default:
-                            /* Anything else Append the input character to the comment token's data.*/
+                            /*
+                             * Anything else Append the input character to the
+                             * comment token's data.
+                             */
                             appendToComment(c);
                             /*
                              * Switch to the comment state.
@@ -2302,15 +2308,17 @@ public final class Tokenizer implements Locator {
                     switch (c) {
                         case '-':
                             /*
-                             * U+002D HYPHEN-MINUS (-) Switch to the comment end state
+                             * U+002D HYPHEN-MINUS (-) Switch to the comment end
+                             * state
                              */
                             state = CommentState.COMMENT_END_STATE;
                             continue;
                         case '>':
-                            /* 
-                             * U+003E GREATER-THAN SIGN (>) Parse error.*/
+                            /*
+                             * U+003E GREATER-THAN SIGN (>) Parse error.
+                             */
                             err("Premature end of comment.");
-                            /* Emit the comment token.*/
+                            /* Emit the comment token. */
                             emitComment();
                             /*
                              * Switch to the data state.
@@ -2329,12 +2337,15 @@ public final class Tokenizer implements Locator {
                             unread(c);
                             return;
                         default:
-                            /* Anything else Append a U+002D HYPHEN-MINUS (-) character and the
-                             * input character to the comment token's data. */
+                            /*
+                             * Anything else Append a U+002D HYPHEN-MINUS (-)
+                             * character and the input character to the comment
+                             * token's data.
+                             */
                             appendToComment('-');
                             appendToComment(c);
-                            /*Switch to the comment
-                             * state.
+                            /*
+                             * Switch to the comment state.
                              */
                             state = CommentState.COMMENT_STATE;
                             continue;
@@ -2620,9 +2631,9 @@ public final class Tokenizer implements Locator {
                 case '\u0000':
                     /* EOF Parse error. */
                     err("End of file inside doctype.");
-                    /* Emit the current DOCTYPE token. */
-                    // XXX shouldn't this be in error?
-                    tokenHandler.doctype(strBufToString(), null, null, true);
+                    /* Set the DOCTYPE token's correctness flag to
+                incorrect. Emit that DOCTYPE token. */
+                    tokenHandler.doctype(strBufToString(), null, null, false);
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -2679,8 +2690,9 @@ public final class Tokenizer implements Locator {
                 case '\u0000':
                     /* EOF Parse error. */
                     err("End of file inside doctype.");
-                    /* Emit the current DOCTYPE token. */
-                    tokenHandler.doctype(doctypeName, null, null, true);
+                    /* Set the DOCTYPE token's correctness flag to
+                incorrect. Emit that DOCTYPE token. */
+                    tokenHandler.doctype(doctypeName, null, null, false);
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -3337,72 +3349,21 @@ public final class Tokenizer implements Locator {
          * immediately after the U+0026 AMPERSAND character):
          */
         char c = read();
-        /*
-         * U+0023 NUMBER SIGN (#) Consume the U+0023 NUMBER SIGN.
-         */
-        if (c == '#') {
-            appendStrBuf('#');
-            consumeNCR(inAttribute);
-        } else {
-            unread(c);
-            int entCol = -1;
-            int lo = 0;
-            int hi = (Entities.NAMES.length - 1);
-            int candidate = -1;
-            boolean wasSemicolonTerminated = false;
-            outer: for (;;) {
-                entCol++;
-                c = read();
+        switch (c) {
+            case '\t':
+            case '\n':
+            case '\u000B':
+            case '\u000C':
+            case ' ':
+            case '<':
+            case '&':
+            case '\u0000':
                 /*
-                 * Anything else Consume the maximum number of characters
-                 * possible, with the consumed characters case-sensitively
-                 * matching one of the identifiers in the first column of the
-                 * entities table.
-                 */
-                hiloop: for (;;) {
-                    if (hi == -1) {
-                        break;
-                    }
-                    if (entCol == Entities.NAMES[hi].length()) {
-                        break hiloop;
-                    }
-                    if (entCol > Entities.NAMES[hi].length()) {
-                        break outer;
-                    } else if (c < Entities.NAMES[hi].charAt(entCol)) {
-                        hi--;
-                    } else {
-                        break hiloop;
-                    }
-                }
-
-                loloop: for (;;) {
-                    if (hi < lo) {
-                        break outer;
-                    }
-                    if (entCol == Entities.NAMES[lo].length()) {
-                        wasSemicolonTerminated = (c == ';');
-                        candidate = lo;
-                        clearStrBuf();
-                        lo++;
-                    } else if (entCol > Entities.NAMES[lo].length()) {
-                        break outer;
-                    } else if (c > Entities.NAMES[lo].charAt(entCol)) {
-                        lo++;
-                    } else {
-                        break loloop;
-                    }
-                }
-
-                if (!wasSemicolonTerminated) {
-                    appendStrBuf(c);
-                }
-            }
-            // TODO warn about apos (IE) and TRADE (Opera)
-            if (candidate == -1) {
-                /* If no match can be made, then this is a parse error. */
-                err("Text after \u201C&\u201D did not match an entity name.");
-                /*
-                 * No characters are consumed, and nothing is returned.
+                 * U+0009 CHARACTER TABULATION U+000A LINE FEED (LF) U+000B LINE
+                 * TABULATION U+000C FORM FEED (FF) U+0020 SPACE U+003C
+                 * LESS-THAN SIGN U+0026 AMPERSAND EOF Not an entity. No
+                 * characters are consumed, and nothing is returned. (This is
+                 * not an error, either.)
                  */
                 if (inAttribute) {
                     appendStrBufToLongStrBuf();
@@ -3410,39 +3371,123 @@ public final class Tokenizer implements Locator {
                     emitStrBuf();
                 }
                 unread(c);
+                return;                
+            case '#':
+                /*
+                 * U+0023 NUMBER SIGN (#) Consume the U+0023 NUMBER SIGN.
+                 */
+                appendStrBuf('#');
+                consumeNCR(inAttribute);
                 return;
-            } else {
-                // XXX the spec changed
-                /*
-                 * Otherwise, if the next character is a U+003B SEMICOLON,
-                 * consume that too. If it isn't, there is a parse error.
-                 */
-                if (!wasSemicolonTerminated) {
-                    err("Entity name was not terminated with a semicolon.");
+            default:
+                unread(c);
+                int entCol = -1;
+                int lo = 0;
+                int hi = (Entities.NAMES.length - 1);
+                int candidate = -1;
+                outer: for (;;) {
+                    entCol++;
+                    c = read();
+                    /*
+                     * Anything else Consume the maximum number of characters
+                     * possible, with the consumed characters case-sensitively
+                     * matching one of the identifiers in the first column of
+                     * the entities table.
+                     */
+                    hiloop: for (;;) {
+                        if (hi == -1) {
+                            break;
+                        }
+                        if (entCol == Entities.NAMES[hi].length()) {
+                            break hiloop;
+                        }
+                        if (entCol > Entities.NAMES[hi].length()) {
+                            unread(c);
+                            break outer;
+                        } else if (c < Entities.NAMES[hi].charAt(entCol)) {
+                            hi--;
+                        } else {
+                            break hiloop;
+                        }
+                    }
+
+                    loloop: for (;;) {
+                        if (hi < lo) {
+                            unread(c);
+                            break outer;
+                        }
+                        if (entCol == Entities.NAMES[lo].length()) {
+                            candidate = lo;
+                            clearStrBuf();
+                            lo++;
+                        } else if (entCol > Entities.NAMES[lo].length()) {
+                            break outer;
+                        } else if (c > Entities.NAMES[lo].charAt(entCol)) {
+                            lo++;
+                        } else {
+                            break loloop;
+                        }
+                    }
+
+                    appendStrBuf(c);
                 }
-                /*
-                 * Return a character token for the character corresponding to
-                 * the entity name (as given by the second column of the
-                 * entities table).
-                 */
-                char[] val = Entities.VALUES[candidate];
-                emitOrAppend(val, inAttribute);
-                if (!wasSemicolonTerminated) {
+                // TODO warn about apos (IE) and TRADE (Opera)
+                if (candidate == -1) {
+                    /* If no match can be made, then this is a parse error. */
+                    err("Text after \u201C&\u201D did not match an entity name.");
+                    /*
+                     * No characters are consumed, and nothing is returned.
+                     */
                     if (inAttribute) {
                         appendStrBufToLongStrBuf();
                     } else {
                         emitStrBuf();
                     }
-                    unread(c);
+                    return;
+                } else {
+                    if (!Entities.NAMES[candidate].endsWith(";")) {
+                        /*
+                         * If the last character matched is not a U+003B SEMICOLON (;),
+              there is a parse error.
+              */
+                        err("Entity reference was not terminated by a semicolon.");
+                        if (inAttribute) {
+                        /*
+                        If the entity is being consumed as part of an attribute, and
+                        the last character matched is not a U+003B SEMICOLON (;), */
+                            c = read();
+                            if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) {
+                            /*and
+                        the next character is in the range U+0030 DIGIT ZERO to U+0039
+                        DIGIT NINE, U+0041 LATIN CAPITAL LETTER A to U+005A LATIN
+                        CAPITAL LETTER Z, or U+0061 LATIN SMALL LETTER A to U+007A
+                        LATIN SMALL LETTER Z, then, for historical reasons, all the
+                        characters that were matched after the U+0026 AMPERSAND (&)
+                        must be unconsumed, and nothing is returned.
+              */
+                                appendStrBufToLongStrBuf();
+                                unread(c);
+                                return;
+                            }
+                            unread(c);
+                        }
+                    }
+                    
+                    /*
+          Otherwise, return a character token for the character
+          corresponding to the entity name (as given by the second column
+          of the entities table).
+                     */
+                    char[] val = Entities.VALUES[candidate];
+                    emitOrAppend(val, inAttribute);
+                    return;
+                    /*
+                     * If the markup contains I'm &notit; I tell you, the entity is
+                     * parsed as "not", as in, I'm ¬it; I tell you. But if the
+                     * markup was I'm &notin; I tell you, the entity would be parsed
+                     * as "notin;", resulting in I'm ∉ I tell you.
+                     */
                 }
-                return;
-                /*
-                 * If the markup contains I'm &notit; I tell you, the entity is
-                 * parsed as "not", as in, I'm ¬it; I tell you. But if the
-                 * markup was I'm &notin; I tell you, the entity would be parsed
-                 * as "notin;", resulting in I'm ∉ I tell you.
-                 */
-            }
 
         }
     }
@@ -3562,14 +3607,15 @@ public final class Tokenizer implements Locator {
          */
         if (value >= 0x80 && value <= 0x9f) {
             /*
-             * If that number is in the range 128 to 159 (0x80 to 0x9F), then
-             * this is a parse error.
+             * If that number is one of the numbers in the first column of the
+          following table, then this is a parse error.
              */
             err("A numeric character reference expanded to the C1 controls range.");
             /*
-             * In the following table, find the row with that number in the
-             * first column, and return a character token for the Unicode
-             * character given in the second column of that row.
+             * Find the row with
+          that number in the first column, and return a character token
+          for the Unicode character given in the second column of that
+          row.
              */
             char[] val = Entities.WINDOWS_1252[value - 0x80];
             emitOrAppend(val, inAttribute);
@@ -3580,10 +3626,11 @@ public final class Tokenizer implements Locator {
             return;
         } else if (value == 0) {
             /*
-             * Otherwise, if the number is not a valid Unicode character (e.g.
-             * if the number is higher than 1114111), or if the number is zero,
-             * then return a character token for the U+FFFD REPLACEMENT
-             * CHARACTER character instead.
+             * Otherwise, if the number is zero, if the number is higher than
+          0x10FFFF, or if it's one of the surrogate characters
+          (characters in the range 0xD800 to 0xDFFF), then this is a
+          parse error; return a character token for the U+FFFD
+          REPLACEMENT CHARACTER character instead.
              */
             err("Character reference expands to U+0000.");
             emitOrAppend(REPLACEMENT_CHARACTER, inAttribute);
