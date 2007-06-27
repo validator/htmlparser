@@ -22,8 +22,6 @@
 
 package nu.validator.htmlparser;
 
-import java.util.Arrays;
-
 /**
  * @version $Id$
  * @author hsivonen

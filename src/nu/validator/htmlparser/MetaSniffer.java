@@ -37,7 +37,7 @@ import org.xml.sax.SAXParseException;
 
 import fi.iki.hsivonen.io.EncodingInfo;
 
-public class MetaSniffer implements Locator {
+public final class MetaSniffer implements Locator {
 
     private class StopSniffingException extends Exception {
 

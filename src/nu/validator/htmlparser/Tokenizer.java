@@ -62,6 +62,10 @@ import fi.iki.hsivonen.xml.EmptyAttributes;
  * incidental implementation detail: Users of this class are encouraged to make
  * use of the <code>Locator</code> nature.
  * 
+ * By default, the tokenizer may report data that XML 1.0 bans. The tokenizer can be 
+ * configured to treat these conditions as fatal or to coerce the infoset to something 
+ * that XML 1.0 allows.
+ * 
  * @version $Id$
  * @author hsivonen
  */
@@ -404,6 +408,61 @@ public final class Tokenizer implements Locator {
     }
 
     /**
+     * Returns the commentPolicy.
+     * 
+     * @return the commentPolicy
+     */
+    public XmlViolationPolicy getCommentPolicy() {
+        return commentPolicy;
+    }
+
+    /**
+     * Sets the commentPolicy.
+     * 
+     * @param commentPolicy the commentPolicy to set
+     */
+    public void setCommentPolicy(XmlViolationPolicy commentPolicy) {
+        this.commentPolicy = commentPolicy;
+    }
+
+    /**
+     * Returns the contentNonXmlCharPolicy.
+     * 
+     * @return the contentNonXmlCharPolicy
+     */
+    public XmlViolationPolicy getContentNonXmlCharPolicy() {
+        return contentNonXmlCharPolicy;
+    }
+
+    /**
+     * Sets the contentNonXmlCharPolicy.
+     * 
+     * @param contentNonXmlCharPolicy the contentNonXmlCharPolicy to set
+     */
+    public void setContentNonXmlCharPolicy(
+            XmlViolationPolicy contentNonXmlCharPolicy) {
+        this.contentNonXmlCharPolicy = contentNonXmlCharPolicy;
+    }
+
+    /**
+     * Returns the contentSpacePolicy.
+     * 
+     * @return the contentSpacePolicy
+     */
+    public XmlViolationPolicy getContentSpacePolicy() {
+        return contentSpacePolicy;
+    }
+
+    /**
+     * Sets the contentSpacePolicy.
+     * 
+     * @param contentSpacePolicy the contentSpacePolicy to set
+     */
+    public void setContentSpacePolicy(XmlViolationPolicy contentSpacePolicy) {
+        this.contentSpacePolicy = contentSpacePolicy;
+    }
+
+    /**
      * Runs the tokenization. This is the main entry point.
      * 
      * @param is
@@ -432,7 +491,6 @@ public final class Tokenizer implements Locator {
                         errorHandler, this, this, decoder);
             }
         }
-        emitComments = tokenHandler.wantsComments();
         // TODO reset stuff
         contentModelFlag = ContentModelFlag.PCDATA;
         escapeFlag = false;
@@ -446,7 +504,15 @@ public final class Tokenizer implements Locator {
         alreadyWarnedAboutPrivateUseCharacters = false;
         metaBoundaryPassed = false;
         tokenHandler.start(this);
+        emitComments = tokenHandler.wantsComments();
         try {
+            // Swallow the BOM
+            char c = read();
+            if (c == '\uFEFF') {
+                col = 0;
+            } else {
+                unread(c);
+            }
             dataState();
         } finally {
             systemIdentifier = null;
@@ -522,8 +588,7 @@ public final class Tokenizer implements Locator {
     /**
      * Appends to the smaller buffer.
      * 
-     * @param c
-     *            the UTF-16 code unit to append
+     * @param c the UTF-16 code unit to append
      */
     private void appendStrBuf(char c) {
         if (strBufLen == strBuf.length) {
@@ -652,6 +717,8 @@ public final class Tokenizer implements Locator {
     }
 
     /**
+     * Emits the current comment token.
+     * 
      * @throws SAXException
      */
     private void emitComment() throws SAXException {
@@ -677,7 +744,7 @@ public final class Tokenizer implements Locator {
     /**
      * Reads the next UTF-16 code unit.
      * 
-     * @return
+     * @return the next code unit
      * @throws SAXException
      * @throws IOException
      */
@@ -814,8 +881,8 @@ public final class Tokenizer implements Locator {
 
     /**
      * Tells if the argument is a BMP PUA character.
-     * @param c
-     * @return
+     * @param c the UTF-16 code unit to check
+     * @return <code>true</code> if PUA character
      */
     private boolean isPrivateUse(char c) {
         return c >= '\uE000' && c <= '\uF8FF';
@@ -823,8 +890,8 @@ public final class Tokenizer implements Locator {
 
     /**
      * Tells if the argument is an astral PUA character.
-     * @param c
-     * @return
+     * @param c the code point to check
+     * @return <code>true</code> if astral private use
      */
     private boolean isAstralPrivateUse(int c) {
         return (c >= 0xF0000 && c <= 0xFFFFD)
@@ -833,16 +900,17 @@ public final class Tokenizer implements Locator {
 
     /**
      * Tells if the argument is a non-character (works for BMP and astral).
-     * @param c
-     * @return
+     * @param c the code point to check
+     * @return <code>true</code> if non-character
      */
     private boolean isNonCharacter(int c) {
         return (c & 0xFFFE) == 0xFFFE;
     }
 
     /**
-     * @throws SAXException
+     * Flushes coalesced character tokens.
      * 
+     * @throws SAXException
      */
     private void flushChars() throws SAXException, IOException {
         if (cstart != -1) {
@@ -854,6 +922,9 @@ public final class Tokenizer implements Locator {
     }
 
     /**
+     * Reports an condition that would make the infoset incompatible with XML 1.0 as fatal.
+     * 
+     * @param message the message
      * @throws SAXException
      * @throws SAXParseException
      */
@@ -864,7 +935,9 @@ public final class Tokenizer implements Locator {
     }
 
     /**
-     * @param string
+     * Reports a Parse Error.
+     * 
+     * @param message the message
      * @throws SAXException
      */
     private void err(String message) throws SAXException {
@@ -873,7 +946,9 @@ public final class Tokenizer implements Locator {
     }
 
     /**
-     * @param string
+     * Reports a warning
+     * 
+     * @param message the message
      * @throws SAXException
      */
     private void warn(String message) throws SAXException {
@@ -882,7 +957,7 @@ public final class Tokenizer implements Locator {
     }
 
     /**
-     * 
+     * Initializes a decoder from external decl.
      */
     private CharsetDecoder decoderFromExternalDeclaration(String encoding)
             throws SAXException {
@@ -890,6 +965,9 @@ public final class Tokenizer implements Locator {
             return null;
         }
         encoding = encoding.toUpperCase();
+        if ("ISO-8859-1".equals(encoding)) {
+            encoding = "Windows-1252";
+        }
         try {
             Charset cs = Charset.forName(encoding);
             String canonName = cs.name();

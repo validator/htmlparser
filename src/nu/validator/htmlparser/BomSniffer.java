@@ -1,10 +1,38 @@
+/*
+ * Copyright (c) 2007 Henri Sivonen
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a 
+ * copy of this software and associated documentation files (the "Software"), 
+ * to deal in the Software without restriction, including without limitation 
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense, 
+ * and/or sell copies of the Software, and to permit persons to whom the 
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in 
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL 
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * DEALINGS IN THE SOFTWARE.
+ */
+
 package nu.validator.htmlparser;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 
-public class BomSniffer {
+/**
+ * The BOM sniffing part of the HTML5 encoding sniffing algorithm.
+ * 
+ * @version $Id$
+ * @author hsivonen
+ */
+public final class BomSniffer {
     
     private final ByteReadable source;
 
@@ -32,18 +60,7 @@ public class BomSniffer {
         } else if (b == 0xFF) { // little-endian
             b = source.readByte();
             if (b == 0xFE) {
-                b = source.readByte();
-                if (b == 0x00) {
-                    b = source.readByte();
-                    if (b == 0x00) {
-                        // XXX What if an UTF-32 decoder is unavailable?
-                        return Charset.forName("UTF-32LE").newDecoder();                   
-                    } else {
-                        return Charset.forName("UTF-16LE").newDecoder();
-                    }                    
-                } else {
-                    return Charset.forName("UTF-16LE").newDecoder();
-                }
+                return Charset.forName("UTF-16LE").newDecoder();
             } else {
                 return null;
             }
@@ -51,24 +68,6 @@ public class BomSniffer {
             b = source.readByte();
             if (b == 0xFF) {
                 return Charset.forName("UTF-16BE").newDecoder();        
-            } else {
-                return null;
-            }
-        } else if (b == 0x00) { // big-endian UTF-32
-            b = source.readByte();
-            if (b == 0x00) {
-                b = source.readByte();
-                if (b == 0xFE) {
-                    b = source.readByte();
-                    if (b == 0xFF) {
-                        // XXX What if an UTF-32 decoder is unavailable?
-                        return Charset.forName("UTF-32BE").newDecoder();                                           
-                    } else {
-                        return null;
-                    }                    
-                } else {
-                    return null;
-                }
             } else {
                 return null;
             }

@@ -25,6 +25,8 @@ package nu.validator.htmlparser;
 import java.util.Arrays;
 
 /**
+ * This class will probably be used for backwards compat stuff.
+ * 
  * @version $Id$
  * @author hsivonen
  */
