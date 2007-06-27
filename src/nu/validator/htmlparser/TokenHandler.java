@@ -25,21 +25,89 @@ package nu.validator.htmlparser;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
+/**
+ * <code>Tokenizer</code> reports tokens through this interface.
+ * 
+ * @version $Id$
+ * @author hsivonen
+ */
 public interface TokenHandler {
+
+    /**
+     * This method is called at the start of tokenization before any other 
+     * methods on this interface are called. Implementations should hold 
+     * the reference to the <code>Tokenizer</code> in order to set the 
+     * content model flag and in order to be able to query for 
+     * <code>Locator</code> data.
+     * 
+     * @param self the <code>Tokenizer</code>.
+     * @throws SAXException if something went wrong
+     */
     public void start(Tokenizer self) throws SAXException;
 
+    /**
+     * If this handler implementation cares about comments, return <code>true</code>.
+     * If not, return <code>false</code>.
+     * 
+     * @return whether this handler wants comments
+     * @throws SAXException if something went wrong
+     */
     public boolean wantsComments() throws SAXException;
     
+    /**
+     * Receive a doctype token.
+     * 
+     * @param name the name
+     * @param publicIdentifier the public id
+     * @param systemIdentifier the system id
+     * @param correct whether the token is correct
+     * @throws SAXException if something went wrong
+     */
     public void doctype(String name, String publicIdentifier, String systemIdentifier, boolean correct) throws SAXException;
-    
+
+    /**
+     * Receive a start tag token.
+     * 
+     * @param name the tag name
+     * @param attributes the attributes
+     * @throws SAXException if something went wrong
+     */
     public void startTag(String name, Attributes attributes) throws SAXException;
     
+    /**
+     * Receive an end tag token.
+     * 
+     * @param name the tag name
+     * @param attributes the attributes
+     * @throws SAXException if something went wrong
+     */
     public void endTag(String name, Attributes attributes) throws SAXException;
     
+    /**
+     * Receive a comment token.
+     * 
+     * @param buf a buffer holding the data
+     * @param length the number of code units to read
+     * @throws SAXException if something went wrong
+     */
     public void comment(char[] buf, int length) throws SAXException;
     
+    /**
+     * Receive character tokens. This method has the same semantics as 
+     * the SAX method of the same name.
+     * 
+     * @param buf a buffer holding the data
+     * @param start offset into the buffer
+     * @param length the number of code units to read
+     * @throws SAXException if something went wrong
+     */
     public void characters(char[] buf, int start, int length) throws SAXException;
     
+    /**
+     * The end-of-file token.
+     * 
+     * @throws SAXException if something went wrong
+     */
     public void eof() throws SAXException;
     
 }
