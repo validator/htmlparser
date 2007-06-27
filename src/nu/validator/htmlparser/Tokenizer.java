@@ -672,6 +672,7 @@ public final class Tokenizer implements Locator {
      * @throws IOException
      */
     private char read() throws SAXException, IOException {
+        assert(bufLen > -1);
         for (;;) { // the loop is here for the CRLF case
             if (unreadBuffer != -1) {
                 char c = (char) unreadBuffer;
@@ -679,6 +680,7 @@ public final class Tokenizer implements Locator {
                 return c;
             }
             pos++;
+            assert pos <= bufLen;
             col++;
             if (pos == bufLen) {
                 boolean charDataContinuation = false;
@@ -687,6 +689,7 @@ public final class Tokenizer implements Locator {
                     charDataContinuation = true;
                 }
                 bufLen = reader.read(buf);
+                assert bufLen <= buf.length;
                 if (bufLen == -1) {
                     return '\u0000';
                 } else if (normalizationChecker != null) {
@@ -1157,6 +1160,7 @@ public final class Tokenizer implements Locator {
                  * Switch to the bogus comment state.
                  */
                 clearLongStrBuf();
+                appendLongStrBuf(c);
                 bogusCommentState();
                 return;
             } else {
@@ -1369,6 +1373,7 @@ public final class Tokenizer implements Locator {
                  * Switch to the bogus comment state.
                  */
                 clearLongStrBuf();
+                appendToComment(c);
                 bogusCommentState();
                 return;
             }
@@ -2229,14 +2234,14 @@ public final class Tokenizer implements Locator {
                     return;
                 } else {
                     err("Bogus comment.");
-                    appendLongStrBuf('-');
+                    appendToComment('-');
                     unread(c);
                     bogusCommentState();
                     return;
                 }
             case 'd':
             case 'D':
-                appendLongStrBuf(c);
+                appendToComment(c);
                 for (int i = 0; i < OCTYPE.length; i++) {
                     c = read();
                     char folded = c;
@@ -2244,7 +2249,7 @@ public final class Tokenizer implements Locator {
                         folded += 0x20;
                     }
                     if (folded == OCTYPE[i]) {
-                        appendLongStrBuf(c);
+                        appendToComment(c);
                     } else {
                         err("Bogus comment.");
                         unread(c);
@@ -2502,6 +2507,7 @@ public final class Tokenizer implements Locator {
                              */
                             appendToComment('-');
                             appendToComment('-');
+                            appendToComment(c);
                             /*
                              * Switch to the comment state.
                              */
@@ -2863,7 +2869,7 @@ public final class Tokenizer implements Locator {
                     /*
                      * Switch to the bogus DOCTYPE state.
                      */
-                    bogusCommentState();
+                    bogusDoctypeState();
                     return;
             }
         }
@@ -3138,7 +3144,7 @@ public final class Tokenizer implements Locator {
                     /*
                      * Switch to the bogus DOCTYPE state.
                      */
-                    bogusCommentState();
+                    bogusDoctypeState();
                     return;
             }
         }
@@ -3418,9 +3424,6 @@ public final class Tokenizer implements Locator {
                 outer: for (;;) {
                     entCol++;
                     c = read();
-                    if (entCol == 3) {
-                        int foo = 0;
-                    }
                     /*
                      * Anything else Consume the maximum number of characters
                      * possible, with the consumed characters case-sensitively
