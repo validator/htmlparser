@@ -52,8 +52,8 @@ public class DecoderLoopTester {
        byteBuffer.get(byteArr);
        
        ErrorHandler eh = new SystemErrErrorHandler();
-       compare(new HtmlInputStreamReader(new ByteArrayInputStream(byteArr), eh, null), padding, charArr, byteArr);
-       compare(new HtmlInputStreamReader(new ByteArrayInputStream(byteArr), eh, null, utf8.newDecoder()), padding, charArr, byteArr);
+       compare(new HtmlInputStreamReader(new ByteArrayInputStream(byteArr), eh, null, null), padding, charArr, byteArr);
+       compare(new HtmlInputStreamReader(new ByteArrayInputStream(byteArr), eh, null, null, utf8.newDecoder()), padding, charArr, byteArr);
     }
 
     /**
@@ -68,7 +68,7 @@ public class DecoderLoopTester {
            int offset = 0;
            int num = 0;
            int readNum = 0;
-           while ((num = reader.read(readBuffer, 0, readBuffer.length)) != -1) {
+           while ((num = reader.read(readBuffer)) != -1) {
                for (int j = 0; j < num; j++) {
                    System.out.println(offset + j);
                    if (readBuffer[j] != charArr[offset + j]) {
