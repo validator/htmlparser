@@ -522,7 +522,7 @@ public final class MetaSniffer implements Locator {
      */
     private void comment() throws IOException, StopSniffingException {
         if (read() == 0x2D) { // -
-            int hyphensSeen = 0;
+            int hyphensSeen = 2;
             for (;;) {
                 int b = read();
                 if (b == 0x2D) { // -
