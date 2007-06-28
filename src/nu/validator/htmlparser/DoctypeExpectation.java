@@ -32,7 +32,7 @@ public enum DoctypeExpectation {
     /**
      * Be a pure HTML5 parser.
      */
-    HTML5,
+    HTML,
     
     /**
      * Require the HTML 4.01 Transitional public id. Turn on HTML4-specific
@@ -47,10 +47,10 @@ public enum DoctypeExpectation {
     HTML401_STRICT,
     
     /**
-     * Treat the HTML5 doctype, doctypes with the HTML 4.01 Strict public id and
-     * doctypes with the HTML 4.01 Transitional public id and a system id as
-     * non-errors. Turn of HTML4-specific additional errors if the public id is
-     * the HTML 4.01 Strict or Transitional public id.
+     * Treat the doctype required by HTML 5, doctypes with the HTML 4.01 Strict 
+     * public id and doctypes with the HTML 4.01 Transitional public id and a 
+     * system id as non-errors. Turn on HTML4-specific additional errors if the 
+     * public id is the HTML 4.01 Strict or Transitional public id.
      */
     AUTO
 }
