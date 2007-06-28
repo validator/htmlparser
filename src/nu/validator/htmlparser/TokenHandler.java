@@ -100,6 +100,7 @@ public interface TokenHandler {
      * @param start offset into the buffer
      * @param length the number of code units to read
      * @throws SAXException if something went wrong
+     * @see org.xml.sax.ContentHandler#characters(char[], int, int)
      */
     public void characters(char[] buf, int start, int length) throws SAXException;
     
