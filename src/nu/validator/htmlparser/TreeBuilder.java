@@ -22,6 +22,16 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+/*
+ * The comments following this one that use the same comment syntax as this 
+ * comment are quotes from the WHATWG HTML 5 spec as of 27 June 2007 
+ * amended as of June 28 2007.
+ * That document came with this statement:
+ * "© Copyright 2004-2007 Apple Computer, Inc., Mozilla Foundation, and 
+ * Opera Software ASA. You are granted a license to use, reproduce and 
+ * create derivative works of this document."
+ */
+
 package nu.validator.htmlparser;
 
 import org.xml.sax.Attributes;
@@ -883,11 +893,12 @@ public abstract class TreeBuilder implements TokenHandler {
      * 
      * 8.2.4.3.4. Closing elements that have implied end tags
      * 
-     * When the steps below require the UA to generate implied end tags, then,
-     * if the current node is a dd element, a dt element, an li element, a p
-     * element, a td element, a th element, or a tr element, the UA must act as
-     * if an end tag with the respective tag name had been seen and then
-     * generate implied end tags again.
+     * When the steps below require the UA to generate implied end tags,
+   then, if the current node is a dd element, a dt element, an li
+   element, a p element, a tbody element, a td element, a tfoot element,
+   a th element, a thead element, a tr element, the UA must act as if an
+   end tag with the respective tag name had been seen and then generate
+   implied end tags again.
      * 
      * The step that requires the UA to generate implied end tags but lists an
      * element to exclude from the process, then the UA must perform the above
@@ -1004,7 +1015,8 @@ public abstract class TreeBuilder implements TokenHandler {
      * This will result in a head element being generated, and with the current
      * token being reprocessed in the "in head" insertion mode.
      * 
-     * An end tag whose tag name is one of: "head", "body", "html" Act as if a
+     * An end tag whose tag name is one of: "head", "body",
+                      "html", "p", "br" Act as if a
      * start tag token with the tag name "head" and no attributes had been seen,
      * then reprocess the current token.
      * 
@@ -1046,8 +1058,10 @@ public abstract class TreeBuilder implements TokenHandler {
      * a supported encoding encoding, and the confidence is currently tentative,
      * then change the encoding to the encoding encoding.
      * 
-     * A start tag whose tag name is "title" Follow the generic RCDATA parsing
-     * algorithm, with the current node as the context node.
+     * A start tag whose tag name is "title" Follow the generic RCDATA parsing algorithm, with
+                      the head element pointer as the context node,
+                      unless that's null, in which case use the current
+                      node (fragment cose).
      * 
      * A start tag whose tag name is "noscript", if scripting is enabled:
      * 
@@ -1130,7 +1144,8 @@ public abstract class TreeBuilder implements TokenHandler {
      * 
      * Change the insertion mode to "after head".
      * 
-     * An end tag whose tag name is one of: "body", "html" Act as described in
+     * An end tag whose tag name is one of: "body", "html", "p",
+                      "br" Act as described in
      * the "anything else" entry below.
      * 
      * A start tag whose tag name is "head" Any other end tag Parse error.
@@ -1156,6 +1171,10 @@ public abstract class TreeBuilder implements TokenHandler {
      * 
      * A comment token A start tag whose tag name is one of: "link", "meta",
      * "style" Process the token as if the insertion mode had been "in head".
+     * 
+     *  An end tag whose tag name is one of: "p", "br"
+                      Act as described in the "anything else" entry
+                      below.
      * 
      * A start tag whose tag name is one of: "head", "noscript" Any other end
      * tag Parse error. Ignore the token.
@@ -1226,10 +1245,13 @@ public abstract class TreeBuilder implements TokenHandler {
      * open elements is not a body element, this is a parse error. Ignore the
      * token. (fragment case)
      * 
-     * Otherwise, if there is a node in the stack of open elements that is not
-     * either a dd element, a dt element, an li element, a p element, a td
-     * element, a th element, a tr element, the body element, or the html
-     * element, then this is a parse error.
+     * Otherwise, if there is a node in the stack of open
+                      elements that is not either a dd element, a dt
+                      element, an li element, a p element, a tbody
+                      element, a td element, a tfoot element, a th
+                      element, a thead element, a tr element, the body
+                      element, or the html element, then this is a parse
+                      error.
      * 
      * Change the insertion mode to "after body".
      * 
@@ -1411,8 +1433,11 @@ public abstract class TreeBuilder implements TokenHandler {
      * A start tag whose tag name is "nobr" Reconstruct the active formatting
      * elements, if any.
      * 
-     * If the stack of open elements has a nobr element in scope, then act as if
-     * an end tag with the tag name nobr had been seen.
+     * If the stack of open elements has a nobr element in
+                      scope, then this is a parse error. Act as if an end
+                      tag with the tag name nobr had been seen, then once
+                      again reconstruct the active formatting elements,
+                      if any.
      * 
      * Insert an HTML element for the token. Add that element to the list of
      * active formatting elements.
