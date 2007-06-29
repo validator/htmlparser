@@ -360,12 +360,11 @@ public abstract class TreeBuilder implements TokenHandler {
                 return;
             default:
                 /*
-                 * * A DOCTYPE token Parse error.
+                 * A DOCTYPE token Parse error.
                  */
                 err("Stray doctype.");
                 /*
                  * Ignore the token.
-                 * 
                  */
                 return;
         }
@@ -431,112 +430,6 @@ public abstract class TreeBuilder implements TokenHandler {
             buf[i] = c;
         }
         return new String(buf);
-    }
-
-    /**
-     * @see nu.validator.htmlparser.TokenHandler#characters(char[], int, int)
-     */
-    public void characters(char[] buf, int start, int length)
-            throws SAXException {
-        outer: for (;;) {
-            switch (phase) {
-                case INITIAL:
-                    int end = start + length;
-                    for (int i = start; i < end; i++) {
-                        switch (buf[i]) {
-                            case '\t':
-                            case '\n':
-                            case '\u000B':
-                            case '\u000C':
-                            case ' ':
-                                /*
-                                 * A character token that is one of one of
-                                 * U+0009 CHARACTER TABULATION, U+000A LINE FEED
-                                 * (LF), U+000B LINE TABULATION, U+000C FORM
-                                 * FEED (FF), or U+0020 SPACE Ignore the token.
-                                 * 
-                                 */
-                                continue;
-                            default:
-                                /*
-                                 * A character token that is not one of one of
-                                 * U+0009 CHARACTER TABULATION, U+000A LINE FEED
-                                 * (LF), U+000B LINE TABULATION, U+000C FORM
-                                 * FEED (FF), or U+0020 SPACE Parse error.
-                                 */
-                                err("Non-space characters found without seeing a doctype first.");
-                                /*
-                                 * 
-                                 * Set the document to quirks mode.
-                                 */
-                                documentMode(DocumentMode.QUIRKS_MODE, null,
-                                        null, false);
-                                /*
-                                 * Then, switch to the root element phase of the
-                                 * tree construction stage
-                                 */
-                                phase = Phase.ROOT_ELEMENT;
-                                /*
-                                 * and reprocess the current token.
-                                 * 
-                                 * 
-                                 */
-                                start = i;
-                                length = end - i;
-                                continue outer;
-                        }
-                    }
-                    return;
-                case ROOT_ELEMENT:
-                    // TODO
-                    return;
-                case BEFORE_HEAD:
-                    // TODO
-                    return;
-                case IN_HEAD:
-                    // TODO
-                    return;
-                case AFTER_HEAD:
-                    // TODO
-                    return;
-                case IN_BODY:
-                    // TODO
-                    return;
-                case IN_TABLE:
-                    // TODO
-                    return;
-                case IN_CAPTION:
-                    // TODO
-                    return;
-                case IN_COLUMN_GROUP:
-                    // TODO
-                    return;
-                case IN_TABLE_BODY:
-                    // TODO
-                    return;
-                case IN_ROW:
-                    // TODO
-                    return;
-                case IN_CELL:
-                    // TODO
-                    return;
-                case IN_SELECT:
-                    // TODO
-                    return;
-                case AFTER_BODY:
-                    // TODO
-                    return;
-                case IN_FRAMESET:
-                    // TODO
-                    return;
-                case AFTER_FRAMESET:
-                    // TODO
-                    return;
-                case TRAILING_END:
-                    // TODO
-                    return;
-            }
-        }
     }
 
     public void comment(char[] buf, int length) throws SAXException {
@@ -753,6 +646,163 @@ public abstract class TreeBuilder implements TokenHandler {
         }
     }
 
+    /**
+     * @see nu.validator.htmlparser.TokenHandler#characters(char[], int, int)
+     */
+    public void characters(char[] buf, int start, int length)
+            throws SAXException {
+        int end = start + length;
+        for (int i = start; i < end; i++) {
+            switch (buf[i]) {
+                case ' ':
+                case '\t':
+                case '\n':
+                case '\u000B':
+                case '\u000C':
+                    /*
+                     * A character token that is one of one of U+0009 CHARACTER
+                     * TABULATION, U+000A LINE FEED (LF), U+000B LINE
+                     * TABULATION, U+000C FORM FEED (FF), or U+0020 SPACE
+                     */
+                    switch (phase) {
+                        case INITIAL:
+                            /*
+                             * Ignore the token.
+                             */
+                            continue;
+                        case ROOT_ELEMENT:
+                            // TODO
+                            return;
+                        case BEFORE_HEAD:
+                            // TODO
+                            return;
+                        case IN_HEAD:
+                            // TODO
+                            return;
+                        case AFTER_HEAD:
+                            // TODO
+                            return;
+                        case IN_BODY:
+                            // TODO
+                            return;
+                        case IN_TABLE:
+                            // TODO
+                            return;
+                        case IN_CAPTION:
+                            // TODO
+                            return;
+                        case IN_COLUMN_GROUP:
+                            // TODO
+                            return;
+                        case IN_TABLE_BODY:
+                            // TODO
+                            return;
+                        case IN_ROW:
+                            // TODO
+                            return;
+                        case IN_CELL:
+                            // TODO
+                            return;
+                        case IN_SELECT:
+                            // TODO
+                            return;
+                        case AFTER_BODY:
+                            // TODO
+                            return;
+                        case IN_FRAMESET:
+                            // TODO
+                            return;
+                        case AFTER_FRAMESET:
+                            // TODO
+                            return;
+                        case TRAILING_END:
+                            // TODO
+                            return;
+                    }
+                default:
+                    /*
+                     * A character token that is not one of one of U+0009
+                     * CHARACTER TABULATION, U+000A LINE FEED (LF), U+000B LINE
+                     * TABULATION, U+000C FORM FEED (FF), or U+0020 SPACE
+                     */
+                    switch (phase) {
+                        case INITIAL:
+                            /*
+                             * Parse error.
+                             */
+                            err("Non-space characters found without seeing a doctype first.");
+                            /*
+                             * 
+                             * Set the document to quirks mode.
+                             */
+                            documentMode(DocumentMode.QUIRKS_MODE, null, null,
+                                    false);
+                            /*
+                             * Then, switch to the root element phase of the
+                             * tree construction stage
+                             */
+                            phase = Phase.ROOT_ELEMENT;
+                            /*
+                             * and reprocess the current token.
+                             * 
+                             * 
+                             */
+                            i--;
+                            continue;
+                        case ROOT_ELEMENT:
+                            // TODO
+                            return;
+                        case BEFORE_HEAD:
+                            // TODO
+                            return;
+                        case IN_HEAD:
+                            // TODO
+                            return;
+                        case AFTER_HEAD:
+                            // TODO
+                            return;
+                        case IN_BODY:
+                            // TODO
+                            return;
+                        case IN_TABLE:
+                            // TODO
+                            return;
+                        case IN_CAPTION:
+                            // TODO
+                            return;
+                        case IN_COLUMN_GROUP:
+                            // TODO
+                            return;
+                        case IN_TABLE_BODY:
+                            // TODO
+                            return;
+                        case IN_ROW:
+                            // TODO
+                            return;
+                        case IN_CELL:
+                            // TODO
+                            return;
+                        case IN_SELECT:
+                            // TODO
+                            return;
+                        case AFTER_BODY:
+                            // TODO
+                            return;
+                        case IN_FRAMESET:
+                            // TODO
+                            return;
+                        case AFTER_FRAMESET:
+                            // TODO
+                            return;
+                        case TRAILING_END:
+                            // TODO
+                            return;
+                    }
+            }
+        }
+    }
+
+    
     /*
      * 
      * #8.2.3. Tokenisation Table of contents 8.3. Namespaces

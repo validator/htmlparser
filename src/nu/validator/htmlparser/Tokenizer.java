@@ -62,9 +62,9 @@ import fi.iki.hsivonen.xml.EmptyAttributes;
  * incidental implementation detail: Users of this class are encouraged to make
  * use of the <code>Locator</code> nature.
  * 
- * By default, the tokenizer may report data that XML 1.0 bans. The tokenizer can be 
- * configured to treat these conditions as fatal or to coerce the infoset to something 
- * that XML 1.0 allows.
+ * By default, the tokenizer may report data that XML 1.0 bans. The tokenizer
+ * can be configured to treat these conditions as fatal or to coerce the infoset
+ * to something that XML 1.0 allows.
  * 
  * @version $Id$
  * @author hsivonen
@@ -322,17 +322,17 @@ public final class Tokenizer implements Locator {
      * Whether non-ASCII causes an error.
      */
     private boolean nonAsciiProhibited;
-    
+
     /**
      * Used together with <code>nonAsciiProhibited</code>.
      */
     private boolean alreadyComplainedAboutNonAscii;
-    
+
     /**
      * Whether the stream is past the first 512 bytes.
      */
     private boolean metaBoundaryPassed;
-    
+
     /**
      * The name of the current doctype token.
      */
@@ -431,7 +431,8 @@ public final class Tokenizer implements Locator {
     /**
      * Sets the commentPolicy.
      * 
-     * @param commentPolicy the commentPolicy to set
+     * @param commentPolicy
+     *            the commentPolicy to set
      */
     public void setCommentPolicy(XmlViolationPolicy commentPolicy) {
         this.commentPolicy = commentPolicy;
@@ -449,7 +450,8 @@ public final class Tokenizer implements Locator {
     /**
      * Sets the contentNonXmlCharPolicy.
      * 
-     * @param contentNonXmlCharPolicy the contentNonXmlCharPolicy to set
+     * @param contentNonXmlCharPolicy
+     *            the contentNonXmlCharPolicy to set
      */
     public void setContentNonXmlCharPolicy(
             XmlViolationPolicy contentNonXmlCharPolicy) {
@@ -468,7 +470,8 @@ public final class Tokenizer implements Locator {
     /**
      * Sets the contentSpacePolicy.
      * 
-     * @param contentSpacePolicy the contentSpacePolicy to set
+     * @param contentSpacePolicy
+     *            the contentSpacePolicy to set
      */
     public void setContentSpacePolicy(XmlViolationPolicy contentSpacePolicy) {
         this.contentSpacePolicy = contentSpacePolicy;
@@ -594,19 +597,19 @@ public final class Tokenizer implements Locator {
     void notifyAboutMetaBoundary() {
         metaBoundaryPassed = true;
     }
-    
+
     void turnOnAdditionalHtml4Errors() {
         html4 = true;
     }
-    
+
     void dontSwallowBom() {
         swallowBom = false;
     }
-    
+
     void noEncodingDeclared() {
         nonAsciiProhibited = true;
     }
-    
+
     /**
      * Clears the smaller buffer.
      */
@@ -617,7 +620,8 @@ public final class Tokenizer implements Locator {
     /**
      * Appends to the smaller buffer.
      * 
-     * @param c the UTF-16 code unit to append
+     * @param c
+     *            the UTF-16 code unit to append
      */
     private void appendStrBuf(char c) {
         if (strBufLen == strBuf.length) {
@@ -673,10 +677,11 @@ public final class Tokenizer implements Locator {
     }
 
     /**
-     * Appends to the larger buffer when it is used to buffer a comment. Checks for 
-     * two consecutive hyphens.
+     * Appends to the larger buffer when it is used to buffer a comment. Checks
+     * for two consecutive hyphens.
      * 
-     * @param c the UTF-16 code unit to append
+     * @param c
+     *            the UTF-16 code unit to append
      * @throws SAXException
      */
     private void appendToComment(char c) throws SAXException {
@@ -778,7 +783,7 @@ public final class Tokenizer implements Locator {
      * @throws IOException
      */
     private char read() throws SAXException, IOException {
-        assert(bufLen > -1);
+        assert (bufLen > -1);
         for (;;) { // the loop is here for the CRLF case
             if (unreadBuffer != -1) {
                 char c = (char) unreadBuffer;
@@ -807,7 +812,8 @@ public final class Tokenizer implements Locator {
                 pos = 0;
             }
             char c = buf[pos];
-            if (c > '\u007F' && nonAsciiProhibited && !alreadyComplainedAboutNonAscii) {
+            if (c > '\u007F' && nonAsciiProhibited
+                    && !alreadyComplainedAboutNonAscii) {
                 err("The character encoding of the document was not explicit but the document contains non-ASCII.");
             }
             switch (c) {
@@ -901,7 +907,9 @@ public final class Tokenizer implements Locator {
     }
 
     /**
-     * Emits a warning about private use characters if the warning has not been emitted yet.
+     * Emits a warning about private use characters if the warning has not been
+     * emitted yet.
+     * 
      * @throws SAXException
      */
     private void warnAboutPrivateUseChar() throws SAXException {
@@ -913,7 +921,9 @@ public final class Tokenizer implements Locator {
 
     /**
      * Tells if the argument is a BMP PUA character.
-     * @param c the UTF-16 code unit to check
+     * 
+     * @param c
+     *            the UTF-16 code unit to check
      * @return <code>true</code> if PUA character
      */
     private boolean isPrivateUse(char c) {
@@ -922,7 +932,9 @@ public final class Tokenizer implements Locator {
 
     /**
      * Tells if the argument is an astral PUA character.
-     * @param c the code point to check
+     * 
+     * @param c
+     *            the code point to check
      * @return <code>true</code> if astral private use
      */
     private boolean isAstralPrivateUse(int c) {
@@ -932,7 +944,9 @@ public final class Tokenizer implements Locator {
 
     /**
      * Tells if the argument is a non-character (works for BMP and astral).
-     * @param c the code point to check
+     * 
+     * @param c
+     *            the code point to check
      * @return <code>true</code> if non-character
      */
     private boolean isNonCharacter(int c) {
@@ -954,9 +968,11 @@ public final class Tokenizer implements Locator {
     }
 
     /**
-     * Reports an condition that would make the infoset incompatible with XML 1.0 as fatal.
+     * Reports an condition that would make the infoset incompatible with XML
+     * 1.0 as fatal.
      * 
-     * @param message the message
+     * @param message
+     *            the message
      * @throws SAXException
      * @throws SAXParseException
      */
@@ -969,7 +985,8 @@ public final class Tokenizer implements Locator {
     /**
      * Reports a Parse Error.
      * 
-     * @param message the message
+     * @param message
+     *            the message
      * @throws SAXException
      */
     private void err(String message) throws SAXException {
@@ -980,7 +997,8 @@ public final class Tokenizer implements Locator {
     /**
      * Reports a warning
      * 
-     * @param message the message
+     * @param message
+     *            the message
      * @throws SAXException
      */
     private void warn(String message) throws SAXException {
@@ -1369,11 +1387,11 @@ public final class Tokenizer implements Locator {
             tagName = contentModelElement;
             char c = read();
             switch (c) {
+                case ' ':
                 case '\t':
                 case '\n':
                 case '\u000B':
                 case '\u000C':
-                case ' ':
                     /*
                      * U+0009 CHARACTER TABULATION U+000A LINE FEED (LF) U+000B
                      * LINE TABULATION U+000C FORM FEED (FF) U+0020 SPACE Switch
@@ -1517,11 +1535,11 @@ public final class Tokenizer implements Locator {
              */
             char c = read();
             switch (c) {
+                case ' ':
                 case '\t':
                 case '\n':
                 case '\u000B':
                 case '\u000C':
-                case ' ':
                     /*
                      * U+0009 CHARACTER TABULATION U+000A LINE FEED (LF) U+000B
                      * LINE TABULATION U+000C FORM FEED (FF) U+0020 SPACE Switch
@@ -1624,11 +1642,11 @@ public final class Tokenizer implements Locator {
         for (;;) {
             char c = read();
             switch (c) {
+                case ' ':
                 case '\t':
                 case '\n':
                 case '\u000B':
                 case '\u000C':
-                case ' ':
                     /*
                      * U+0009 CHARACTER TABULATION U+000A LINE FEED (LF) U+000B
                      * LINE TABULATION U+000C FORM FEED (FF) U+0020 SPACE Stay
@@ -1762,11 +1780,11 @@ public final class Tokenizer implements Locator {
              */
             char c = read();
             switch (c) {
+                case ' ':
                 case '\t':
                 case '\n':
                 case '\u000B':
                 case '\u000C':
-                case ' ':
                     /*
                      * U+0009 CHARACTER TABULATION U+000A LINE FEED (LF) U+000B
                      * LINE TABULATION U+000C FORM FEED (FF) U+0020 SPACE Switch
@@ -1860,7 +1878,8 @@ public final class Tokenizer implements Locator {
     }
 
     private void addAttributeWithoutValue() throws SAXException {
-        if (metaBoundaryPassed && "charset".equals(attributeName) && "meta".equals(tagName)) {
+        if (metaBoundaryPassed && "charset".equals(attributeName)
+                && "meta".equals(tagName)) {
             err("A \u201Ccharset\u201D attribute on a \u201Cmeta\u201D element found after the first 512 bytes.");
         }
         if (shouldAddAttributes) {
@@ -1869,7 +1888,8 @@ public final class Tokenizer implements Locator {
     }
 
     private void addAttributeWithValue() throws SAXException {
-        if (metaBoundaryPassed && "charset".equals(attributeName) && "meta".equals(tagName)) {
+        if (metaBoundaryPassed && "charset".equals(attributeName)
+                && "meta".equals(tagName)) {
             err("A \u201Ccharset\u201D attribute on a \u201Cmeta\u201D element found after the first 512 bytes.");
         }
         if (shouldAddAttributes) {
@@ -1890,11 +1910,11 @@ public final class Tokenizer implements Locator {
              */
             char c = read();
             switch (c) {
+                case ' ':
                 case '\t':
                 case '\n':
                 case '\u000B':
                 case '\u000C':
-                case ' ':
                     /*
                      * U+0009 CHARACTER TABULATION U+000A LINE FEED (LF) U+000B
                      * LINE TABULATION U+000C FORM FEED (FF) U+0020 SPACE Stay
@@ -1984,11 +2004,11 @@ public final class Tokenizer implements Locator {
              */
             char c = read();
             switch (c) {
+                case ' ':
                 case '\t':
                 case '\n':
                 case '\u000B':
                 case '\u000C':
-                case ' ':
                     /*
                      * U+0009 CHARACTER TABULATION U+000A LINE FEED (LF) U+000B
                      * LINE TABULATION U+000C FORM FEED (FF) U+0020 SPACE Stay
@@ -2196,11 +2216,11 @@ public final class Tokenizer implements Locator {
              */
             char c = read();
             switch (c) {
+                case ' ':
                 case '\t':
                 case '\n':
                 case '\u000B':
                 case '\u000C':
-                case ' ':
                     /*
                      * U+0009 CHARACTER TABULATION U+000A LINE FEED (LF) U+000B
                      * LINE TABULATION U+000C FORM FEED (FF) U+0020 SPACE Switch
@@ -2663,11 +2683,11 @@ public final class Tokenizer implements Locator {
          */
         char c = read();
         switch (c) {
+            case ' ':
             case '\t':
             case '\n':
             case '\u000B':
             case '\u000C':
-            case ' ':
                 /*
                  * U+0009 CHARACTER TABULATION U+000A LINE FEED (LF) U+000B LINE
                  * TABULATION U+000C FORM FEED (FF) U+0020 SPACE Switch to the
@@ -2703,11 +2723,11 @@ public final class Tokenizer implements Locator {
              */
             char c = read();
             switch (c) {
+                case ' ':
                 case '\t':
                 case '\n':
                 case '\u000B':
                 case '\u000C':
-                case ' ':
                     /*
                      * U+0009 CHARACTER TABULATION U+000A LINE FEED (LF) U+000B
                      * LINE TABULATION U+000C FORM FEED (FF) U+0020 SPACE Stay
@@ -2770,11 +2790,11 @@ public final class Tokenizer implements Locator {
              */
             char c = read();
             switch (c) {
+                case ' ':
                 case '\t':
                 case '\n':
                 case '\u000B':
                 case '\u000C':
-                case ' ':
                     /*
                      * U+0009 CHARACTER TABULATION U+000A LINE FEED (LF) U+000B
                      * LINE TABULATION U+000C FORM FEED (FF) U+0020 SPACE Switch
@@ -2796,8 +2816,10 @@ public final class Tokenizer implements Locator {
                 case '\u0000':
                     /* EOF Parse error. */
                     err("End of file inside doctype.");
-                    /* Set the DOCTYPE token's correctness flag to
-                incorrect. Emit that DOCTYPE token. */
+                    /*
+                     * Set the DOCTYPE token's correctness flag to incorrect.
+                     * Emit that DOCTYPE token.
+                     */
                     tokenHandler.doctype(strBufToString(), null, null, false);
                     /*
                      * Reconsume the EOF character in the data state.
@@ -2831,11 +2853,11 @@ public final class Tokenizer implements Locator {
              */
             char c = read();
             switch (c) {
+                case ' ':
                 case '\t':
                 case '\n':
                 case '\u000B':
                 case '\u000C':
-                case ' ':
                     /*
                      * U+0009 CHARACTER TABULATION U+000A LINE FEED (LF) U+000B
                      * LINE TABULATION U+000C FORM FEED (FF) U+0020 SPACE Stay
@@ -2855,8 +2877,10 @@ public final class Tokenizer implements Locator {
                 case '\u0000':
                     /* EOF Parse error. */
                     err("End of file inside doctype.");
-                    /* Set the DOCTYPE token's correctness flag to
-                incorrect. Emit that DOCTYPE token. */
+                    /*
+                     * Set the DOCTYPE token's correctness flag to incorrect.
+                     * Emit that DOCTYPE token.
+                     */
                     tokenHandler.doctype(doctypeName, null, null, false);
                     /*
                      * Reconsume the EOF character in the data state.
@@ -2933,11 +2957,11 @@ public final class Tokenizer implements Locator {
              */
             char c = read();
             switch (c) {
+                case ' ':
                 case '\t':
                 case '\n':
                 case '\u000B':
                 case '\u000C':
-                case ' ':
                     /*
                      * U+0009 CHARACTER TABULATION U+000A LINE FEED (LF) U+000B
                      * LINE TABULATION U+000C FORM FEED (FF) U+0020 SPACE Stay
@@ -3122,11 +3146,11 @@ public final class Tokenizer implements Locator {
              */
             char c = read();
             switch (c) {
+                case ' ':
                 case '\t':
                 case '\n':
                 case '\u000B':
                 case '\u000C':
-                case ' ':
                     /*
                      * U+0009 CHARACTER TABULATION U+000A LINE FEED (LF) U+000B
                      * LINE TABULATION U+000C FORM FEED (FF) U+0020 SPACE Stay
@@ -3208,11 +3232,11 @@ public final class Tokenizer implements Locator {
              */
             char c = read();
             switch (c) {
+                case ' ':
                 case '\t':
                 case '\n':
                 case '\u000B':
                 case '\u000C':
-                case ' ':
                     /*
                      * U+0009 CHARACTER TABULATION U+000A LINE FEED (LF) U+000B
                      * LINE TABULATION U+000C FORM FEED (FF) U+0020 SPACE Stay
@@ -3396,11 +3420,11 @@ public final class Tokenizer implements Locator {
              */
             char c = read();
             switch (c) {
+                case ' ':
                 case '\t':
                 case '\n':
                 case '\u000B':
                 case '\u000C':
-                case ' ':
                     /*
                      * U+0009 CHARACTER TABULATION U+000A LINE FEED (LF) U+000B
                      * LINE TABULATION U+000C FORM FEED (FF) U+0020 SPACE Stay
@@ -3515,11 +3539,11 @@ public final class Tokenizer implements Locator {
          */
         char c = read();
         switch (c) {
+            case ' ':
             case '\t':
             case '\n':
             case '\u000B':
             case '\u000C':
-            case ' ':
             case '<':
             case '&':
             case '\u0000':
@@ -3536,7 +3560,7 @@ public final class Tokenizer implements Locator {
                     emitStrBuf();
                 }
                 unread(c);
-                return;                
+                return;
             case '#':
                 /*
                  * U+0023 NUMBER SIGN (#) Consume the U+0023 NUMBER SIGN.
@@ -3614,24 +3638,30 @@ public final class Tokenizer implements Locator {
                 } else {
                     if (!Entities.NAMES[candidate].endsWith(";")) {
                         /*
-                         * If the last character matched is not a U+003B SEMICOLON (;),
-              there is a parse error.
-              */
+                         * If the last character matched is not a U+003B
+                         * SEMICOLON (;), there is a parse error.
+                         */
                         err("Entity reference was not terminated by a semicolon.");
                         if (inAttribute) {
-                        /*
-                        If the entity is being consumed as part of an attribute, and
-                        the last character matched is not a U+003B SEMICOLON (;), */
+                            /*
+                             * If the entity is being consumed as part of an
+                             * attribute, and the last character matched is not
+                             * a U+003B SEMICOLON (;),
+                             */
                             c = read();
-                            if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) {
-                            /*and
-                        the next character is in the range U+0030 DIGIT ZERO to U+0039
-                        DIGIT NINE, U+0041 LATIN CAPITAL LETTER A to U+005A LATIN
-                        CAPITAL LETTER Z, or U+0061 LATIN SMALL LETTER A to U+007A
-                        LATIN SMALL LETTER Z, then, for historical reasons, all the
-                        characters that were matched after the U+0026 AMPERSAND (&)
-                        must be unconsumed, and nothing is returned.
-              */
+                            if ((c >= '0' && c <= '9')
+                                    || (c >= 'A' && c <= 'Z')
+                                    || (c >= 'a' && c <= 'z')) {
+                                /*
+                                 * and the next character is in the range U+0030
+                                 * DIGIT ZERO to U+0039 DIGIT NINE, U+0041 LATIN
+                                 * CAPITAL LETTER A to U+005A LATIN CAPITAL
+                                 * LETTER Z, or U+0061 LATIN SMALL LETTER A to
+                                 * U+007A LATIN SMALL LETTER Z, then, for
+                                 * historical reasons, all the characters that
+                                 * were matched after the U+0026 AMPERSAND (&)
+                                 * must be unconsumed, and nothing is returned.
+                                 */
                                 appendStrBufToLongStrBuf();
                                 unread(c);
                                 return;
@@ -3639,11 +3669,11 @@ public final class Tokenizer implements Locator {
                             unread(c);
                         }
                     }
-                    
+
                     /*
-          Otherwise, return a character token for the character
-          corresponding to the entity name (as given by the second column
-          of the entities table).
+                     * Otherwise, return a character token for the character
+                     * corresponding to the entity name (as given by the second
+                     * column of the entities table).
                      */
                     char[] val = Entities.VALUES[candidate];
                     emitOrAppend(val, inAttribute);
@@ -3654,15 +3684,16 @@ public final class Tokenizer implements Locator {
                                 appendLongStrBuf(strBuf[i]);
                             }
                         } else {
-                            tokenHandler.characters(strBuf, strBufMark, strBufLen - strBufMark);
+                            tokenHandler.characters(strBuf, strBufMark,
+                                    strBufLen - strBufMark);
                         }
                     }
                     return;
                     /*
-                     * If the markup contains I'm &notit; I tell you, the entity is
-                     * parsed as "not", as in, I'm ¬it; I tell you. But if the
-                     * markup was I'm &notin; I tell you, the entity would be parsed
-                     * as "notin;", resulting in I'm ∉ I tell you.
+                     * If the markup contains I'm &notit; I tell you, the entity
+                     * is parsed as "not", as in, I'm ¬it; I tell you. But if
+                     * the markup was I'm &notin; I tell you, the entity would
+                     * be parsed as "notin;", resulting in I'm ∉ I tell you.
                      */
                 }
 
@@ -3785,14 +3816,13 @@ public final class Tokenizer implements Locator {
         if (value >= 0x80 && value <= 0x9f) {
             /*
              * If that number is one of the numbers in the first column of the
-          following table, then this is a parse error.
+             * following table, then this is a parse error.
              */
             err("A numeric character reference expanded to the C1 controls range.");
             /*
-             * Find the row with
-          that number in the first column, and return a character token
-          for the Unicode character given in the second column of that
-          row.
+             * Find the row with that number in the first column, and return a
+             * character token for the Unicode character given in the second
+             * column of that row.
              */
             char[] val = Entities.WINDOWS_1252[value - 0x80];
             emitOrAppend(val, inAttribute);
@@ -3804,10 +3834,10 @@ public final class Tokenizer implements Locator {
         } else if (value == 0) {
             /*
              * Otherwise, if the number is zero, if the number is higher than
-          0x10FFFF, or if it's one of the surrogate characters
-          (characters in the range 0xD800 to 0xDFFF), then this is a
-          parse error; return a character token for the U+FFFD
-          REPLACEMENT CHARACTER character instead.
+             * 0x10FFFF, or if it's one of the surrogate characters (characters
+             * in the range 0xD800 to 0xDFFF), then this is a parse error;
+             * return a character token for the U+FFFD REPLACEMENT CHARACTER
+             * character instead.
              */
             err("Character reference expands to U+0000.");
             emitOrAppend(REPLACEMENT_CHARACTER, inAttribute);
