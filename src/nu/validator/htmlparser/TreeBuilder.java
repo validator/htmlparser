@@ -34,6 +34,8 @@
 
 package nu.validator.htmlparser;
 
+import java.util.Arrays;
+
 import org.xml.sax.Attributes;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
@@ -42,16 +44,79 @@ import org.xml.sax.SAXParseException;
 public abstract class TreeBuilder implements TokenHandler {
 
     private enum Phase {
-        INITIAL_PHASE, ROOT_ELEMENT, BEFORE_HEAD, IN_HEAD, AFTER_HEAD, IN_BODY, IN_TABLE, IN_CAPTION, IN_COLUMN_GROUP, IN_TABLE_BODY, IN_ROW, IN_CELL, IN_SELECT, AFTER_BODY, IN_FRAMESET, AFTER_FRAMESET, TRAILING_END
+        INITIAL, ROOT_ELEMENT, BEFORE_HEAD, IN_HEAD, IN_HEAD_NOSCRIPT, AFTER_HEAD, IN_BODY, IN_TABLE, IN_CAPTION, IN_COLUMN_GROUP, IN_TABLE_BODY, IN_ROW, IN_CELL, IN_SELECT, AFTER_BODY, IN_FRAMESET, AFTER_FRAMESET, TRAILING_END
     }
 
-    private Phase phase;
+    private final static String[] QUIRKY_PUBLIC_IDS = {
+            "+//silmaril//dtd html pro v0r11 19970101//en",
+            "-//advasoft ltd//dtd html 3.0 aswedit + extensions//en",
+            "-//as//dtd html 3.0 aswedit + extensions//en",
+            "-//ietf//dtd html 2.0 level 1//en",
+            "-//ietf//dtd html 2.0 level 2//en",
+            "-//ietf//dtd html 2.0 strict level 1//en",
+            "-//ietf//dtd html 2.0 strict level 2//en",
+            "-//ietf//dtd html 2.0 strict//en", "-//ietf//dtd html 2.0//en",
+            "-//ietf//dtd html 2.1e//en", "-//ietf//dtd html 3.0//en",
+            "-//ietf//dtd html 3.0//en//", "-//ietf//dtd html 3.2 final//en",
+            "-//ietf//dtd html 3.2//en", "-//ietf//dtd html 3//en",
+            "-//ietf//dtd html level 0//en",
+            "-//ietf//dtd html level 0//en//2.0",
+            "-//ietf//dtd html level 1//en",
+            "-//ietf//dtd html level 1//en//2.0",
+            "-//ietf//dtd html level 2//en",
+            "-//ietf//dtd html level 2//en//2.0",
+            "-//ietf//dtd html level 3//en",
+            "-//ietf//dtd html level 3//en//3.0",
+            "-//ietf//dtd html strict level 0//en",
+            "-//ietf//dtd html strict level 0//en//2.0",
+            "-//ietf//dtd html strict level 1//en",
+            "-//ietf//dtd html strict level 1//en//2.0",
+            "-//ietf//dtd html strict level 2//en",
+            "-//ietf//dtd html strict level 2//en//2.0",
+            "-//ietf//dtd html strict level 3//en",
+            "-//ietf//dtd html strict level 3//en//3.0",
+            "-//ietf//dtd html strict//en",
+            "-//ietf//dtd html strict//en//2.0",
+            "-//ietf//dtd html strict//en//3.0", "-//ietf//dtd html//en",
+            "-//ietf//dtd html//en//2.0", "-//ietf//dtd html//en//3.0",
+            "-//metrius//dtd metrius presentational//en",
+            "-//microsoft//dtd internet explorer 2.0 html strict//en",
+            "-//microsoft//dtd internet explorer 2.0 html//en",
+            "-//microsoft//dtd internet explorer 2.0 tables//en",
+            "-//microsoft//dtd internet explorer 3.0 html strict//en",
+            "-//microsoft//dtd internet explorer 3.0 html//en",
+            "-//microsoft//dtd internet explorer 3.0 tables//en",
+            "-//netscape comm. corp.//dtd html//en",
+            "-//netscape comm. corp.//dtd strict html//en",
+            "-//o'reilly and associates//dtd html 2.0//en",
+            "-//o'reilly and associates//dtd html extended 1.0//en",
+            "-//spyglass//dtd html 2.0 extended//en",
+            "-//sq//dtd html 2.0 hotmetal + extensions//en",
+            "-//sun microsystems corp.//dtd hotjava html//en",
+            "-//sun microsystems corp.//dtd hotjava strict html//en",
+            "-//w3c//dtd html 3 1995-03-24//en",
+            "-//w3c//dtd html 3.2 draft//en", "-//w3c//dtd html 3.2 final//en",
+            "-//w3c//dtd html 3.2//en", "-//w3c//dtd html 3.2s draft//en",
+            "-//w3c//dtd html 4.0 frameset//en",
+            "-//w3c//dtd html 4.0 transitional//en",
+            "-//w3c//dtd html experimental 19960712//en",
+            "-//w3c//dtd html experimental 970421//en",
+            "-//w3c//dtd w3 html//en", "-//w3o//dtd w3 html 3.0//en",
+            "-//w3o//dtd w3 html 3.0//en//",
+            "-//w3o//dtd w3 html strict 3.0//en//",
+            "-//webtechs//dtd mozilla html 2.0//en",
+            "-//webtechs//dtd mozilla html//en",
+            "-/w3c/dtd html 4.0 transitional/en", "html" };
+
+    private Phase phase = Phase.INITIAL;
 
     private Tokenizer tokenizer;
 
     private ErrorHandler errorHandler;
 
     private DocumentModeHandler documentModeHandler;
+
+    private DoctypeExpectation doctypeExpectation;
 
     /**
      * Reports an condition that would make the infoset incompatible with XML
@@ -110,6 +175,286 @@ public abstract class TreeBuilder implements TokenHandler {
      */
     public abstract boolean wantsComments() throws SAXException;
 
+    public void doctype(String name, String publicIdentifier,
+            String systemIdentifier, boolean correct) throws SAXException {
+        for (;;) {
+            switch (phase) {
+                case INITIAL:
+                    /*
+                     * A DOCTYPE token If the DOCTYPE token's name does not
+                     * case-insensitively match the string "HTML", or if the
+                     * token's public identifier is not missing, or if the
+                     * token's system identifier is not missing, then there is a
+                     * parse error. Conformance checkers may, instead of
+                     * reporting this error, switch to a conformance checking
+                     * mode for another language (e.g. based on the DOCTYPE
+                     * token a conformance checker could recognise that the
+                     * document is an HTML4-era document, and defer to an HTML4
+                     * conformance checker.)
+                     * 
+                     * Append a DocumentType node to the Document node, with the
+                     * name attribute set to the name given in the DOCTYPE
+                     * token; the publicId attribute set to the public
+                     * identifier given in the DOCTYPE token, or the empty
+                     * string if the public identifier was not set; the systemId
+                     * attribute set to the system identifier given in the
+                     * DOCTYPE token, or the empty string if the system
+                     * identifier was not set; and the other attributes specific
+                     * to DocumentType objects set to null and empty lists as
+                     * appropriate. Associate the DocumentType node with the
+                     * Document object so that it is returned as the value of
+                     * the doctype attribute of the Document object.
+                     */
+                    appendDoctypeToDocument(name, publicIdentifier == null ? ""
+                            : publicIdentifier, systemIdentifier == null ? ""
+                            : systemIdentifier);
+                    /*
+                     * Then, if the DOCTYPE token matches one of the conditions
+                     * in the following list, then set the document to quirks
+                     * mode:
+                     * 
+                     * Otherwise, if the DOCTYPE token matches one of the
+                     * conditions in the following list, then set the document
+                     * to limited quirks mode: + The public identifier is set
+                     * to: "-//W3C//DTD XHTML 1.0 Frameset//EN" + The public
+                     * identifier is set to: "-//W3C//DTD XHTML 1.0
+                     * Transitional//EN" + The system identifier is not missing
+                     * and the public identifier is set to: "-//W3C//DTD HTML
+                     * 4.01 Frameset//EN" + The system identifier is not missing
+                     * and the public identifier is set to: "-//W3C//DTD HTML
+                     * 4.01 Transitional//EN"
+                     * 
+                     * The name, system identifier, and public identifier
+                     * strings must be compared to the values given in the lists
+                     * above in a case-insensitive manner.
+                     */
+                    String publicIdentifierLC = toAsciiLowerCase(publicIdentifier);
+                    String systemIdentifierLC = toAsciiLowerCase(systemIdentifier);
+                    switch (doctypeExpectation) {
+                        case HTML:
+                            if (isQuirky(name, publicIdentifierLC,
+                                    systemIdentifierLC, correct)) {
+                                err("Quirky doctype.");
+                                documentMode(DocumentMode.QUIRKS_MODE,
+                                        publicIdentifier, systemIdentifier,
+                                        false);
+                            } else if (isAlmostStandards(publicIdentifierLC,
+                                    systemIdentifierLC)) {
+                                err("Almost standards mode doctype.");
+                                documentMode(
+                                        DocumentMode.ALMOST_STANDARDS_MODE,
+                                        publicIdentifier, systemIdentifier,
+                                        false);
+                            } else {
+                                if (!(publicIdentifier == null && systemIdentifier == null)) {
+                                    err("Legacy doctype.");
+                                }
+                                documentMode(DocumentMode.STANDARDS_MODE,
+                                        publicIdentifier, systemIdentifier,
+                                        false);
+                            }
+                            break;
+                        case HTML401_STRICT:
+                            tokenizer.turnOnAdditionalHtml4Errors();
+                            if (isQuirky(name, publicIdentifierLC,
+                                    systemIdentifierLC, correct)) {
+                                err("Quirky doctype.");
+                                documentMode(DocumentMode.QUIRKS_MODE,
+                                        publicIdentifier, systemIdentifier,
+                                        true);
+                            } else if (isAlmostStandards(publicIdentifierLC,
+                                    systemIdentifierLC)) {
+                                err("Almost standards mode doctype.");
+                                documentMode(
+                                        DocumentMode.ALMOST_STANDARDS_MODE,
+                                        publicIdentifier, systemIdentifier,
+                                        true);
+                            } else {
+                                if ("-//W3C//DTD HTML 4.01//EN".equals(publicIdentifier)) {
+                                    if (!"http://www.w3.org/TR/html4/strict.dtd".equals(systemIdentifier)) {
+                                        warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification.");
+                                    }
+                                } else {
+                                    err("The doctype was not the HTML 4.01 Strict doctype.");
+                                }
+                                documentMode(DocumentMode.STANDARDS_MODE,
+                                        publicIdentifier, systemIdentifier,
+                                        true);
+                            }
+                            break;
+                        case HTML401_TRANSITIONAL:
+                            tokenizer.turnOnAdditionalHtml4Errors();
+                            if (isQuirky(name, publicIdentifierLC,
+                                    systemIdentifierLC, correct)) {
+                                err("Quirky doctype.");
+                                documentMode(DocumentMode.QUIRKS_MODE,
+                                        publicIdentifier, systemIdentifier,
+                                        true);
+                            } else if (isAlmostStandards(publicIdentifierLC,
+                                    systemIdentifierLC)) {
+                                if ("-//W3C//DTD HTML 4.01 Transitional//EN".equals(publicIdentifier)
+                                        && systemIdentifier != null) {
+                                    if (!"http://www.w3.org/TR/html4/loose.dtd".equals(systemIdentifier)) {
+                                        warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification.");
+                                    }
+                                } else {
+                                    err("The doctype was not a non-quirky HTML 4.01 Transitional doctype.");
+                                }
+                                documentMode(
+                                        DocumentMode.ALMOST_STANDARDS_MODE,
+                                        publicIdentifier, systemIdentifier,
+                                        true);
+                            } else {
+                                err("The doctype was not the HTML 4.01 Transitional doctype.");
+                                documentMode(DocumentMode.STANDARDS_MODE,
+                                        publicIdentifier, systemIdentifier,
+                                        true);
+                            }
+                            break;
+                        case AUTO:
+                            if (isQuirky(name, publicIdentifierLC,
+                                    systemIdentifierLC, correct)) {
+                                err("Quirky doctype.");
+                                documentMode(DocumentMode.QUIRKS_MODE,
+                                        publicIdentifier, systemIdentifier,
+                                        false);
+                            } else if (isAlmostStandards(publicIdentifierLC,
+                                    systemIdentifierLC)) {
+                                boolean html4 = "-//W3C//DTD HTML 4.01 Transitional//EN".equals(publicIdentifier);
+                                if (html4) {
+                                    tokenizer.turnOnAdditionalHtml4Errors();
+                                    if (!"http://www.w3.org/TR/html4/loose.dtd".equals(systemIdentifier)) {
+                                        warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification.");
+                                    }
+                                } else {
+                                    err("Almost standards mode doctype.");
+                                }
+                                documentMode(
+                                        DocumentMode.ALMOST_STANDARDS_MODE,
+                                        publicIdentifier, systemIdentifier,
+                                        html4);
+                            } else {
+                                boolean html4 = "-//W3C//DTD HTML 4.01//EN".equals(publicIdentifier);
+                                if (html4) {
+                                    tokenizer.turnOnAdditionalHtml4Errors();
+                                    if (!"http://www.w3.org/TR/html4/strict.dtd".equals(systemIdentifier)) {
+                                        warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification.");
+                                    }
+                                } else {
+                                    if (!(publicIdentifier == null && systemIdentifier == null)) {
+                                        err("Legacy doctype.");
+                                    }
+                                }
+                                documentMode(DocumentMode.STANDARDS_MODE,
+                                        publicIdentifier, systemIdentifier,
+                                        html4);
+                            }
+                            break;
+                        case NO_DOCTYPE_ERRORS:
+                            if (isQuirky(name, publicIdentifierLC,
+                                    systemIdentifierLC, correct)) {
+                                documentMode(DocumentMode.QUIRKS_MODE,
+                                        publicIdentifier, systemIdentifier,
+                                        false);
+                            } else if (isAlmostStandards(publicIdentifierLC,
+                                    systemIdentifierLC)) {
+                                documentMode(
+                                        DocumentMode.ALMOST_STANDARDS_MODE,
+                                        publicIdentifier, systemIdentifier,
+                                        false);
+                            } else {
+                                documentMode(DocumentMode.STANDARDS_MODE,
+                                        publicIdentifier, systemIdentifier,
+                                        false);
+                            }
+                            break;
+                    }
+
+                    /*
+                     * 
+                     * Then, switch to the root element phase of the tree
+                     * construction stage.
+                     * 
+                     * 
+                     */
+                    phase = Phase.ROOT_ELEMENT;
+                    return;
+                default:
+                    /*
+                     * * A DOCTYPE token Parse error.
+                     */
+                    err("Stray doctype.");
+                    /*
+                     * Ignore the token.
+                     * 
+                     */
+                    return;
+            }
+        }
+    }
+
+    protected void appendDoctypeToDocument(String name,
+            String publicIdentifier, String systemIdentifier) {
+    }
+
+    private boolean isAlmostStandards(String publicIdentifierLC,
+            String systemIdentifierLC) {
+        if ("-//w3c//dtd xhtml 1.0 transitional//en".equals(publicIdentifierLC)) {
+            return true;
+        }
+        if ("-//w3c//dtd xhtml 1.0 frameset//en".equals(publicIdentifierLC)) {
+            return true;
+        }
+        if (systemIdentifierLC != null) {
+            if ("-//w3c//dtd html 4.01 transitional//en".equals(publicIdentifierLC)) {
+                return true;
+            }
+            if ("-//w3c//dtd html 4.01 frameset//en".equals(publicIdentifierLC)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isQuirky(String name, String publicIdentifierLC,
+            String systemIdentifierLC, boolean correct) {
+        if (!correct) {
+            return true;
+        }
+        if (!"HTML".equalsIgnoreCase(name)) {
+            return true;
+        }
+        if (publicIdentifierLC != null
+                && (Arrays.binarySearch(QUIRKY_PUBLIC_IDS, publicIdentifierLC) > -1)) {
+            return true;
+        }
+        if (systemIdentifierLC == null) {
+            if ("-//w3c//dtd html 4.01 transitional//en".equals(publicIdentifierLC)) {
+                return true;
+            } else if ("-//w3c//dtd html 4.01 frameset//en".equals(publicIdentifierLC)) {
+                return true;
+            }
+        } else if ("http://www.ibm.com/data/dtd/v11/ibmxhtml1-transitional.dtd".equals(systemIdentifierLC)) {
+            return true;
+        }
+        return false;
+    }
+
+    private String toAsciiLowerCase(String str) {
+        if (str == null) {
+            return null;
+        }
+        char[] buf = new char[str.length()];
+        for (int i = 0; i < str.length(); i++) {
+            char c = str.charAt(i);
+            if (c >= 'A' && c <= 'Z') {
+                c += 0x20;
+            }
+            buf[i] = c;
+        }
+        return new String(buf);
+    }
+
     /**
      * @see nu.validator.htmlparser.TokenHandler#characters(char[], int, int)
      */
@@ -117,7 +462,7 @@ public abstract class TreeBuilder implements TokenHandler {
             throws SAXException {
         outer: for (;;) {
             switch (phase) {
-                case INITIAL_PHASE:
+                case INITIAL:
                     int end = start + length;
                     for (int i = start; i < end; i++) {
                         switch (buf[i]) {
@@ -218,138 +563,48 @@ public abstract class TreeBuilder implements TokenHandler {
 
     public void comment(char[] buf, int length) throws SAXException {
         switch (phase) {
-            case INITIAL_PHASE:
-                /*
-     * A comment token Append a Comment node to the Document object with the
-     * data attribute set to the data given in the comment token.
-                 */
+            case INITIAL:
             case ROOT_ELEMENT:
+            case TRAILING_END:
                 /*
-     * A comment token Append a Comment node to the Document object with the
-     * data attribute set to the data given in the comment token.
+                 * A comment token Append a Comment node to the Document object
+                 * with the data attribute set to the data given in the comment
+                 * token.
                  */
                 appendCommentToDocument(buf, length);
                 return;
-            case BEFORE_HEAD:
-/*
-     * A comment token Append a Comment node to the current node with the data
-     * attribute set to the data given in the comment token.
- */   
-                appendCommentToCurrentNode(buf, length);
-                return;
-            case IN_HEAD:
-                // TODO
-                return;
-            case AFTER_HEAD:
-                // TODO
-                return;
-            case IN_BODY:
-                // TODO
-                return;
-            case IN_TABLE:
-                // TODO
-                return;
-            case IN_CAPTION:
-                // TODO
-                return;
-            case IN_COLUMN_GROUP:
-                // TODO
-                return;
-            case IN_TABLE_BODY:
-                // TODO
-                return;
-            case IN_ROW:
-                // TODO
-                return;
-            case IN_CELL:
-                // TODO
-                return;
-            case IN_SELECT:
-                // TODO
-                return;
             case AFTER_BODY:
-                // TODO
+                /*
+                 * * A comment token Append a Comment node to the first element
+                 * in the stack of open elements (the html element), with the
+                 * data attribute set to the data given in the comment token.
+                 * 
+                 */
+                appendCommentToRootElement(buf, length);
                 return;
-            case IN_FRAMESET:
-                // TODO
-                return;
-            case AFTER_FRAMESET:
-                // TODO
-                return;
-            case TRAILING_END:
-                // TODO
+            default:
+                /*
+                 * * A comment token Append a Comment node to the current node
+                 * with the data attribute set to the data given in the comment
+                 * token.
+                 * 
+                 */
+                appendCommentToCurrentNode(buf, length);
                 return;
         }
     }
 
     protected abstract void appendCommentToCurrentNode(char[] buf, int length);
-    protected abstract void appendCommentToDocument(char[] buf, int length);
-    protected abstract void appendCommentToRootElement(char[] buf, int length);
 
-    public void doctype(String name, String publicIdentifier,
-            String systemIdentifier, boolean correct) throws SAXException {
-        for (;;) {
-            switch (phase) {
-                case INITIAL_PHASE:
-                    // TODO
-                    return;
-                case ROOT_ELEMENT:
-                    // TODO
-                    return;
-                case BEFORE_HEAD:
-                    // TODO
-                    return;
-                case IN_HEAD:
-                    // TODO
-                    return;
-                case AFTER_HEAD:
-                    // TODO
-                    return;
-                case IN_BODY:
-                    // TODO
-                    return;
-                case IN_TABLE:
-                    // TODO
-                    return;
-                case IN_CAPTION:
-                    // TODO
-                    return;
-                case IN_COLUMN_GROUP:
-                    // TODO
-                    return;
-                case IN_TABLE_BODY:
-                    // TODO
-                    return;
-                case IN_ROW:
-                    // TODO
-                    return;
-                case IN_CELL:
-                    // TODO
-                    return;
-                case IN_SELECT:
-                    // TODO
-                    return;
-                case AFTER_BODY:
-                    // TODO
-                    return;
-                case IN_FRAMESET:
-                    // TODO
-                    return;
-                case AFTER_FRAMESET:
-                    // TODO
-                    return;
-                case TRAILING_END:
-                    // TODO
-                    return;
-            }
-        }
-    }
+    protected abstract void appendCommentToDocument(char[] buf, int length);
+
+    protected abstract void appendCommentToRootElement(char[] buf, int length);
 
     public void startTag(String name, Attributes attributes)
             throws SAXException {
         for (;;) {
             switch (phase) {
-                case INITIAL_PHASE:
+                case INITIAL:
                     // TODO
                     return;
                 case ROOT_ELEMENT:
@@ -407,7 +662,7 @@ public abstract class TreeBuilder implements TokenHandler {
     public void endTag(String name, Attributes attributes) throws SAXException {
         for (;;) {
             switch (phase) {
-                case INITIAL_PHASE:
+                case INITIAL:
                     // TODO
                     return;
                 case ROOT_ELEMENT:
@@ -465,7 +720,7 @@ public abstract class TreeBuilder implements TokenHandler {
     public void eof() throws SAXException {
         for (;;) {
             switch (phase) {
-                case INITIAL_PHASE:
+                case INITIAL:
                     // TODO
                     return;
                 case ROOT_ELEMENT:
@@ -528,8 +783,8 @@ public abstract class TreeBuilder implements TokenHandler {
      * 
      * HTML 5
      * 
-     * Working Draft — 27 June 2007
-     *  < 8.2.3. Tokenisation – Table of contents – 8.3. Namespaces >
+     * Working Draft — 27 June 2007 < 8.2.3. Tokenisation – Table of contents –
+     * 8.3. Namespaces >
      * 
      * 8.2.4. Tree construction
      * 
@@ -573,122 +828,6 @@ public abstract class TreeBuilder implements TokenHandler {
      * 
      * 
      * 
-     * A DOCTYPE token If the DOCTYPE token's name does not case-insensitively
-     * match the string "HTML", or if the token's public identifier is not
-     * missing, or if the token's system identifier is not missing, then there
-     * is a parse error. Conformance checkers may, instead of reporting this
-     * error, switch to a conformance checking mode for another language (e.g.
-     * based on the DOCTYPE token a conformance checker could recognise that the
-     * document is an HTML4-era document, and defer to an HTML4 conformance
-     * checker.)
-     * 
-     * Append a DocumentType node to the Document node, with the name attribute
-     * set to the name given in the DOCTYPE token; the publicId attribute set to
-     * the public identifier given in the DOCTYPE token, or the empty string if
-     * the public identifier was not set; the systemId attribute set to the
-     * system identifier given in the DOCTYPE token, or the empty string if the
-     * system identifier was not set; and the other attributes specific to
-     * DocumentType objects set to null and empty lists as appropriate.
-     * Associate the DocumentType node with the Document object so that it is
-     * returned as the value of the doctype attribute of the Document object.
-     * 
-     * Then, if the DOCTYPE token matches one of the conditions in the following
-     * list, then set the document to quirks mode:
-     *  + The correctness flag is set to incorrect. + The name is set to
-     * anything other than "HTML". + The public identifier is set to:
-     * "+//Silmaril//dtd html Pro v0r11 19970101//EN" + The public identifier is
-     * set to: "-//AdvaSoft Ltd//DTD HTML 3.0 asWedit + extensions//EN" + The
-     * public identifier is set to: "-//AS//DTD HTML 3.0 asWedit +
-     * extensions//EN" + The public identifier is set to: "-//IETF//DTD HTML 2.0
-     * Level 1//EN" + The public identifier is set to: "-//IETF//DTD HTML 2.0
-     * Level 2//EN" + The public identifier is set to: "-//IETF//DTD HTML 2.0
-     * Strict Level 1//EN" + The public identifier is set to: "-//IETF//DTD HTML
-     * 2.0 Strict Level 2//EN" + The public identifier is set to: "-//IETF//DTD
-     * HTML 2.0 Strict//EN" + The public identifier is set to: "-//IETF//DTD
-     * HTML 2.0//EN" + The public identifier is set to: "-//IETF//DTD HTML
-     * 2.1E//EN" + The public identifier is set to: "-//IETF//DTD HTML 3.0//EN" +
-     * The public identifier is set to: "-//IETF//DTD HTML 3.0//EN//" + The
-     * public identifier is set to: "-//IETF//DTD HTML 3.2 Final//EN" + The
-     * public identifier is set to: "-//IETF//DTD HTML 3.2//EN" + The public
-     * identifier is set to: "-//IETF//DTD HTML 3//EN" + The public identifier
-     * is set to: "-//IETF//DTD HTML Level 0//EN" + The public identifier is set
-     * to: "-//IETF//DTD HTML Level 0//EN//2.0" + The public identifier is set
-     * to: "-//IETF//DTD HTML Level 1//EN" + The public identifier is set to:
-     * "-//IETF//DTD HTML Level 1//EN//2.0" + The public identifier is set to:
-     * "-//IETF//DTD HTML Level 2//EN" + The public identifier is set to:
-     * "-//IETF//DTD HTML Level 2//EN//2.0" + The public identifier is set to:
-     * "-//IETF//DTD HTML Level 3//EN" + The public identifier is set to:
-     * "-//IETF//DTD HTML Level 3//EN//3.0" + The public identifier is set to:
-     * "-//IETF//DTD HTML Strict Level 0//EN" + The public identifier is set to:
-     * "-//IETF//DTD HTML Strict Level 0//EN//2.0" + The public identifier is
-     * set to: "-//IETF//DTD HTML Strict Level 1//EN" + The public identifier is
-     * set to: "-//IETF//DTD HTML Strict Level 1//EN//2.0" + The public
-     * identifier is set to: "-//IETF//DTD HTML Strict Level 2//EN" + The public
-     * identifier is set to: "-//IETF//DTD HTML Strict Level 2//EN//2.0" + The
-     * public identifier is set to: "-//IETF//DTD HTML Strict Level 3//EN" + The
-     * public identifier is set to: "-//IETF//DTD HTML Strict Level 3//EN//3.0" +
-     * The public identifier is set to: "-//IETF//DTD HTML Strict//EN" + The
-     * public identifier is set to: "-//IETF//DTD HTML Strict//EN//2.0" + The
-     * public identifier is set to: "-//IETF//DTD HTML Strict//EN//3.0" + The
-     * public identifier is set to: "-//IETF//DTD HTML//EN" + The public
-     * identifier is set to: "-//IETF//DTD HTML//EN//2.0" + The public
-     * identifier is set to: "-//IETF//DTD HTML//EN//3.0" + The public
-     * identifier is set to: "-//Metrius//DTD Metrius Presentational//EN" + The
-     * public identifier is set to: "-//Microsoft//DTD Internet Explorer 2.0
-     * HTML Strict//EN" + The public identifier is set to: "-//Microsoft//DTD
-     * Internet Explorer 2.0 HTML//EN" + The public identifier is set to:
-     * "-//Microsoft//DTD Internet Explorer 2.0 Tables//EN" + The public
-     * identifier is set to: "-//Microsoft//DTD Internet Explorer 3.0 HTML
-     * Strict//EN" + The public identifier is set to: "-//Microsoft//DTD
-     * Internet Explorer 3.0 HTML//EN" + The public identifier is set to:
-     * "-//Microsoft//DTD Internet Explorer 3.0 Tables//EN" + The public
-     * identifier is set to: "-//Netscape Comm. Corp.//DTD HTML//EN" + The
-     * public identifier is set to: "-//Netscape Comm. Corp.//DTD Strict
-     * HTML//EN" + The public identifier is set to: "-//O'Reilly and
-     * Associates//DTD HTML 2.0//EN" + The public identifier is set to:
-     * "-//O'Reilly and Associates//DTD HTML Extended 1.0//EN" + The public
-     * identifier is set to: "-//Spyglass//DTD HTML 2.0 Extended//EN" + The
-     * public identifier is set to: "-//SQ//DTD HTML 2.0 HoTMetaL +
-     * extensions//EN" + The public identifier is set to: "-//Sun Microsystems
-     * Corp.//DTD HotJava HTML//EN" + The public identifier is set to: "-//Sun
-     * Microsystems Corp.//DTD HotJava Strict HTML//EN" + The public identifier
-     * is set to: "-//W3C//DTD HTML 3 1995-03-24//EN" + The public identifier is
-     * set to: "-//W3C//DTD HTML 3.2 Draft//EN" + The public identifier is set
-     * to: "-//W3C//DTD HTML 3.2 Final//EN" + The public identifier is set to:
-     * "-//W3C//DTD HTML 3.2//EN" + The public identifier is set to:
-     * "-//W3C//DTD HTML 3.2S Draft//EN" + The public identifier is set to:
-     * "-//W3C//DTD HTML 4.0 Frameset//EN" + The public identifier is set to:
-     * "-//W3C//DTD HTML 4.0 Transitional//EN" + The public identifier is set
-     * to: "-//W3C//DTD HTML Experimental 19960712//EN" + The public identifier
-     * is set to: "-//W3C//DTD HTML Experimental 970421//EN" + The public
-     * identifier is set to: "-//W3C//DTD W3 HTML//EN" + The public identifier
-     * is set to: "-//W3O//DTD W3 HTML 3.0//EN" + The public identifier is set
-     * to: "-//W3O//DTD W3 HTML 3.0//EN//" + The public identifier is set to:
-     * "-//W3O//DTD W3 HTML Strict 3.0//EN//" + The public identifier is set to:
-     * "-//WebTechs//DTD Mozilla HTML 2.0//EN" + The public identifier is set
-     * to: "-//WebTechs//DTD Mozilla HTML//EN" + The public identifier is set
-     * to: "-/W3C/DTD HTML 4.0 Transitional/EN" + The public identifier is set
-     * to: "HTML" + The system identifier is set to:
-     * "http://www.ibm.com/data/dtd/v11/ibmxhtml1-transitional.dtd" + The system
-     * identifier is missing and the public identifier is set to: "-//W3C//DTD
-     * HTML 4.01 Frameset//EN" + The system identifier is missing and the public
-     * identifier is set to: "-//W3C//DTD HTML 4.01 Transitional//EN"
-     * 
-     * Otherwise, if the DOCTYPE token matches one of the conditions in the
-     * following list, then set the document to limited quirks mode:
-     *  + The public identifier is set to: "-//W3C//DTD XHTML 1.0 Frameset//EN" +
-     * The public identifier is set to: "-//W3C//DTD XHTML 1.0 Transitional//EN" +
-     * The system identifier is not missing and the public identifier is set to:
-     * "-//W3C//DTD HTML 4.01 Frameset//EN" + The system identifier is not
-     * missing and the public identifier is set to: "-//W3C//DTD HTML 4.01
-     * Transitional//EN"
-     * 
-     * The name, system identifier, and public identifier strings must be
-     * compared to the values given in the lists above in a case-insensitive
-     * manner.
-     * 
-     * Then, switch to the root element phase of the tree construction stage.
-     * 
      * A start tag token An end tag token
      * 
      * 
@@ -704,7 +843,6 @@ public abstract class TreeBuilder implements TokenHandler {
      * After the initial phase, as each token is emitted from the tokenisation
      * stage, it must be processed as described in this section.
      * 
-     * A DOCTYPE token Parse error. Ignore the token.
      * 
      * 
      * A character token that is one of one of U+0009 CHARACTER TABULATION,
@@ -893,12 +1031,12 @@ public abstract class TreeBuilder implements TokenHandler {
      * 
      * 8.2.4.3.4. Closing elements that have implied end tags
      * 
-     * When the steps below require the UA to generate implied end tags,
-   then, if the current node is a dd element, a dt element, an li
-   element, a p element, a tbody element, a td element, a tfoot element,
-   a th element, a thead element, a tr element, the UA must act as if an
-   end tag with the respective tag name had been seen and then generate
-   implied end tags again.
+     * When the steps below require the UA to generate implied end tags, then,
+     * if the current node is a dd element, a dt element, an li element, a p
+     * element, a tbody element, a td element, a tfoot element, a th element, a
+     * thead element, a tr element, the UA must act as if an end tag with the
+     * respective tag name had been seen and then generate implied end tags
+     * again.
      * 
      * The step that requires the UA to generate implied end tags but lists an
      * element to exclude from the process, then the UA must perform the above
@@ -1015,10 +1153,9 @@ public abstract class TreeBuilder implements TokenHandler {
      * This will result in a head element being generated, and with the current
      * token being reprocessed in the "in head" insertion mode.
      * 
-     * An end tag whose tag name is one of: "head", "body",
-                      "html", "p", "br" Act as if a
-     * start tag token with the tag name "head" and no attributes had been seen,
-     * then reprocess the current token.
+     * An end tag whose tag name is one of: "head", "body", "html", "p", "br"
+     * Act as if a start tag token with the tag name "head" and no attributes
+     * had been seen, then reprocess the current token.
      * 
      * Any other end tag Parse error. Ignore the token.
      * 
@@ -1040,8 +1177,6 @@ public abstract class TreeBuilder implements TokenHandler {
      * U+000A LINE FEED (LF), U+000B LINE TABULATION, U+000C FORM FEED (FF), or
      * U+0020 SPACE Append the character to the current node.
      * 
-     * A comment token Append a Comment node to the current node with the data
-     * attribute set to the data given in the comment token.
      * 
      * A start tag whose tag name is one of: "base", "link" Insert an HTML
      * element for the token.
@@ -1058,10 +1193,9 @@ public abstract class TreeBuilder implements TokenHandler {
      * a supported encoding encoding, and the confidence is currently tentative,
      * then change the encoding to the encoding encoding.
      * 
-     * A start tag whose tag name is "title" Follow the generic RCDATA parsing algorithm, with
-                      the head element pointer as the context node,
-                      unless that's null, in which case use the current
-                      node (fragment cose).
+     * A start tag whose tag name is "title" Follow the generic RCDATA parsing
+     * algorithm, with the head element pointer as the context node, unless
+     * that's null, in which case use the current node (fragment cose).
      * 
      * A start tag whose tag name is "noscript", if scripting is enabled:
      * 
@@ -1144,9 +1278,8 @@ public abstract class TreeBuilder implements TokenHandler {
      * 
      * Change the insertion mode to "after head".
      * 
-     * An end tag whose tag name is one of: "body", "html", "p",
-                      "br" Act as described in
-     * the "anything else" entry below.
+     * An end tag whose tag name is one of: "body", "html", "p", "br" Act as
+     * described in the "anything else" entry below.
      * 
      * A start tag whose tag name is "head" Any other end tag Parse error.
      * Ignore the token.
@@ -1169,12 +1302,11 @@ public abstract class TreeBuilder implements TokenHandler {
      * U+000A LINE FEED (LF), U+000B LINE TABULATION, U+000C FORM FEED (FF), or
      * U+0020 SPACE
      * 
-     * A comment token A start tag whose tag name is one of: "link", "meta",
-     * "style" Process the token as if the insertion mode had been "in head".
+     * A start tag whose tag name is one of: "link", "meta", "style" Process the
+     * token as if the insertion mode had been "in head".
      * 
-     *  An end tag whose tag name is one of: "p", "br"
-                      Act as described in the "anything else" entry
-                      below.
+     * An end tag whose tag name is one of: "p", "br" Act as described in the
+     * "anything else" entry below.
      * 
      * A start tag whose tag name is one of: "head", "noscript" Any other end
      * tag Parse error. Ignore the token.
@@ -1188,8 +1320,6 @@ public abstract class TreeBuilder implements TokenHandler {
      * U+000A LINE FEED (LF), U+000B LINE TABULATION, U+000C FORM FEED (FF), or
      * U+0020 SPACE Append the character to the current node.
      * 
-     * A comment token Append a Comment node to the current node with the data
-     * attribute set to the data given in the comment token.
      * 
      * A start tag whose tag name is "body" Insert a body element for the token.
      * 
@@ -1220,8 +1350,6 @@ public abstract class TreeBuilder implements TokenHandler {
      * 
      * Append the token's character to the current node.
      * 
-     * A comment token Append a Comment node to the current node with the data
-     * attribute set to the data given in the comment token.
      * 
      * A start tag token whose tag name is one of: "base", "link", "meta",
      * "script", "style" Process the token as if the insertion mode had been "in
@@ -1245,13 +1373,11 @@ public abstract class TreeBuilder implements TokenHandler {
      * open elements is not a body element, this is a parse error. Ignore the
      * token. (fragment case)
      * 
-     * Otherwise, if there is a node in the stack of open
-                      elements that is not either a dd element, a dt
-                      element, an li element, a p element, a tbody
-                      element, a td element, a tfoot element, a th
-                      element, a thead element, a tr element, the body
-                      element, or the html element, then this is a parse
-                      error.
+     * Otherwise, if there is a node in the stack of open elements that is not
+     * either a dd element, a dt element, an li element, a p element, a tbody
+     * element, a td element, a tfoot element, a th element, a thead element, a
+     * tr element, the body element, or the html element, then this is a parse
+     * error.
      * 
      * Change the insertion mode to "after body".
      * 
@@ -1433,11 +1559,9 @@ public abstract class TreeBuilder implements TokenHandler {
      * A start tag whose tag name is "nobr" Reconstruct the active formatting
      * elements, if any.
      * 
-     * If the stack of open elements has a nobr element in
-                      scope, then this is a parse error. Act as if an end
-                      tag with the tag name nobr had been seen, then once
-                      again reconstruct the active formatting elements,
-                      if any.
+     * If the stack of open elements has a nobr element in scope, then this is a
+     * parse error. Act as if an end tag with the tag name nobr had been seen,
+     * then once again reconstruct the active formatting elements, if any.
      * 
      * Insert an HTML element for the token. Add that element to the list of
      * active formatting elements.
@@ -1710,8 +1834,6 @@ public abstract class TreeBuilder implements TokenHandler {
      * U+000A LINE FEED (LF), U+000B LINE TABULATION, U+000C FORM FEED (FF), or
      * U+0020 SPACE Append the character to the current node.
      * 
-     * A comment token Append a Comment node to the current node with the data
-     * attribute set to the data given in the comment token.
      * 
      * A start tag whose tag name is "caption" Clear the stack back to a table
      * context. (See below.)
@@ -1839,8 +1961,6 @@ public abstract class TreeBuilder implements TokenHandler {
      * U+000A LINE FEED (LF), U+000B LINE TABULATION, U+000C FORM FEED (FF), or
      * U+0020 SPACE Append the character to the current node.
      * 
-     * A comment token Append a Comment node to the current node with the data
-     * attribute set to the data given in the comment token.
      * 
      * A start tag whose tag name is "col" Insert a col element for the token.
      * Immediately pop the current node off the stack of open elements.
@@ -2021,8 +2141,6 @@ public abstract class TreeBuilder implements TokenHandler {
      * 
      * A character token Append the token's character to the current node.
      * 
-     * A comment token Append a Comment node to the current node with the data
-     * attribute set to the data given in the comment token.
      * 
      * A start tag whose tag name is "option" If the current node is an option
      * element, act as if an end tag with the tag name "option" had been seen.
@@ -2081,9 +2199,6 @@ public abstract class TreeBuilder implements TokenHandler {
      * U+0020 SPACE Process the token as it would be processed if the insertion
      * mode was "in body".
      * 
-     * A comment token Append a Comment node to the first element in the stack
-     * of open elements (the html element), with the data attribute set to the
-     * data given in the comment token.
      * 
      * An end tag whose tag name is "html" If the parser was originally created
      * as part of the HTML fragment parsing algorithm, this is a parse error;
@@ -2100,9 +2215,6 @@ public abstract class TreeBuilder implements TokenHandler {
      * A character token that is one of one of U+0009 CHARACTER TABULATION,
      * U+000A LINE FEED (LF), U+000B LINE TABULATION, U+000C FORM FEED (FF), or
      * U+0020 SPACE Append the character to the current node.
-     * 
-     * A comment token Append a Comment node to the current node with the data
-     * attribute set to the data given in the comment token.
      * 
      * A start tag whose tag name is "frameset" Insert a frameset element for
      * the token.
@@ -2131,9 +2243,6 @@ public abstract class TreeBuilder implements TokenHandler {
      * U+000A LINE FEED (LF), U+000B LINE TABULATION, U+000C FORM FEED (FF), or
      * U+0020 SPACE Append the character to the current node.
      * 
-     * A comment token Append a Comment node to the current node with the data
-     * attribute set to the data given in the comment token.
-     * 
      * An end tag whose tag name is "html" Switch to the trailing end phase.
      * 
      * A start tag whose tag name is "noframes" Process the token as if the
@@ -2151,9 +2260,6 @@ public abstract class TreeBuilder implements TokenHandler {
      * stage, it must be processed as described in this section.
      * 
      * A DOCTYPE token Parse error. Ignore the token.
-     * 
-     * A comment token Append a Comment node to the Document object with the
-     * data attribute set to the data given in the comment token.
      * 
      * A character token that is one of one of U+0009 CHARACTER TABULATION,
      * U+000A LINE FEED (LF), U+000B LINE TABULATION, U+000C FORM FEED (FF), or
