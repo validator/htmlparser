@@ -52,5 +52,14 @@ public enum DoctypeExpectation {
      * system id as non-errors. Turn on HTML4-specific additional errors if the 
      * public id is the HTML 4.01 Strict or Transitional public id.
      */
-    AUTO
+    AUTO,
+    
+    /**
+     * Never enable HTML4-specific error checks. Never report any doctype 
+     * condition as an error. (Doctype tokens in wrong places will be 
+     * reported as errors, though.) The application may decide what to log 
+     * in response to calls to <code>DocumentModeHanler</code>. This mode 
+     * in meant for doing surveys on existing content.
+     */
+    NO_DOCTYPE_ERRORS
 }

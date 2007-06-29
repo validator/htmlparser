@@ -319,6 +319,16 @@ public final class Tokenizer implements Locator {
     private boolean html4;
 
     /**
+     * Whether non-ASCII causes an error.
+     */
+    private boolean nonAsciiProhibited;
+    
+    /**
+     * Used together with <code>nonAsciiProhibited</code>.
+     */
+    private boolean alreadyComplainedAboutNonAscii;
+    
+    /**
      * Whether the stream is past the first 512 bytes.
      */
     private boolean metaBoundaryPassed;
@@ -357,6 +367,8 @@ public final class Tokenizer implements Locator {
      * The policy for comments.
      */
     private XmlViolationPolicy commentPolicy = XmlViolationPolicy.ALLOW;
+
+    private boolean swallowBom;
 
     // start public API
 
@@ -474,6 +486,7 @@ public final class Tokenizer implements Locator {
      *             if the stream threw
      */
     public void tokenize(InputSource is) throws SAXException, IOException {
+        swallowBom = true;
         this.systemId = is.getSystemId();
         this.publicId = is.getPublicId();
         this.reader = is.getCharacterStream();
@@ -491,7 +504,6 @@ public final class Tokenizer implements Locator {
                         errorHandler, this, this, decoder);
             }
         }
-        // TODO reset stuff
         contentModelFlag = ContentModelFlag.PCDATA;
         escapeFlag = false;
         inContent = true;
@@ -501,17 +513,22 @@ public final class Tokenizer implements Locator {
         col = 0;
         prev = '\u0000';
         bufLen = 0;
+        nonAsciiProhibited = false;
+        alreadyComplainedAboutNonAscii = false;
+        html4 = false;
         alreadyWarnedAboutPrivateUseCharacters = false;
         metaBoundaryPassed = false;
         tokenHandler.start(this);
         emitComments = tokenHandler.wantsComments();
         try {
-            // Swallow the BOM
-            char c = read();
-            if (c == '\uFEFF') {
-                col = 0;
-            } else {
-                unread(c);
+            if (swallowBom) {
+                // Swallow the BOM
+                char c = read();
+                if (c == '\uFEFF') {
+                    col = 0;
+                } else {
+                    unread(c);
+                }
             }
             dataState();
         } finally {
@@ -576,6 +593,18 @@ public final class Tokenizer implements Locator {
 
     void notifyAboutMetaBoundary() {
         metaBoundaryPassed = true;
+    }
+    
+    void turnOnAdditionalHtml4Errors() {
+        html4 = true;
+    }
+    
+    void dontSwallowBom() {
+        swallowBom = false;
+    }
+    
+    void noEncodingDeclared() {
+        nonAsciiProhibited = true;
     }
     
     /**
@@ -778,6 +807,9 @@ public final class Tokenizer implements Locator {
                 pos = 0;
             }
             char c = buf[pos];
+            if (c > '\u007F' && nonAsciiProhibited && !alreadyComplainedAboutNonAscii) {
+                err("The character encoding of the document was not explicit but the document contains non-ASCII.");
+            }
             switch (c) {
                 case '\n':
                     /*
@@ -968,6 +1000,9 @@ public final class Tokenizer implements Locator {
         if ("ISO-8859-1".equals(encoding)) {
             encoding = "Windows-1252";
         }
+        if ("UTF-16".equals(encoding) || "UTF-32".equals(encoding)) {
+            swallowBom = false;
+        }
         try {
             Charset cs = Charset.forName(encoding);
             String canonName = cs.name();
@@ -1000,6 +1035,7 @@ public final class Tokenizer implements Locator {
         } catch (UnsupportedCharsetException e) {
             err("Unsupported character encoding name: \u201C" + encoding
                     + "\u201D. Will sniff.");
+            swallowBom = true;
         }
         return null; // keep the compiler happy
     }
@@ -1823,13 +1859,19 @@ public final class Tokenizer implements Locator {
         }
     }
 
-    private void addAttributeWithoutValue() {
+    private void addAttributeWithoutValue() throws SAXException {
+        if (metaBoundaryPassed && "charset".equals(attributeName) && "meta".equals(tagName)) {
+            err("A \u201Ccharset\u201D attribute on a \u201Cmeta\u201D element found after the first 512 bytes.");
+        }
         if (shouldAddAttributes) {
             attributes.addAttribute(attributeName);
         }
     }
 
-    private void addAttributeWithValue() {
+    private void addAttributeWithValue() throws SAXException {
+        if (metaBoundaryPassed && "charset".equals(attributeName) && "meta".equals(tagName)) {
+            err("A \u201Ccharset\u201D attribute on a \u201Cmeta\u201D element found after the first 512 bytes.");
+        }
         if (shouldAddAttributes) {
             attributes.addAttribute(attributeName, longStrBufToString());
         }

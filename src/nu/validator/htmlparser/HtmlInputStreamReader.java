@@ -116,6 +116,9 @@ public final class HtmlInputStreamReader extends Reader implements ByteReadable,
             sniffing = false;
             // TODO chardet
             if (this.decoder == null) {
+                if (tokenizer != null) {
+                    tokenizer.noEncodingDeclared();
+                }
                 err("Could not determine the character encoding of the document. Using \u201CWindows-1252\u201D.");
                 this.decoder = Charset.forName("Windows-1252").newDecoder();
             }
