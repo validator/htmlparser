@@ -52,8 +52,8 @@ public final class BomSniffer {
             if (b == 0xBB) {
                 b = source.readByte();
                 if (b == 0xBF) {
-//                    return new CharsetProviderICU().charsetForName("UTF-8").newDecoder();
-                    return Charset.forName("UTF-8").newDecoder();
+                    return new CharsetProviderICU().charsetForName("UTF-8").newDecoder();
+//                    return Charset.forName("UTF-8").newDecoder();
                 } else {
                     return null;
                 }

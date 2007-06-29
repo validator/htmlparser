@@ -38,19 +38,19 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 /**
- * Be very careful with this class. It is not a general-purpose subclass of 
- * of <code>Reader</code>. Instead, it is the minimal implementation that 
- * does what <code>Tokenizer</code> needs while being an instance of 
+ * Be very careful with this class. It is not a general-purpose subclass of of
+ * <code>Reader</code>. Instead, it is the minimal implementation that does
+ * what <code>Tokenizer</code> needs while being an instance of
  * <code>Reader</code>.
  * 
- * The only reason why this is a public class is that it needs to be visible 
- * to test code in another package.
+ * The only reason why this is a public class is that it needs to be visible to
+ * test code in another package.
  * 
  * @version $Id$
  * @author hsivonen
  */
-public final class HtmlInputStreamReader extends Reader implements ByteReadable,
-        Locator {
+public final class HtmlInputStreamReader extends Reader implements
+        ByteReadable, Locator {
 
     private static final int SNIFFING_LIMIT = 512;
 
@@ -59,7 +59,7 @@ public final class HtmlInputStreamReader extends Reader implements ByteReadable,
     private final ErrorHandler errorHandler;
 
     private final Locator locator;
-    
+
     private final Tokenizer tokenizer;
 
     private CharsetDecoder decoder = null;
@@ -102,8 +102,8 @@ public final class HtmlInputStreamReader extends Reader implements ByteReadable,
      * @throws SAXException
      */
     public HtmlInputStreamReader(InputStream inputStream,
-            ErrorHandler errorHandler, Locator locator, Tokenizer tokenizer) throws SAXException,
-            IOException {
+            ErrorHandler errorHandler, Locator locator, Tokenizer tokenizer)
+            throws SAXException, IOException {
         this.inputStream = inputStream;
         this.errorHandler = errorHandler;
         this.locator = locator;
@@ -136,15 +136,15 @@ public final class HtmlInputStreamReader extends Reader implements ByteReadable,
      */
     private void initDecoder() {
         if ("ISO-8859-1".equals(this.decoder.charset().name())) {
-            this.decoder = Charset.forName("Windows-1252").newDecoder(); 
+            this.decoder = Charset.forName("Windows-1252").newDecoder();
         }
         this.decoder.onMalformedInput(CodingErrorAction.REPORT);
         this.decoder.onUnmappableCharacter(CodingErrorAction.REPORT);
     }
 
     public HtmlInputStreamReader(InputStream inputStream,
-            ErrorHandler errorHandler, Locator locator, Tokenizer tokenizer, CharsetDecoder decoder) throws SAXException,
-            IOException {
+            ErrorHandler errorHandler, Locator locator, Tokenizer tokenizer,
+            CharsetDecoder decoder) throws SAXException, IOException {
         this.inputStream = inputStream;
         this.errorHandler = errorHandler;
         this.locator = locator;
@@ -159,7 +159,6 @@ public final class HtmlInputStreamReader extends Reader implements ByteReadable,
         initDecoder();
     }
 
-    
     @Override
     public void close() throws IOException {
         // TODO Auto-generated method stub
@@ -167,8 +166,7 @@ public final class HtmlInputStreamReader extends Reader implements ByteReadable,
     }
 
     @Override
-    public int read(char[] charArray)
-            throws IOException {
+    public int read(char[] charArray) throws IOException {
         lineColPos = 0;
         if (sniffing) {
             throw new IllegalStateException(
@@ -188,93 +186,104 @@ public final class HtmlInputStreamReader extends Reader implements ByteReadable,
             decoder.flush(charBuffer);
             // return -1 if zero
             int cPos = charBuffer.position();
-            return cPos == 0 ? -1 : cPos;                    
+            return cPos == 0 ? -1 : cPos;
         }
-        if (shouldReadBytes) {
-            int oldLimit = byteBuffer.limit();
-            int readLen;
-            if (charsetBoundaryPassed) {
-                readLen = byteArray.length - oldLimit;
-            } else {
-                readLen = SNIFFING_LIMIT - oldLimit;
-            }
-            int num = inputStream.read(byteArray, oldLimit, readLen);
-            if (num == -1) {
-                eofSeen = true;
-                inputStream.close();
-            } else {
-                byteBuffer.position(0);
-                byteBuffer.limit(oldLimit + num);
-            }
-            shouldReadBytes = false;
-        }
-        boolean finalDecode = false;
-        for (;;) {
-            int oldBytePos = byteBuffer.position();
-            CoderResult cr = decoder.decode(byteBuffer, charBuffer, finalDecode);
-            bytesRead += byteBuffer.position() - oldBytePos;
-            if (cr == CoderResult.OVERFLOW) {
-                // Decoder will remember surrogates
-                return charBuffer.position();
-            } else if (cr == CoderResult.UNDERFLOW) {
-                // If the buffer was not fully consumed, there may be an
-                // incomplete byte sequence that needs to seed the next
-                // buffer.
-                int remaining = byteBuffer.remaining();
-                if (remaining > 0) {
-                    System.arraycopy(byteArray, byteBuffer.position(),
-                            byteArray, 0, remaining);
-                }
-                byteBuffer.position(0);
-                byteBuffer.limit(remaining);
-                if (!charsetBoundaryPassed) {
-                    if (bytesRead + remaining >= SNIFFING_LIMIT) {
-                        needToNotifyTokenizer = true;
-                    }
-                }
-                if (flushing) {
-                    // The final decode was successful. Not sure if this ever happens. 
-                    // Let's get out in any case.
-                    int cPos = charBuffer.position();
-                    return cPos == 0 ? -1 : cPos;                    
-                } else if (eofSeen) {
-                    // If there's something left, it isn't something that would be 
-                    // consumed in the middle of the stream. Rerun the loop once 
-                    // in the final mode.
-                    shouldReadBytes = false;
-                    finalDecode = true;
-                    flushing  = true;
-                    continue;
+        outer: for (;;) {
+            if (shouldReadBytes) {
+                int oldLimit = byteBuffer.limit();
+                int readLen;
+                if (charsetBoundaryPassed) {
+                    readLen = byteArray.length - oldLimit;
                 } else {
-                    // The usual stuff. Want more bytes next time.
-                    shouldReadBytes = true;
-                    return charBuffer.position();
+                    readLen = SNIFFING_LIMIT - oldLimit;
                 }
-            } else {
-                // The result is in error. No need to test.
-                StringBuilder sb = new StringBuilder();
-                for (int i = 0; i < cr.length(); i++) {
-                    if (i > 0) {
-                        sb.append(", ");
-                    }
-                    sb.append('\u201C');
-                    sb.append(Integer.toHexString(byteBuffer.get() & 0xFF));
-                    bytesRead++;
-                    sb.append('\u201D');
-                }
-                charBuffer.put('\uFFFD');
-                calculateLineAndCol(charBuffer);
-                if (cr.isMalformed()) {
-                    err("Malformed byte sequence: " + sb + ".");
-                } else if (cr.isUnmappable()) {
-                    err("Unmappable byte sequence: " + sb + ".");
+                int num = inputStream.read(byteArray, oldLimit, readLen);
+                if (num == -1) {
+                    eofSeen = true;
+                    inputStream.close();
                 } else {
-                    throw new RuntimeException(
-                            "CoderResult was none of overflow, underflow, malformed or unmappable.");
+                    byteBuffer.position(0);
+                    byteBuffer.limit(oldLimit + num);
                 }
-                if (finalDecode) {
-                    // These were the last bytes of input. Return without relooping.
+                shouldReadBytes = false;
+            }
+            boolean finalDecode = false;
+            for (;;) {
+                int oldBytePos = byteBuffer.position();
+                CoderResult cr = decoder.decode(byteBuffer, charBuffer,
+                        finalDecode);
+                bytesRead += byteBuffer.position() - oldBytePos;
+                if (cr == CoderResult.OVERFLOW) {
+                    // Decoder will remember surrogates
                     return charBuffer.position();
+                } else if (cr == CoderResult.UNDERFLOW) {
+                    int remaining = byteBuffer.remaining();
+                    if (!charsetBoundaryPassed) {
+                        if (bytesRead + remaining >= SNIFFING_LIMIT) {
+                            needToNotifyTokenizer = true;
+                        }
+                    }
+
+                    // XXX what happens if the entire byte buffer consists of 
+                    // a pathologically long malformed sequence?
+                    
+                    // If the buffer was not fully consumed, there may be an
+                    // incomplete byte sequence that needs to seed the next
+                    // buffer.
+                    if (remaining > 0) {
+                        System.arraycopy(byteArray, byteBuffer.position(),
+                                byteArray, 0, remaining);
+                    }
+                    byteBuffer.position(0);
+                    byteBuffer.limit(remaining);
+                    if (flushing) {
+                        // The final decode was successful. Not sure if this
+                        // ever happens.
+                        // Let's get out in any case.
+                        int cPos = charBuffer.position();
+                        return cPos == 0 ? -1 : cPos;
+                    } else if (eofSeen) {
+                        // If there's something left, it isn't something that
+                        // would be
+                        // consumed in the middle of the stream. Rerun the loop
+                        // once
+                        // in the final mode.
+                        shouldReadBytes = false;
+                        finalDecode = true;
+                        flushing = true;
+                        continue;
+                    } else {
+                        // The usual stuff. Want more bytes next time.
+                        shouldReadBytes = true;
+                        return charBuffer.position();
+                    }
+                } else {
+                    // The result is in error. No need to test.
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; i < cr.length(); i++) {
+                        if (i > 0) {
+                            sb.append(", ");
+                        }
+                        sb.append('\u201C');
+                        sb.append(Integer.toHexString(byteBuffer.get() & 0xFF));
+                        bytesRead++;
+                        sb.append('\u201D');
+                    }
+                    charBuffer.put('\uFFFD');
+                    calculateLineAndCol(charBuffer);
+                    if (cr.isMalformed()) {
+                        err("Malformed byte sequence: " + sb + ".");
+                    } else if (cr.isUnmappable()) {
+                        err("Unmappable byte sequence: " + sb + ".");
+                    } else {
+                        throw new RuntimeException(
+                                "CoderResult was none of overflow, underflow, malformed or unmappable.");
+                    }
+                    if (finalDecode) {
+                        // These were the last bytes of input. Return without
+                        // relooping.
+                        return charBuffer.position();
+                    }
                 }
             }
         }
@@ -410,11 +419,11 @@ public final class HtmlInputStreamReader extends Reader implements ByteReadable,
             throw (IOException) new IOException(e.getMessage()).initCause(e);
         }
     }
-    
+
     public Charset getCharset() {
         return decoder.charset();
     }
-    
+
     /**
      * @see java.io.Reader#read()
      */
