@@ -177,219 +177,197 @@ public abstract class TreeBuilder implements TokenHandler {
 
     public void doctype(String name, String publicIdentifier,
             String systemIdentifier, boolean correct) throws SAXException {
-        for (;;) {
-            switch (phase) {
-                case INITIAL:
-                    /*
-                     * A DOCTYPE token If the DOCTYPE token's name does not
-                     * case-insensitively match the string "HTML", or if the
-                     * token's public identifier is not missing, or if the
-                     * token's system identifier is not missing, then there is a
-                     * parse error. Conformance checkers may, instead of
-                     * reporting this error, switch to a conformance checking
-                     * mode for another language (e.g. based on the DOCTYPE
-                     * token a conformance checker could recognise that the
-                     * document is an HTML4-era document, and defer to an HTML4
-                     * conformance checker.)
-                     * 
-                     * Append a DocumentType node to the Document node, with the
-                     * name attribute set to the name given in the DOCTYPE
-                     * token; the publicId attribute set to the public
-                     * identifier given in the DOCTYPE token, or the empty
-                     * string if the public identifier was not set; the systemId
-                     * attribute set to the system identifier given in the
-                     * DOCTYPE token, or the empty string if the system
-                     * identifier was not set; and the other attributes specific
-                     * to DocumentType objects set to null and empty lists as
-                     * appropriate. Associate the DocumentType node with the
-                     * Document object so that it is returned as the value of
-                     * the doctype attribute of the Document object.
-                     */
-                    appendDoctypeToDocument(name, publicIdentifier == null ? ""
-                            : publicIdentifier, systemIdentifier == null ? ""
-                            : systemIdentifier);
-                    /*
-                     * Then, if the DOCTYPE token matches one of the conditions
-                     * in the following list, then set the document to quirks
-                     * mode:
-                     * 
-                     * Otherwise, if the DOCTYPE token matches one of the
-                     * conditions in the following list, then set the document
-                     * to limited quirks mode: + The public identifier is set
-                     * to: "-//W3C//DTD XHTML 1.0 Frameset//EN" + The public
-                     * identifier is set to: "-//W3C//DTD XHTML 1.0
-                     * Transitional//EN" + The system identifier is not missing
-                     * and the public identifier is set to: "-//W3C//DTD HTML
-                     * 4.01 Frameset//EN" + The system identifier is not missing
-                     * and the public identifier is set to: "-//W3C//DTD HTML
-                     * 4.01 Transitional//EN"
-                     * 
-                     * The name, system identifier, and public identifier
-                     * strings must be compared to the values given in the lists
-                     * above in a case-insensitive manner.
-                     */
-                    String publicIdentifierLC = toAsciiLowerCase(publicIdentifier);
-                    String systemIdentifierLC = toAsciiLowerCase(systemIdentifier);
-                    switch (doctypeExpectation) {
-                        case HTML:
-                            if (isQuirky(name, publicIdentifierLC,
-                                    systemIdentifierLC, correct)) {
-                                err("Quirky doctype.");
-                                documentMode(DocumentMode.QUIRKS_MODE,
-                                        publicIdentifier, systemIdentifier,
-                                        false);
-                            } else if (isAlmostStandards(publicIdentifierLC,
-                                    systemIdentifierLC)) {
+        switch (phase) {
+            case INITIAL:
+                /*
+                 * A DOCTYPE token If the DOCTYPE token's name does not
+                 * case-insensitively match the string "HTML", or if the
+                 * token's public identifier is not missing, or if the
+                 * token's system identifier is not missing, then there is a
+                 * parse error. Conformance checkers may, instead of
+                 * reporting this error, switch to a conformance checking
+                 * mode for another language (e.g. based on the DOCTYPE
+                 * token a conformance checker could recognise that the
+                 * document is an HTML4-era document, and defer to an HTML4
+                 * conformance checker.)
+                 * 
+                 * Append a DocumentType node to the Document node, with the
+                 * name attribute set to the name given in the DOCTYPE
+                 * token; the publicId attribute set to the public
+                 * identifier given in the DOCTYPE token, or the empty
+                 * string if the public identifier was not set; the systemId
+                 * attribute set to the system identifier given in the
+                 * DOCTYPE token, or the empty string if the system
+                 * identifier was not set; and the other attributes specific
+                 * to DocumentType objects set to null and empty lists as
+                 * appropriate. Associate the DocumentType node with the
+                 * Document object so that it is returned as the value of
+                 * the doctype attribute of the Document object.
+                 */
+                appendDoctypeToDocument(name, publicIdentifier == null ? ""
+                        : publicIdentifier, systemIdentifier == null ? ""
+                        : systemIdentifier);
+                /*
+                 * Then, if the DOCTYPE token matches one of the conditions
+                 * in the following list, then set the document to quirks
+                 * mode:
+                 * 
+                 * Otherwise, if the DOCTYPE token matches one of the
+                 * conditions in the following list, then set the document
+                 * to limited quirks mode: + The public identifier is set
+                 * to: "-//W3C//DTD XHTML 1.0 Frameset//EN" + The public
+                 * identifier is set to: "-//W3C//DTD XHTML 1.0
+                 * Transitional//EN" + The system identifier is not missing
+                 * and the public identifier is set to: "-//W3C//DTD HTML
+                 * 4.01 Frameset//EN" + The system identifier is not missing
+                 * and the public identifier is set to: "-//W3C//DTD HTML
+                 * 4.01 Transitional//EN"
+                 * 
+                 * The name, system identifier, and public identifier
+                 * strings must be compared to the values given in the lists
+                 * above in a case-insensitive manner.
+                 */
+                String publicIdentifierLC = toAsciiLowerCase(publicIdentifier);
+                String systemIdentifierLC = toAsciiLowerCase(systemIdentifier);
+                switch (doctypeExpectation) {
+                    case HTML:
+                        if (isQuirky(name, publicIdentifierLC,
+                                systemIdentifierLC, correct)) {
+                            err("Quirky doctype.");
+                            documentMode(DocumentMode.QUIRKS_MODE,
+                                    publicIdentifier, systemIdentifier, false);
+                        } else if (isAlmostStandards(publicIdentifierLC,
+                                systemIdentifierLC)) {
+                            err("Almost standards mode doctype.");
+                            documentMode(DocumentMode.ALMOST_STANDARDS_MODE,
+                                    publicIdentifier, systemIdentifier, false);
+                        } else {
+                            if (!(publicIdentifier == null && systemIdentifier == null)) {
+                                err("Legacy doctype.");
+                            }
+                            documentMode(DocumentMode.STANDARDS_MODE,
+                                    publicIdentifier, systemIdentifier, false);
+                        }
+                        break;
+                    case HTML401_STRICT:
+                        tokenizer.turnOnAdditionalHtml4Errors();
+                        if (isQuirky(name, publicIdentifierLC,
+                                systemIdentifierLC, correct)) {
+                            err("Quirky doctype.");
+                            documentMode(DocumentMode.QUIRKS_MODE,
+                                    publicIdentifier, systemIdentifier, true);
+                        } else if (isAlmostStandards(publicIdentifierLC,
+                                systemIdentifierLC)) {
+                            err("Almost standards mode doctype.");
+                            documentMode(DocumentMode.ALMOST_STANDARDS_MODE,
+                                    publicIdentifier, systemIdentifier, true);
+                        } else {
+                            if ("-//W3C//DTD HTML 4.01//EN".equals(publicIdentifier)) {
+                                if (!"http://www.w3.org/TR/html4/strict.dtd".equals(systemIdentifier)) {
+                                    warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification.");
+                                }
+                            } else {
+                                err("The doctype was not the HTML 4.01 Strict doctype.");
+                            }
+                            documentMode(DocumentMode.STANDARDS_MODE,
+                                    publicIdentifier, systemIdentifier, true);
+                        }
+                        break;
+                    case HTML401_TRANSITIONAL:
+                        tokenizer.turnOnAdditionalHtml4Errors();
+                        if (isQuirky(name, publicIdentifierLC,
+                                systemIdentifierLC, correct)) {
+                            err("Quirky doctype.");
+                            documentMode(DocumentMode.QUIRKS_MODE,
+                                    publicIdentifier, systemIdentifier, true);
+                        } else if (isAlmostStandards(publicIdentifierLC,
+                                systemIdentifierLC)) {
+                            if ("-//W3C//DTD HTML 4.01 Transitional//EN".equals(publicIdentifier)
+                                    && systemIdentifier != null) {
+                                if (!"http://www.w3.org/TR/html4/loose.dtd".equals(systemIdentifier)) {
+                                    warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification.");
+                                }
+                            } else {
+                                err("The doctype was not a non-quirky HTML 4.01 Transitional doctype.");
+                            }
+                            documentMode(DocumentMode.ALMOST_STANDARDS_MODE,
+                                    publicIdentifier, systemIdentifier, true);
+                        } else {
+                            err("The doctype was not the HTML 4.01 Transitional doctype.");
+                            documentMode(DocumentMode.STANDARDS_MODE,
+                                    publicIdentifier, systemIdentifier, true);
+                        }
+                        break;
+                    case AUTO:
+                        if (isQuirky(name, publicIdentifierLC,
+                                systemIdentifierLC, correct)) {
+                            err("Quirky doctype.");
+                            documentMode(DocumentMode.QUIRKS_MODE,
+                                    publicIdentifier, systemIdentifier, false);
+                        } else if (isAlmostStandards(publicIdentifierLC,
+                                systemIdentifierLC)) {
+                            boolean html4 = "-//W3C//DTD HTML 4.01 Transitional//EN".equals(publicIdentifier);
+                            if (html4) {
+                                tokenizer.turnOnAdditionalHtml4Errors();
+                                if (!"http://www.w3.org/TR/html4/loose.dtd".equals(systemIdentifier)) {
+                                    warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification.");
+                                }
+                            } else {
                                 err("Almost standards mode doctype.");
-                                documentMode(
-                                        DocumentMode.ALMOST_STANDARDS_MODE,
-                                        publicIdentifier, systemIdentifier,
-                                        false);
+                            }
+                            documentMode(DocumentMode.ALMOST_STANDARDS_MODE,
+                                    publicIdentifier, systemIdentifier, html4);
+                        } else {
+                            boolean html4 = "-//W3C//DTD HTML 4.01//EN".equals(publicIdentifier);
+                            if (html4) {
+                                tokenizer.turnOnAdditionalHtml4Errors();
+                                if (!"http://www.w3.org/TR/html4/strict.dtd".equals(systemIdentifier)) {
+                                    warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification.");
+                                }
                             } else {
                                 if (!(publicIdentifier == null && systemIdentifier == null)) {
                                     err("Legacy doctype.");
                                 }
-                                documentMode(DocumentMode.STANDARDS_MODE,
-                                        publicIdentifier, systemIdentifier,
-                                        false);
                             }
-                            break;
-                        case HTML401_STRICT:
-                            tokenizer.turnOnAdditionalHtml4Errors();
-                            if (isQuirky(name, publicIdentifierLC,
-                                    systemIdentifierLC, correct)) {
-                                err("Quirky doctype.");
-                                documentMode(DocumentMode.QUIRKS_MODE,
-                                        publicIdentifier, systemIdentifier,
-                                        true);
-                            } else if (isAlmostStandards(publicIdentifierLC,
-                                    systemIdentifierLC)) {
-                                err("Almost standards mode doctype.");
-                                documentMode(
-                                        DocumentMode.ALMOST_STANDARDS_MODE,
-                                        publicIdentifier, systemIdentifier,
-                                        true);
-                            } else {
-                                if ("-//W3C//DTD HTML 4.01//EN".equals(publicIdentifier)) {
-                                    if (!"http://www.w3.org/TR/html4/strict.dtd".equals(systemIdentifier)) {
-                                        warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification.");
-                                    }
-                                } else {
-                                    err("The doctype was not the HTML 4.01 Strict doctype.");
-                                }
-                                documentMode(DocumentMode.STANDARDS_MODE,
-                                        publicIdentifier, systemIdentifier,
-                                        true);
-                            }
-                            break;
-                        case HTML401_TRANSITIONAL:
-                            tokenizer.turnOnAdditionalHtml4Errors();
-                            if (isQuirky(name, publicIdentifierLC,
-                                    systemIdentifierLC, correct)) {
-                                err("Quirky doctype.");
-                                documentMode(DocumentMode.QUIRKS_MODE,
-                                        publicIdentifier, systemIdentifier,
-                                        true);
-                            } else if (isAlmostStandards(publicIdentifierLC,
-                                    systemIdentifierLC)) {
-                                if ("-//W3C//DTD HTML 4.01 Transitional//EN".equals(publicIdentifier)
-                                        && systemIdentifier != null) {
-                                    if (!"http://www.w3.org/TR/html4/loose.dtd".equals(systemIdentifier)) {
-                                        warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification.");
-                                    }
-                                } else {
-                                    err("The doctype was not a non-quirky HTML 4.01 Transitional doctype.");
-                                }
-                                documentMode(
-                                        DocumentMode.ALMOST_STANDARDS_MODE,
-                                        publicIdentifier, systemIdentifier,
-                                        true);
-                            } else {
-                                err("The doctype was not the HTML 4.01 Transitional doctype.");
-                                documentMode(DocumentMode.STANDARDS_MODE,
-                                        publicIdentifier, systemIdentifier,
-                                        true);
-                            }
-                            break;
-                        case AUTO:
-                            if (isQuirky(name, publicIdentifierLC,
-                                    systemIdentifierLC, correct)) {
-                                err("Quirky doctype.");
-                                documentMode(DocumentMode.QUIRKS_MODE,
-                                        publicIdentifier, systemIdentifier,
-                                        false);
-                            } else if (isAlmostStandards(publicIdentifierLC,
-                                    systemIdentifierLC)) {
-                                boolean html4 = "-//W3C//DTD HTML 4.01 Transitional//EN".equals(publicIdentifier);
-                                if (html4) {
-                                    tokenizer.turnOnAdditionalHtml4Errors();
-                                    if (!"http://www.w3.org/TR/html4/loose.dtd".equals(systemIdentifier)) {
-                                        warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification.");
-                                    }
-                                } else {
-                                    err("Almost standards mode doctype.");
-                                }
-                                documentMode(
-                                        DocumentMode.ALMOST_STANDARDS_MODE,
-                                        publicIdentifier, systemIdentifier,
-                                        html4);
-                            } else {
-                                boolean html4 = "-//W3C//DTD HTML 4.01//EN".equals(publicIdentifier);
-                                if (html4) {
-                                    tokenizer.turnOnAdditionalHtml4Errors();
-                                    if (!"http://www.w3.org/TR/html4/strict.dtd".equals(systemIdentifier)) {
-                                        warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification.");
-                                    }
-                                } else {
-                                    if (!(publicIdentifier == null && systemIdentifier == null)) {
-                                        err("Legacy doctype.");
-                                    }
-                                }
-                                documentMode(DocumentMode.STANDARDS_MODE,
-                                        publicIdentifier, systemIdentifier,
-                                        html4);
-                            }
-                            break;
-                        case NO_DOCTYPE_ERRORS:
-                            if (isQuirky(name, publicIdentifierLC,
-                                    systemIdentifierLC, correct)) {
-                                documentMode(DocumentMode.QUIRKS_MODE,
-                                        publicIdentifier, systemIdentifier,
-                                        false);
-                            } else if (isAlmostStandards(publicIdentifierLC,
-                                    systemIdentifierLC)) {
-                                documentMode(
-                                        DocumentMode.ALMOST_STANDARDS_MODE,
-                                        publicIdentifier, systemIdentifier,
-                                        false);
-                            } else {
-                                documentMode(DocumentMode.STANDARDS_MODE,
-                                        publicIdentifier, systemIdentifier,
-                                        false);
-                            }
-                            break;
-                    }
+                            documentMode(DocumentMode.STANDARDS_MODE,
+                                    publicIdentifier, systemIdentifier, html4);
+                        }
+                        break;
+                    case NO_DOCTYPE_ERRORS:
+                        if (isQuirky(name, publicIdentifierLC,
+                                systemIdentifierLC, correct)) {
+                            documentMode(DocumentMode.QUIRKS_MODE,
+                                    publicIdentifier, systemIdentifier, false);
+                        } else if (isAlmostStandards(publicIdentifierLC,
+                                systemIdentifierLC)) {
+                            documentMode(DocumentMode.ALMOST_STANDARDS_MODE,
+                                    publicIdentifier, systemIdentifier, false);
+                        } else {
+                            documentMode(DocumentMode.STANDARDS_MODE,
+                                    publicIdentifier, systemIdentifier, false);
+                        }
+                        break;
+                }
 
-                    /*
-                     * 
-                     * Then, switch to the root element phase of the tree
-                     * construction stage.
-                     * 
-                     * 
-                     */
-                    phase = Phase.ROOT_ELEMENT;
-                    return;
-                default:
-                    /*
-                     * * A DOCTYPE token Parse error.
-                     */
-                    err("Stray doctype.");
-                    /*
-                     * Ignore the token.
-                     * 
-                     */
-                    return;
-            }
+                /*
+                 * 
+                 * Then, switch to the root element phase of the tree
+                 * construction stage.
+                 * 
+                 * 
+                 */
+                phase = Phase.ROOT_ELEMENT;
+                return;
+            default:
+                /*
+                 * * A DOCTYPE token Parse error.
+                 */
+                err("Stray doctype.");
+                /*
+                 * Ignore the token.
+                 * 
+                 */
+                return;
         }
     }
 
