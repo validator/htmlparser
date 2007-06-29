@@ -32,12 +32,14 @@ import nu.validator.htmlparser.TokenHandler;
 import nu.validator.htmlparser.Tokenizer;
 
 import org.xml.sax.Attributes;
+import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
 import fi.iki.hsivonen.xml.SystemErrErrorHandler;
 
-public class TokenPrinter implements TokenHandler {
+public class TokenPrinter implements TokenHandler, ErrorHandler {
 
     private final Writer writer;
     
@@ -141,8 +143,9 @@ public class TokenPrinter implements TokenHandler {
     }
 
     public static void main(String[] args) throws SAXException, IOException {
-        Tokenizer tokenizer = new Tokenizer(new TokenPrinter(new OutputStreamWriter(System.out, "UTF-8")));
-        tokenizer.setErrorHandler(new SystemErrErrorHandler());
+        TokenPrinter printer = new TokenPrinter(new OutputStreamWriter(System.out, "UTF-8")); 
+        Tokenizer tokenizer = new Tokenizer(printer);
+        tokenizer.setErrorHandler(printer);
         File file = new File(args[0]);
         InputSource is = new InputSource(new FileInputStream(file));
         is.setSystemId(file.toURI().toASCIIString());
@@ -154,6 +157,36 @@ public class TokenPrinter implements TokenHandler {
      */
     public TokenPrinter(final Writer writer) {
         this.writer = writer;
+    }
+
+    public void error(SAXParseException exception) throws SAXException {
+        try {
+            writer.write("R ");
+            writer.write(exception.getMessage());
+            writer.write("\n");
+        } catch (IOException e) {
+            throw new SAXException(e);
+        }        
+    }
+
+    public void fatalError(SAXParseException exception) throws SAXException {
+        try {
+            writer.write("F ");
+            writer.write(exception.getMessage());
+            writer.write("\n");
+        } catch (IOException e) {
+            throw new SAXException(e);
+        }        
+    }
+
+    public void warning(SAXParseException exception) throws SAXException {
+        try {
+            writer.write("W ");
+            writer.write(exception.getMessage());
+            writer.write("\n");
+        } catch (IOException e) {
+            throw new SAXException(e);
+        }        
     }
     
 }

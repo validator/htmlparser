@@ -26,6 +26,8 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 
+import com.ibm.icu.charset.CharsetProviderICU;
+
 /**
  * The BOM sniffing part of the HTML5 encoding sniffing algorithm.
  * 
@@ -50,6 +52,7 @@ public final class BomSniffer {
             if (b == 0xBB) {
                 b = source.readByte();
                 if (b == 0xBF) {
+//                    return new CharsetProviderICU().charsetForName("UTF-8").newDecoder();
                     return Charset.forName("UTF-8").newDecoder();
                 } else {
                     return null;
