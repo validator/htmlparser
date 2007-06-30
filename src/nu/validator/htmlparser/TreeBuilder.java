@@ -112,6 +112,8 @@ public abstract class TreeBuilder implements TokenHandler {
 
     private Phase phase = Phase.INITIAL;
 
+    private Phase phaseBeforeSwitchingToTrailingEnd;
+    
     private Tokenizer tokenizer;
 
     private ErrorHandler errorHandler;
@@ -167,7 +169,7 @@ public abstract class TreeBuilder implements TokenHandler {
         errorHandler.warning(spe);
     }
 
-    public void start(Tokenizer self) throws SAXException {
+    public final void start(Tokenizer self) throws SAXException {
         // TODO Auto-generated method stub
 
     }
@@ -177,7 +179,7 @@ public abstract class TreeBuilder implements TokenHandler {
      */
     public abstract boolean wantsComments() throws SAXException;
 
-    public void doctype(String name, String publicIdentifier,
+    public final void doctype(String name, String publicIdentifier,
             String systemIdentifier, boolean correct) throws SAXException {
         switch (phase) {
             case INITIAL:
@@ -430,7 +432,7 @@ public abstract class TreeBuilder implements TokenHandler {
         return new String(buf);
     }
 
-    public void comment(char[] buf, int length) throws SAXException {
+    public final void comment(char[] buf, int length) throws SAXException {
         switch (phase) {
             case INITIAL:
             case ROOT_ELEMENT:
@@ -469,7 +471,7 @@ public abstract class TreeBuilder implements TokenHandler {
 
     protected abstract void appendCommentToRootElement(char[] buf, int length);
 
-    public void startTag(String name, Attributes attributes)
+    public final void startTag(String name, Attributes attributes)
             throws SAXException {
         for (;;) {
             switch (phase) {
@@ -481,6 +483,8 @@ public abstract class TreeBuilder implements TokenHandler {
                     // "html" handling here.
                     if ("html".equals(name)) {
                         if (attributes.getLength() == 0) {
+                            // This has the right magic side effect that it
+                            // makes attributes in SAX Tree mutable.
                             appendHtmlElementToDocument();
                         } else {
                             appendHtmlElementToDocument(attributes);
@@ -572,7 +576,8 @@ public abstract class TreeBuilder implements TokenHandler {
 
     protected abstract void appendHtmlElementToDocument(Attributes attributes);
 
-    public void endTag(String name, Attributes attributes) throws SAXException {
+    public final void endTag(String name, Attributes attributes)
+            throws SAXException {
         for (;;) {
             switch (phase) {
                 case INITIAL:
@@ -643,7 +648,7 @@ public abstract class TreeBuilder implements TokenHandler {
         }
     }
 
-    public void eof() throws SAXException {
+    public final void eof() throws SAXException {
         for (;;) {
             switch (phase) {
                 case INITIAL:
@@ -716,17 +721,17 @@ public abstract class TreeBuilder implements TokenHandler {
     /**
      * @see nu.validator.htmlparser.TokenHandler#characters(char[], int, int)
      */
-    public void characters(char[] buf, int start, int length)
+    public final void characters(char[] buf, int start, int length)
             throws SAXException {
         // optimize the most common case
-        if (phase == Phase.IN_BODY) {
+        if (phase == Phase.IN_BODY || phase == Phase.IN_CELL || phase == Phase.IN_CAPTION) {
             reconstructTheActiveFormattingElements();
             appendCharactersToCurrentNode(buf, start, length);
             return;
         }
-        
+
         int end = start + length;
-        loop : for (int i = start; i < end; i++) {
+        loop: for (int i = start; i < end; i++) {
             switch (buf[i]) {
                 case ' ':
                 case '\t':
@@ -750,11 +755,19 @@ public abstract class TreeBuilder implements TokenHandler {
                         case IN_HEAD:
                         case IN_HEAD_NOSCRIPT:
                         case AFTER_HEAD:
+                        case IN_TABLE:
+                        case IN_COLUMN_GROUP:
+                        case IN_TABLE_BODY:
+                        case IN_ROW:
+                        case IN_FRAMESET:
+                        case AFTER_FRAMESET:
                             /*
                              * Append the character to the current node.
                              */
                             continue;
                         case IN_BODY:
+                        case IN_CELL:
+                        case IN_CAPTION:
                             // XXX is this dead code?
                             if (start < i) {
                                 appendCharactersToCurrentNode(buf, start, i
@@ -769,39 +782,38 @@ public abstract class TreeBuilder implements TokenHandler {
                             reconstructTheActiveFormattingElements();
                             /* Append the token's character to the current node. */
                             break loop;
-                        case IN_TABLE:
-                            // TODO
-                            return;
-                        case IN_CAPTION:
-                            // TODO
-                            return;
-                        case IN_COLUMN_GROUP:
-                            // TODO
-                            return;
-                        case IN_TABLE_BODY:
-                            // TODO
-                            return;
-                        case IN_ROW:
-                            // TODO
-                            return;
-                        case IN_CELL:
-                            // TODO
-                            return;
                         case IN_SELECT:
-                            // TODO
-                            return;
+                            break loop;
                         case AFTER_BODY:
-                            // TODO
-                            return;
-                        case IN_FRAMESET:
-                            // TODO
-                            return;
-                        case AFTER_FRAMESET:
-                            // TODO
-                            return;
+                            if (start < i) {
+                                appendCharactersToCurrentNode(buf, start, i
+                                        - start);
+                                start = i;
+                            }
+                            /*
+                             * Reconstruct the active formatting elements, if
+                             * any.
+                             */
+                            reconstructTheActiveFormattingElements();
+                            /* Append the token's character to the current node. */
+                            continue;
                         case TRAILING_END:
-                            // TODO
-                            return;
+                            if (phaseBeforeSwitchingToTrailingEnd == Phase.AFTER_FRAMESET) {
+                                continue;
+                            } else  {
+                                if (start < i) {
+                                    appendCharactersToCurrentNode(buf, start, i
+                                            - start);
+                                    start = i;
+                                }
+                                /*
+                                 * Reconstruct the active formatting elements, if
+                                 * any.
+                                 */
+                                reconstructTheActiveFormattingElements();
+                                /* Append the token's character to the current node. */
+                                continue;                                
+                            }
                     }
                 default:
                     /*
@@ -922,12 +934,13 @@ public abstract class TreeBuilder implements TokenHandler {
                             i--;
                             continue;
                         case IN_BODY:
+                        case IN_CELL:
+                        case IN_CAPTION:
                             if (start < i) {
                                 appendCharactersToCurrentNode(buf, start, i
                                         - start);
                                 start = i;
                             }
-
                             /*
                              * Reconstruct the active formatting elements, if
                              * any.
@@ -936,45 +949,95 @@ public abstract class TreeBuilder implements TokenHandler {
                             /* Append the token's character to the current node. */
                             break loop;
                         case IN_TABLE:
-                            // TODO
-                            return;
-                        case IN_CAPTION:
-                            // TODO
-                            return;
-                        case IN_COLUMN_GROUP:
-                            // TODO
-                            return;
                         case IN_TABLE_BODY:
-                            // TODO
-                            return;
                         case IN_ROW:
-                            // TODO
-                            return;
-                        case IN_CELL:
-                            // TODO
-                            return;
+                            if (start < i) {
+                                appendCharactersToCurrentNode(buf, start, i
+                                        - start);
+                            }
+                            reconstructTheActiveFormattingElementsWithFosterParent();
+                            appendCharToFosterParent(buf[i]);
+                            start = i + 1;
+                            continue;
+                        case IN_COLUMN_GROUP:
+                            /*
+                             * Act as if an end tag with the tag name "colgroup" had been seen, and then, if that token wasn't ignored, reprocess the current token.
+                             */
+                            if (isCurrentRoot()) {
+                                err("Non-space in \u201Ccolgroup\u201D when parsing fragment.");
+                                continue;
+                            }
+                            popCurrentNode();
+                            phase = Phase.IN_TABLE;
+                            i--;
+                            continue;
                         case IN_SELECT:
-                            // TODO
-                            return;
+                            break loop;
                         case AFTER_BODY:
-                            // TODO
-                            return;
+                            err("Non-space character after body.");
+                            phase = Phase.IN_BODY;
+                            i--;
+                            continue;
                         case IN_FRAMESET:
-                            // TODO
-                            return;
+                            if (start < i) {
+                                appendCharactersToCurrentNode(buf, start, i
+                                        - start);
+                                start = i;
+                            }
+                            /*
+                             * Parse error.
+                             */
+                            err("Non-space in \u201Cframeset\u201D.");
+                            /*
+                             * Ignore the token.
+                             */
+                            start = i + 1;
+                            continue;
                         case AFTER_FRAMESET:
-                            // TODO
-                            return;
+                            if (start < i) {
+                                appendCharactersToCurrentNode(buf, start, i
+                                        - start);
+                                start = i;
+                            }
+                            /*
+                             * Parse error.
+                             */
+                            err("Non-space after \u201Cframeset\u201D.");
+                            /*
+                             * Ignore the token.
+                             */
+                            start = i + 1;
+                            continue;
                         case TRAILING_END:
-                            // TODO
-                            return;
+                            /*
+                             * Parse error. */
+                            err("Non-space character in page trailer.");
+                            /*Switch back to the main phase and reprocess the token.
+                             */
+                            phase = phaseBeforeSwitchingToTrailingEnd;
+                            i--;
+                            continue;
                     }
             }
         }
         if (start < end) {
-            appendCharactersToCurrentNode(buf, start, end
-                    - start);
+            appendCharactersToCurrentNode(buf, start, end - start);
         }
+    }
+
+    private boolean isCurrentRoot() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    private void reconstructTheActiveFormattingElementsWithFosterParent() {
+        // TODO Auto-generated method stub
+
+    }
+
+    private void appendCharToFosterParent(char c) {
+        // TODO Auto-generated method stub
+
     }
 
     private void reconstructTheActiveFormattingElements() {
