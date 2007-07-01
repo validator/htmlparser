@@ -84,7 +84,8 @@ public interface TokenHandler {
     public void endTag(String name, Attributes attributes) throws SAXException;
     
     /**
-     * Receive a comment token.
+     * Receive a comment token. The data is junk if the <code>wantsComments()</code> 
+     * returned <code>false</code>.
      * 
      * @param buf a buffer holding the data
      * @param length the number of code units to read
