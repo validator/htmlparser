@@ -113,7 +113,7 @@ public abstract class TreeBuilder implements TokenHandler {
     private Phase phase = Phase.INITIAL;
 
     private Phase phaseBeforeSwitchingToTrailingEnd;
-    
+
     private Tokenizer tokenizer;
 
     private ErrorHandler errorHandler;
@@ -121,6 +121,16 @@ public abstract class TreeBuilder implements TokenHandler {
     private DocumentModeHandler documentModeHandler;
 
     private DoctypeExpectation doctypeExpectation;
+
+    private int cdataOrRcdataTimesToPop;
+    
+    private boolean scriptingEnabled;
+
+    private boolean nonConformingAndStreaming;
+
+    private boolean previousTokenWasPreStart;
+
+    private boolean wantingComments;
 
     /**
      * Reports an condition that would make the infoset incompatible with XML
@@ -171,7 +181,8 @@ public abstract class TreeBuilder implements TokenHandler {
 
     public final void start(Tokenizer self) throws SAXException {
         // TODO Auto-generated method stub
-
+        previousTokenWasPreStart = false;
+        cdataOrRcdataTimesToPop = 0;
     }
 
     /**
@@ -181,6 +192,7 @@ public abstract class TreeBuilder implements TokenHandler {
 
     public final void doctype(String name, String publicIdentifier,
             String systemIdentifier, boolean correct) throws SAXException {
+        previousTokenWasPreStart = false;
         switch (phase) {
             case INITIAL:
                 /*
@@ -433,35 +445,39 @@ public abstract class TreeBuilder implements TokenHandler {
     }
 
     public final void comment(char[] buf, int length) throws SAXException {
-        switch (phase) {
-            case INITIAL:
-            case ROOT_ELEMENT:
-            case TRAILING_END:
-                /*
-                 * A comment token Append a Comment node to the Document object
-                 * with the data attribute set to the data given in the comment
-                 * token.
-                 */
-                appendCommentToDocument(buf, length);
-                return;
-            case AFTER_BODY:
-                /*
-                 * * A comment token Append a Comment node to the first element
-                 * in the stack of open elements (the html element), with the
-                 * data attribute set to the data given in the comment token.
-                 * 
-                 */
-                appendCommentToRootElement(buf, length);
-                return;
-            default:
-                /*
-                 * * A comment token Append a Comment node to the current node
-                 * with the data attribute set to the data given in the comment
-                 * token.
-                 * 
-                 */
-                appendCommentToCurrentNode(buf, length);
-                return;
+        previousTokenWasPreStart = false;
+        if (wantingComments) {
+            switch (phase) {
+                case INITIAL:
+                case ROOT_ELEMENT:
+                case TRAILING_END:
+                    /*
+                     * A comment token Append a Comment node to the Document
+                     * object with the data attribute set to the data given in
+                     * the comment token.
+                     */
+                    appendCommentToDocument(buf, length);
+                    return;
+                case AFTER_BODY:
+                    /*
+                     * * A comment token Append a Comment node to the first
+                     * element in the stack of open elements (the html element),
+                     * with the data attribute set to the data given in the
+                     * comment token.
+                     * 
+                     */
+                    appendCommentToRootElement(buf, length);
+                    return;
+                default:
+                    /*
+                     * * A comment token Append a Comment node to the current
+                     * node with the data attribute set to the data given in the
+                     * comment token.
+                     * 
+                     */
+                    appendCommentToCurrentNode(buf, length);
+                    return;
+            }
         }
     }
 
@@ -471,13 +487,35 @@ public abstract class TreeBuilder implements TokenHandler {
 
     protected abstract void appendCommentToRootElement(char[] buf, int length);
 
+    
+    //XXX intern element names and use ==
+    
     public final void startTag(String name, Attributes attributes)
             throws SAXException {
+        previousTokenWasPreStart = false;
         for (;;) {
             switch (phase) {
                 case INITIAL:
-                    // TODO
-                    return;
+                    /*
+                     * Parse error.
+                     */
+                    if (doctypeExpectation != DoctypeExpectation.NO_DOCTYPE_ERRORS) {
+                        err("Start tag seen without seeing a doctype first.");
+                    }
+                    /*
+                     * 
+                     * Set the document to quirks mode.
+                     */
+                    documentMode(DocumentMode.QUIRKS_MODE, null, null, false);
+                    /*
+                     * Then, switch to the root element phase of the
+                     * tree construction stage
+                     */
+                    phase = Phase.ROOT_ELEMENT;
+                    /*
+                     * and reprocess the current token.
+                     */
+                    continue;
                 case ROOT_ELEMENT:
                     // optimize error check and streaming SAX by hoisting
                     // "html" handling here.
@@ -506,7 +544,28 @@ public abstract class TreeBuilder implements TokenHandler {
                         continue;
                     }
                 case BEFORE_HEAD:
-                    // TODO
+                    if ("head".equals(name)) {
+                        /*
+                         * A start tag whose tag name is "head"
+                         * 
+                         * Create an element for the token.
+                         * 
+                         * Set the head element pointer to this new element
+                         * node.
+                         * 
+                         * Append the new element to the current node and push
+                         * it onto the stack of open elements.
+                         */
+                        appendToCurrentNodeAndPushHeadElement(attributes);
+                        /*
+                         * 
+                         * Change the insertion mode to "in head".
+                         * 
+                         */
+                        phase = Phase.IN_HEAD;
+                        return;
+                    }
+
                     /*
                      * Any other start tag token
                      */
@@ -526,17 +585,293 @@ public abstract class TreeBuilder implements TokenHandler {
                      */
                     continue;
                 case IN_HEAD:
-                    // TODO
-                    return;
+                    if ("base".equals(name) || "link".equals(name)) {
+                        /*
+                         * A start tag whose tag name is one of: "base", "link"
+
+    Insert an HTML element for the token.
+
+                         */
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        popCurrentNode(); // XXX not in spec
+                        return;
+                    } else if ("meta".equals(name)) {
+                        // XXX do charset stuff
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        popCurrentNode(); // XXX not in spec
+                        return;                        
+                    } else if ("title".equals(name)) {
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        cdataOrRcdataTimesToPop = 1;
+                        tokenizer.setContentModelFlag(ContentModelFlag.RCDATA, name);
+                        return;                                               
+                    } else if ("style".equals(name) || ("noscript".equals(name) && scriptingEnabled)) {
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        cdataOrRcdataTimesToPop = 1;
+                        tokenizer.setContentModelFlag(ContentModelFlag.CDATA, name);
+                        return;                                                                       
+                    } else if ("noscript".equals(name) && !scriptingEnabled) {
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        phase = Phase.IN_HEAD_NOSCRIPT;
+                        return;
+                    } else if ("script".equals(name)) {
+                        // XXX need to manage much more stuff here if supporting
+                        // document.write()
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        cdataOrRcdataTimesToPop = 1;
+                        tokenizer.setContentModelFlag(ContentModelFlag.CDATA, name);
+                        return;                                                                       
+                    } else if ("head".equals(name)) {
+                        /*Parse error.*/
+                        err("Start tag for \u201Chead\u201D seen when \u201Chead\u201D was already open.");
+                        /* Ignore the token.*/
+                        return;
+                    } else {
+                        /* Act as if an end tag token with the tag name "head" had been seen, */
+                        popCurrentNode();
+                        phase = Phase.AFTER_HEAD;
+                        /* and reprocess the current token.  */
+                        continue;
+                    }
                 case IN_HEAD_NOSCRIPT:
-                    // TODO
-                    return;
+                    // XXX did Hixie really mean to omit "base" here?
+                    if ("link".equals(name)) {
+                        /*
+                         * Insert an HTML element for the token.
+                         */
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        popCurrentNode(); // XXX not in spec
+                        return;
+                    } else if ("meta".equals(name)) {
+                        // XXX do charset stuff
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        popCurrentNode(); // XXX not in spec
+                        return;                        
+                    } else if ("style".equals(name)) {
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        cdataOrRcdataTimesToPop = 1;
+                        tokenizer.setContentModelFlag(ContentModelFlag.CDATA, name);
+                        return;                                                                       
+                    } else if ("head".equals(name)) {
+                        /*Parse error.*/
+                        err("Start tag for \u201Chead\u201D seen when \u201Chead\u201D was already open.");
+                        /* Ignore the token.*/
+                        return;
+                    } else if ("noscript".equals(name)) {
+                        /*Parse error.*/
+                        err("Start tag for \u201Cnoscript\u201D seen when \u201Cnoscript\u201D was already open.");
+                        /* Ignore the token.*/
+                        return;
+                    } else {
+                        /*
+                         * Parse error.*/
+                        err("Bad start tag in \u201Cnoscript\u201D in \u201Chead\u201D.");
+                        /* Act as if an end tag with the tag name "noscript" had been seen 
+                         */
+                        popCurrentNode();
+                        phase = Phase.IN_HEAD;
+                        /*
+                         * and reprocess the current token.
+                         */
+                        continue;
+                    }
                 case AFTER_HEAD:
-                    // TODO
-                    return;
+                    if ("body".equals(name)) {
+                        if (attributes.getLength() == 0) {
+                            // This has the right magic side effect that it
+                            // makes attributes in SAX Tree mutable.
+                            appendToCurrentNodeAndPushBodyElement();
+                        } else {
+                            appendToCurrentNodeAndPushBodyElement(attributes);
+                        }
+                        phase = Phase.IN_BODY;
+                        return;
+                    } else if ("frameset".equals(name)) {
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        phase = Phase.IN_FRAMESET;
+                        return;
+                    } else if ("base".equals(name)) {
+                        err("\u201Cbase\u201D element outside \u201Chead\u201D.");
+                        if (nonConformingAndStreaming) {
+                            pushHeadPointerOntoStack();
+                        }
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        popCurrentNode(); // XXX not in spec
+                        if (nonConformingAndStreaming) {
+                            popCurrentNode(); // head
+                        }
+                        return;
+                    } else if ("link".equals(name)) {
+                        err("\u201Clink\u201D element outside \u201Chead\u201D.");
+                        if (nonConformingAndStreaming) {
+                            pushHeadPointerOntoStack();
+                        }
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        popCurrentNode(); // XXX not in spec
+                        if (nonConformingAndStreaming) {
+                            popCurrentNode(); // head
+                        }
+                        return;
+                    } else if ("meta".equals(name)) {
+                        err("\u201Cmeta\u201D element outside \u201Chead\u201D.");
+                        // XXX do chaset stuff
+                        if (nonConformingAndStreaming) {
+                            pushHeadPointerOntoStack();
+                        }
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        popCurrentNode(); // XXX not in spec
+                        if (nonConformingAndStreaming) {
+                            popCurrentNode(); // head
+                        }
+                        return;
+                    } else if ("script".equals(name)) {
+                        err("\u201Cscript\u201D element between \u201Chead\u201D and \u201Cbody\u201D.");
+                        if (nonConformingAndStreaming) {
+                            pushHeadPointerOntoStack();
+                        }
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        cdataOrRcdataTimesToPop = nonConformingAndStreaming ? 1 : 2; // pops head
+                        tokenizer.setContentModelFlag(ContentModelFlag.CDATA, name);
+                        return;                                                                       
+                    } else if ("style".equals(name)) {
+                        err("\u201Cstyle\u201D element between \u201Chead\u201D and \u201Cbody\u201D.");
+                        if (nonConformingAndStreaming) {
+                            pushHeadPointerOntoStack();
+                        }
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        cdataOrRcdataTimesToPop = nonConformingAndStreaming ? 1 : 2; // pops head
+                        tokenizer.setContentModelFlag(ContentModelFlag.CDATA, name);
+                        return;                                                                       
+                    } else if ("title".equals(name)) {
+                        err("\u201Ctitle\u201D element outside \u201Chead\u201D.");
+                        if (nonConformingAndStreaming) {
+                            pushHeadPointerOntoStack();
+                        }
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        cdataOrRcdataTimesToPop = nonConformingAndStreaming ? 1 : 2; // pops head
+                        tokenizer.setContentModelFlag(ContentModelFlag.RCDATA, name);
+                        return;                                                                       
+                    } else {
+                        appendToCurrentNodeAndPushBodyElement();
+                        phase = Phase.IN_BODY;
+                        continue;
+                    }
                 case IN_BODY:
-                    // TODO
-                    return;
+                    if ("base".equals(name) || "link".equals(name)) {
+                        /*
+                         * A start tag whose tag name is one of: "base", "link"
+
+    Insert an HTML element for the token.
+
+                         */
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        popCurrentNode(); // XXX not in spec
+                        return;
+                    } else if ("meta".equals(name)) {
+                        // XXX do charset stuff
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        popCurrentNode(); // XXX not in spec
+                        return;                        
+                    } else if ("style".equals(name)) {
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        cdataOrRcdataTimesToPop = 1;
+                        tokenizer.setContentModelFlag(ContentModelFlag.CDATA, name);
+                        return;                                                                       
+                    } else if ("script".equals(name)) {
+                        // XXX need to manage much more stuff here if supporting
+                        // document.write()
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        cdataOrRcdataTimesToPop = 1;
+                        tokenizer.setContentModelFlag(ContentModelFlag.CDATA, name);
+                        return;                                                                       
+                    } else if ("title".equals(name)) {
+                        err("\u201Ctitle\u201D element found inside \u201Cbody\201D.");
+                        if (nonConformingAndStreaming) {
+                            pushHeadPointerOntoStack();
+                        }
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        cdataOrRcdataTimesToPop = nonConformingAndStreaming ? 1 : 2; // pops head
+                        tokenizer.setContentModelFlag(ContentModelFlag.RCDATA, name);
+                        return;                                                                       
+                    } else if ("body".equals(name)) {
+                        err("\u201Cbody\u201D start tag found but the \u201Cbody\201D element is already open.");
+                        addAttributesToBody(attributes);
+                        return;
+                    } else if ("p".equals(name) || "div".equals(name) || "h1".equals(name) || "h2".equals(name) || "h3".equals(name) || "h4".equals(name) || "h5".equals(name) || "h6".equals(name) || "blockquote".equals(name) || "ol".equals(name) ||  "ul".equals(name) || "dl".equals(name) || "fieldset".equals(name) || "address".equals(name) || "menu".equals(name)  || "center".equals(name) || "dir".equals(name) || "listing".equals(name)) {
+                        if(stackHasInScope("p")) {
+                            endP();
+                        }
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        return;
+                    } else if ("pre".equals(name)) {
+                        if(stackHasInScope("p")) {
+                            endP();
+                        }
+                        appendToCurrentNodeAndPushElement(name, attributes);                        
+                        previousTokenWasPreStart = true;
+                        return;
+                    } else if ("form".equals(name)) {
+                        if (isFormPointerNull()) {
+                            err("Saw a \u201Cform\u201D start tag, but there was already an active \u201Cform\u201D element.");
+                            return;
+                        } else {
+                            if(stackHasInScope("p")) {
+                                endP();
+                            }
+                            appendToCurrentNodeAndPushFormElement(attributes);
+                            return;                            
+                        }
+                    } else if ("li".equals(name)) {
+                        if(stackHasInScope("p")) {
+                            endP();
+                        }
+                        int timesToPop = timesNeededToPopInOrderToPopUptoAndIncludingLi();
+                        if (timesToPop > 1) {
+                            err("A \u201Cli\u201D start tag was seen but the previous \u201Cli\u201D element had open children.");
+                        }
+                        while (timesToPop > 0) {
+                            popCurrentNode();
+                            timesToPop--;
+                        }
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        return;
+                    } else if ("dd".equals(name) || "dt".equals(name)) {
+                        if(stackHasInScope("p")) {
+                            endP();
+                        }
+                        int timesToPop = timesNeededToPopInOrderToPopUptoAndIncludingDdOrDt();
+                        if (timesToPop > 1) {
+                            err("A definition list item start tag was seen but the previous definition list item element had open children.");
+                        }
+                        while (timesToPop > 0) {
+                            popCurrentNode();
+                            timesToPop--;
+                        }
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        return;
+                    } else if ("plaintext".equals(name)) {
+                        if(stackHasInScope("p")) {
+                            endP();
+                        }
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        tokenizer.setContentModelFlag(ContentModelFlag.PLAINTEXT, name);
+                        return;
+                    } else if ("a".equals(name)) {
+                        // TODO
+                        /*
+                         * 
+
+    If the list of active formatting elements contains an element whose tag name is "a" between the end of the list and the last marker on the list (or the start of the list if there is no marker on the list), then this is a parse error; act as if an end tag with the tag name "a" had been seen, then remove that element from the list of active formatting elements and the stack of open elements if the end tag didn't already remove it (it might not have if the element is not in table scope).
+
+    In the non-conforming stream <a href="a">a<table><a href="b">b</table>x, the first a element would be closed upon seeing the second one, and the "x" character would be inside a link to "b", not to "a". This is despite the fact that the outer a element is not in table scope (meaning that a regular </a> end tag at the start of the table wouldn't close the outer a element).
+
+    Reconstruct the active formatting elements, if any.
+
+    Insert an HTML element for the token. Add that element to the list of active formatting elements.
+
+                         * 
+                         */
+                    }
                 case IN_TABLE:
                     // TODO
                     return;
@@ -574,15 +909,82 @@ public abstract class TreeBuilder implements TokenHandler {
         }
     }
 
+    private int timesNeededToPopInOrderToPopUptoAndIncludingDdOrDt() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    private int timesNeededToPopInOrderToPopUptoAndIncludingLi() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    private void appendToCurrentNodeAndPushFormElement(Attributes attributes) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    private boolean isFormPointerNull() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    private void endP() {
+        // TODO Auto-generated method stub
+        
+    }
+
+    private boolean stackHasInScope(String string) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    private void addAttributesToBody(Attributes attributes) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    private void pushHeadPointerOntoStack() {
+        // TODO Auto-generated method stub
+        
+    }
+
     protected abstract void appendHtmlElementToDocument(Attributes attributes);
 
     public final void endTag(String name, Attributes attributes)
             throws SAXException {
+        previousTokenWasPreStart = false;
+        if (cdataOrRcdataTimesToPop > 0) {
+            while (cdataOrRcdataTimesToPop > 0) {
+                popCurrentNode();
+                cdataOrRcdataTimesToPop--;
+            }
+            return;
+        }
+
         for (;;) {
             switch (phase) {
                 case INITIAL:
-                    // TODO
-                    return;
+                    /*
+                     * Parse error.
+                     */
+                    if (doctypeExpectation != DoctypeExpectation.NO_DOCTYPE_ERRORS) {
+                        err("End tag seen without seeing a doctype first.");
+                    }
+                    /*
+                     * 
+                     * Set the document to quirks mode.
+                     */
+                    documentMode(DocumentMode.QUIRKS_MODE, null, null, false);
+                    /*
+                     * Then, switch to the root element phase of the
+                     * tree construction stage
+                     */
+                    phase = Phase.ROOT_ELEMENT;
+                    /*
+                     * and reprocess the current token.
+                     */
+                    continue;
                 case ROOT_ELEMENT:
                     /*
                      * Create an HTMLElement node with the tag name html, in the
@@ -652,8 +1054,26 @@ public abstract class TreeBuilder implements TokenHandler {
         for (;;) {
             switch (phase) {
                 case INITIAL:
-                    // TODO
-                    return;
+                    /*
+                     * Parse error.
+                     */
+                    if (doctypeExpectation != DoctypeExpectation.NO_DOCTYPE_ERRORS) {
+                        err("End of file seen without seeing a doctype first.");
+                    }
+                    /*
+                     * 
+                     * Set the document to quirks mode.
+                     */
+                    documentMode(DocumentMode.QUIRKS_MODE, null, null, false);
+                    /*
+                     * Then, switch to the root element phase of the
+                     * tree construction stage
+                     */
+                    phase = Phase.ROOT_ELEMENT;
+                    /*
+                     * and reprocess the current token.
+                     */
+                    continue;
                 case ROOT_ELEMENT:
                     /*
                      * Create an HTMLElement node with the tag name html, in the
@@ -667,55 +1087,75 @@ public abstract class TreeBuilder implements TokenHandler {
                      */
                     continue;
                 case BEFORE_HEAD:
-                    // TODO
-                    return;
                 case IN_HEAD:
-                    // TODO
-                    return;
                 case IN_HEAD_NOSCRIPT:
-                    // TODO
-                    return;
                 case AFTER_HEAD:
-                    // TODO
-                    return;
                 case IN_BODY:
-                    // TODO
-                    return;
                 case IN_TABLE:
-                    // TODO
-                    return;
                 case IN_CAPTION:
-                    // TODO
-                    return;
                 case IN_COLUMN_GROUP:
-                    // TODO
-                    return;
                 case IN_TABLE_BODY:
-                    // TODO
-                    return;
                 case IN_ROW:
-                    // TODO
-                    return;
                 case IN_CELL:
-                    // TODO
-                    return;
                 case IN_SELECT:
-                    // TODO
-                    return;
                 case AFTER_BODY:
-                    // TODO
-                    return;
                 case IN_FRAMESET:
-                    // TODO
-                    return;
                 case AFTER_FRAMESET:
-                    // TODO
+                    /*
+                     * Generate implied end tags.
+                     */
+                    generateImpliedEndTags();
+                     /* If there are more than two nodes on the stack of open
+                     * elements, */
+                    if (stackSize() > 2) {
+                        err("End of file seen and there were open elements.");
+                    } else if (stackSize() == 2 && !"body".equals(nameOfCurrentNode())) {
+                        /*or if there are two nodes but the second node
+                         * is not a body node, this is a parse error.
+*/
+                        err("End of file seen and there were open elements.");                        
+                    }
+                    
+                    // XXX fragments
+                     /* 
+                     * Otherwise, if the parser was originally created as part
+                     * of the HTML fragment parsing algorithm, and there's more
+                     * than one element in the stack of open elements, and the
+                     * second node on the stack of open elements is not a body
+                     * node, then this is a parse error. (fragment case)
+                     */
+                    
+                    
+                     /* Stop parsing.*/
                     return;
+                     /* 
+                     * This fails because it doesn't imply HEAD and BODY tags.
+                     * We should probably expand out the insertion modes and
+                     * merge them with phases and then put the three things here
+                     * into each insertion mode instead of trying to factor them
+                     * out so carefully.
+                     * 
+                     */
                 case TRAILING_END:
-                    // TODO
+                    /*Stop parsing.*/
                     return;
             }
         }
+    }
+
+    private Object nameOfCurrentNode() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    private int stackSize() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    private void generateImpliedEndTags() {
+        // TODO Auto-generated method stub
+        
     }
 
     /**
@@ -723,8 +1163,23 @@ public abstract class TreeBuilder implements TokenHandler {
      */
     public final void characters(char[] buf, int start, int length)
             throws SAXException {
+        if (previousTokenWasPreStart) {
+            if (buf[start] == '\n') {
+                start++;
+                length--;
+                if (length == 0) {
+                    return;
+                }
+            }
+            previousTokenWasPreStart = false;
+        } else if (cdataOrRcdataTimesToPop > 0) {
+            appendCharactersToCurrentNode(buf, start, length);
+            return;
+        }
+        
         // optimize the most common case
-        if (phase == Phase.IN_BODY || phase == Phase.IN_CELL || phase == Phase.IN_CAPTION) {
+        if (phase == Phase.IN_BODY || phase == Phase.IN_CELL
+                || phase == Phase.IN_CAPTION) {
             reconstructTheActiveFormattingElements();
             appendCharactersToCurrentNode(buf, start, length);
             return;
@@ -800,7 +1255,7 @@ public abstract class TreeBuilder implements TokenHandler {
                         case TRAILING_END:
                             if (phaseBeforeSwitchingToTrailingEnd == Phase.AFTER_FRAMESET) {
                                 continue;
-                            } else  {
+                            } else {
                                 if (start < i) {
                                     appendCharactersToCurrentNode(buf, start, i
                                             - start);
@@ -812,7 +1267,7 @@ public abstract class TreeBuilder implements TokenHandler {
                                  */
                                 reconstructTheActiveFormattingElements();
                                 /* Append the token's character to the current node. */
-                                continue;                                
+                                continue;
                             }
                     }
                 default:
@@ -826,7 +1281,9 @@ public abstract class TreeBuilder implements TokenHandler {
                             /*
                              * Parse error.
                              */
-                            err("Non-space characters found without seeing a doctype first.");
+                            if (doctypeExpectation != DoctypeExpectation.NO_DOCTYPE_ERRORS) {
+                                err("Non-space characters found without seeing a doctype first.");
+                            }
                             /*
                              * 
                              * Set the document to quirks mode.

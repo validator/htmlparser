@@ -301,7 +301,7 @@ public final class Tokenizer implements Locator {
     /**
      * Whether comment tokens are emitted.
      */
-    private boolean emitComments = false;
+    private boolean wantsComments = false;
 
     /**
      * If <code>false</code>, <code>addAttribute*()</code> are no-ops.
@@ -522,7 +522,7 @@ public final class Tokenizer implements Locator {
         alreadyWarnedAboutPrivateUseCharacters = false;
         metaBoundaryPassed = false;
         tokenHandler.start(this);
-        emitComments = tokenHandler.wantsComments();
+        wantsComments = tokenHandler.wantsComments();
         try {
             if (swallowBom) {
                 // Swallow the BOM
@@ -690,7 +690,7 @@ public final class Tokenizer implements Locator {
                 fatal("This document is not mappable to XML 1.0 without data loss to \u201C--\u201D in a comment.");
             } else {
                 warn("This document is not mappable to XML 1.0 without data loss to \u201C--\u201D in a comment.");
-                if (emitComments) {
+                if (wantsComments) {
                     if (commentPolicy == XmlViolationPolicy.ALLOW) {
                         appendLongStrBuf('-');
                     } else {
@@ -702,7 +702,7 @@ public final class Tokenizer implements Locator {
             }
         } else {
             if (longStrBufPending != '\u0000') {
-                if (emitComments) {
+                if (wantsComments) {
                     appendLongStrBuf(longStrBufPending);
                 }
                 longStrBufPending = '\u0000';
@@ -710,7 +710,7 @@ public final class Tokenizer implements Locator {
             if (c == '-') {
                 longStrBufPending = '-';
             } else {
-                if (emitComments) {
+                if (wantsComments) {
                     appendLongStrBuf(c);
                 }
             }
@@ -756,12 +756,12 @@ public final class Tokenizer implements Locator {
      * @throws SAXException
      */
     private void emitComment() throws SAXException {
-        if (emitComments) {
+        if (wantsComments) {
             if (longStrBufPending != '\u0000') {
                 appendLongStrBuf(longStrBufPending);
             }
-            tokenHandler.comment(longStrBuf, longStrBufLen);
         }
+        tokenHandler.comment(longStrBuf, longStrBufLen);
     }
 
     /**
@@ -1545,12 +1545,12 @@ public final class Tokenizer implements Locator {
                      * LINE TABULATION U+000C FORM FEED (FF) U+0020 SPACE Switch
                      * to the before attribute name state.
                      */
-                    tagName = strBufToString();
+                    tagName = strBufToElementNameString();
                     beforeAttributeNameState();
                     return;
                 case '>':
                     /* U+003E GREATER-THAN SIGN (>) Emit the current tag token. */
-                    tagName = strBufToString();
+                    tagName = strBufToElementNameString();
                     emitCurrentTagToken();
                     /*
                      * Switch to the data state.
@@ -1564,7 +1564,7 @@ public final class Tokenizer implements Locator {
                     /*
                      * Emit the current tag token.
                      */
-                    tagName = strBufToString();
+                    tagName = strBufToElementNameString();
                     emitCurrentTagToken();
                     /*
                      * Reconsume the EOF character in the data state.
@@ -1576,7 +1576,7 @@ public final class Tokenizer implements Locator {
                      * U+002F SOLIDUS (/) Parse error unless this is a permitted
                      * slash.
                      */
-                    tagName = strBufToString();
+                    tagName = strBufToElementNameString();
                     parseErrorUnlessPermittedSlash();
                     /*
                      * Switch to the before attribute name state.
@@ -1606,6 +1606,11 @@ public final class Tokenizer implements Locator {
                     continue;
             }
         }
+    }
+
+    private String strBufToElementNameString() {
+        // TODO Generate a better interning function
+        return strBufToString().intern();
     }
 
     /**
