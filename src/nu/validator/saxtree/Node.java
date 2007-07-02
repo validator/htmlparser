@@ -114,6 +114,12 @@ public abstract class Node implements Locator {
         this.parentNode = parentNode;
     }
     
+    public void detach() {
+        if (parentNode != null) {
+            parentNode.removeChild(this);
+        }
+    }
+    
     /**
      * Returns the name.
      * 
