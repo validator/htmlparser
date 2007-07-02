@@ -45,4 +45,9 @@ public final class Document extends ParentNode {
         treeParser.endDocument(endLocator);
     }
 
+    @Override
+    public NodeType getNodeType() {
+        return NodeType.DOCUMENT;
+    }
+
 }

@@ -45,4 +45,9 @@ public final class CDATA extends ParentNode {
         treeParser.endCDATA(endLocator);
     }
 
+    @Override
+    public NodeType getNodeType() {
+        return NodeType.CDATA;
+    }
+
 }

@@ -22,6 +22,9 @@
 
 package nu.validator.saxtree;
 
+import java.util.List;
+
+import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 
@@ -96,6 +99,11 @@ public abstract class Node implements Locator {
     public final ParentNode getParentNode() {
         return parentNode;
     }
+    
+    public abstract NodeType getNodeType();
+    
+    // Subclass-specific accessors that are hoisted here to 
+    // avoid casting.
 
     /**
      * Sets the parentNode.
@@ -104,5 +112,95 @@ public abstract class Node implements Locator {
      */
     void setParentNode(ParentNode parentNode) {
         this.parentNode = parentNode;
+    }
+    
+    /**
+     * Returns the name.
+     * 
+     * @return the name
+     */
+    public String getName() {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Returns the publicIdentifier.
+     * 
+     * @return the publicIdentifier
+     */
+    public String getPublicIdentifier() {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Returns the systemIdentifier.
+     * 
+     * @return the systemIdentifier
+     */
+    public String getSystemIdentifier() {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Returns the attributes.
+     * 
+     * @return the attributes
+     */
+    public Attributes getAttributes() {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Returns the localName.
+     * 
+     * @return the localName
+     */
+    public String getLocalName() {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Returns the prefixMappings.
+     * 
+     * @return the prefixMappings
+     */
+    public List<PrefixMapping> getPrefixMappings() {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Returns the qName.
+     * 
+     * @return the qName
+     */
+    public String getQName() {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Returns the uri.
+     * 
+     * @return the uri
+     */
+    public String getUri() {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Returns the data.
+     * 
+     * @return the data
+     */
+    public String getData() {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Returns the target.
+     * 
+     * @return the target
+     */
+    public String getTarget() {
+        throw new UnsupportedOperationException();
     }
 }

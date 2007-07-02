@@ -34,4 +34,9 @@ public final class DocumentFragment extends ParentNode {
     void visit(TreeParser treeParser) {
         // nothing
     }
+
+    @Override
+    public NodeType getNodeType() {
+        return NodeType.DOCUMENT_FRAGMENT;
+    }
 }

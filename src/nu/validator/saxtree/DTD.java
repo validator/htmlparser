@@ -52,4 +52,36 @@ public final class DTD extends ParentNode {
         treeParser.endDTD(endLocator);
     }
 
+    /**
+     * Returns the name.
+     * 
+     * @return the name
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * Returns the publicIdentifier.
+     * 
+     * @return the publicIdentifier
+     */
+    public String getPublicIdentifier() {
+        return publicIdentifier;
+    }
+
+    /**
+     * Returns the systemIdentifier.
+     * 
+     * @return the systemIdentifier
+     */
+    public String getSystemIdentifier() {
+        return systemIdentifier;
+    }
+
+    @Override
+    public NodeType getNodeType() {
+        return NodeType.DTD;
+    }
+
 }

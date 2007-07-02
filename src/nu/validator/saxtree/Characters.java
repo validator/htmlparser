@@ -36,4 +36,9 @@ public final class Characters extends CharBufferNode {
         treeParser.characters(buffer, 0, buffer.length, this);
     }
 
+    @Override
+    public NodeType getNodeType() {
+        return NodeType.CHARACTERS;
+    }
+
 }

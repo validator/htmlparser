@@ -36,4 +36,9 @@ public final class Comment extends CharBufferNode {
         treeParser.comment(buffer, 0, buffer.length, this);
     }
 
+    @Override
+    public NodeType getNodeType() {
+        return NodeType.COMMENT;
+    }
+
 }

@@ -33,4 +33,14 @@ public abstract class CharBufferNode extends Node {
         this.buffer = new char[length];
         System.arraycopy(buf, start, buffer, 0, length);
     }
+
+    /**
+     * Returns the wrapped buffer as a string.
+     * 
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return new String(buffer);
+    }
 }

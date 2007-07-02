@@ -37,7 +37,7 @@ public final class Element extends ParentNode {
 
     private final String qName;
 
-    private final Attributes atts;
+    private final Attributes attributes;
 
     private final List<PrefixMapping> prefixMappings;
 
@@ -49,9 +49,9 @@ public final class Element extends ParentNode {
         this.localName = localName;
         this.qName = qName;
         if (retainAttributes) {
-            this.atts = atts;
+            this.attributes = atts;
         } else {
-            this.atts = new AttributesImpl(atts);
+            this.attributes = new AttributesImpl(atts);
         }
         this.prefixMappings = prefixMappings;
     }
@@ -64,7 +64,7 @@ public final class Element extends ParentNode {
                         mapping.getUri(), this);
             }
         }
-        treeParser.startElement(uri, localName, qName, atts, this);
+        treeParser.startElement(uri, localName, qName, attributes, this);
     }
 
     /**
@@ -79,6 +79,56 @@ public final class Element extends ParentNode {
                 treeParser.endPrefixMapping(mapping.getPrefix(), endLocator);
             }
         }
+    }
+
+    /**
+     * Returns the attributes.
+     * 
+     * @return the attributes
+     */
+    public Attributes getAttributes() {
+        return attributes;
+    }
+
+    /**
+     * Returns the localName.
+     * 
+     * @return the localName
+     */
+    public String getLocalName() {
+        return localName;
+    }
+
+    /**
+     * Returns the prefixMappings.
+     * 
+     * @return the prefixMappings
+     */
+    public List<PrefixMapping> getPrefixMappings() {
+        return prefixMappings;
+    }
+
+    /**
+     * Returns the qName.
+     * 
+     * @return the qName
+     */
+    public String getQName() {
+        return qName;
+    }
+
+    /**
+     * Returns the uri.
+     * 
+     * @return the uri
+     */
+    public String getUri() {
+        return uri;
+    }
+
+    @Override
+    public NodeType getNodeType() {
+        return NodeType.ELEMENT;
     }
 
 }
