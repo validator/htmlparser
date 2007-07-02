@@ -48,7 +48,26 @@ public abstract class TreeBuilder implements TokenHandler {
     private enum Phase {
         INITIAL, ROOT_ELEMENT, BEFORE_HEAD, IN_HEAD, IN_HEAD_NOSCRIPT, AFTER_HEAD, IN_BODY, IN_TABLE, IN_CAPTION, IN_COLUMN_GROUP, IN_TABLE_BODY, IN_ROW, IN_CELL, IN_SELECT, AFTER_BODY, IN_FRAMESET, AFTER_FRAMESET, TRAILING_END
     }
+    
+    private class StackNode {
+        final String name;
+        final Object node;
+        /**
+         * @param name
+         * @param node
+         */
+        StackNode(final String name, final Object node) {
+            this.name = name;
+            this.node = node;
+        }
+        
+        public StackNode clone() {
+            return new StackNode(this.name, this.node);
+        }
+    }
 
+    private final static char[] ISINDEX_PROMPT = "This is a searchable index. Insert your search keywords here: ".toCharArray();
+    
     private final static String[] QUIRKY_PUBLIC_IDS = {
             "+//silmaril//dtd html pro v0r11 19970101//en",
             "-//advasoft ltd//dtd html 3.0 aswedit + extensions//en",
@@ -123,12 +142,12 @@ public abstract class TreeBuilder implements TokenHandler {
     private DoctypeExpectation doctypeExpectation;
 
     private int cdataOrRcdataTimesToPop;
-    
+
     private boolean scriptingEnabled;
 
     private boolean nonConformingAndStreaming;
 
-    private boolean previousTokenWasPreStart;
+    private boolean needToDropLF;
 
     private boolean wantingComments;
 
@@ -181,7 +200,7 @@ public abstract class TreeBuilder implements TokenHandler {
 
     public final void start(Tokenizer self) throws SAXException {
         // TODO Auto-generated method stub
-        previousTokenWasPreStart = false;
+        needToDropLF = false;
         cdataOrRcdataTimesToPop = 0;
     }
 
@@ -192,7 +211,7 @@ public abstract class TreeBuilder implements TokenHandler {
 
     public final void doctype(String name, String publicIdentifier,
             String systemIdentifier, boolean correct) throws SAXException {
-        previousTokenWasPreStart = false;
+        needToDropLF = false;
         switch (phase) {
             case INITIAL:
                 /*
@@ -445,7 +464,7 @@ public abstract class TreeBuilder implements TokenHandler {
     }
 
     public final void comment(char[] buf, int length) throws SAXException {
-        previousTokenWasPreStart = false;
+        needToDropLF = false;
         if (wantingComments) {
             switch (phase) {
                 case INITIAL:
@@ -487,12 +506,11 @@ public abstract class TreeBuilder implements TokenHandler {
 
     protected abstract void appendCommentToRootElement(char[] buf, int length);
 
-    
     //XXX intern element names and use ==
-    
+
     public final void startTag(String name, Attributes attributes)
             throws SAXException {
-        previousTokenWasPreStart = false;
+        needToDropLF = false;
         for (;;) {
             switch (phase) {
                 case INITIAL:
@@ -519,7 +537,7 @@ public abstract class TreeBuilder implements TokenHandler {
                 case ROOT_ELEMENT:
                     // optimize error check and streaming SAX by hoisting
                     // "html" handling here.
-                    if ("html".equals(name)) {
+                    if ("html" == name) {
                         if (attributes.getLength() == 0) {
                             // This has the right magic side effect that it
                             // makes attributes in SAX Tree mutable.
@@ -544,7 +562,7 @@ public abstract class TreeBuilder implements TokenHandler {
                         continue;
                     }
                 case BEFORE_HEAD:
-                    if ("head".equals(name)) {
+                    if ("head" == name) {
                         /*
                          * A start tag whose tag name is "head"
                          * 
@@ -584,44 +602,412 @@ public abstract class TreeBuilder implements TokenHandler {
                      * the "after head" insertion mode.
                      */
                     continue;
-                case IN_HEAD:
-                    if ("base".equals(name) || "link".equals(name)) {
-                        /*
-                         * A start tag whose tag name is one of: "base", "link"
-
-    Insert an HTML element for the token.
-
-                         */
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        popCurrentNode(); // XXX not in spec
+                case AFTER_HEAD:
+                    if ("body" == name) {
+                        if (attributes.getLength() == 0) {
+                            // This has the right magic side effect that it
+                            // makes attributes in SAX Tree mutable.
+                            appendToCurrentNodeAndPushBodyElement();
+                        } else {
+                            appendToCurrentNodeAndPushBodyElement(attributes);
+                        }
+                        phase = Phase.IN_BODY;
                         return;
-                    } else if ("meta".equals(name)) {
-                        // XXX do charset stuff
+                    } else if ("frameset" == name) {
                         appendToCurrentNodeAndPushElement(name, attributes);
-                        popCurrentNode(); // XXX not in spec
+                        phase = Phase.IN_FRAMESET;
+                        return;
+                    } else if ("base" == name) {
+                        err("\u201Cbase\u201D element outside \u201Chead\u201D.");
+                        if (nonConformingAndStreaming) {
+                            pushHeadPointerOntoStack();
+                        }
+                        appendToCurrentNodeVoidElement(name, attributes);
+                        if (nonConformingAndStreaming) {
+                            popCurrentNode(); // head
+                        }
+                        return;
+                    } else if ("link" == name) {
+                        err("\u201Clink\u201D element outside \u201Chead\u201D.");
+                        if (nonConformingAndStreaming) {
+                            pushHeadPointerOntoStack();
+                        }
+                        appendToCurrentNodeVoidElement(name, attributes);
+                        if (nonConformingAndStreaming) {
+                            popCurrentNode(); // head
+                        }
+                        return;
+                    } else if ("meta" == name) {
+                        err("\u201Cmeta\u201D element outside \u201Chead\u201D.");
+                        // XXX do chaset stuff
+                        if (nonConformingAndStreaming) {
+                            pushHeadPointerOntoStack();
+                        }
+                        appendToCurrentNodeVoidElement(name, attributes);
+                        if (nonConformingAndStreaming) {
+                            popCurrentNode(); // head
+                        }
+                        return;
+                    } else if ("script" == name) {
+                        err("\u201Cscript\u201D element between \u201Chead\u201D and \u201Cbody\u201D.");
+                        if (nonConformingAndStreaming) {
+                            pushHeadPointerOntoStack();
+                        }
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        cdataOrRcdataTimesToPop = nonConformingAndStreaming ? 1
+                                : 2; // pops head
+                        tokenizer.setContentModelFlag(ContentModelFlag.CDATA,
+                                name);
+                        return;
+                    } else if ("style" == name) {
+                        err("\u201Cstyle\u201D element between \u201Chead\u201D and \u201Cbody\u201D.");
+                        if (nonConformingAndStreaming) {
+                            pushHeadPointerOntoStack();
+                        }
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        cdataOrRcdataTimesToPop = nonConformingAndStreaming ? 1
+                                : 2; // pops head
+                        tokenizer.setContentModelFlag(ContentModelFlag.CDATA,
+                                name);
+                        return;
+                    } else if ("title" == name) {
+                        err("\u201Ctitle\u201D element outside \u201Chead\u201D.");
+                        if (nonConformingAndStreaming) {
+                            pushHeadPointerOntoStack();
+                        }
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        cdataOrRcdataTimesToPop = nonConformingAndStreaming ? 1
+                                : 2; // pops head
+                        tokenizer.setContentModelFlag(ContentModelFlag.RCDATA,
+                                name);
+                        return;
+                    } else {
+                        appendToCurrentNodeAndPushBodyElement();
+                        phase = Phase.IN_BODY;
+                        continue;
+                    }
+                case IN_BODY:
+                    if ("base" == name || "link" == name || "meta" == name || "style" == name || "script" == name) {
+                        // Fall through to IN_HEAD
+                    } else if ("title" == name) {
+                        err("\u201Ctitle\u201D element found inside \u201Cbody\201D.");
+                        if (nonConformingAndStreaming) {
+                            pushHeadPointerOntoStack();
+                        }
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        cdataOrRcdataTimesToPop = nonConformingAndStreaming ? 1
+                                : 2; // pops head
+                        tokenizer.setContentModelFlag(ContentModelFlag.RCDATA,
+                                name);
+                        return;
+                    } else if ("body" == name) {
+                        err("\u201Cbody\u201D start tag found but the \u201Cbody\201D element is already open.");
+                        addAttributesToBody(attributes);
+                        return;
+                    } else if ("p" == name || "div" == name || "h1" == name
+                            || "h2" == name || "h3" == name || "h4" == name
+                            || "h5" == name || "h6" == name
+                            || "blockquote" == name || "ol" == name
+                            || "ul" == name || "dl" == name
+                            || "fieldset" == name || "address" == name
+                            || "menu" == name || "center" == name
+                            || "dir" == name || "listing" == name) {
+                        implicitlyCloseP();
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        return;
+                    } else if ("pre" == name) {
+                        implicitlyCloseP();
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        needToDropLF = true;
+                        return;
+                    } else if ("form" == name) {
+                        if (isFormPointerNull()) {
+                            err("Saw a \u201Cform\u201D start tag, but there was already an active \u201Cform\u201D element.");
+                            return;
+                        } else {
+                            implicitlyCloseP();
+                            appendToCurrentNodeAndPushFormElement(attributes);
+                            return;
+                        }
+                    } else if ("li" == name) {
+                        implicitlyCloseP();
+                        int timesToPop = timesNeededToPopInOrderToPopUptoAndIncludingLi();
+                        if (timesToPop > 1) {
+                            err("A \u201Cli\u201D start tag was seen but the previous \u201Cli\u201D element had open children.");
+                        }
+                        while (timesToPop > 0) {
+                            popCurrentNode();
+                            timesToPop--;
+                        }
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        return;
+                    } else if ("dd" == name || "dt" == name) {
+                        implicitlyCloseP();
+                        int timesToPop = timesNeededToPopInOrderToPopUptoAndIncludingDdOrDt();
+                        if (timesToPop > 1) {
+                            err("A definition list item start tag was seen but the previous definition list item element had open children.");
+                        }
+                        while (timesToPop > 0) {
+                            popCurrentNode();
+                            timesToPop--;
+                        }
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        return;
+                    } else if ("plaintext" == name) {
+                        implicitlyCloseP();
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        tokenizer.setContentModelFlag(
+                                ContentModelFlag.PLAINTEXT, name);
+                        return;
+                    } else if ("a" == name) {
+                        StackNode activeA = findInListOfActiveFormattingElementsContainsBetweenEndAndLastMarker("a");
+                        if (activeA != null) {
+                        /*
+                         * If the list of active formatting elements contains an
+                         * element whose tag name is "a" between the end of the
+                         * list and the last marker on the list (or the start of
+                         * the list if there is no marker on the list), then
+                         * this is a parse error;*/
+                            err("An \u201Ca\u201D start tag seen with already an active \u201Ca\u201D element.");
+                            /* act as if an end tag with the
+                         * tag name "a" had been seen, */
+                            adoptionAgencyEndTag("a");
+                            /*then remove that element
+                         * from the list of active formatting elements and the
+                         * stack of open elements if the end tag didn't already
+                         * remove it (it might not have if the element is not in
+                         * table scope).
+                         */
+                            removeFromListOfActiveFormattingElements(activeA);
+                            removeFromStack(activeA);
+                            /* In the non-conforming stream <a href="a">a<table><a
+                             * href="b">b</table>x, the first a element would be
+                             * closed upon seeing the second one, and the "x"
+                             * character would be inside a link to "b", not to "a".
+                             * This is despite the fact that the outer a element is
+                             * not in table scope (meaning that a regular </a> end
+                             * tag at the start of the table wouldn't close the
+                             * outer a element).
+                             */ 
+                        }
+                         /* Reconstruct the active formatting elements, if any.
+                         */
+                        reconstructTheActiveFormattingElements();
+                         /* Insert an HTML element for the token. Add that
+                         * element to the list of active formatting elements.
+                         */
+                        appendToCurrentNodeAndPushFormattingElement(name, attributes);
+                        return;
+                    } else if ("i" == name || "b" == name || "em" == name || "strong" == name || "font" == name || "big" == name ||  "s" == name || "small" == name || "strike" == name || "tt" == name || "u" == name) {
+                        reconstructTheActiveFormattingElements();
+                        appendToCurrentNodeAndPushFormattingElement(name, attributes);
+                        return;
+                    } else if ("nobr" == name) {
+                        /*
+                         * Reconstruct the active formatting elements, if any.
+                         */
+                        reconstructTheActiveFormattingElements();
+                        if (stackHasInScope("nobr")) {
+                         /* If the stack of open elements has a nobr element in
+                         * scope, then this is a parse error.*/
+                            err("\u201Cnobr\u201D start tag seen when there was an open \u201Cnobr\u201D element in scope.");
+                            /* Act as if an end
+                         * tag with the tag name nobr had been seen, */
+                            adoptionAgencyEndTag("nobr");
+                            /*then once
+                         * again reconstruct the active formatting elements, if
+                         * any.
+                         */
+                            reconstructTheActiveFormattingElements();
+                        }
+                         /* Insert an HTML element for the token. Add that
+                         * element to the list of active formatting elements.
+                         */
+                        appendToCurrentNodeAndPushFormattingElement(name, attributes);
+                        return;
+                    } else if ("button" == name) {
+                        if (stackHasInScope("button")) {
+                        /*
+                         * If the stack of open elements has a button element in
+                         * scope, then this is a parse error;*/
+                            err("\u201Cbutton\u201D start tag seen when there was an open \u201Cbutton\u201D element in scope.");                            
+                            /*
+                             * act as if an end tag with the tag name "button"
+                             * had been seen,
+                             */
+                            /*
+                             * If the stack of open elements has in scope an
+                             * element whose tag name is the same as the tag
+                             * name of the token, then generate implied end
+                             * tags.
+                             */
+                            generateImpliedEndTags();
+                             /* Now, if the current node is not an element with
+                             * the same tag name as the token, then this is a
+                             * parse error.
+                             */
+                            if(!isCurrent("button")) {
+                                err("There was an open \u201Cbutton\u201D element in scope with unclosed children.");
+                            }
+                            StackNode buttonInScope = getInScopeNode("button");
+                            if (buttonInScope != null) {
+                             /* Now, if the stack of open elements has an element
+                             * in scope whose tag name matches the tag name of
+                             * the token, then pop elements from the stack until
+                             * that element has been popped from the stack,*/
+                                popUpToAndIncluding(buttonInScope);
+                                /* and
+                             * clear the list of active formatting elements up
+                             * to the last marker.
+                             * 
+                             */
+                                clearTheListOfActiveFormattingElementsUpToTheLastMarker();
+                            }
+                            
+                            /* then
+                         * reprocess the token.
+                         */
+                            continue;
+                        } else {
+                         /* Otherwise:
+                         * 
+                         * Reconstruct the active formatting elements, if any.
+                         */
+                            reconstructTheActiveFormattingElements();
+                         /* Insert an HTML element for the token.
+                         */
+                            appendToCurrentNodeAndPushElement(name, attributes);
+                         /* Insert a marker at the end of the list of active
+                         * formatting elements.
+                         */
+                            insertMarker();
+                            return;
+                        }
+                    } else if ("object" == name || "marquee" == name) {
+                        reconstructTheActiveFormattingElements();
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        insertMarker();
+                        return;
+                    } else if ("xmp" == name) {
+                        reconstructTheActiveFormattingElements();
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        cdataOrRcdataTimesToPop = 1;
+                        tokenizer.setContentModelFlag(ContentModelFlag.CDATA,
+                                name);
                         return;                        
-                    } else if ("title".equals(name)) {
+                    } else if ("table" == name) {
+                        implicitlyCloseP();
                         appendToCurrentNodeAndPushElement(name, attributes);
-                        cdataOrRcdataTimesToPop = 1;
+                        phase = Phase.IN_TABLE;
+                        return;
+                    } else if ("br" == name || "img" == name || "embed" == name || "param" == name || "area" == name || "basefont" == name || "bgsound" == name || "spacer" == name || "wbr" == name) {
+                        reconstructTheActiveFormattingElements();
+                        appendToCurrentNodeVoidElement(name, attributes);
+                        return;
+                    } else if ("hr" == name) {
+                        implicitlyCloseP();
+                        appendToCurrentNodeVoidElement(name, attributes);
+                        return;
+                    } else if ("image" == name) {
+                        err("Saw a start tag \u201Cimage\201D.");
+                        name = "img";
+                        continue;
+                    } else if ("input" == name) {
+                        reconstructTheActiveFormattingElements();
+                        appendToCurrentNodeVoidElementAssociateWithForm(name, attributes);
+                        return;
+                    } else if ("isindex" == name) {
+                        err("\u201Cisindex\201D seen.");
+                        if (isFormPointerNull()) {
+                            return;
+                        }
+                        implicitlyCloseP();
+                        AttributesImpl formAttrs = newAttributes();
+                        int actionIndex = attributes.getIndex("action");
+                        if (actionIndex > -1) {
+                            formAttrs.addAttribute("action", attributes.getValue(actionIndex));
+                        }
+                        appendToCurrentNodeAndPushFormElement(formAttrs);
+                        appendToCurrentNodeVoidElement("hr", EmptyAttributes.EMPTY_ATTRIBUTES);
+                        appendToCurrentNodeAndPushElement("p", EmptyAttributes.EMPTY_ATTRIBUTES);
+                        appendToCurrentNodeAndPushElement("label", EmptyAttributes.EMPTY_ATTRIBUTES);
+                        int promptIndex = attributes.getIndex("prompt");
+                        if (promptIndex > -1) {
+                            char[] prompt = attributes.getValue(promptIndex).toCharArray(); 
+                            appendCharactersToCurrentNode(prompt, 0, prompt.length);
+                        } else {
+                            // XXX localization
+                            appendCharactersToCurrentNode(ISINDEX_PROMPT, 0, ISINDEX_PROMPT.length);
+                        }
+                        AttributesImpl inputAttributes = newAttributes();
+                        for (int i = 0; i < attributes.getLength(); i++) {
+                            String attributeQName = attributes.getQName(i);
+                            if (!("name".equals(attributeQName) || "action".equals(attributeQName) || "prompt".equals(attributeQName))) {
+                                inputAttributes.addAttribute(attributeQName, attributes.getValue(i));
+                            }
+                        }
+                        appendToCurrentNodeVoidElementAssociateWithForm("input", inputAttributes);
+                        // XXX localization
+                        popCurrentNode(); // label
+                        popCurrentNode(); // p
+                        appendToCurrentNodeVoidElement("hr", EmptyAttributes.EMPTY_ATTRIBUTES);
+                        popCurrentNode(); // form
+                        return;
+                    } else if ("textarea" == name) {
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        associateCurrentNodeWithFormPointer();
                         tokenizer.setContentModelFlag(ContentModelFlag.RCDATA, name);
-                        return;                                               
-                    } else if ("style".equals(name) || ("noscript".equals(name) && scriptingEnabled)) {
+                        cdataOrRcdataTimesToPop = 1;
+                        needToDropLF = true;
+                        return;
+                    } else if ("iframe" == name || "noembed" == name || "noframes" == name || ("noscript" == name && scriptingEnabled)) {
                         appendToCurrentNodeAndPushElement(name, attributes);
                         cdataOrRcdataTimesToPop = 1;
-                        tokenizer.setContentModelFlag(ContentModelFlag.CDATA, name);
-                        return;                                                                       
-                    } else if ("noscript".equals(name) && !scriptingEnabled) {
+                        tokenizer.setContentModelFlag(ContentModelFlag.CDATA,
+                                name);
+                        return;                                              
+                    } else if ("select" == name) {
+                        reconstructTheActiveFormattingElements();
+                        // XXX form pointer
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        phase = Phase.IN_SELECT;
+                        return;
+                    } else if ("caption" == name || "col" == name || "colgroup" == name || "frame" == name || "frameset" == name || "head" == name || "option" == name || "optgroup" == name || "tbody" == name || "td" == name || "tfoot" == name || "th" == name || "thead" == name || "tr" == name) {
+                        err("Stay start tag \u201C" + name + "\u201D.");
+                        return;
+                    } 
+                case IN_HEAD:
+                    if ("base" == name) {
+                        appendToCurrentNodeVoidElement(name, attributes);
+                        return;
+                    } else if ("meta" == name || "link" == name) {
+                        // Fall through to IN_HEAD_NOSCRIPT
+                    } else if ("title" == name) {
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        cdataOrRcdataTimesToPop = 1;
+                        tokenizer.setContentModelFlag(ContentModelFlag.RCDATA,
+                                name);
+                        return;
+                    } else if ("style" == name
+                            || ("noscript" == name && scriptingEnabled)) {
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        cdataOrRcdataTimesToPop = 1;
+                        tokenizer.setContentModelFlag(ContentModelFlag.CDATA,
+                                name);
+                        return;
+                    } else if ("noscript" == name && !scriptingEnabled) {
                         appendToCurrentNodeAndPushElement(name, attributes);
                         phase = Phase.IN_HEAD_NOSCRIPT;
                         return;
-                    } else if ("script".equals(name)) {
+                    } else if ("script" == name) {
                         // XXX need to manage much more stuff here if supporting
                         // document.write()
                         appendToCurrentNodeAndPushElement(name, attributes);
                         cdataOrRcdataTimesToPop = 1;
-                        tokenizer.setContentModelFlag(ContentModelFlag.CDATA, name);
-                        return;                                                                       
-                    } else if ("head".equals(name)) {
+                        tokenizer.setContentModelFlag(ContentModelFlag.CDATA,
+                                name);
+                        return;
+                    } else if ("head" == name) {
                         /*Parse error.*/
                         err("Start tag for \u201Chead\u201D seen when \u201Chead\u201D was already open.");
                         /* Ignore the token.*/
@@ -635,29 +1021,25 @@ public abstract class TreeBuilder implements TokenHandler {
                     }
                 case IN_HEAD_NOSCRIPT:
                     // XXX did Hixie really mean to omit "base" here?
-                    if ("link".equals(name)) {
-                        /*
-                         * Insert an HTML element for the token.
-                         */
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        popCurrentNode(); // XXX not in spec
+                    if ("link" == name) {
+                        appendToCurrentNodeVoidElement(name, attributes);
                         return;
-                    } else if ("meta".equals(name)) {
+                    } else if ("meta" == name) {
                         // XXX do charset stuff
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        popCurrentNode(); // XXX not in spec
-                        return;                        
-                    } else if ("style".equals(name)) {
+                        appendToCurrentNodeVoidElement(name, attributes);
+                        return;
+                    } else if ("style" == name) {
                         appendToCurrentNodeAndPushElement(name, attributes);
                         cdataOrRcdataTimesToPop = 1;
-                        tokenizer.setContentModelFlag(ContentModelFlag.CDATA, name);
-                        return;                                                                       
-                    } else if ("head".equals(name)) {
+                        tokenizer.setContentModelFlag(ContentModelFlag.CDATA,
+                                name);
+                        return;
+                    } else if ("head" == name) {
                         /*Parse error.*/
                         err("Start tag for \u201Chead\u201D seen when \u201Chead\u201D was already open.");
                         /* Ignore the token.*/
                         return;
-                    } else if ("noscript".equals(name)) {
+                    } else if ("noscript" == name) {
                         /*Parse error.*/
                         err("Start tag for \u201Cnoscript\u201D seen when \u201Cnoscript\u201D was already open.");
                         /* Ignore the token.*/
@@ -674,203 +1056,6 @@ public abstract class TreeBuilder implements TokenHandler {
                          * and reprocess the current token.
                          */
                         continue;
-                    }
-                case AFTER_HEAD:
-                    if ("body".equals(name)) {
-                        if (attributes.getLength() == 0) {
-                            // This has the right magic side effect that it
-                            // makes attributes in SAX Tree mutable.
-                            appendToCurrentNodeAndPushBodyElement();
-                        } else {
-                            appendToCurrentNodeAndPushBodyElement(attributes);
-                        }
-                        phase = Phase.IN_BODY;
-                        return;
-                    } else if ("frameset".equals(name)) {
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        phase = Phase.IN_FRAMESET;
-                        return;
-                    } else if ("base".equals(name)) {
-                        err("\u201Cbase\u201D element outside \u201Chead\u201D.");
-                        if (nonConformingAndStreaming) {
-                            pushHeadPointerOntoStack();
-                        }
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        popCurrentNode(); // XXX not in spec
-                        if (nonConformingAndStreaming) {
-                            popCurrentNode(); // head
-                        }
-                        return;
-                    } else if ("link".equals(name)) {
-                        err("\u201Clink\u201D element outside \u201Chead\u201D.");
-                        if (nonConformingAndStreaming) {
-                            pushHeadPointerOntoStack();
-                        }
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        popCurrentNode(); // XXX not in spec
-                        if (nonConformingAndStreaming) {
-                            popCurrentNode(); // head
-                        }
-                        return;
-                    } else if ("meta".equals(name)) {
-                        err("\u201Cmeta\u201D element outside \u201Chead\u201D.");
-                        // XXX do chaset stuff
-                        if (nonConformingAndStreaming) {
-                            pushHeadPointerOntoStack();
-                        }
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        popCurrentNode(); // XXX not in spec
-                        if (nonConformingAndStreaming) {
-                            popCurrentNode(); // head
-                        }
-                        return;
-                    } else if ("script".equals(name)) {
-                        err("\u201Cscript\u201D element between \u201Chead\u201D and \u201Cbody\u201D.");
-                        if (nonConformingAndStreaming) {
-                            pushHeadPointerOntoStack();
-                        }
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        cdataOrRcdataTimesToPop = nonConformingAndStreaming ? 1 : 2; // pops head
-                        tokenizer.setContentModelFlag(ContentModelFlag.CDATA, name);
-                        return;                                                                       
-                    } else if ("style".equals(name)) {
-                        err("\u201Cstyle\u201D element between \u201Chead\u201D and \u201Cbody\u201D.");
-                        if (nonConformingAndStreaming) {
-                            pushHeadPointerOntoStack();
-                        }
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        cdataOrRcdataTimesToPop = nonConformingAndStreaming ? 1 : 2; // pops head
-                        tokenizer.setContentModelFlag(ContentModelFlag.CDATA, name);
-                        return;                                                                       
-                    } else if ("title".equals(name)) {
-                        err("\u201Ctitle\u201D element outside \u201Chead\u201D.");
-                        if (nonConformingAndStreaming) {
-                            pushHeadPointerOntoStack();
-                        }
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        cdataOrRcdataTimesToPop = nonConformingAndStreaming ? 1 : 2; // pops head
-                        tokenizer.setContentModelFlag(ContentModelFlag.RCDATA, name);
-                        return;                                                                       
-                    } else {
-                        appendToCurrentNodeAndPushBodyElement();
-                        phase = Phase.IN_BODY;
-                        continue;
-                    }
-                case IN_BODY:
-                    if ("base".equals(name) || "link".equals(name)) {
-                        /*
-                         * A start tag whose tag name is one of: "base", "link"
-
-    Insert an HTML element for the token.
-
-                         */
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        popCurrentNode(); // XXX not in spec
-                        return;
-                    } else if ("meta".equals(name)) {
-                        // XXX do charset stuff
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        popCurrentNode(); // XXX not in spec
-                        return;                        
-                    } else if ("style".equals(name)) {
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        cdataOrRcdataTimesToPop = 1;
-                        tokenizer.setContentModelFlag(ContentModelFlag.CDATA, name);
-                        return;                                                                       
-                    } else if ("script".equals(name)) {
-                        // XXX need to manage much more stuff here if supporting
-                        // document.write()
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        cdataOrRcdataTimesToPop = 1;
-                        tokenizer.setContentModelFlag(ContentModelFlag.CDATA, name);
-                        return;                                                                       
-                    } else if ("title".equals(name)) {
-                        err("\u201Ctitle\u201D element found inside \u201Cbody\201D.");
-                        if (nonConformingAndStreaming) {
-                            pushHeadPointerOntoStack();
-                        }
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        cdataOrRcdataTimesToPop = nonConformingAndStreaming ? 1 : 2; // pops head
-                        tokenizer.setContentModelFlag(ContentModelFlag.RCDATA, name);
-                        return;                                                                       
-                    } else if ("body".equals(name)) {
-                        err("\u201Cbody\u201D start tag found but the \u201Cbody\201D element is already open.");
-                        addAttributesToBody(attributes);
-                        return;
-                    } else if ("p".equals(name) || "div".equals(name) || "h1".equals(name) || "h2".equals(name) || "h3".equals(name) || "h4".equals(name) || "h5".equals(name) || "h6".equals(name) || "blockquote".equals(name) || "ol".equals(name) ||  "ul".equals(name) || "dl".equals(name) || "fieldset".equals(name) || "address".equals(name) || "menu".equals(name)  || "center".equals(name) || "dir".equals(name) || "listing".equals(name)) {
-                        if(stackHasInScope("p")) {
-                            endP();
-                        }
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        return;
-                    } else if ("pre".equals(name)) {
-                        if(stackHasInScope("p")) {
-                            endP();
-                        }
-                        appendToCurrentNodeAndPushElement(name, attributes);                        
-                        previousTokenWasPreStart = true;
-                        return;
-                    } else if ("form".equals(name)) {
-                        if (isFormPointerNull()) {
-                            err("Saw a \u201Cform\u201D start tag, but there was already an active \u201Cform\u201D element.");
-                            return;
-                        } else {
-                            if(stackHasInScope("p")) {
-                                endP();
-                            }
-                            appendToCurrentNodeAndPushFormElement(attributes);
-                            return;                            
-                        }
-                    } else if ("li".equals(name)) {
-                        if(stackHasInScope("p")) {
-                            endP();
-                        }
-                        int timesToPop = timesNeededToPopInOrderToPopUptoAndIncludingLi();
-                        if (timesToPop > 1) {
-                            err("A \u201Cli\u201D start tag was seen but the previous \u201Cli\u201D element had open children.");
-                        }
-                        while (timesToPop > 0) {
-                            popCurrentNode();
-                            timesToPop--;
-                        }
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        return;
-                    } else if ("dd".equals(name) || "dt".equals(name)) {
-                        if(stackHasInScope("p")) {
-                            endP();
-                        }
-                        int timesToPop = timesNeededToPopInOrderToPopUptoAndIncludingDdOrDt();
-                        if (timesToPop > 1) {
-                            err("A definition list item start tag was seen but the previous definition list item element had open children.");
-                        }
-                        while (timesToPop > 0) {
-                            popCurrentNode();
-                            timesToPop--;
-                        }
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        return;
-                    } else if ("plaintext".equals(name)) {
-                        if(stackHasInScope("p")) {
-                            endP();
-                        }
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        tokenizer.setContentModelFlag(ContentModelFlag.PLAINTEXT, name);
-                        return;
-                    } else if ("a".equals(name)) {
-                        // TODO
-                        /*
-                         * 
-
-    If the list of active formatting elements contains an element whose tag name is "a" between the end of the list and the last marker on the list (or the start of the list if there is no marker on the list), then this is a parse error; act as if an end tag with the tag name "a" had been seen, then remove that element from the list of active formatting elements and the stack of open elements if the end tag didn't already remove it (it might not have if the element is not in table scope).
-
-    In the non-conforming stream <a href="a">a<table><a href="b">b</table>x, the first a element would be closed upon seeing the second one, and the "x" character would be inside a link to "b", not to "a". This is despite the fact that the outer a element is not in table scope (meaning that a regular </a> end tag at the start of the table wouldn't close the outer a element).
-
-    Reconstruct the active formatting elements, if any.
-
-    Insert an HTML element for the token. Add that element to the list of active formatting elements.
-
-                         * 
-                         */
                     }
                 case IN_TABLE:
                     // TODO
@@ -909,6 +1094,89 @@ public abstract class TreeBuilder implements TokenHandler {
         }
     }
 
+    private void associateCurrentNodeWithFormPointer() {
+        // TODO Auto-generated method stub
+        
+    }
+
+    private AttributesImpl newAttributes() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    private void appendToCurrentNodeVoidElementAssociateWithForm(String name, Attributes attributes) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    /**
+     * @param name
+     * @param attributes
+     */
+    private void appendToCurrentNodeVoidElement(String name, Attributes attributes) {
+        appendToCurrentNodeAndPushElement(name, attributes);
+        popCurrentNode();
+    }
+
+    /**
+     * 
+     */
+    private void implicitlyCloseP() {
+        if (stackHasInScope("p")) {
+            endP();
+        }
+    }
+
+    private void insertMarker() {
+        // TODO Auto-generated method stub
+        
+    }
+
+    private void clearTheListOfActiveFormattingElementsUpToTheLastMarker() {
+        // TODO Auto-generated method stub
+        
+    }
+
+    private void popUpToAndIncluding(StackNode buttonInScope) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    private StackNode getInScopeNode(String string) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    private boolean isCurrent(String string) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    private void appendToCurrentNodeAndPushFormattingElement(String name, Attributes attributes) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    private void removeFromStack(StackNode activeA) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    private void removeFromListOfActiveFormattingElements(StackNode activeA) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    private void adoptionAgencyEndTag(String string) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    private StackNode findInListOfActiveFormattingElementsContainsBetweenEndAndLastMarker(String string) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
     private int timesNeededToPopInOrderToPopUptoAndIncludingDdOrDt() {
         // TODO Auto-generated method stub
         return 0;
@@ -921,7 +1189,7 @@ public abstract class TreeBuilder implements TokenHandler {
 
     private void appendToCurrentNodeAndPushFormElement(Attributes attributes) {
         // TODO Auto-generated method stub
-        
+
     }
 
     private boolean isFormPointerNull() {
@@ -931,7 +1199,7 @@ public abstract class TreeBuilder implements TokenHandler {
 
     private void endP() {
         // TODO Auto-generated method stub
-        
+
     }
 
     private boolean stackHasInScope(String string) {
@@ -941,19 +1209,19 @@ public abstract class TreeBuilder implements TokenHandler {
 
     private void addAttributesToBody(Attributes attributes) {
         // TODO Auto-generated method stub
-        
+
     }
 
     private void pushHeadPointerOntoStack() {
         // TODO Auto-generated method stub
-        
+
     }
 
     protected abstract void appendHtmlElementToDocument(Attributes attributes);
 
     public final void endTag(String name, Attributes attributes)
             throws SAXException {
-        previousTokenWasPreStart = false;
+        needToDropLF = false;
         if (cdataOrRcdataTimesToPop > 0) {
             while (cdataOrRcdataTimesToPop > 0) {
                 popCurrentNode();
@@ -1105,30 +1373,30 @@ public abstract class TreeBuilder implements TokenHandler {
                      * Generate implied end tags.
                      */
                     generateImpliedEndTags();
-                     /* If there are more than two nodes on the stack of open
+                    /* If there are more than two nodes on the stack of open
                      * elements, */
                     if (stackSize() > 2) {
                         err("End of file seen and there were open elements.");
-                    } else if (stackSize() == 2 && !"body".equals(nameOfCurrentNode())) {
+                    } else if (stackSize() == 2
+                            && !"body".equals(nameOfCurrentNode())) {
                         /*or if there are two nodes but the second node
                          * is not a body node, this is a parse error.
-*/
-                        err("End of file seen and there were open elements.");                        
+                         */
+                        err("End of file seen and there were open elements.");
                     }
-                    
+
                     // XXX fragments
-                     /* 
+                    /* 
                      * Otherwise, if the parser was originally created as part
                      * of the HTML fragment parsing algorithm, and there's more
                      * than one element in the stack of open elements, and the
                      * second node on the stack of open elements is not a body
                      * node, then this is a parse error. (fragment case)
                      */
-                    
-                    
-                     /* Stop parsing.*/
+
+                    /* Stop parsing.*/
                     return;
-                     /* 
+                    /* 
                      * This fails because it doesn't imply HEAD and BODY tags.
                      * We should probably expand out the insertion modes and
                      * merge them with phases and then put the three things here
@@ -1155,7 +1423,7 @@ public abstract class TreeBuilder implements TokenHandler {
 
     private void generateImpliedEndTags() {
         // TODO Auto-generated method stub
-        
+
     }
 
     /**
@@ -1163,7 +1431,7 @@ public abstract class TreeBuilder implements TokenHandler {
      */
     public final void characters(char[] buf, int start, int length)
             throws SAXException {
-        if (previousTokenWasPreStart) {
+        if (needToDropLF) {
             if (buf[start] == '\n') {
                 start++;
                 length--;
@@ -1171,12 +1439,12 @@ public abstract class TreeBuilder implements TokenHandler {
                     return;
                 }
             }
-            previousTokenWasPreStart = false;
+            needToDropLF = false;
         } else if (cdataOrRcdataTimesToPop > 0) {
             appendCharactersToCurrentNode(buf, start, length);
             return;
         }
-        
+
         // optimize the most common case
         if (phase == Phase.IN_BODY || phase == Phase.IN_CELL
                 || phase == Phase.IN_CAPTION) {
