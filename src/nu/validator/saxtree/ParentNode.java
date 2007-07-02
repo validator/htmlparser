@@ -64,15 +64,6 @@ public abstract class ParentNode extends Node {
     }
 
     /**
-     * Sets the firstChild.
-     * 
-     * @param firstChild the firstChild to set
-     */
-    void setFirstChild(Node firstChild) {
-        this.firstChild = firstChild;
-    }
-
-    /**
      * Returns the lastChild.
      * 
      * @return the lastChild
@@ -81,23 +72,52 @@ public abstract class ParentNode extends Node {
         return lastChild;
     }
 
-    /**
-     * Sets the lastChild.
-     * 
-     * @param lastChild the lastChild to set
-     */
-    void setLastChild(Node lastChild) {
-        this.lastChild = lastChild;
-    }
-
     public Node appendChild(Node child) {
+        child.detach();
         if (firstChild == null) {
             firstChild = child;
-            lastChild = child;
         } else {
             lastChild.setNextSibling(child);
-            lastChild = child;
         }
+        lastChild = child;
+        child.setParentNode(this);
         return child;
+    }
+    
+    public void appendChildren(Node parent) {
+        Node child = parent.getFirstChild();
+        if (child == null) {
+            return;
+        }
+        ParentNode another = (ParentNode) parent;
+        if (firstChild == null) {
+            firstChild = child;
+        } else {
+            lastChild.setNextSibling(child);
+        }
+        lastChild = another.lastChild;
+        do {
+            child.setParentNode(this);
+        } while ((child = child.getNextSibling()) != null);
+    }
+
+    void removeChild(Node node) {
+        if (firstChild == node) {
+            firstChild = node.getNextSibling();
+            if (lastChild == node) {
+                lastChild = null;
+            }
+        } else {
+            Node prev = firstChild;
+            Node next = firstChild.getNextSibling();
+            while (next != node) {
+                prev = next;
+                next = next.getNextSibling();
+            }
+            prev.setNextSibling(node.getNextSibling());
+            if (lastChild == node) {
+                lastChild = prev;
+            }            
+        }
     }
 }
