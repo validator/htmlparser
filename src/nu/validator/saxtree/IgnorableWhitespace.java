@@ -36,4 +36,9 @@ public final class IgnorableWhitespace extends CharBufferNode {
         treeParser.ignorableWhitespace(buffer, 0, buffer.length, this);
     }
 
+    @Override
+    public NodeType getNodeType() {
+        return NodeType.IGNORABLE_WHITESPACE;
+    }
+
 }

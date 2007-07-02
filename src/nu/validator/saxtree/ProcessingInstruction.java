@@ -41,4 +41,27 @@ public final class ProcessingInstruction extends Node {
         treeParser.processingInstruction(target, data, this);
     }
 
+    @Override
+    public NodeType getNodeType() {
+        return NodeType.PROCESSING_INSTRUCTION;
+    }
+
+    /**
+     * Returns the data.
+     * 
+     * @return the data
+     */
+    public String getData() {
+        return data;
+    }
+
+    /**
+     * Returns the target.
+     * 
+     * @return the target
+     */
+    public String getTarget() {
+        return target;
+    }
+
 }

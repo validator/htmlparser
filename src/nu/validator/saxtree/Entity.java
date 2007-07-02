@@ -48,4 +48,18 @@ public final class Entity extends ParentNode {
         treeParser.endEntity(name, endLocator);
     }
 
+    @Override
+    public NodeType getNodeType() {
+        return NodeType.ENTITY;
+    }
+
+    /**
+     * Returns the name.
+     * 
+     * @return the name
+     */
+    public String getName() {
+        return name;
+    }
+
 }
