@@ -506,8 +506,6 @@ public abstract class TreeBuilder implements TokenHandler {
 
     protected abstract void appendCommentToRootElement(char[] buf, int length);
 
-    //XXX intern element names and use ==
-
     public final void startTag(String name, Attributes attributes)
             throws SAXException {
         needToDropLF = false;
@@ -537,6 +535,49 @@ public abstract class TreeBuilder implements TokenHandler {
                         }
                     } else {
                         // fall through to IN_TABLE
+                    }
+                case IN_ROW:
+                    if ("td" == name || "th" == name) {
+                        clearTheStackBackToATableRowContext();
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        phase = Phase.IN_CELL;
+                        insertMarker();
+                        return;
+                    } else if ("caption" == name || "col" == name
+                            || "colgroup" == name || "tbody" == name
+                            || "tfoot" == name || "thead" == name
+                            || "tr" == name) {
+                        /*
+                         * Act as if an end tag with the tag name "tr" had been
+                         * seen, then, if that token wasn't ignored, reprocess
+                         * the current token.
+                         */
+                        /*
+                         * If the stack of open elements does not have an
+                         * element in table scope with the same tag name as the
+                         * token, this is a parse error. Ignore the token.
+                         * (fragment case)
+                         */
+                        if (!stackHasInTableScope("tr")) {
+                            err("No table row to close.");
+                            return;
+                        }
+                         /* Otherwise:
+                         * 
+                         * Clear the stack back to a table row context. (See
+                         * below.)
+                         */
+                        clearTheStackBackToATableRowContext();
+                         /* Pop the current node (which will be a tr element)
+                         * from the stack of open elements.*/
+                        popCurrentNode();
+                        /* Switch the insertion
+                         * mode to "in table body".
+                         */
+                        phase = Phase.IN_TABLE_BODY;
+                        continue;
+                    } else {
+                        // fall through to IN_TABLE                        
                     }
                 case IN_TABLE:
                     if ("caption" == name) {
@@ -1047,9 +1088,6 @@ public abstract class TreeBuilder implements TokenHandler {
                         phase = Phase.IN_TABLE;
                         continue;
                     }
-                case IN_ROW:
-                    // TODO
-                    return;
                 case IN_CELL:
                     // TODO
                     return;
@@ -1243,6 +1281,11 @@ public abstract class TreeBuilder implements TokenHandler {
                     }
             }
         }
+    }
+
+    private void clearTheStackBackToATableRowContext() {
+        // TODO Auto-generated method stub
+        
     }
 
     private void clearTheStackBackToATableBodyContext() {
