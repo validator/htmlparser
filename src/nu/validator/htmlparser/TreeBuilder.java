@@ -513,178 +513,136 @@ public abstract class TreeBuilder implements TokenHandler {
         needToDropLF = false;
         for (;;) {
             switch (phase) {
-                case INITIAL:
-                    /*
-                     * Parse error.
-                     */
-                    if (doctypeExpectation != DoctypeExpectation.NO_DOCTYPE_ERRORS) {
-                        err("Start tag seen without seeing a doctype first.");
-                    }
-                    /*
-                     * 
-                     * Set the document to quirks mode.
-                     */
-                    documentMode(DocumentMode.QUIRKS_MODE, null, null, false);
-                    /*
-                     * Then, switch to the root element phase of the
-                     * tree construction stage
-                     */
-                    phase = Phase.ROOT_ELEMENT;
-                    /*
-                     * and reprocess the current token.
-                     */
-                    continue;
-                case ROOT_ELEMENT:
-                    // optimize error check and streaming SAX by hoisting
-                    // "html" handling here.
-                    if ("html" == name) {
-                        if (attributes.getLength() == 0) {
-                            // This has the right magic side effect that it
-                            // makes attributes in SAX Tree mutable.
-                            appendHtmlElementToDocument();
-                        } else {
-                            appendHtmlElementToDocument(attributes);
-                        }
-                        phase = Phase.BEFORE_HEAD;
+                case IN_TABLE_BODY:
+                    if ("tr" == name) {
+                        clearTheStackBackToATableBodyContext();
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        phase = Phase.IN_ROW;
                         return;
-                    } else {
-                        /*
-                         * Create an HTMLElement node with the tag name html, in
-                         * the HTML namespace. Append it to the Document object.
-                         */
-                        appendHtmlElementToDocument();
-                        /* Switch to the main phase */
-                        phase = Phase.BEFORE_HEAD;
-                        /*
-                         * reprocess the current token.
-                         * 
-                         */
+                    } else if ("td" == name || "th" == name) {
+                        err("\u201C" + name + "\u201D start tag in table body.");
+                        clearTheStackBackToATableBodyContext();
+                        appendToCurrentNodeAndPushElement("tr", EmptyAttributes.EMPTY_ATTRIBUTES);
+                        phase = Phase.IN_ROW;
                         continue;
-                    }
-                case BEFORE_HEAD:
-                    if ("head" == name) {
-                        /*
-                         * A start tag whose tag name is "head"
-                         * 
-                         * Create an element for the token.
-                         * 
-                         * Set the head element pointer to this new element
-                         * node.
-                         * 
-                         * Append the new element to the current node and push
-                         * it onto the stack of open elements.
-                         */
-                        appendToCurrentNodeAndPushHeadElement(attributes);
-                        /*
-                         * 
-                         * Change the insertion mode to "in head".
-                         * 
-                         */
-                        phase = Phase.IN_HEAD;
-                        return;
-                    }
-
-                    /*
-                     * Any other start tag token
-                     */
-
-                    /*
-                     * Act as if a start tag token with the tag name "head" and
-                     * no attributes had been seen,
-                     */
-                    appendToCurrentNodeAndPushHeadElement(EmptyAttributes.EMPTY_ATTRIBUTES);
-                    phase = Phase.IN_HEAD;
-                    /*
-                     * then reprocess the current token.
-                     * 
-                     * This will result in an empty head element being
-                     * generated, with the current token being reprocessed in
-                     * the "after head" insertion mode.
-                     */
-                    continue;
-                case AFTER_HEAD:
-                    if ("body" == name) {
-                        if (attributes.getLength() == 0) {
-                            // This has the right magic side effect that it
-                            // makes attributes in SAX Tree mutable.
-                            appendToCurrentNodeAndPushBodyElement();
+                    } else if ("caption" == name || "col" == name || "colgroup" == name || "tbody" == name || "tfoot" == name || "thead" == name) {
+                        if (!(stackHasInTableScope("tbody") || stackHasInTableScope("thead") || stackHasInTableScope("tfoot"))) {
+                            err("Stray \u201C" + name + "\u201D start tag.");
+                            return;
                         } else {
-                            appendToCurrentNodeAndPushBodyElement(attributes);
+                            clearTheStackBackToATableBodyContext();
+                            popCurrentNode();
+                            phase = Phase.IN_TABLE;
+                            continue;
                         }
-                        phase = Phase.IN_BODY;
-                        return;
-                    } else if ("frameset" == name) {
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        phase = Phase.IN_FRAMESET;
-                        return;
-                    } else if ("base" == name) {
-                        err("\u201Cbase\u201D element outside \u201Chead\u201D.");
-                        if (nonConformingAndStreaming) {
-                            pushHeadPointerOntoStack();
-                        }
-                        appendToCurrentNodeVoidElement(name, attributes);
-                        if (nonConformingAndStreaming) {
-                            popCurrentNode(); // head
-                        }
-                        return;
-                    } else if ("link" == name) {
-                        err("\u201Clink\u201D element outside \u201Chead\u201D.");
-                        if (nonConformingAndStreaming) {
-                            pushHeadPointerOntoStack();
-                        }
-                        appendToCurrentNodeVoidElement(name, attributes);
-                        if (nonConformingAndStreaming) {
-                            popCurrentNode(); // head
-                        }
-                        return;
-                    } else if ("meta" == name) {
-                        err("\u201Cmeta\u201D element outside \u201Chead\u201D.");
-                        // XXX do chaset stuff
-                        if (nonConformingAndStreaming) {
-                            pushHeadPointerOntoStack();
-                        }
-                        appendToCurrentNodeVoidElement(name, attributes);
-                        if (nonConformingAndStreaming) {
-                            popCurrentNode(); // head
-                        }
-                        return;
-                    } else if ("script" == name) {
-                        err("\u201Cscript\u201D element between \u201Chead\u201D and \u201Cbody\u201D.");
-                        if (nonConformingAndStreaming) {
-                            pushHeadPointerOntoStack();
-                        }
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        cdataOrRcdataTimesToPop = nonConformingAndStreaming ? 1
-                                : 2; // pops head
-                        tokenizer.setContentModelFlag(ContentModelFlag.CDATA,
-                                name);
-                        return;
-                    } else if ("style" == name) {
-                        err("\u201Cstyle\u201D element between \u201Chead\u201D and \u201Cbody\u201D.");
-                        if (nonConformingAndStreaming) {
-                            pushHeadPointerOntoStack();
-                        }
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        cdataOrRcdataTimesToPop = nonConformingAndStreaming ? 1
-                                : 2; // pops head
-                        tokenizer.setContentModelFlag(ContentModelFlag.CDATA,
-                                name);
-                        return;
-                    } else if ("title" == name) {
-                        err("\u201Ctitle\u201D element outside \u201Chead\u201D.");
-                        if (nonConformingAndStreaming) {
-                            pushHeadPointerOntoStack();
-                        }
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        cdataOrRcdataTimesToPop = nonConformingAndStreaming ? 1
-                                : 2; // pops head
-                        tokenizer.setContentModelFlag(ContentModelFlag.RCDATA,
-                                name);
-                        return;
                     } else {
-                        appendToCurrentNodeAndPushBodyElement();
-                        phase = Phase.IN_BODY;
+                        // fall through to IN_TABLE
+                    }
+                case IN_TABLE:
+                    if ("caption" == name) {
+                        clearTheStackBackToATableContext();
+                        insertMarker();
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        phase = Phase.IN_CAPTION;
+                        return;
+                    } else if ("colgroup" == name) {
+                        clearTheStackBackToATableContext();
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        phase = Phase.IN_COLUMN_GROUP;
+                        return;
+                    } else if ("col" == name) {
+                        clearTheStackBackToATableContext();
+                        appendToCurrentNodeAndPushElement("colgroup", EmptyAttributes.EMPTY_ATTRIBUTES);
+                        phase = Phase.IN_COLUMN_GROUP;
                         continue;
+                    } else if ("tbody" == name || "tfoot" == name || "thead" == name) {
+                        clearTheStackBackToATableContext();
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        phase = Phase.IN_TABLE_BODY;
+                        return;                        
+                    } else if ("td" == name || "tr" == name || "th" == name) {
+                        clearTheStackBackToATableContext();
+                        appendToCurrentNodeAndPushElement("tbody", EmptyAttributes.EMPTY_ATTRIBUTES);
+                        phase = Phase.IN_TABLE_BODY;
+                        continue;                        
+                    } else if ("table" == name) {
+                        err("Start tag for \u201Ctable\u201D seen but the previous \u201Ctable\u201D is still open.");
+                        /*
+                         * If the stack of open elements does not have an
+                         * element in table scope with the same tag name as the
+                         * token, this is a parse error. Ignore the token.
+                         * (fragment case)
+                         */
+                        if (!stackHasInTableScope("table")) {
+                            return;
+                        }
+                         /* 
+                         * Otherwise:
+                         * 
+                         * Generate implied end tags.
+                         */
+                        generateImpliedEndTags();
+                         /* Now, if the current node is not a table element, then
+                         * this is a parse error.
+                         */
+                        // XXX is the next if dead code?
+                        if (!isCurrent("table")) {
+                            err("Unclosed elements on stack.");
+                        }
+                         /* Pop elements from this stack until a table element
+                         * has been popped from the stack.
+                         */
+                        popUntilElementHasBeenPopped("table");
+                         /* Reset the insertion mode appropriately.
+                         */
+                        resetTheInsertionMode();
+                        continue;
+                    } else {
+                        err("Start tag \u201C" + name + "\u201D seen in \u201Ctable\u201D.");
+                        // fall through to IN_BODY
+                    }
+                case IN_CAPTION:
+                    if ("caption" == name || "col" == name
+                            || "colgroup" == name || "tbody" == name
+                            || "td" == name || "tfoot" == name || "th" == name
+                            || "thead" == name || "tr" == name) {
+                        err("Stray \u201C" + name
+                                + "\u201D start tag in \u201Ccaption\u201D.");
+                        /*
+                         * If the stack of open elements does not have an
+                         * element in table scope with the same tag name as the
+                         * token, this is a parse error. Ignore the token.
+                         * (fragment case)
+                         */
+                        if (!stackHasInTableScope("caption")) {
+                            return;
+                        }
+                         /* Otherwise:
+                         * 
+                         * Generate implied end tags.
+                         */
+                        generateImpliedEndTags();
+                         /* Now, if the current node is not a caption element,
+                         * then this is a parse error.
+                         */ 
+                        // XXX is the next if dead code?
+                        if (!isCurrent("caption")) {
+                            err("Unclosed elements on stack.");
+                        }
+                         /* Pop elements from this stack until a caption element
+                         * has been popped from the stack.
+                         */ 
+                        popUntilElementHasBeenPopped("table");
+                         /* Clear the list of active formatting elements up to
+                         * the last marker.
+                         */
+                        clearTheListOfActiveFormattingElementsUpToTheLastMarker();
+                         /* Switch the insertion mode to "in table".
+                         */
+                        phase = Phase.IN_TABLE;
+                        continue;
+                    } else {
+                        // fall through to IN_BODY                        
                     }
                 case IN_BODY:
                     if ("base" == name || "link" == name || "meta" == name || "style" == name || "script" == name) {
@@ -975,7 +933,11 @@ public abstract class TreeBuilder implements TokenHandler {
                     } else if ("caption" == name || "col" == name || "colgroup" == name || "frame" == name || "frameset" == name || "head" == name || "option" == name || "optgroup" == name || "tbody" == name || "td" == name || "tfoot" == name || "th" == name || "thead" == name || "tr" == name) {
                         err("Stay start tag \u201C" + name + "\u201D.");
                         return;
-                    } 
+                    } else {
+                        reconstructTheActiveFormattingElements();
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        return;
+                    }
                 case IN_HEAD:
                     if ("base" == name) {
                         appendToCurrentNodeVoidElement(name, attributes);
@@ -1057,18 +1019,34 @@ public abstract class TreeBuilder implements TokenHandler {
                          */
                         continue;
                     }
-                case IN_TABLE:
-                    // TODO
-                    return;
-                case IN_CAPTION:
-                    // TODO
-                    return;
                 case IN_COLUMN_GROUP:
-                    // TODO
-                    return;
-                case IN_TABLE_BODY:
-                    // TODO
-                    return;
+                    if ("col" == name) {
+                        appendToCurrentNodeVoidElement(name, attributes);
+                        return;
+                    } else {
+                        /*
+                         * Act as if an end tag with the tag name "colgroup" had
+                         * been seen, and then, if that token wasn't ignored,
+                         * reprocess the current token.
+                         */
+                        if (isCurrentRoot()) {
+                        /*
+                         * If the current node is the root html element, then
+                         * this is a parse error, ignore the token. (fragment
+                         * case)
+                         */
+                            err("Garbage in \u201Ccolgroup\u201D fragment.");
+                            return;
+                        }
+                         /* Otherwise, pop the current node (which will be a
+                         * colgroup element) from the stack of open elements.
+                         */
+                        popCurrentNode();
+                        /* Switch the insertion mode to "in table".
+                         */
+                        phase = Phase.IN_TABLE;
+                        continue;
+                    }
                 case IN_ROW:
                     // TODO
                     return;
@@ -1090,8 +1068,206 @@ public abstract class TreeBuilder implements TokenHandler {
                 case TRAILING_END:
                     // TODO
                     return;
+                case INITIAL:
+                    /*
+                     * Parse error.
+                     */
+                    if (doctypeExpectation != DoctypeExpectation.NO_DOCTYPE_ERRORS) {
+                        err("Start tag seen without seeing a doctype first.");
+                    }
+                    /*
+                     * 
+                     * Set the document to quirks mode.
+                     */
+                    documentMode(DocumentMode.QUIRKS_MODE, null, null, false);
+                    /*
+                     * Then, switch to the root element phase of the
+                     * tree construction stage
+                     */
+                    phase = Phase.ROOT_ELEMENT;
+                    /*
+                     * and reprocess the current token.
+                     */
+                    continue;
+                case ROOT_ELEMENT:
+                    // optimize error check and streaming SAX by hoisting
+                    // "html" handling here.
+                    if ("html" == name) {
+                        if (attributes.getLength() == 0) {
+                            // This has the right magic side effect that it
+                            // makes attributes in SAX Tree mutable.
+                            appendHtmlElementToDocument();
+                        } else {
+                            appendHtmlElementToDocument(attributes);
+                        }
+                        phase = Phase.BEFORE_HEAD;
+                        return;
+                    } else {
+                        /*
+                         * Create an HTMLElement node with the tag name html, in
+                         * the HTML namespace. Append it to the Document object.
+                         */
+                        appendHtmlElementToDocument();
+                        /* Switch to the main phase */
+                        phase = Phase.BEFORE_HEAD;
+                        /*
+                         * reprocess the current token.
+                         * 
+                         */
+                        continue;
+                    }
+                case BEFORE_HEAD:
+                    if ("head" == name) {
+                        /*
+                         * A start tag whose tag name is "head"
+                         * 
+                         * Create an element for the token.
+                         * 
+                         * Set the head element pointer to this new element
+                         * node.
+                         * 
+                         * Append the new element to the current node and push
+                         * it onto the stack of open elements.
+                         */
+                        appendToCurrentNodeAndPushHeadElement(attributes);
+                        /*
+                         * 
+                         * Change the insertion mode to "in head".
+                         * 
+                         */
+                        phase = Phase.IN_HEAD;
+                        return;
+                    }
+
+                    /*
+                     * Any other start tag token
+                     */
+
+                    /*
+                     * Act as if a start tag token with the tag name "head" and
+                     * no attributes had been seen,
+                     */
+                    appendToCurrentNodeAndPushHeadElement(EmptyAttributes.EMPTY_ATTRIBUTES);
+                    phase = Phase.IN_HEAD;
+                    /*
+                     * then reprocess the current token.
+                     * 
+                     * This will result in an empty head element being
+                     * generated, with the current token being reprocessed in
+                     * the "after head" insertion mode.
+                     */
+                    continue;
+                case AFTER_HEAD:
+                    if ("body" == name) {
+                        if (attributes.getLength() == 0) {
+                            // This has the right magic side effect that it
+                            // makes attributes in SAX Tree mutable.
+                            appendToCurrentNodeAndPushBodyElement();
+                        } else {
+                            appendToCurrentNodeAndPushBodyElement(attributes);
+                        }
+                        phase = Phase.IN_BODY;
+                        return;
+                    } else if ("frameset" == name) {
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        phase = Phase.IN_FRAMESET;
+                        return;
+                    } else if ("base" == name) {
+                        err("\u201Cbase\u201D element outside \u201Chead\u201D.");
+                        if (nonConformingAndStreaming) {
+                            pushHeadPointerOntoStack();
+                        }
+                        appendToCurrentNodeVoidElement(name, attributes);
+                        if (nonConformingAndStreaming) {
+                            popCurrentNode(); // head
+                        }
+                        return;
+                    } else if ("link" == name) {
+                        err("\u201Clink\u201D element outside \u201Chead\u201D.");
+                        if (nonConformingAndStreaming) {
+                            pushHeadPointerOntoStack();
+                        }
+                        appendToCurrentNodeVoidElement(name, attributes);
+                        if (nonConformingAndStreaming) {
+                            popCurrentNode(); // head
+                        }
+                        return;
+                    } else if ("meta" == name) {
+                        err("\u201Cmeta\u201D element outside \u201Chead\u201D.");
+                        // XXX do chaset stuff
+                        if (nonConformingAndStreaming) {
+                            pushHeadPointerOntoStack();
+                        }
+                        appendToCurrentNodeVoidElement(name, attributes);
+                        if (nonConformingAndStreaming) {
+                            popCurrentNode(); // head
+                        }
+                        return;
+                    } else if ("script" == name) {
+                        err("\u201Cscript\u201D element between \u201Chead\u201D and \u201Cbody\u201D.");
+                        if (nonConformingAndStreaming) {
+                            pushHeadPointerOntoStack();
+                        }
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        cdataOrRcdataTimesToPop = nonConformingAndStreaming ? 1
+                                : 2; // pops head
+                        tokenizer.setContentModelFlag(ContentModelFlag.CDATA,
+                                name);
+                        return;
+                    } else if ("style" == name) {
+                        err("\u201Cstyle\u201D element between \u201Chead\u201D and \u201Cbody\u201D.");
+                        if (nonConformingAndStreaming) {
+                            pushHeadPointerOntoStack();
+                        }
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        cdataOrRcdataTimesToPop = nonConformingAndStreaming ? 1
+                                : 2; // pops head
+                        tokenizer.setContentModelFlag(ContentModelFlag.CDATA,
+                                name);
+                        return;
+                    } else if ("title" == name) {
+                        err("\u201Ctitle\u201D element outside \u201Chead\u201D.");
+                        if (nonConformingAndStreaming) {
+                            pushHeadPointerOntoStack();
+                        }
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        cdataOrRcdataTimesToPop = nonConformingAndStreaming ? 1
+                                : 2; // pops head
+                        tokenizer.setContentModelFlag(ContentModelFlag.RCDATA,
+                                name);
+                        return;
+                    } else {
+                        appendToCurrentNodeAndPushBodyElement();
+                        phase = Phase.IN_BODY;
+                        continue;
+                    }
             }
         }
+    }
+
+    private void clearTheStackBackToATableBodyContext() {
+        // TODO Auto-generated method stub
+        
+    }
+
+    private boolean stackHasInTableScope(String string) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    private void popUntilElementHasBeenPopped(String string) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    private void resetTheInsertionMode() {
+        // TODO Auto-generated method stub
+        
+    }
+
+    private void clearTheStackBackToATableContext() {
+        // TODO Auto-generated method stub
+        
     }
 
     private void associateCurrentNodeWithFormPointer() {
