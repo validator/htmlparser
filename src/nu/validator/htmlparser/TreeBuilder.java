@@ -142,7 +142,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private Phase phaseBeforeSwitchingToTrailingEnd;
 
-    private Tokenizer tokenizer;
+    protected Tokenizer tokenizer;
 
     private ErrorHandler errorHandler;
 
@@ -224,11 +224,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         currentPtr = -1;
         formPointer = null;
     }
-
-    /**
-     * @see nu.validator.htmlparser.TokenHandler#wantsComments()
-     */
-    public abstract boolean wantsComments() throws SAXException;
 
     public final void doctype(String name, String publicIdentifier,
             String systemIdentifier, boolean correct) throws SAXException {
@@ -1603,16 +1598,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
     }
 
-    private void appendToCurrentNodeAndPushElementWithFormPointer(String name, Attributes attributes) {
-        // TODO Auto-generated method stub
-        
-    }
-
-    private int findLastInTableScopeOrRoot(String string) {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
     public final void endTag(String name, Attributes attributes)
             throws SAXException {
         needToDropLF = false;
@@ -1706,7 +1691,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             err("Stray end tag \u201Ctable\u201D.");
                             return;
                         }
-                        // XXX struck useless stuff
+                        generateImpliedEndTags();
+                        if (currentPtr != eltPos) {
+                            err("There were unclosed elements.");
+                        }
                         if (currentPtr >= eltPos) {
                             popCurrentNode();
                         }
@@ -2453,7 +2441,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     }
 
-    protected abstract void appendHtmlElementToDocument(Attributes attributes);
+    private void appendHtmlElementToDocument(Attributes attributes) {
+        
+    }
 
     private boolean isCurrentRoot() {
         // TODO Auto-generated method stub
@@ -2479,11 +2469,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         
     }
 
-    private void appendCharactersToCurrentNode(char[] buf,
-            int start, int length) {
-        
-    }
-
     private void appendToCurrentNodeAndPushHeadElement(
             Attributes attributes) {
         
@@ -2506,5 +2491,44 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     private void appendHtmlElementToDocument() {
         
     }
+
+    private void appendToCurrentNodeAndPushElementWithFormPointer(String name, Attributes attributes) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    private int findLastInTableScopeOrRoot(String string) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+    
+    protected T createElementAppendToCurrentAndPush(String name,
+            Attributes attributes, T form) {
+        return createElementAppendToCurrentAndPush(name, attributes);
+    }
+
+    protected void createElementAppendToCurrent(String name,
+            Attributes attributes, T form) {
+        createElementAppendToCurrentAndPush(name, attributes, form);
+        elementPopped(name, stack[currentPtr].node);
+    }
+    
+    protected void createElementAppendToCurrent(String name, Attributes attributes) {
+        createElementAppendToCurrentAndPush(name, attributes);
+        elementPopped(name, stack[currentPtr].node);    
+    }
+
+    protected abstract T createElementAppendToCurrentAndPush(String name,
+            Attributes attributes);
+    
+    protected abstract void elementPopped(String poppedElemenName, T newCurrentNode);
+
+    protected abstract void appendCharactersToCurrentNode(char[] buf,
+            int start, int length);
+    
+    /**
+     * @see nu.validator.htmlparser.TokenHandler#wantsComments()
+     */
+    public abstract boolean wantsComments() throws SAXException;
 
 }
