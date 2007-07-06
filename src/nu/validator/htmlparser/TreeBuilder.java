@@ -53,6 +53,8 @@ public abstract class TreeBuilder implements TokenHandler {
         final String name;
 
         final Object node;
+        
+        final boolean impliedEndTag;
 
         /**
          * @param name
@@ -61,6 +63,8 @@ public abstract class TreeBuilder implements TokenHandler {
         StackNode(final String name, final Object node) {
             this.name = name;
             this.node = node;
+            this.impliedEndTag = ("dd" == name || "dt" == name || "li" == name
+                    || "p" == name);
         }
 
         public StackNode clone() {
@@ -131,6 +135,8 @@ public abstract class TreeBuilder implements TokenHandler {
             "-//webtechs//dtd mozilla html//en",
             "-/w3c/dtd html 4.0 transitional/en", "html" };
 
+    private static final int NOT_FOUND_ON_STACK = Integer.MAX_VALUE;
+
     private Phase phase = Phase.INITIAL;
 
     private Phase phaseBeforeSwitchingToTrailingEnd;
@@ -156,6 +162,12 @@ public abstract class TreeBuilder implements TokenHandler {
     private boolean fragment;
 
     private Phase previousPhaseBeforeTrailingEnd;
+    
+    private StackNode[] stack = new StackNode[64];
+    
+    private int currentPtr = -1;
+
+    private StackNode formPointer;
 
     /**
      * Reports an condition that would make the infoset incompatible with XML
@@ -909,37 +921,13 @@ public abstract class TreeBuilder implements TokenHandler {
                             || "colgroup" == name || "tbody" == name
                             || "tfoot" == name || "thead" == name
                             || "tr" == name) {
-                        /*
-                         * Act as if an end tag with the tag name "tr" had been
-                         * seen, then, if that token wasn't ignored, reprocess
-                         * the current token.
-                         */
-                        /*
-                         * If the stack of open elements does not have an
-                         * element in table scope with the same tag name as the
-                         * token, this is a parse error. Ignore the token.
-                         * (fragment case)
-                         */
                         if (!stackHasInTableScope("tr")) {
                             assert fragment;
                             err("No table row to close.");
                             return;
                         }
-                        /*
-                         * Otherwise:
-                         * 
-                         * Clear the stack back to a table row context. (See
-                         * below.)
-                         */
                         clearTheStackBackToATableRowContext();
-                        /*
-                         * Pop the current node (which will be a tr element)
-                         * from the stack of open elements.
-                         */
                         popCurrentNode();
-                        /*
-                         * Switch the insertion mode to "in table body".
-                         */
                         phase = Phase.IN_TABLE_BODY;
                         continue;
                     } else {
@@ -977,38 +965,16 @@ public abstract class TreeBuilder implements TokenHandler {
                         continue;
                     } else if ("table" == name) {
                         err("Start tag for \u201Ctable\u201D seen but the previous \u201Ctable\u201D is still open.");
-                        /*
-                         * If the stack of open elements does not have an
-                         * element in table scope with the same tag name as the
-                         * token, this is a parse error. Ignore the token.
-                         * (fragment case)
-                         */
                         if (!stackHasInTableScope("table")) {
                             assert fragment;
                             return;
                         }
-                        /*
-                         * Otherwise:
-                         * 
-                         * Generate implied end tags.
-                         */
                         generateImpliedEndTags();
-                        /*
-                         * Now, if the current node is not a table element, then
-                         * this is a parse error.
-                         */
                         // XXX is the next if dead code?
                         if (!isCurrent("table")) {
                             err("Unclosed elements on stack.");
                         }
-                        /*
-                         * Pop elements from this stack until a table element
-                         * has been popped from the stack.
-                         */
                         popUntilElementHasBeenPopped("table");
-                        /*
-                         * Reset the insertion mode appropriately.
-                         */
                         resetTheInsertionMode();
                         continue;
                     } else {
@@ -1023,42 +989,19 @@ public abstract class TreeBuilder implements TokenHandler {
                             || "thead" == name || "tr" == name) {
                         err("Stray \u201C" + name
                                 + "\u201D start tag in \u201Ccaption\u201D.");
-                        /*
-                         * If the stack of open elements does not have an
-                         * element in table scope with the same tag name as the
-                         * token, this is a parse error. Ignore the token.
-                         * (fragment case)
-                         */
-                        if (!stackHasInTableScope("caption")) {
+                        int eltPos = getInTableScopeNode("caption");
+                        if (eltPos == NOT_FOUND_ON_STACK) {
                             return;
                         }
-                        /*
-                         * Otherwise:
-                         * 
-                         * Generate implied end tags.
-                         */
                         generateImpliedEndTags();
-                        /*
-                         * Now, if the current node is not a caption element,
-                         * then this is a parse error.
-                         */
-                        // XXX is the next if dead code?
-                        if (!isCurrent("caption")) {
+                        if (currentPtr != eltPos) {
                             err("Unclosed elements on stack.");
                         }
-                        /*
-                         * Pop elements from this stack until a caption element
-                         * has been popped from the stack.
-                         */
-                        popUntilElementHasBeenPopped("table");
-                        /*
-                         * Clear the list of active formatting elements up to
-                         * the last marker.
-                         */
+                        eltPos--;
+                        while (currentPtr > eltPos) {
+                            popCurrentNode();
+                        }
                         clearTheListOfActiveFormattingElementsUpToTheLastMarker();
-                        /*
-                         * Switch the insertion mode to "in table".
-                         */
                         phase = Phase.IN_TABLE;
                         continue;
                     } else {
@@ -1156,47 +1099,12 @@ public abstract class TreeBuilder implements TokenHandler {
                     } else if ("a" == name) {
                         StackNode activeA = findInListOfActiveFormattingElementsContainsBetweenEndAndLastMarker("a");
                         if (activeA != null) {
-                            /*
-                             * If the list of active formatting elements
-                             * contains an element whose tag name is "a" between
-                             * the end of the list and the last marker on the
-                             * list (or the start of the list if there is no
-                             * marker on the list), then this is a parse error;
-                             */
                             err("An \u201Ca\u201D start tag seen with already an active \u201Ca\u201D element.");
-                            /*
-                             * act as if an end tag with the tag name "a" had
-                             * been seen,
-                             */
                             adoptionAgencyEndTag("a");
-                            /*
-                             * then remove that element from the list of active
-                             * formatting elements and the stack of open
-                             * elements if the end tag didn't already remove it
-                             * (it might not have if the element is not in table
-                             * scope).
-                             */
                             removeFromListOfActiveFormattingElements(activeA);
                             removeFromStack(activeA);
-                            /*
-                             * In the non-conforming stream <a href="a">a<table><a
-                             * href="b">b</table>x, the first a element would
-                             * be closed upon seeing the second one, and the "x"
-                             * character would be inside a link to "b", not to
-                             * "a". This is despite the fact that the outer a
-                             * element is not in table scope (meaning that a
-                             * regular </a> end tag at the start of the table
-                             * wouldn't close the outer a element).
-                             */
                         }
-                        /*
-                         * Reconstruct the active formatting elements, if any.
-                         */
                         reconstructTheActiveFormattingElements();
-                        /*
-                         * Insert an HTML element for the token. Add that
-                         * element to the list of active formatting elements.
-                         */
                         appendToCurrentNodeAndPushFormattingElement(name,
                                 attributes);
                         return;
@@ -1209,98 +1117,30 @@ public abstract class TreeBuilder implements TokenHandler {
                                 attributes);
                         return;
                     } else if ("nobr" == name) {
-                        /*
-                         * Reconstruct the active formatting elements, if any.
-                         */
                         reconstructTheActiveFormattingElements();
                         if (stackHasInScope("nobr")) {
-                            /*
-                             * If the stack of open elements has a nobr element
-                             * in scope, then this is a parse error.
-                             */
                             err("\u201Cnobr\u201D start tag seen when there was an open \u201Cnobr\u201D element in scope.");
-                            /*
-                             * Act as if an end tag with the tag name nobr had
-                             * been seen,
-                             */
                             adoptionAgencyEndTag("nobr");
-                            /*
-                             * then once again reconstruct the active formatting
-                             * elements, if any.
-                             */
-                            reconstructTheActiveFormattingElements();
                         }
-                        /*
-                         * Insert an HTML element for the token. Add that
-                         * element to the list of active formatting elements.
-                         */
                         appendToCurrentNodeAndPushFormattingElement(name,
                                 attributes);
                         return;
                     } else if ("button" == name) {
                         if (stackHasInScope("button")) {
-                            /*
-                             * If the stack of open elements has a button
-                             * element in scope, then this is a parse error;
-                             */
                             err("\u201Cbutton\u201D start tag seen when there was an open \u201Cbutton\u201D element in scope.");
-                            /*
-                             * act as if an end tag with the tag name "button"
-                             * had been seen,
-                             */
-                            /*
-                             * If the stack of open elements has in scope an
-                             * element whose tag name is the same as the tag
-                             * name of the token, then generate implied end
-                             * tags.
-                             */
                             generateImpliedEndTags();
-                            /*
-                             * Now, if the current node is not an element with
-                             * the same tag name as the token, then this is a
-                             * parse error.
-                             */
                             if (!isCurrent("button")) {
                                 err("There was an open \u201Cbutton\u201D element in scope with unclosed children.");
                             }
                             StackNode buttonInScope = getInScopeNode("button");
                             if (buttonInScope != null) {
-                                /*
-                                 * Now, if the stack of open elements has an
-                                 * element in scope whose tag name matches the
-                                 * tag name of the token, then pop elements from
-                                 * the stack until that element has been popped
-                                 * from the stack,
-                                 */
                                 popUpToAndIncluding(buttonInScope);
-                                /*
-                                 * and clear the list of active formatting
-                                 * elements up to the last marker.
-                                 * 
-                                 */
                                 clearTheListOfActiveFormattingElementsUpToTheLastMarker();
                             }
-
-                            /*
-                             * then reprocess the token.
-                             */
                             continue;
                         } else {
-                            /*
-                             * Otherwise:
-                             * 
-                             * Reconstruct the active formatting elements, if
-                             * any.
-                             */
                             reconstructTheActiveFormattingElements();
-                            /*
-                             * Insert an HTML element for the token.
-                             */
                             appendToCurrentNodeAndPushElement(name, attributes);
-                            /*
-                             * Insert a marker at the end of the list of active
-                             * formatting elements.
-                             */
                             insertMarker();
                             return;
                         }
@@ -1461,13 +1301,8 @@ public abstract class TreeBuilder implements TokenHandler {
                         /* Ignore the token. */
                         return;
                     } else {
-                        /*
-                         * Act as if an end tag token with the tag name "head"
-                         * had been seen,
-                         */
                         popCurrentNode();
                         phase = Phase.AFTER_HEAD;
-                        /* and reprocess the current token. */
                         continue;
                     }
                 case IN_HEAD_NOSCRIPT:
@@ -1486,29 +1321,15 @@ public abstract class TreeBuilder implements TokenHandler {
                                 name);
                         return;
                     } else if ("head" == name) {
-                        /* Parse error. */
                         err("Start tag for \u201Chead\u201D seen when \u201Chead\u201D was already open.");
-                        /* Ignore the token. */
                         return;
                     } else if ("noscript" == name) {
-                        /* Parse error. */
                         err("Start tag for \u201Cnoscript\u201D seen when \u201Cnoscript\u201D was already open.");
-                        /* Ignore the token. */
                         return;
                     } else {
-                        /*
-                         * Parse error.
-                         */
                         err("Bad start tag in \u201Cnoscript\u201D in \u201Chead\u201D.");
-                        /*
-                         * Act as if an end tag with the tag name "noscript" had
-                         * been seen
-                         */
                         popCurrentNode();
                         phase = Phase.IN_HEAD;
-                        /*
-                         * and reprocess the current token.
-                         */
                         continue;
                     }
                 case IN_COLUMN_GROUP:
@@ -1516,29 +1337,12 @@ public abstract class TreeBuilder implements TokenHandler {
                         appendToCurrentNodeVoidElement(name, attributes);
                         return;
                     } else {
-                        /*
-                         * Act as if an end tag with the tag name "colgroup" had
-                         * been seen, and then, if that token wasn't ignored,
-                         * reprocess the current token.
-                         */
                         if (isCurrentRoot()) {
                             assert fragment;
-                            /*
-                             * If the current node is the root html element,
-                             * then this is a parse error, ignore the token.
-                             * (fragment case)
-                             */
                             err("Garbage in \u201Ccolgroup\u201D fragment.");
                             return;
                         }
-                        /*
-                         * Otherwise, pop the current node (which will be a
-                         * colgroup element) from the stack of open elements.
-                         */
                         popCurrentNode();
-                        /*
-                         * Switch the insertion mode to "in table".
-                         */
                         phase = Phase.IN_TABLE;
                         continue;
                     }
@@ -1792,6 +1596,405 @@ public abstract class TreeBuilder implements TokenHandler {
 
         for (;;) {
             switch (phase) {
+                case IN_ROW:
+                    if ("tr" == name) {
+                        if (!stackHasInTableScope("tr")) {
+                            assert fragment;
+                            err("No table row to close.");
+                            return;
+                        }
+                        clearTheStackBackToATableRowContext();
+                        popCurrentNode();
+                        phase = Phase.IN_TABLE_BODY;
+                        return;
+                    } else if ("table" == name) {
+                        if (!stackHasInTableScope("tr")) {
+                            assert fragment;
+                            err("No table row to close.");
+                            return;
+                        }
+                        clearTheStackBackToATableRowContext();
+                        popCurrentNode();
+                        phase = Phase.IN_TABLE_BODY;
+                        continue;
+                    } else if ("tbody" == name || "thead" == name || "tfoot" == name) {
+                        if (!stackHasInTableScope(name)) {
+                            err("Stray end tag \u201C" + name + "\u201D.");                            
+                            return;
+                        }
+                        if (!stackHasInTableScope("tr")) {
+                            assert fragment;
+                            err("No table row to close.");
+                            return;
+                        }
+                        clearTheStackBackToATableRowContext();
+                        popCurrentNode();
+                        phase = Phase.IN_TABLE_BODY;
+                        continue;
+                    } else if ("body" == name || "caption" == name || "col" == name || "colgroup" == name || "html" == name || "td" == name || "th" == name) {
+                        err("Stray end tag \u201C" + name + "\u201D.");                            
+                        return;
+                    } else {
+                        // fall through to IN_TABLE
+                    }
+                case IN_TABLE_BODY:
+                    if ("tbody" == name || "tfoot" == name || "thead" == name) {
+                        if (!stackHasInTableScope(name)) {
+                            err("Stray end tag \u201C" + name + "\u201D.");
+                            return;
+                        }
+                        clearTheStackBackToATableBodyContext();
+                        popCurrentNode();
+                        phase = Phase.IN_TABLE;
+                        return;
+                    } else if ("table" == name) {
+                        if (!stackHasInTableScopeTbodyTheadTfoot()) {
+                            assert fragment;
+                            err("Stray end tag \u201Ctable\u201D.");
+                            return;
+                        }
+                        clearTheStackBackToATableBodyContext();
+                        popCurrentNode();
+                        phase = Phase.IN_TABLE;
+                        continue;
+                    } else if ("body" == name || "caption" == name || "col" == name || "colgroup" == name || "html" == name || "td" == name || "th" == name || "tr" == name) {
+                        err("Stray end tag \u201C" + name + "\u201D.");
+                        return;
+                    } else {
+                        // fall through to IN_TABLE
+                    }
+                case IN_TABLE:
+                    if ("table" == name) {
+                        if (!stackHas("table")) {
+                            assert fragment;
+                            err("Stray end tag \u201Ctable\u201D.");
+                            return;
+                        }
+                        // XXX struck useless stuff
+                        popUntilElementHasBeenPopped("table");
+                        resetTheInsertionMode();
+                        return;
+                    } else if ("body" == name || "caption" == name || "col" == name || "colgroup" == name || "html" == name || "tbody" == name || "td" == name || "tfoot" == name || "th" == name || "thead" == name || "tr" == name) {
+                        err("Stray end tag \u201C" + name + "\u201D.");
+                        return;
+                    } else {
+                        err("Stray end tag \u201C" + name + "\u201D.");                        
+                        // fall through to IN_BODY
+                    }
+                case IN_CAPTION:
+                    if ("caption" == name) {
+                        int eltPos = getInTableScopeNode("caption");
+                        if (eltPos == NOT_FOUND_ON_STACK) {
+                            return;
+                        }
+                        generateImpliedEndTags();
+                        if (currentPtr != eltPos) {
+                            err("Unclosed elements on stack.");
+                        }
+                        eltPos--;
+                        while (currentPtr > eltPos) {
+                            popCurrentNode();
+                        }
+                        clearTheListOfActiveFormattingElementsUpToTheLastMarker();
+                        phase = Phase.IN_TABLE;
+                        return;
+                    } else if ("table" == name) {
+                        err("\u201Ctable\u201D closed but \u201Ccaption\u201D was still open.");
+                        int eltPos = getInTableScopeNode("caption");
+                        if (eltPos == NOT_FOUND_ON_STACK) {
+                            return;
+                        }
+                        generateImpliedEndTags();
+                        if (currentPtr != eltPos) {
+                            err("Unclosed elements on stack.");
+                        }
+                        eltPos--;
+                        while (currentPtr > eltPos) {
+                            popCurrentNode();
+                        }
+                        clearTheListOfActiveFormattingElementsUpToTheLastMarker();
+                        phase = Phase.IN_TABLE;
+                        continue;
+                    } else if ("body" == name || "col" == name || "colgroup" == name || "html" == name || "tbody" == name || "td" == name || "tfoot" == name || "th" == name || "thead" == name || "tr" == name) {
+                        err("Stray end tag \u201C" + name + "\u201D.");
+                        return;                                                                                                        
+                    } else {
+                        // fall through to IN_BODY
+                    }
+                case IN_CELL:
+                    if ("td" == name || "th" == name) {
+                        int eltPos = getInTableScopeNode(name);
+                        if (eltPos == NOT_FOUND_ON_STACK) {
+                            err("Stray end tag \u201C" + name + "\u201D.");
+                            return;                            
+                        }
+                        generateImpliedEndTags();
+                        if (!isCurrent(name)) {
+                            err("Unclosed elements.");
+                        }
+                        eltPos--;
+                        while (currentPtr > eltPos) {
+                            popCurrentNode();
+                        }
+                        clearTheListOfActiveFormattingElementsUpToTheLastMarker();
+                        phase = Phase.IN_ROW;
+                        return;
+                    } else if ("table" == name || "tbody" == name || "tfoot" == name || "thead" == name || "tr" == name) {
+                        if (!stackHasInTableScope(name)) {
+                            err("Stray end tag \u201C" + name + "\u201D.");
+                            return;                                                        
+                        }
+                        closeTheCell();
+                        continue;
+                    } else if ("body" == name || "caption" == name || "col" == name || "colgroup" == name || "html" == name) {
+                        err("Stray end tag \u201C" + name + "\u201D.");
+                        return;                                                                                
+                    } else {
+                        // fall through to IN_BODY
+                    }
+                case IN_BODY:
+                    if ("body" == name) {
+                        if (!isSecondOnStackBody()) {
+                            assert fragment;
+                            err("Stray end tag \u201Cbody\u201D.");
+                            return;
+                        }
+                        assert currentPtr >= 1;
+                        for (int i = 2; i <= currentPtr; i++) {
+                            if (!stack[i].impliedEndTag) {
+                                err("End tag for \u201Cbody\u201D seen but there were unclosed elements.");
+                                break;
+                            }
+                        }
+                        phase = Phase.AFTER_BODY;
+                        return;
+                    } else if ("html" == name) {
+                        if (!isSecondOnStackBody()) {
+                            assert fragment;
+                            err("Stray end tag \u201Chtml\u201D.");
+                            return;
+                        }
+                        for (int i = 0; i <= currentPtr; i++) {
+                            String stackName = stack[i].name;
+                            if ("dd" == stackName || "dt" == stackName || "li" == stackName
+                                    || "p" == stackName || "tbody" == stackName || "td" == stackName
+                                    || "tfoot" == stackName || "th" == stackName || "thead" == stackName || "tr" == stackName || "body" == stackName || "html" == stackName) {
+                                err("End tag for \u201Cbody\u201D seen but there were unclosed elements.");
+                                break;
+                            }
+                        }
+                        phase = Phase.AFTER_BODY;
+                        continue;
+                    } else if ("div" == name || "blockquote" == name
+                            || "ul" == name || "ol" == name || "pre" == name
+                            || "dl" == name || "fieldset" == name
+                            || "address" == name || "center" == name
+                            || "dir" == name || "listing" == name
+                            || "menu" == name) {
+                        int eltPos = findLastInScope(name);
+                        if (eltPos != NOT_FOUND_ON_STACK) {
+                            generateImpliedEndTags();
+                        }
+                        if (!isCurrent(name)) {
+                            err("End tag \u201C" + name + "\u201D seen but there were unclosed elements.");
+                        }
+                        eltPos--;
+                        while (currentPtr > eltPos) {
+                            popCurrentNode();
+                        }
+                        return;
+                    } else if ("form" == name) {
+                        int eltPos = findLastInScope(name);
+                        if (eltPos != NOT_FOUND_ON_STACK) {
+                            generateImpliedEndTags();
+                        }
+                        if (!isCurrent(name)) {
+                            err("End tag \u201Cform\u201D seen but there were unclosed elements.");
+                        } else {
+                            popCurrentNode();
+                        }
+                        formPointer = null;
+                        return;
+                    } else if ("p" == name) {
+                        if (!isCurrent(name)) {
+                            err("End tag \u201Cp\u201D seen but there were unclosed elements.");
+                        }
+                        int eltPos = findLastInScope(name);
+                        if (eltPos != NOT_FOUND_ON_STACK) {
+                            eltPos--;
+                            while (currentPtr > eltPos) {
+                                popCurrentNode();
+                            }
+                        } else {
+                            appendToCurrentNodeVoidElement(name, EmptyAttributes.EMPTY_ATTRIBUTES);
+                        }
+                        return;
+                    } else if ("dd" == name || "dt" == name || "li" == name) {
+                        int eltPos = findLastInScope(name);
+                        if (eltPos != NOT_FOUND_ON_STACK) {
+                            generateImpliedEndTagsExceptFor(name);
+                        }
+                        if (!isCurrent(name)) {
+                            err("End tag \u201C" + name + "\u201D seen but there were unclosed elements.");
+                        }
+                        eltPos--;
+                        while (currentPtr > eltPos) {
+                            popCurrentNode();
+                        }
+                        return;
+                    } else if ("h1" == name || "h2" == name || "h3" == name
+                            || "h4" == name || "h5" == name || "h6" == name) {
+                        int eltPos = findLastInScopeHn();
+                        if (eltPos != NOT_FOUND_ON_STACK) {
+                            generateImpliedEndTags();
+                        }
+                        if (!isCurrent(name)) {
+                            err("End tag \u201C" + name + "\u201D seen but there were unclosed elements.");
+                        }
+                        eltPos--;
+                        while (currentPtr > eltPos) {
+                            popCurrentNode();
+                        }
+                        return;
+                    } else if ("a" == name || "b" == name || "big" == name || "em" == name || "font" == name || "i" == name || "nobr" == name || "s" == name || "small" == name || "strike" == name || "strong" == name || "tt" == name || "u" == name) {
+                        adoptionAgencyEndTag(name);
+                        return;
+                    } else if ("button" == name || "marquee" == name || "object" == name) {
+                        int eltPos = findLastInScope(name);
+                        if (eltPos != NOT_FOUND_ON_STACK) {
+                            generateImpliedEndTags();
+                        }
+                        if (!isCurrent(name)) {
+                            err("End tag \u201C" + name + "\u201D seen but there were unclosed elements.");
+                        }
+                        eltPos--;
+                        while (currentPtr > eltPos) {
+                            popCurrentNode();
+                        }
+                        clearTheListOfActiveFormattingElementsUpToTheLastMarker();
+                        return;
+                    } else if ("area" == name || "basefont" == name || "bgsound" == name || "br" == name || "embed" == name || "hr" == name || "iframe" == name || "image" == name || "img" == name || "input" == name || "isindex" == name || "noembed" == name || "noframes" == name || "param" == name || "select" == name || "spacer" == name || "table" == name || "textarea" == name || "wbr" == name || (scriptingEnabled && "noscript" == name)) {
+                        err("Stray end tag \u201C" + name + "\u201D.");
+                        return;
+                    } else {
+                        if (isCurrent(name)) {
+                            popCurrentNode();
+                            return;
+                        }
+                        for(;;) {
+                            generateImpliedEndTags();
+                            if (isCurrent(name)) {
+                                popCurrentNode();
+                                return;
+                            }
+                            String stackName = stack[currentPtr].name;
+                            if (!("address" == stackName || "area" == stackName || "base" == stackName || "basefont" == stackName || "bgsound" == stackName || "blockquote" == stackName || "body" == stackName || "br" == stackName || "center" == stackName || "col" == stackName || "colgroup" == stackName || "dd" == stackName || "dir" == stackName || "div" == stackName || "dl" == stackName || "dt" == stackName || "embed" == stackName || "fieldset" == stackName || "form" == stackName || "frame" == stackName || "frameset" == stackName || "h1" == stackName || "h2" == stackName || "h3" == stackName || "h4" == stackName || "h5" == stackName || "h6" == stackName || "head" == stackName || "hr" == stackName || "iframe" == stackName || "image" == stackName || "img" == stackName || "input" == stackName || "isindex" == stackName || "li" == stackName || "link" == stackName || "listing" == stackName || "menu" == stackName || "meta" == stackName || "noembed" == stackName || "noframes" == stackName || "noscript" == stackName || "ol" == stackName || "optgroup" == stackName || "option" == stackName || "p" == stackName || "param" == stackName || "plaintext" == stackName || "pre" == stackName || "script" == stackName || "select" == stackName || "spacer" == stackName || "style" == stackName || "tbody" == stackName || "textarea" == stackName || "tfoot" == stackName || "thead" == stackName || "title" == stackName || "tr" == stackName || "ul" == stackName || "wbr" == stackName || "button" == stackName || "caption" == stackName || "html" == stackName || "marquee" == stackName || "object" == stackName || "table" == stackName || "td" == stackName || "th" == stackName)) {
+                                err("Unclosed element \u201C" + stackName + "\u201D.");
+                                popCurrentNode();
+                            } else {
+                                return;
+                            }
+                        }
+                    }
+                case IN_COLUMN_GROUP:
+                    if ("colgroup" == name) {
+                        if (isCurrentRoot()) {
+                            assert fragment;
+                            err("Garbage in \u201Ccolgroup\u201D fragment.");
+                            return;
+                        }
+                        popCurrentNode();
+                        phase = Phase.IN_TABLE;
+                        return;                    
+                    } else if ("col" == name) {
+                        err("Stray end tag \u201Ccol\u201D.");                        
+                        return;
+                    } else {
+                        if (isCurrentRoot()) {
+                            assert fragment;
+                            err("Garbage in \u201Ccolgroup\u201D fragment.");
+                            return;
+                        }
+                        popCurrentNode();
+                        phase = Phase.IN_TABLE;
+                        continue;                   
+                    }
+                case IN_SELECT:
+                    if ("option" == name) {
+                        if (isCurrent("option")) {
+                            popCurrentNode();
+                            return;
+                        } else {
+                            err("Stray end tag \u201Coption\u201D");
+                            return;
+                        }
+                    } else if ("optgroup" == name) {
+                        if (isCurrent("option") && "optgroup" == stack[currentPtr - 1].name) {
+                            popCurrentNode();
+                        }
+                        if (isCurrent("optgroup")) {
+                            popCurrentNode();
+                        } else {
+                            err("Stray end tag \u201Coptgroup\u201D");
+                            return;                            
+                        }
+                    } else if ("select" == name) {
+                        int eltPos = getInTableScopeNode("select");
+                        if (eltPos == NOT_FOUND_ON_STACK) {
+                            assert fragment;
+                            err("Stray end tag \u201Cselect\u201D");
+                            return;                                                        
+                        }
+                        eltPos--;
+                        while (currentPtr > eltPos) {
+                            popCurrentNode();
+                        }
+                        resetTheInsertionMode();
+                        return;
+                    } else {
+                        err("Stray end tag \u201C" + name + "\u201D");
+                        return;
+                    }
+                case AFTER_BODY:
+                    if ("html" == name) {
+                        if (fragment) {
+                            err("Stray end tag \u201Chtml\u201D");
+                            return;                            
+                        } else {
+                            previousPhaseBeforeTrailingEnd = Phase.AFTER_BODY;
+                            phase = Phase.TRAILING_END;
+                            return;
+                        }
+                    } else {
+                        err("Saw an end tag after \u201Cbody\u201D had been closed.");
+                        phase = Phase.IN_BODY;
+                        continue;
+                    }
+                case IN_FRAMESET:
+                    if ("frameset" == name) {
+                        if (isCurrentRoot()) {
+                            assert fragment;
+                            err("Stray end tag \u201Cframeset\u201D");
+                            return;
+                        }
+                        popCurrentNode();
+                        if (!fragment && !isCurrent("frameset")) {
+                            phase = Phase.AFTER_FRAMESET;                            
+                        }
+                        return;
+                    } else {
+                        err("Stray end tag \u201C" + name + "\u201D");
+                        return;                        
+                    }
+                case AFTER_FRAMESET:
+                    if ("html" == name) {
+                        previousPhaseBeforeTrailingEnd = Phase.AFTER_FRAMESET;
+                        phase = Phase.TRAILING_END;
+                        return;
+                    } else {
+                        err("Stray end tag \u201C" + name + "\u201D");
+                        return;                        
+                    }
                 case INITIAL:
                     /*
                      * Parse error.
@@ -1827,55 +2030,91 @@ public abstract class TreeBuilder implements TokenHandler {
                      */
                     continue;
                 case BEFORE_HEAD:
-                    // TODO
-                    return;
+                    if ("head" == name || "body" == name || "html" == name || "p" == name || "br" == name) {
+                        appendToCurrentNodeAndPushHeadElement(EmptyAttributes.EMPTY_ATTRIBUTES);
+                        phase = Phase.IN_HEAD;
+                        continue;
+                    } else {
+                        err("Stray end tag \u201C" + name + "\u201D.");
+                        return;
+                    }
                 case IN_HEAD:
-                    // TODO
-                    return;
+                    if ("head" == name) {
+                        popCurrentNode();
+                        phase = Phase.AFTER_HEAD;
+                        return;
+                    } else if ("body" == name || "html" == name || "p" == name || "br" == name) {
+                        popCurrentNode();
+                        phase = Phase.AFTER_HEAD;
+                        continue;
+                    } else {
+                        err("Stray end tag \u201C" + name + "\u201D.");
+                        return;                        
+                    }
                 case IN_HEAD_NOSCRIPT:
-                    // TODO
-                    return;
+                    if ("noscript" == name) {
+                        popCurrentNode();
+                        phase = Phase.IN_HEAD;
+                        return;
+                    } else if ("p" == name || "br" == name) {
+                        err("Stray end tag \u201C" + name + "\u201D.");
+                        popCurrentNode();
+                        phase = Phase.IN_HEAD;
+                        continue;
+                    } else {
+                        err("Stray end tag \u201C" + name + "\u201D.");
+                        return;
+                    }
                 case AFTER_HEAD:
-                    // TODO
-                    return;
-                case IN_BODY:
-                    // TODO
-                    return;
-                case IN_TABLE:
-                    // TODO
-                    return;
-                case IN_CAPTION:
-                    // TODO
-                    return;
-                case IN_COLUMN_GROUP:
-                    // TODO
-                    return;
-                case IN_TABLE_BODY:
-                    // TODO
-                    return;
-                case IN_ROW:
-                    // TODO
-                    return;
-                case IN_CELL:
-                    // TODO
-                    return;
-                case IN_SELECT:
-                    // TODO
-                    return;
-                case AFTER_BODY:
-                    // TODO
-                    return;
-                case IN_FRAMESET:
-                    // TODO
-                    return;
-                case AFTER_FRAMESET:
-                    // TODO
-                    return;
+                    appendToCurrentNodeAndPushBodyElement();
+                    phase = Phase.IN_BODY;
+                    continue;
                 case TRAILING_END:
-                    // TODO
-                    return;
+                    err("Stray \u201C" + name + "\u201D end tag.");
+                    phase = previousPhaseBeforeTrailingEnd;
+                    continue;
             }
         }
+    }
+
+    private int getInTableScopeNode(String name) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    private boolean stackHasInTableScopeTbodyTheadTfoot() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    private boolean stackHas(String string) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    private int findLastInScope(String name) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    private int findLastInScopeHn() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    private boolean stackHasInScopeHn() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    private void generateImpliedEndTagsExceptFor(String name) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    private boolean isSecondOnStackBody() {
+        // TODO Auto-generated method stub
+        return false;
     }
 
     private void documentMode(DocumentMode mode, String publicIdentifier,
