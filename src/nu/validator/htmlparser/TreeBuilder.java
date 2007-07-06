@@ -162,6 +162,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private boolean fragment;
 
+    private StackNode<T> context;
+    
     private Phase previousPhaseBeforeTrailingEnd;
     
     private StackNode<T>[] stack;
@@ -170,6 +172,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private T formPointer;
 
+    private T headPointer;
+    
     private StackNode<T>[] listOfActiveFormattingElements;
 
     /**
@@ -893,13 +897,13 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             switch (phase) {
                 case IN_TABLE_BODY:
                     if ("tr" == name) {
-                        clearTheStackBackToATableBodyContext();
+                        clearStackBackTo(findLastInTableScopeOrRootTbodyTheadTfoot());
                         appendToCurrentNodeAndPushElement(name, attributes);
                         phase = Phase.IN_ROW;
                         return;
                     } else if ("td" == name || "th" == name) {
                         err("\u201C" + name + "\u201D start tag in table body.");
-                        clearTheStackBackToATableBodyContext();
+                        clearStackBackTo(findLastInTableScopeOrRootTbodyTheadTfoot());
                         appendToCurrentNodeAndPushElement("tr",
                                 EmptyAttributes.EMPTY_ATTRIBUTES);
                         phase = Phase.IN_ROW;
@@ -907,12 +911,12 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     } else if ("caption" == name || "col" == name
                             || "colgroup" == name || "tbody" == name
                             || "tfoot" == name || "thead" == name) {
-                        if (!(stackHasInTableScope("tbody")
-                                || stackHasInTableScope("thead") || stackHasInTableScope("tfoot"))) {
+                        int eltPos = findLastInTableScopeOrRootTbodyTheadTfoot();
+                        if (eltPos == 0) {
                             err("Stray \u201C" + name + "\u201D start tag.");
                             return;
                         } else {
-                            clearTheStackBackToATableBodyContext();
+                            clearStackBackTo(eltPos);
                             popCurrentNode();
                             phase = Phase.IN_TABLE;
                             continue;
@@ -922,7 +926,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     }
                 case IN_ROW:
                     if ("td" == name || "th" == name) {
-                        clearTheStackBackToATableRowContext();
+                        clearStackBackTo(findLastInTableScopeOrRoot("tr"));
                         appendToCurrentNodeAndPushElement(name, attributes);
                         phase = Phase.IN_CELL;
                         insertMarker();
@@ -931,12 +935,13 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             || "colgroup" == name || "tbody" == name
                             || "tfoot" == name || "thead" == name
                             || "tr" == name) {
-                        if (!stackHasInTableScope("tr")) {
+                        int eltPos = findLastInTableScopeOrRoot("tr");
+                        if (eltPos == 0) {
                             assert fragment;
                             err("No table row to close.");
                             return;
                         }
-                        clearTheStackBackToATableRowContext();
+                        clearStackBackTo(eltPos);
                         popCurrentNode();
                         phase = Phase.IN_TABLE_BODY;
                         continue;
@@ -945,30 +950,30 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     }
                 case IN_TABLE:
                     if ("caption" == name) {
-                        clearTheStackBackToATableContext();
+                        clearStackBackTo(findLastInTableScopeOrRoot("table"));
                         insertMarker();
                         appendToCurrentNodeAndPushElement(name, attributes);
                         phase = Phase.IN_CAPTION;
                         return;
                     } else if ("colgroup" == name) {
-                        clearTheStackBackToATableContext();
+                        clearStackBackTo(findLastInTableScopeOrRoot("table"));
                         appendToCurrentNodeAndPushElement(name, attributes);
                         phase = Phase.IN_COLUMN_GROUP;
                         return;
                     } else if ("col" == name) {
-                        clearTheStackBackToATableContext();
+                        clearStackBackTo(findLastInTableScopeOrRoot("table"));
                         appendToCurrentNodeAndPushElement("colgroup",
                                 EmptyAttributes.EMPTY_ATTRIBUTES);
                         phase = Phase.IN_COLUMN_GROUP;
                         continue;
                     } else if ("tbody" == name || "tfoot" == name
                             || "thead" == name) {
-                        clearTheStackBackToATableContext();
+                        clearStackBackTo(findLastInTableScopeOrRoot("table"));
                         appendToCurrentNodeAndPushElement(name, attributes);
                         phase = Phase.IN_TABLE_BODY;
                         return;
                     } else if ("td" == name || "tr" == name || "th" == name) {
-                        clearTheStackBackToATableContext();
+                        clearStackBackTo(findLastInTableScopeOrRoot("table"));
                         appendToCurrentNodeAndPushElement("tbody",
                                 EmptyAttributes.EMPTY_ATTRIBUTES);
                         phase = Phase.IN_TABLE_BODY;
@@ -1024,11 +1029,12 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             || "colgroup" == name || "tbody" == name
                             || "td" == name || "tfoot" == name || "th" == name
                             || "thead" == name || "tr" == name) {
-                        if (!(stackHasInScope("td") || stackHasInTableScope("th"))) {
+                        int eltPos = findLastInTableScopeTdTh();
+                        if (eltPos == NOT_FOUND_ON_STACK) {
                             err("No cell to close.");
                             return;
                         } else {
-                            closeTheCell();
+                            closeTheCell(eltPos);
                             continue;
                         }
                     } else {
@@ -1199,7 +1205,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             return;
                         }
                         implicitlyCloseP();
-                        AttributesImpl formAttrs = newAttributes();
+                        AttributesImpl formAttrs = tokenizer.newAttributes();
                         int actionIndex = attributes.getIndex("action");
                         if (actionIndex > -1) {
                             formAttrs.addAttribute("action",
@@ -1222,7 +1228,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             appendCharactersToCurrentNode(ISINDEX_PROMPT, 0,
                                     ISINDEX_PROMPT.length);
                         }
-                        AttributesImpl inputAttributes = newAttributes();
+                        AttributesImpl inputAttributes = tokenizer.newAttributes();
                         for (int i = 0; i < attributes.getLength(); i++) {
                             String attributeQName = attributes.getQName(i);
                             if (!("name".equals(attributeQName)
@@ -1241,8 +1247,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         popCurrentNode(); // form
                         return;
                     } else if ("textarea" == name) {
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        associateCurrentNodeWithFormPointer();
+                        appendToCurrentNodeAndPushElementWithFormPointer(name, attributes);
                         tokenizer.setContentModelFlag(ContentModelFlag.RCDATA,
                                 name);
                         cdataOrRcdataTimesToPop = 1;
@@ -1598,6 +1603,16 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
     }
 
+    private void appendToCurrentNodeAndPushElementWithFormPointer(String name, Attributes attributes) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    private int findLastInTableScopeOrRoot(String string) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
     public final void endTag(String name, Attributes attributes)
             throws SAXException {
         needToDropLF = false;
@@ -1613,36 +1628,39 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             switch (phase) {
                 case IN_ROW:
                     if ("tr" == name) {
-                        if (!stackHasInTableScope("tr")) {
+                        int eltPos = findLastInTableScopeOrRoot("tr");
+                        if (eltPos == 0) {
                             assert fragment;
                             err("No table row to close.");
                             return;
                         }
-                        clearTheStackBackToATableRowContext();
+                        clearStackBackTo(eltPos);
                         popCurrentNode();
                         phase = Phase.IN_TABLE_BODY;
                         return;
                     } else if ("table" == name) {
-                        if (!stackHasInTableScope("tr")) {
+                        int eltPos = findLastInTableScopeOrRoot("tr");
+                        if (eltPos == 0) {
                             assert fragment;
                             err("No table row to close.");
                             return;
                         }
-                        clearTheStackBackToATableRowContext();
+                        clearStackBackTo(eltPos);
                         popCurrentNode();
                         phase = Phase.IN_TABLE_BODY;
                         continue;
                     } else if ("tbody" == name || "thead" == name || "tfoot" == name) {
-                        if (!stackHasInTableScope(name)) {
+                        if (findLastInTableScope(name) == NOT_FOUND_ON_STACK) {
                             err("Stray end tag \u201C" + name + "\u201D.");                            
                             return;
                         }
-                        if (!stackHasInTableScope("tr")) {
+                        int eltPos = findLastInTableScopeOrRoot("tr");
+                        if (eltPos == 0) {
                             assert fragment;
                             err("No table row to close.");
                             return;
                         }
-                        clearTheStackBackToATableRowContext();
+                        clearStackBackTo(eltPos);
                         popCurrentNode();
                         phase = Phase.IN_TABLE_BODY;
                         continue;
@@ -1654,21 +1672,23 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     }
                 case IN_TABLE_BODY:
                     if ("tbody" == name || "tfoot" == name || "thead" == name) {
-                        if (!stackHasInTableScope(name)) {
+                        int eltPos = findLastInTableScopeOrRoot(name);
+                        if (eltPos == 0) {
                             err("Stray end tag \u201C" + name + "\u201D.");
                             return;
                         }
-                        clearTheStackBackToATableBodyContext();
+                        clearStackBackTo(eltPos);
                         popCurrentNode();
                         phase = Phase.IN_TABLE;
                         return;
                     } else if ("table" == name) {
-                        if (!stackContainsInTableScopeTbodyTheadTfoot()) {
+                            int eltPos = findLastInTableScopeOrRootTbodyTheadTfoot();
+                            if (eltPos == 0) {
                             assert fragment;
                             err("Stray end tag \u201Ctable\u201D.");
                             return;
                         }
-                        clearTheStackBackToATableBodyContext();
+                        clearStackBackTo(eltPos);
                         popCurrentNode();
                         phase = Phase.IN_TABLE;
                         continue;
@@ -1755,11 +1775,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         phase = Phase.IN_ROW;
                         return;
                     } else if ("table" == name || "tbody" == name || "tfoot" == name || "thead" == name || "tr" == name) {
-                        if (!stackHasInTableScope(name)) {
+                        if (findLastInTableScope(name) == NOT_FOUND_ON_STACK) {
                             err("Stray end tag \u201C" + name + "\u201D.");
                             return;                                                        
                         }
-                        closeTheCell();
+                        closeTheCell(findLastInTableScopeTdTh());
                         continue;
                     } else if ("body" == name || "caption" == name || "col" == name || "colgroup" == name || "html" == name) {
                         err("Stray end tag \u201C" + name + "\u201D.");
@@ -2088,6 +2108,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
     }
 
+    private int findLastInTableScopeOrRootTbodyTheadTfoot() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
     private int findLast(String name) {
         for (int i = currentPtr; i > 0; i--) {
             if (stack[i].name == name) {
@@ -2106,18 +2131,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             }
         }
         return NOT_FOUND_ON_STACK;
-    }
-
-    private boolean stackContainsInTableScopeTbodyTheadTfoot() {
-        for (int i = currentPtr; i > 0; i--) {
-            String name = stack[i].name;
-            if ("tbody" == name || "thead" == name || "tfoot" == name) {
-                return true;
-            } else if (name == "table") {
-                return false;                
-            }
-        }
-        return false;
     }
 
     private int findLastInScope(String name) {
@@ -2246,44 +2259,91 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     protected abstract void appendCommentToRootElement(char[] buf, int length);
 
-    private void closeTheCell() {
-        // TODO Auto-generated method stub
-
+    private void closeTheCell(int eltPos) throws SAXException {
+        generateImpliedEndTags();
+        if (eltPos != currentPtr) {
+            err("Unclosed elements.");
+        }
+        while (currentPtr >= eltPos) {
+            popCurrentNode();
+        }
+        clearTheListOfActiveFormattingElementsUpToTheLastMarker();
+        phase = Phase.IN_ROW;
+        return;
     }
 
-    private void clearTheStackBackToATableRowContext() {
-        // TODO Auto-generated method stub
-
+    private int findLastInTableScopeTdTh() {
+        for (int i = currentPtr; i > 0; i--) {
+            String name = stack[i].name;
+            if ("td" == name || "th" == name) {
+                return i;
+            } else if (name == "table") {
+                return NOT_FOUND_ON_STACK;                
+            }
+        }
+        return NOT_FOUND_ON_STACK;
     }
 
-    private void clearTheStackBackToATableBodyContext() {
-        // TODO Auto-generated method stub
-
-    }
-
-    private boolean stackHasInTableScope(String string) {
-        // TODO Auto-generated method stub
-        return false;
+    private void clearStackBackTo(int eltPos) throws SAXException {
+        if (eltPos != currentPtr) {
+            err("Unclosed elements.");
+            while(currentPtr > eltPos) { // > not >= intentional
+                popCurrentNode();
+            }
+        }
     }
 
     private void resetTheInsertionMode() {
-        // TODO Auto-generated method stub
-
-    }
-
-    private void clearTheStackBackToATableContext() {
-        // TODO Auto-generated method stub
-
-    }
-
-    private void associateCurrentNodeWithFormPointer() {
-        // TODO Auto-generated method stub
-
-    }
-
-    private AttributesImpl newAttributes() {
-        // TODO Auto-generated method stub
-        return null;
+        String name;
+        for (int i = currentPtr; i >= 0; i--) {
+            name = stack[i].name;
+            if (i == 0) {
+                if (!(context.name == "td" || context.name == "th")) {
+                    name = context.name;
+                }
+            }
+            if ("select" == name) {
+                phase = Phase.IN_SELECT;
+                return;
+            } else if ("td" == name || "th" == name) {
+                phase = Phase.IN_CELL;
+                return;
+            } else if ("tr" == name) {
+                phase = Phase.IN_ROW;
+                return;
+            } else if ("tbody" == name || "thead" == name || "tfoot" == name) {
+                phase = Phase.IN_TABLE_BODY;
+                return;
+            } else if ("caption" == name) {
+                phase = Phase.IN_CAPTION;
+                return;
+            } else if ("colgroup" == name) {
+                phase = Phase.IN_COLUMN_GROUP;
+                return;
+            } else if ("table" == name) {
+                phase = Phase.IN_TABLE;
+                return;
+            } else if ("head" == name) {
+                phase = Phase.IN_BODY; // really
+                return;
+            } else if ("body" == name) {
+                phase = Phase.IN_BODY;
+                return;
+            } else if ("frameset" == name) {
+                phase = Phase.IN_FRAMESET;
+                return;
+            } else if ("html" == name) {
+                if (headPointer == null) {
+                    phase = Phase.BEFORE_HEAD;                    
+                } else {
+                    phase = Phase.AFTER_HEAD;
+                }
+                return;
+            } else if (i == 0) {
+                phase = Phase.IN_BODY;
+                return;
+            } 
+        }
     }
 
     private void appendToCurrentNodeVoidElementAssociateWithForm(String name,

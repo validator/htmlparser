@@ -610,6 +610,10 @@ public final class Tokenizer implements Locator {
         nonAsciiProhibited = true;
     }
 
+    AttributesImpl newAttributes() {
+        return new AttributesImpl();
+    }
+    
     /**
      * Clears the smaller buffer.
      */
