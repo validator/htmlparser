@@ -43,35 +43,34 @@ import org.xml.sax.SAXParseException;
 
 import fi.iki.hsivonen.xml.EmptyAttributes;
 
-public abstract class TreeBuilder implements TokenHandler {
+public abstract class TreeBuilder<T> implements TokenHandler {
 
     private enum Phase {
         INITIAL, ROOT_ELEMENT, BEFORE_HEAD, IN_HEAD, IN_HEAD_NOSCRIPT, AFTER_HEAD, IN_BODY, IN_TABLE, IN_CAPTION, IN_COLUMN_GROUP, IN_TABLE_BODY, IN_ROW, IN_CELL, IN_SELECT, AFTER_BODY, IN_FRAMESET, AFTER_FRAMESET, TRAILING_END
     }
 
-    private class StackNode {
+    private class StackNode<S> {
         final String name;
 
-        final Object node;
+        final S node;
         
-        final boolean impliedEndTag;
+        final boolean scoping;
 
         /**
          * @param name
          * @param node
          */
-        StackNode(final String name, final Object node) {
+        StackNode(final String name, final S node) {
             this.name = name;
             this.node = node;
-            this.impliedEndTag = ("dd" == name || "dt" == name || "li" == name
-                    || "p" == name);
+            this.scoping = ("table" == name || "caption" == name || "td" == name || "th" == name || "button" == name || "marquee" == name || "object" == name);
         }
 
-        public StackNode clone() {
-            return new StackNode(this.name, this.node);
+        public StackNode<S> clone() {
+            return new StackNode<S>(this.name, this.node);
         }
     }
-
+    
     private final static char[] ISINDEX_PROMPT = "This is a searchable index. Insert your search keywords here: ".toCharArray();
 
     private final static String[] QUIRKY_PUBLIC_IDS = {
@@ -136,6 +135,8 @@ public abstract class TreeBuilder implements TokenHandler {
             "-/w3c/dtd html 4.0 transitional/en", "html" };
 
     private static final int NOT_FOUND_ON_STACK = Integer.MAX_VALUE;
+    
+    private final StackNode<T> MARKER = new StackNode<T>(null, null);
 
     private Phase phase = Phase.INITIAL;
 
@@ -163,11 +164,13 @@ public abstract class TreeBuilder implements TokenHandler {
 
     private Phase previousPhaseBeforeTrailingEnd;
     
-    private StackNode[] stack = new StackNode[64];
+    private StackNode<T>[] stack;
     
     private int currentPtr = -1;
 
-    private StackNode formPointer;
+    private T formPointer;
+
+    private StackNode<T>[] listOfActiveFormattingElements;
 
     /**
      * Reports an condition that would make the infoset incompatible with XML
@@ -209,9 +212,13 @@ public abstract class TreeBuilder implements TokenHandler {
     }
 
     public final void start(Tokenizer self) throws SAXException {
-        // TODO Auto-generated method stub
+        phase = Phase.INITIAL;
+        tokenizer = self;
+        stack  = new StackNode[64];
         needToDropLF = false;
         cdataOrRcdataTimesToPop = 0;
+        currentPtr = -1;
+        formPointer = null;
     }
 
     /**
@@ -839,25 +846,28 @@ public abstract class TreeBuilder implements TokenHandler {
                      * If there are more than two nodes on the stack of open
                      * elements,
                      */
-                    if (stackSize() > 2) {
+                    if (currentPtr > 1) {
                         err("End of file seen and there were open elements.");
-                    } else if (stackSize() == 2
-                            && !"body".equals(nameOfCurrentNode())) {
+                    } else if (currentPtr == 1
+                            && stack[1].name != "body") {
                         /*
                          * or if there are two nodes but the second node is not
                          * a body node, this is a parse error.
                          */
                         err("End of file seen and there were open elements.");
                     }
-
-                    // XXX fragments
-                    /*
-                     * Otherwise, if the parser was originally created as part
-                     * of the HTML fragment parsing algorithm, and there's more
-                     * than one element in the stack of open elements, and the
-                     * second node on the stack of open elements is not a body
-                     * node, then this is a parse error. (fragment case)
-                     */
+                    if (fragment) {
+                        if (currentPtr > 0 && stack[1].name != "body") {
+                            /*
+                             * Otherwise, if the parser was originally created as part
+                             * of the HTML fragment parsing algorithm, and there's more
+                             * than one element in the stack of open elements, and the
+                             * second node on the stack of open elements is not a body
+                             * node, then this is a parse error. (fragment case)
+                             */
+                            err("End of file seen and there were open elements.");
+                        }                        
+                    }
 
                     /* Stop parsing. */
                     return;
@@ -965,7 +975,8 @@ public abstract class TreeBuilder implements TokenHandler {
                         continue;
                     } else if ("table" == name) {
                         err("Start tag for \u201Ctable\u201D seen but the previous \u201Ctable\u201D is still open.");
-                        if (!stackHasInTableScope("table")) {
+                        int eltPos = findLastInTableScope(name);
+                        if (eltPos == NOT_FOUND_ON_STACK) {
                             assert fragment;
                             return;
                         }
@@ -974,7 +985,9 @@ public abstract class TreeBuilder implements TokenHandler {
                         if (!isCurrent("table")) {
                             err("Unclosed elements on stack.");
                         }
-                        popUntilElementHasBeenPopped("table");
+                        while (currentPtr >= eltPos) {
+                            popCurrentNode();
+                        }
                         resetTheInsertionMode();
                         continue;
                     } else {
@@ -989,7 +1002,7 @@ public abstract class TreeBuilder implements TokenHandler {
                             || "thead" == name || "tr" == name) {
                         err("Stray \u201C" + name
                                 + "\u201D start tag in \u201Ccaption\u201D.");
-                        int eltPos = getInTableScopeNode("caption");
+                        int eltPos = findLastInTableScope("caption");
                         if (eltPos == NOT_FOUND_ON_STACK) {
                             return;
                         }
@@ -997,8 +1010,7 @@ public abstract class TreeBuilder implements TokenHandler {
                         if (currentPtr != eltPos) {
                             err("Unclosed elements on stack.");
                         }
-                        eltPos--;
-                        while (currentPtr > eltPos) {
+                        while (currentPtr >= eltPos) {
                             popCurrentNode();
                         }
                         clearTheListOfActiveFormattingElementsUpToTheLastMarker();
@@ -1097,12 +1109,12 @@ public abstract class TreeBuilder implements TokenHandler {
                                 ContentModelFlag.PLAINTEXT, name);
                         return;
                     } else if ("a" == name) {
-                        StackNode activeA = findInListOfActiveFormattingElementsContainsBetweenEndAndLastMarker("a");
-                        if (activeA != null) {
+                        int activeA = findInListOfActiveFormattingElementsContainsBetweenEndAndLastMarker("a");
+                        if (activeA == -1) {
                             err("An \u201Ca\u201D start tag seen with already an active \u201Ca\u201D element.");
                             adoptionAgencyEndTag("a");
+                            removeFromStack(listOfActiveFormattingElements[activeA]);
                             removeFromListOfActiveFormattingElements(activeA);
-                            removeFromStack(activeA);
                         }
                         reconstructTheActiveFormattingElements();
                         appendToCurrentNodeAndPushFormattingElement(name,
@@ -1126,17 +1138,17 @@ public abstract class TreeBuilder implements TokenHandler {
                                 attributes);
                         return;
                     } else if ("button" == name) {
-                        if (stackHasInScope("button")) {
+                        int eltPos = findLastInScope(name);
+                        if (eltPos != NOT_FOUND_ON_STACK) {
                             err("\u201Cbutton\u201D start tag seen when there was an open \u201Cbutton\u201D element in scope.");
                             generateImpliedEndTags();
                             if (!isCurrent("button")) {
                                 err("There was an open \u201Cbutton\u201D element in scope with unclosed children.");
                             }
-                            StackNode buttonInScope = getInScopeNode("button");
-                            if (buttonInScope != null) {
-                                popUpToAndIncluding(buttonInScope);
-                                clearTheListOfActiveFormattingElementsUpToTheLastMarker();
+                            while (currentPtr >= eltPos) {
+                                popCurrentNode();
                             }
+                            clearTheListOfActiveFormattingElementsUpToTheLastMarker();
                             continue;
                         } else {
                             reconstructTheActiveFormattingElements();
@@ -1364,12 +1376,15 @@ public abstract class TreeBuilder implements TokenHandler {
                         return;
                     } else if ("select" == name) {
                         err("\u201Cselect\u201D start tag where end tag expected.");
-                        if (!stackHasInTableScope("select")) {
+                        int eltPos = findLastInTableScope(name);
+                        if (eltPos == NOT_FOUND_ON_STACK) {
                             assert fragment;
                             err("No \u201Cselect\u201D in table scope.");
                             return;
                         } else {
-                            popUntilElementHasBeenPopped("select");
+                            while (currentPtr >= eltPos) {
+                                popCurrentNode();
+                            }
                             resetTheInsertionMode();
                             return;
                         }
@@ -1648,7 +1663,7 @@ public abstract class TreeBuilder implements TokenHandler {
                         phase = Phase.IN_TABLE;
                         return;
                     } else if ("table" == name) {
-                        if (!stackHasInTableScopeTbodyTheadTfoot()) {
+                        if (!stackContainsInTableScopeTbodyTheadTfoot()) {
                             assert fragment;
                             err("Stray end tag \u201Ctable\u201D.");
                             return;
@@ -1665,13 +1680,16 @@ public abstract class TreeBuilder implements TokenHandler {
                     }
                 case IN_TABLE:
                     if ("table" == name) {
-                        if (!stackHas("table")) {
+                        int eltPos = findLast("table");
+                        if (eltPos == NOT_FOUND_ON_STACK) {
                             assert fragment;
                             err("Stray end tag \u201Ctable\u201D.");
                             return;
                         }
                         // XXX struck useless stuff
-                        popUntilElementHasBeenPopped("table");
+                        if (currentPtr >= eltPos) {
+                            popCurrentNode();
+                        }
                         resetTheInsertionMode();
                         return;
                     } else if ("body" == name || "caption" == name || "col" == name || "colgroup" == name || "html" == name || "tbody" == name || "td" == name || "tfoot" == name || "th" == name || "thead" == name || "tr" == name) {
@@ -1683,7 +1701,7 @@ public abstract class TreeBuilder implements TokenHandler {
                     }
                 case IN_CAPTION:
                     if ("caption" == name) {
-                        int eltPos = getInTableScopeNode("caption");
+                        int eltPos = findLastInTableScope("caption");
                         if (eltPos == NOT_FOUND_ON_STACK) {
                             return;
                         }
@@ -1691,8 +1709,7 @@ public abstract class TreeBuilder implements TokenHandler {
                         if (currentPtr != eltPos) {
                             err("Unclosed elements on stack.");
                         }
-                        eltPos--;
-                        while (currentPtr > eltPos) {
+                        while (currentPtr >= eltPos) {
                             popCurrentNode();
                         }
                         clearTheListOfActiveFormattingElementsUpToTheLastMarker();
@@ -1700,7 +1717,7 @@ public abstract class TreeBuilder implements TokenHandler {
                         return;
                     } else if ("table" == name) {
                         err("\u201Ctable\u201D closed but \u201Ccaption\u201D was still open.");
-                        int eltPos = getInTableScopeNode("caption");
+                        int eltPos = findLastInTableScope("caption");
                         if (eltPos == NOT_FOUND_ON_STACK) {
                             return;
                         }
@@ -1708,8 +1725,7 @@ public abstract class TreeBuilder implements TokenHandler {
                         if (currentPtr != eltPos) {
                             err("Unclosed elements on stack.");
                         }
-                        eltPos--;
-                        while (currentPtr > eltPos) {
+                        while (currentPtr >= eltPos) {
                             popCurrentNode();
                         }
                         clearTheListOfActiveFormattingElementsUpToTheLastMarker();
@@ -1723,7 +1739,7 @@ public abstract class TreeBuilder implements TokenHandler {
                     }
                 case IN_CELL:
                     if ("td" == name || "th" == name) {
-                        int eltPos = getInTableScopeNode(name);
+                        int eltPos = findLastInTableScope(name);
                         if (eltPos == NOT_FOUND_ON_STACK) {
                             err("Stray end tag \u201C" + name + "\u201D.");
                             return;                            
@@ -1732,8 +1748,7 @@ public abstract class TreeBuilder implements TokenHandler {
                         if (!isCurrent(name)) {
                             err("Unclosed elements.");
                         }
-                        eltPos--;
-                        while (currentPtr > eltPos) {
+                        while (currentPtr >= eltPos) {
                             popCurrentNode();
                         }
                         clearTheListOfActiveFormattingElementsUpToTheLastMarker();
@@ -1761,7 +1776,9 @@ public abstract class TreeBuilder implements TokenHandler {
                         }
                         assert currentPtr >= 1;
                         for (int i = 2; i <= currentPtr; i++) {
-                            if (!stack[i].impliedEndTag) {
+                            String stackName = stack[i].name;
+                            if (!("dd" == stackName || "dt" == stackName || "li" == stackName
+                                    || "p" == stackName)) {
                                 err("End tag for \u201Cbody\u201D seen but there were unclosed elements.");
                                 break;
                             }
@@ -1798,8 +1815,7 @@ public abstract class TreeBuilder implements TokenHandler {
                         if (!isCurrent(name)) {
                             err("End tag \u201C" + name + "\u201D seen but there were unclosed elements.");
                         }
-                        eltPos--;
-                        while (currentPtr > eltPos) {
+                        while (currentPtr >= eltPos) {
                             popCurrentNode();
                         }
                         return;
@@ -1821,8 +1837,7 @@ public abstract class TreeBuilder implements TokenHandler {
                         }
                         int eltPos = findLastInScope(name);
                         if (eltPos != NOT_FOUND_ON_STACK) {
-                            eltPos--;
-                            while (currentPtr > eltPos) {
+                            while (currentPtr >= eltPos) {
                                 popCurrentNode();
                             }
                         } else {
@@ -1837,8 +1852,7 @@ public abstract class TreeBuilder implements TokenHandler {
                         if (!isCurrent(name)) {
                             err("End tag \u201C" + name + "\u201D seen but there were unclosed elements.");
                         }
-                        eltPos--;
-                        while (currentPtr > eltPos) {
+                        while (currentPtr >= eltPos) {
                             popCurrentNode();
                         }
                         return;
@@ -1851,8 +1865,7 @@ public abstract class TreeBuilder implements TokenHandler {
                         if (!isCurrent(name)) {
                             err("End tag \u201C" + name + "\u201D seen but there were unclosed elements.");
                         }
-                        eltPos--;
-                        while (currentPtr > eltPos) {
+                        while (currentPtr >= eltPos) {
                             popCurrentNode();
                         }
                         return;
@@ -1867,8 +1880,7 @@ public abstract class TreeBuilder implements TokenHandler {
                         if (!isCurrent(name)) {
                             err("End tag \u201C" + name + "\u201D seen but there were unclosed elements.");
                         }
-                        eltPos--;
-                        while (currentPtr > eltPos) {
+                        while (currentPtr >= eltPos) {
                             popCurrentNode();
                         }
                         clearTheListOfActiveFormattingElementsUpToTheLastMarker();
@@ -1939,14 +1951,13 @@ public abstract class TreeBuilder implements TokenHandler {
                             return;                            
                         }
                     } else if ("select" == name) {
-                        int eltPos = getInTableScopeNode("select");
+                        int eltPos = findLastInTableScope("select");
                         if (eltPos == NOT_FOUND_ON_STACK) {
                             assert fragment;
                             err("Stray end tag \u201Cselect\u201D");
                             return;                                                        
                         }
-                        eltPos--;
-                        while (currentPtr > eltPos) {
+                        while (currentPtr >= eltPos) {
                             popCurrentNode();
                         }
                         resetTheInsertionMode();
@@ -2077,44 +2088,86 @@ public abstract class TreeBuilder implements TokenHandler {
         }
     }
 
-    private int getInTableScopeNode(String name) {
-        // TODO Auto-generated method stub
-        return 0;
+    private int findLast(String name) {
+        for (int i = currentPtr; i > 0; i--) {
+            if (stack[i].name == name) {
+                return i;
+            }
+        }
+        return NOT_FOUND_ON_STACK;
+    }
+    
+    private int findLastInTableScope(String name) {
+        for (int i = currentPtr; i > 0; i--) {
+            if (stack[i].name == name) {
+                return i;
+            } else if (stack[i].name == "table") {
+                return NOT_FOUND_ON_STACK;                
+            }
+        }
+        return NOT_FOUND_ON_STACK;
     }
 
-    private boolean stackHasInTableScopeTbodyTheadTfoot() {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    private boolean stackHas(String string) {
-        // TODO Auto-generated method stub
+    private boolean stackContainsInTableScopeTbodyTheadTfoot() {
+        for (int i = currentPtr; i > 0; i--) {
+            String name = stack[i].name;
+            if ("tbody" == name || "thead" == name || "tfoot" == name) {
+                return true;
+            } else if (name == "table") {
+                return false;                
+            }
+        }
         return false;
     }
 
     private int findLastInScope(String name) {
-        // TODO Auto-generated method stub
-        return 0;
+        for (int i = currentPtr; i > 0; i--) {
+            if (stack[i].name == name) {
+                return i;
+            } else if (stack[i].scoping) {
+                return NOT_FOUND_ON_STACK;                
+            }
+        }
+        return NOT_FOUND_ON_STACK;
     }
 
     private int findLastInScopeHn() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    private boolean stackHasInScopeHn() {
-        // TODO Auto-generated method stub
-        return false;
+        for (int i = currentPtr; i > 0; i--) {
+            String name = stack[i].name;
+            if ("h1" == name || "h2" == name || "h3" == name || "h4" == name
+                    || "h5" == name || "h6" == name) {
+                return i;
+            } else if (stack[i].scoping) {
+                return NOT_FOUND_ON_STACK;
+            }
+        }
+        return NOT_FOUND_ON_STACK;
     }
 
     private void generateImpliedEndTagsExceptFor(String name) {
-        // TODO Auto-generated method stub
-        
+        for (;;) {
+            String stackName = stack[currentPtr].name;
+            if (name != stackName && ("p" == stackName || "li" == stackName || "dd" == stackName || "dt" == stackName)) {
+                popCurrentNode();
+            } else {
+                return;
+            }
+        }
+    }
+    
+    private void generateImpliedEndTags() {
+        for (;;) {
+            String stackName = stack[currentPtr].name;
+            if ("p" == stackName || "li" == stackName || "dd" == stackName || "dt" == stackName) {
+                popCurrentNode();
+            } else {
+                return;
+            }
+        }
     }
 
     private boolean isSecondOnStackBody() {
-        // TODO Auto-generated method stub
-        return false;
+        return currentPtr >= 1 && stack[1].name == "body";
     }
 
     private void documentMode(DocumentMode mode, String publicIdentifier,
@@ -2213,11 +2266,6 @@ public abstract class TreeBuilder implements TokenHandler {
         return false;
     }
 
-    private void popUntilElementHasBeenPopped(String string) {
-        // TODO Auto-generated method stub
-
-    }
-
     private void resetTheInsertionMode() {
         // TODO Auto-generated method stub
 
@@ -2273,16 +2321,6 @@ public abstract class TreeBuilder implements TokenHandler {
 
     }
 
-    private void popUpToAndIncluding(StackNode buttonInScope) {
-        // TODO Auto-generated method stub
-
-    }
-
-    private StackNode getInScopeNode(String string) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
     private boolean isCurrent(String string) {
         // TODO Auto-generated method stub
         return false;
@@ -2294,12 +2332,12 @@ public abstract class TreeBuilder implements TokenHandler {
 
     }
 
-    private void removeFromStack(StackNode activeA) {
+    private void removeFromStack(StackNode<T> activeA) {
         // TODO Auto-generated method stub
 
     }
 
-    private void removeFromListOfActiveFormattingElements(StackNode activeA) {
+    private void removeFromListOfActiveFormattingElements(int activeA) {
         // TODO Auto-generated method stub
 
     }
@@ -2309,10 +2347,10 @@ public abstract class TreeBuilder implements TokenHandler {
 
     }
 
-    private StackNode findInListOfActiveFormattingElementsContainsBetweenEndAndLastMarker(
+    private int findInListOfActiveFormattingElementsContainsBetweenEndAndLastMarker(
             String string) {
         // TODO Auto-generated method stub
-        return null;
+        return 0;
     }
 
     private int timesNeededToPopInOrderToPopUptoAndIncludingDdOrDt() {
@@ -2357,21 +2395,6 @@ public abstract class TreeBuilder implements TokenHandler {
 
     protected abstract void appendHtmlElementToDocument(Attributes attributes);
 
-    private Object nameOfCurrentNode() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    private int stackSize() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    private void generateImpliedEndTags() {
-        // TODO Auto-generated method stub
-
-    }
-
     private boolean isCurrentRoot() {
         // TODO Auto-generated method stub
         return false;
@@ -2392,22 +2415,36 @@ public abstract class TreeBuilder implements TokenHandler {
 
     }
 
-    protected abstract void popCurrentNode();
+    private void popCurrentNode() {
+        
+    }
 
-    protected abstract void appendCharactersToCurrentNode(char[] buf,
-            int start, int length);
+    private void appendCharactersToCurrentNode(char[] buf,
+            int start, int length) {
+        
+    }
 
-    protected abstract void appendToCurrentNodeAndPushHeadElement(
-            Attributes attributes);
+    private void appendToCurrentNodeAndPushHeadElement(
+            Attributes attributes) {
+        
+    }
 
-    protected abstract void appendToCurrentNodeAndPushBodyElement(
-            Attributes attributes);
+    private void appendToCurrentNodeAndPushBodyElement(
+            Attributes attributes) {
+        
+    }
 
-    protected abstract void appendToCurrentNodeAndPushBodyElement();
+    private void appendToCurrentNodeAndPushBodyElement() {
+        
+    }
 
-    protected abstract void appendToCurrentNodeAndPushElement(String name,
-            Attributes attributes);
+    private void appendToCurrentNodeAndPushElement(String name,
+            Attributes attributes) {
+        
+    }
 
-    protected abstract void appendHtmlElementToDocument();
+    private void appendHtmlElementToDocument() {
+        
+    }
 
 }
