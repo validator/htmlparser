@@ -32,11 +32,12 @@ import org.xml.sax.Attributes;
  * @author hsivonen
  */
 public class AttributesImpl implements Attributes {
-    
+
     private int length = 0;
+
     private int limit = 0;
-    
-    private String[] array = new String[6];
+
+    private String[] array = new String[10]; // covers 98.3% of elements according to Hixie
 
     public final int getIndex(String qName) {
         for (int i = 0; i < limit; i += 2) {
@@ -123,7 +124,7 @@ public class AttributesImpl implements Attributes {
 
     final void addAttribute(String name, String value) {
         if (array.length == limit) {
-            String[] newArray = new String[array.length + 4];
+            String[] newArray = new String[array.length + 10]; // The first growth covers virtually 100% of elements according to Hixie
             System.arraycopy(array, 0, newArray, 0, array.length);
             array = newArray;
         }
@@ -132,9 +133,9 @@ public class AttributesImpl implements Attributes {
         length++;
         limit += 2;
     }
-    
+
     final void addAttribute(String name) {
         addAttribute(name, "");
     }
-    
+
 }
