@@ -3719,6 +3719,7 @@ public final class Tokenizer implements Locator {
 
     private void consumeNCR(boolean inAttribute) throws SAXException,
             IOException {
+        int prevValue = -1;
         int value = 0;
         boolean seenDigits = false;
         boolean hex = false;
@@ -3756,10 +3757,11 @@ public final class Tokenizer implements Locator {
         }
         for (;;) {
             // Deal with overflow gracefully
-            if (value < 0) {
+            if (value < prevValue) {
                 value = 0x110000; // Value above Unicode range but within int
                 // range
             }
+            prevValue = value;
             /*
              * Consume as many characters as match the range of characters given
              * above.
