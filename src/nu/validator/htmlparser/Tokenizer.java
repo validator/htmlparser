@@ -1825,6 +1825,7 @@ public final class Tokenizer implements Locator {
                     parseErrorUnlessPermittedSlash();
                     /* Switch to the before attribute name state. */
                     attributeNameComplete();
+                    addAttributeWithoutValue();
                     return true;
                 case '\u0000':
                     /*
@@ -1940,6 +1941,7 @@ public final class Tokenizer implements Locator {
                     /*
                      * U+003E GREATER-THAN SIGN (>) Emit the current tag token.
                      */
+                    addAttributeWithoutValue();
                     emitCurrentTagToken();
                     /*
                      * Switch to the data state.
@@ -1950,6 +1952,7 @@ public final class Tokenizer implements Locator {
                      * U+002F SOLIDUS (/) Parse error unless this is a permitted
                      * slash.
                      */
+                    addAttributeWithoutValue();
                     parseErrorUnlessPermittedSlash();
                     /* Switch to the before attribute name state. */
                     return true;
@@ -1959,6 +1962,7 @@ public final class Tokenizer implements Locator {
                     /*
                      * Emit the current tag token.
                      */
+                    addAttributeWithoutValue();
                     emitCurrentTagToken();
                     /*
                      * Reconsume the character in the data state.
@@ -1971,6 +1975,7 @@ public final class Tokenizer implements Locator {
                     /*
                      * Emit the current tag token.
                      */
+                    addAttributeWithoutValue();
                     emitCurrentTagToken();
                     /*
                      * Reconsume the character in the data state.
@@ -1992,6 +1997,7 @@ public final class Tokenizer implements Locator {
                      * the attribute name state.
                      */
                     // let's do this by respinning through the attribute loop
+                    addAttributeWithoutValue();
                     unread(c);
                     return true;
             }
@@ -2943,7 +2949,9 @@ public final class Tokenizer implements Locator {
                     return;
                 default:
                     /*
-                     * Otherwise, this is the parse error. Switch to the bogus
+                     * Otherwise, this is the parse error. */
+                    err("Bogus doctype.");
+                    /*Switch to the bogus
                      * DOCTYPE state.
                      */
                     bogusDoctypeState();
