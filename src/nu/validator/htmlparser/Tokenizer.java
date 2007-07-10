@@ -847,7 +847,13 @@ public final class Tokenizer implements Locator {
                     c = buf[pos] = '\n';
                     line++;
                     col = 0;
-                    break;
+                    prev = '\r';
+                    if (contentModelFlag != ContentModelFlag.PCDATA) {
+                        prevFourPtr++;
+                        prevFourPtr %= 4;
+                        prevFour[prevFourPtr] = c;
+                    }
+                    return c;
                 case '\u0000':
                     /*
                      * All U+0000 NULL characters in the input must be replaced
