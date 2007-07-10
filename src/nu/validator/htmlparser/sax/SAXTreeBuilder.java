@@ -5,6 +5,8 @@ import nu.validator.saxtree.Characters;
 import nu.validator.saxtree.Comment;
 import nu.validator.saxtree.Document;
 import nu.validator.saxtree.Element;
+import nu.validator.saxtree.NodeType;
+import nu.validator.saxtree.ParentNode;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -89,6 +91,23 @@ public class SAXTreeBuilder extends TreeBuilder<Element> {
         document.appendChild(newElt);
         currentNode = newElt;
         return newElt;
+    }
+
+    @Override
+    protected void insertBefore(Element child, Element sibling, Element parent) {
+        parent.insertBefore(child, sibling);
+    }
+
+    @Override
+    protected Element parentElementFor(Element child) {
+        ParentNode parent = child.getParentNode();
+        if (parent == null) {
+            return null;
+        }
+        if (parent.getNodeType() == NodeType.ELEMENT) {
+            return (Element) parent;
+        }
+        return null;
     }
 
 }

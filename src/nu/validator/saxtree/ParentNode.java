@@ -72,6 +72,30 @@ public abstract class ParentNode extends Node {
         return lastChild;
     }
 
+    public Node insertBefore(Node child, Node sibling) {
+        assert sibling == null || this == sibling.getParentNode();
+        if (sibling == null) {
+            return appendChild(child);
+        }
+        child.detach();
+        if (firstChild == sibling) {
+            child.setNextSibling(sibling);
+            child.setParentNode(this);
+            firstChild = child;
+        } else {
+            Node prev = firstChild;
+            Node next = firstChild.getNextSibling();
+            while (next != sibling) {
+                prev = next;
+                next = next.getNextSibling();
+            }
+            prev.setNextSibling(child);
+            child.setParentNode(this);
+            child.setNextSibling(next);
+        }
+        return child;
+    }
+    
     public Node appendChild(Node child) {
         child.detach();
         if (firstChild == null) {
@@ -102,6 +126,7 @@ public abstract class ParentNode extends Node {
     }
 
     void removeChild(Node node) {
+        assert this == node.getParentNode();
         if (firstChild == node) {
             firstChild = node.getNextSibling();
             if (lastChild == node) {
