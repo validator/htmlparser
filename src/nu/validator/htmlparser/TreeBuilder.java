@@ -58,7 +58,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         
         final boolean special;
 
-        
+        final boolean fosterParenting;
         
         /**
          * @param name
@@ -66,11 +66,12 @@ public abstract class TreeBuilder<T> implements TokenHandler {
          * @param scoping
          * @param special
          */
-        StackNode(final String name, final S node, final boolean scoping, final boolean special) {
+        StackNode(final String name, final S node, final boolean scoping, final boolean special, final boolean fosterParenting) {
             this.name = name;
             this.node = node;
             this.scoping = scoping;
             this.special = special;
+            this.fosterParenting = fosterParenting;
         }
 
         /**
@@ -82,6 +83,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             this.node = node;
             this.scoping = ("table" == name || "caption" == name || "td" == name || "th" == name || "button" == name || "marquee" == name || "object" == name);
             this.special = ("address" == name || "area" == name || "base" == name || "basefont" == name || "bgsound" == name || "blockquote" == name || "body" == name || "br" == name || "center" == name || "col" == name || "colgroup" == name || "dd" == name || "dir" == name || "div" == name || "dl" == name || "dt" == name || "embed" == name || "fieldset" == name || "form" == name || "frame" == name || "frameset" == name || "h1" == name || "h2" == name || "h3" == name || "h4" == name || "h5" == name || "h6" == name || "head" == name || "hr" == name || "iframe" == name || "image" == name || "img" == name || "input" == name || "isindex" == name || "li" == name || "link" == name || "listing" == name || "menu" == name || "meta" == name || "noembed" == name || "noframes" == name || "noscript" == name || "ol" == name || "optgroup" == name || "option" == name || "p" == name || "param" == name || "plaintext" == name || "pre" == name || "script" == name || "select" == name || "spacer" == name || "style" == name || "tbody" == name || "textarea" == name || "tfoot" == name || "thead" == name || "title" == name || "tr" == name || "ul" == name ||  "wbr" == name);
+            this.fosterParenting = ("table" == name || "tbody" == name || "tfoot" == name || "thead" == name || "tr" == name);
         }
     }
     
@@ -727,7 +729,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                 appendCharactersToCurrentNode(buf, start, i
                                         - start);
                             }
-                            reconstructTheActiveFormattingElementsWithFosterParent();
+                            reconstructTheActiveFormattingElements();
                             appendCharToFosterParent(buf[i]);
                             start = i + 1;
                             continue;
@@ -937,7 +939,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     }
                 case IN_ROW:
                     if ("td" == name || "th" == name) {
-                        clearStackBackTo(findLastInTableScopeOrRoot("tr"));
+                        clearStackBackTo(findLastOrRoot("tr"));
                         appendToCurrentNodeAndPushElement(name, attributes);
                         phase = Phase.IN_CELL;
                         insertMarker();
@@ -946,7 +948,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             || "colgroup" == name || "tbody" == name
                             || "tfoot" == name || "thead" == name
                             || "tr" == name) {
-                        int eltPos = findLastInTableScopeOrRoot("tr");
+                        int eltPos = findLastOrRoot("tr");
                         if (eltPos == 0) {
                             assert fragment;
                             err("No table row to close.");
@@ -961,30 +963,30 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     }
                 case IN_TABLE:
                     if ("caption" == name) {
-                        clearStackBackTo(findLastInTableScopeOrRoot("table"));
+                        clearStackBackTo(findLastOrRoot("table"));
                         insertMarker();
                         appendToCurrentNodeAndPushElement(name, attributes);
                         phase = Phase.IN_CAPTION;
                         return;
                     } else if ("colgroup" == name) {
-                        clearStackBackTo(findLastInTableScopeOrRoot("table"));
+                        clearStackBackTo(findLastOrRoot("table"));
                         appendToCurrentNodeAndPushElement(name, attributes);
                         phase = Phase.IN_COLUMN_GROUP;
                         return;
                     } else if ("col" == name) {
-                        clearStackBackTo(findLastInTableScopeOrRoot("table"));
+                        clearStackBackTo(findLastOrRoot("table"));
                         appendToCurrentNodeAndPushElement("colgroup",
                                 EmptyAttributes.EMPTY_ATTRIBUTES);
                         phase = Phase.IN_COLUMN_GROUP;
                         continue;
                     } else if ("tbody" == name || "tfoot" == name
                             || "thead" == name) {
-                        clearStackBackTo(findLastInTableScopeOrRoot("table"));
+                        clearStackBackTo(findLastOrRoot("table"));
                         appendToCurrentNodeAndPushElement(name, attributes);
                         phase = Phase.IN_TABLE_BODY;
                         return;
                     } else if ("td" == name || "tr" == name || "th" == name) {
-                        clearStackBackTo(findLastInTableScopeOrRoot("table"));
+                        clearStackBackTo(findLastOrRoot("table"));
                         appendToCurrentNodeAndPushElement("tbody",
                                 EmptyAttributes.EMPTY_ATTRIBUTES);
                         phase = Phase.IN_TABLE_BODY;
@@ -1097,25 +1099,23 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         }
                     } else if ("li" == name) {
                         implicitlyCloseP();
-                        int timesToPop = timesNeededToPopInOrderToPopUptoAndIncludingLi();
-                        if (timesToPop > 1) {
+                        int eltPos = findLiToPop();
+                        if (eltPos < currentPtr) {
                             err("A \u201Cli\u201D start tag was seen but the previous \u201Cli\u201D element had open children.");
                         }
-                        while (timesToPop > 0) {
+                        while (currentPtr >= eltPos) {
                             popCurrentNode();
-                            timesToPop--;
                         }
                         appendToCurrentNodeAndPushElement(name, attributes);
                         return;
                     } else if ("dd" == name || "dt" == name) {
                         implicitlyCloseP();
-                        int timesToPop = timesNeededToPopInOrderToPopUptoAndIncludingDdOrDt();
-                        if (timesToPop > 1) {
+                        int eltPos = findDdOrDtToPop();
+                        if (eltPos < currentPtr) {
                             err("A definition list item start tag was seen but the previous definition list item element had open children.");
                         }
-                        while (timesToPop > 0) {
+                        while (currentPtr >= eltPos) {
                             popCurrentNode();
-                            timesToPop--;
                         }
                         appendToCurrentNodeAndPushElement(name, attributes);
                         return;
@@ -1625,7 +1625,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             switch (phase) {
                 case IN_ROW:
                     if ("tr" == name) {
-                        int eltPos = findLastInTableScopeOrRoot("tr");
+                        int eltPos = findLastOrRoot("tr");
                         if (eltPos == 0) {
                             assert fragment;
                             err("No table row to close.");
@@ -1636,7 +1636,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         phase = Phase.IN_TABLE_BODY;
                         return;
                     } else if ("table" == name) {
-                        int eltPos = findLastInTableScopeOrRoot("tr");
+                        int eltPos = findLastOrRoot("tr");
                         if (eltPos == 0) {
                             assert fragment;
                             err("No table row to close.");
@@ -1651,7 +1651,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             err("Stray end tag \u201C" + name + "\u201D.");                            
                             return;
                         }
-                        int eltPos = findLastInTableScopeOrRoot("tr");
+                        int eltPos = findLastOrRoot("tr");
                         if (eltPos == 0) {
                             assert fragment;
                             err("No table row to close.");
@@ -1669,7 +1669,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     }
                 case IN_TABLE_BODY:
                     if ("tbody" == name || "tfoot" == name || "thead" == name) {
-                        int eltPos = findLastInTableScopeOrRoot(name);
+                        int eltPos = findLastOrRoot(name);
                         if (eltPos == 0) {
                             err("Stray end tag \u201C" + name + "\u201D.");
                             return;
@@ -2110,7 +2110,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     private int findLastInTableScopeOrRootTbodyTheadTfoot() {
-        // TODO Auto-generated method stub
+        for (int i = currentPtr; i > 0; i--) {
+            if (stack[i].name == "tbody" || stack[i].name == "thead" || stack[i].name == "tfoot") {
+                return i;
+            }
+        }
         return 0;
     }
 
@@ -2539,7 +2543,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     assert node == listOfActiveFormattingElements[nodeListPos];
                     assert node == stack[nodePos];
                     T clone = shallowClone(node.node);
-                    node = new StackNode<T>(node.name, clone, node.scoping, node.special);
+                    node = new StackNode<T>(node.name, clone, node.scoping, node.special, node.fosterParenting);
                     listOfActiveFormattingElements[nodeListPos] = node;
                     stack[nodePos] = node;                    
                 }
@@ -2548,7 +2552,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             }
             detachFromParentAndAppendToNewParent(lastNode.node, commonAncestor.node);
             T clone = shallowClone(formattingElt.node);
-            StackNode<T> formattingClone = new StackNode<T>(formattingElt.name, clone, formattingElt.scoping, formattingElt.special);
+            StackNode<T> formattingClone = new StackNode<T>(formattingElt.name, clone, formattingElt.scoping, formattingElt.special, formattingElt.fosterParenting);
             detachFromParentAndAppendToNewParent(clone, furthestBlock.node);
             removeFromListOfActiveFormattingElements(formattingEltListPos);
             insertIntoListOfActiveFormattingElements(formattingClone, bookmark);
@@ -2598,14 +2602,28 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         return -1;
     }
 
-    private int timesNeededToPopInOrderToPopUptoAndIncludingDdOrDt() {
-        // TODO Auto-generated method stub
-        return 0;
+    private int findDdOrDtToPop() {
+        for (int i = currentPtr; i >= 0; i--) {
+            StackNode<T> node = stack[i];
+            if ("dd" == node.name || "dt" == node.name) {
+                return i;
+            } else if ((node.scoping || node.special) && !("div" == node.name || "address" == node.name)) {
+                return NOT_FOUND_ON_STACK;
+            }
+        }
+        return NOT_FOUND_ON_STACK;
     }
 
-    private int timesNeededToPopInOrderToPopUptoAndIncludingLi() {
-        // TODO Auto-generated method stub
-        return 0;
+    private int findLiToPop() {
+        for (int i = currentPtr; i >= 0; i--) {
+            StackNode<T> node = stack[i];
+            if ("li" == node.name) {
+                return i;
+            } else if ((node.scoping || node.special) && !("div" == node.name || "address" == node.name)) {
+                return NOT_FOUND_ON_STACK;
+            }
+        }
+        return NOT_FOUND_ON_STACK;
     }
 
     private void appendToCurrentNodeAndPushFormElement(Attributes attributes) {
@@ -2626,11 +2644,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private void appendHtmlElementToDocument(Attributes attributes) {
         T elt = createHtmlElementSetAsRootAndPush(attributes);
-    }
-
-    private void reconstructTheActiveFormattingElementsWithFosterParent() {
-        // TODO Auto-generated method stub
-
+        StackNode<T> node = new StackNode<T>("html", elt);
+        push(node);
     }
 
     private void appendCharToFosterParent(char c) {
@@ -2638,13 +2653,73 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     }
 
+    /**
+     * 
+     */
     private void reconstructTheActiveFormattingElements() {
-        // TODO Auto-generated method stub
+        if (listPtr == -1) {
+            return;
+        }
+        if (listOfActiveFormattingElements[listPtr] == MARKER) {
+            return;
+        }
+        int entryPos = listPtr;
+        for(;;) {
+            entryPos--;
+            if (entryPos == -1) {
+                break;
+            }
+            if (listOfActiveFormattingElements[entryPos] == MARKER) {
+                break;
+            }
+            if (isInStack(listOfActiveFormattingElements[entryPos])) {
+                break;
+            }
+        }
+        while (entryPos < listPtr) {
+            entryPos++;
+            StackNode<T> entry = listOfActiveFormattingElements[entryPos];
+            T clone = shallowClone(entry.node);
+            StackNode<T> entryClone = new StackNode<T>(entry.name, clone, entry.scoping, entry.special, entry.fosterParenting);
+            StackNode<T> currentNode = stack[currentPtr];
+            if (currentNode.fosterParenting) {
+                insertIntoFosterParent(clone);                
+            } else {
+                detachFromParentAndAppendToNewParent(clone, currentNode.node);
+            }
+            push(entryClone);
+            listOfActiveFormattingElements[entryPos] = entryClone;
+        }
+    }
 
+    private void insertIntoFosterParent(T child) {
+        int eltPos = findLastOrRoot("table");
+        T elt = stack[eltPos].node;
+        if (eltPos == 0) {
+            detachFromParentAndAppendToNewParent(child, elt);
+            return;
+        }
+        T parent = parentElementFor(elt);
+        if (parent == null) {
+            detachFromParentAndAppendToNewParent(child, stack[eltPos - 1].node);            
+        } else {
+            insertBefore(child, elt, parent);            
+        }
+    }
+
+    private boolean isInStack(StackNode<T> node) {
+        for (int i = currentPtr; i >= 0; i--) {
+            if (stack[i] == node) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void popCurrentNode() {
-        
+        StackNode<T> node = stack[currentPtr];
+        currentPtr--;
+        elementPopped(node.name, stack[currentPtr].node);
     }
 
     private void appendToCurrentNodeAndPushHeadElement(
@@ -2671,12 +2746,17 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     private void appendToCurrentNodeAndPushElementWithFormPointer(String name, Attributes attributes) {
-        // TODO Auto-generated method stub
-        
+        T elt = createElementAppendToCurrentAndPush(name, attributes, formPointer);
+        StackNode<T> node = new StackNode<T>(name, elt);
+        push(node);
     }
 
-    private int findLastInTableScopeOrRoot(String string) {
-        // TODO Auto-generated method stub
+    private int findLastOrRoot(String name) {
+        for (int i = currentPtr; i > 0; i--) {
+            if (stack[i].name == name) {
+                return i;
+            }
+        }
         return 0;
     }
     
@@ -2710,6 +2790,14 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     protected abstract T shallowClone(T element);
     
     protected abstract void detachFromParentAndAppendToNewParent(T child, T newParent);
+
+    /**
+     * Get the parent element. MUST return <code>null</code> if there is no parent
+     * <em>or</em> the parent is not an element.
+     */
+    protected abstract T parentElementFor(T child);
+    
+    protected abstract void insertBefore(T child, T sibling, T parent);
     
     protected abstract void appendCharactersToCurrentNode(char[] buf,
             int start, int length);
