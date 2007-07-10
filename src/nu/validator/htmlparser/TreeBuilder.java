@@ -2733,7 +2733,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     private void appendToCurrentNodeAndPushBodyElement() {
-        
+        appendToCurrentNodeAndPushBodyElement(tokenizer.newAttributes());
     }
 
     private void appendToCurrentNodeAndPushElement(String name,
@@ -2742,7 +2742,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     private void appendHtmlElementToDocument() {
-        
+        appendHtmlElementToDocument(tokenizer.newAttributes());
     }
 
     private void appendToCurrentNodeAndPushElementWithFormPointer(String name, Attributes attributes) {

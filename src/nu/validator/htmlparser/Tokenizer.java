@@ -1736,6 +1736,10 @@ public final class Tokenizer implements Locator {
          * the following: base, link, meta, hr, br, img, embed, param, area,
          * col, input
          */
+        if (endTag) {
+            err("Stray \u201C/\u201D in an end tag.");            
+            return;
+        }
         char c = read();
         if (c == '>') {
             if (!currentIsVoid() && !html4) {
