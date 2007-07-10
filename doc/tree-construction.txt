@@ -5,7 +5,7 @@
 
 HTML 5
 
-Working Draft — 27 June 2007
+Working Draft — 28 June 2007
 
    < 8.2.3. Tokenisation – Table of contents – 8.3. Namespaces >
 
@@ -489,9 +489,10 @@ Working Draft — 27 June 2007
 
    When the steps below require the UA to generate implied end tags,
    then, if the current node is a dd element, a dt element, an li
-   element, a p element, a td element, a th element, or a tr element, the
-   UA must act as if an end tag with the respective tag name had been
-   seen and then generate implied end tags again.
+   element, a p element, a tbody element, a td element, a tfoot element,
+   a th element, a thead element, a tr element, the UA must act as if an
+   end tag with the respective tag name had been seen and then generate
+   implied end tags again.
 
    The step that requires the UA to generate implied end tags but lists
    an element to exclude from the process, then the UA must perform the
@@ -636,7 +637,8 @@ Working Draft — 27 June 2007
                       and with the current token being reprocessed in the
                       "in head" insertion mode.
 
-              An end tag whose tag name is one of: "head", "body", "html"
+              An end tag whose tag name is one of: "head", "body",
+                      "html", "p", "br"
                       Act as if a start tag token with the tag name
                       "head" and no attributes had been seen, then
                       reprocess the current token.
@@ -693,7 +695,9 @@ Working Draft — 27 June 2007
 
               A start tag whose tag name is "title"
                       Follow the generic RCDATA parsing algorithm, with
-                      the current node as the context node.
+                      the head element pointer as the context node,
+                      unless that's null, in which case use the current
+                      node (fragment cose).
 
               A start tag whose tag name is "noscript", if scripting is
                       enabled:
@@ -803,7 +807,8 @@ Working Draft — 27 June 2007
 
                       Change the insertion mode to "after head".
 
-              An end tag whose tag name is one of: "body", "html"
+              An end tag whose tag name is one of: "body", "html", "p",
+                      "br"
                       Act as described in the "anything else" entry
                       below.
 
@@ -837,6 +842,10 @@ Working Draft — 27 June 2007
                       "style"
                       Process the token as if the insertion mode had been
                       "in head".
+
+              An end tag whose tag name is one of: "p", "br"
+                      Act as described in the "anything else" entry
+                      below.
 
               A start tag whose tag name is one of: "head", "noscript"
               Any other end tag
@@ -932,9 +941,11 @@ Working Draft — 27 June 2007
 
                       Otherwise, if there is a node in the stack of open
                       elements that is not either a dd element, a dt
-                      element, an li element, a p element, a td element,
-                      a th element, a tr element, the body element, or
-                      the html element, then this is a parse error.
+                      element, an li element, a p element, a tbody
+                      element, a td element, a tfoot element, a th
+                      element, a thead element, a tr element, the body
+                      element, or the html element, then this is a parse
+                      error.
 
                       Change the insertion mode to "after body".
 
@@ -1164,8 +1175,10 @@ Working Draft — 27 June 2007
                       Reconstruct the active formatting elements, if any.
 
                       If the stack of open elements has a nobr element in
-                      scope, then act as if an end tag with the tag name
-                      nobr had been seen.
+                      scope, then this is a parse error. Act as if an end
+                      tag with the tag name nobr had been seen, then once
+                      again reconstruct the active formatting elements,
+                      if any.
 
                       Insert an HTML element for the token. Add that
                       element to the list of active formatting elements.
