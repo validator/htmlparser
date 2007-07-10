@@ -51,7 +51,7 @@ public class SAXTreeBuilder extends TreeBuilder<Element> {
 
     @Override
     protected void elementPopped(String poppedElemenName, Element newCurrentNode) {
-        assert currentNode.getLocalName() == poppedElemenName;
+        assert poppedElemenName == null || currentNode.getLocalName() == poppedElemenName;
         currentNode.setEndLocator(tokenizer);
         currentNode = newCurrentNode;
     }
@@ -59,6 +59,36 @@ public class SAXTreeBuilder extends TreeBuilder<Element> {
     @Override
     protected void appendCharactersToCurrentNode(char[] buf, int start, int length) {
         currentNode.appendChild(new Characters(tokenizer, buf, start, length));
+    }
+
+    @Override
+    protected void detachFromParent(Element element) {
+        element.detach();
+    }
+
+    @Override
+    protected boolean hasChildren(Element element) {
+        return element.getFirstChild() != null;
+    }
+
+    @Override
+    protected Element shallowClone(Element element) {
+        Element newElt =  new Element(element, element.getUri(), element.getLocalName(), element.getQName(), element.getAttributes(), true, element.getPrefixMappings());
+        newElt.copyEndLocator(element);
+        return newElt;
+    }
+
+    @Override
+    protected void detachFromParentAndAppendToNewParent(Element child, Element newParent) {
+        newParent.appendChild(child);
+    }
+
+    @Override
+    protected Element createHtmlElementSetAsRootAndPush(Attributes attributes) {
+        Element newElt = new Element(tokenizer, "http://www.w3.org/1999/xhtml", "html", "html", attributes, true, null);
+        document.appendChild(newElt);
+        currentNode = newElt;
+        return newElt;
     }
 
 }
