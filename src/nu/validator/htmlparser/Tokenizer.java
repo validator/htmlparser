@@ -43,16 +43,12 @@ import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.Arrays;
 
-import org.whattf.checker.NormalizationChecker;
 import org.xml.sax.Attributes;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
-
-import fi.iki.hsivonen.io.EncodingInfo;
-import fi.iki.hsivonen.xml.EmptyAttributes;
 
 /**
  * An implementatition of
@@ -390,8 +386,7 @@ public final class Tokenizer implements Locator {
      */
     public void setCheckingNormalization(boolean enable) {
         if (enable) {
-            normalizationChecker = new NormalizationChecker(true);
-            normalizationChecker.setDocumentLocator(this);
+            normalizationChecker = new NormalizationChecker(this);
             normalizationChecker.setErrorHandler(errorHandler);
         } else {
             normalizationChecker = null;

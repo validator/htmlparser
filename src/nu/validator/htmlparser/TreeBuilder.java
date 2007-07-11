@@ -41,8 +41,6 @@ import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
-import fi.iki.hsivonen.xml.EmptyAttributes;
-
 public abstract class TreeBuilder<T> implements TokenHandler {
 
     private enum Phase {
@@ -212,6 +210,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
      * @throws SAXParseException
      */
     protected final void fatal() throws SAXException {
+        if (errorHandler == null) {
+            return;
+        }
         SAXParseException spe = new SAXParseException("Last error required non-streamable recovery.", tokenizer);
         errorHandler.fatalError(spe);
         throw spe;
@@ -225,6 +226,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
      * @throws SAXException
      */
     protected final void err(String message) throws SAXException {
+        if (errorHandler == null) {
+            return;
+        }
         SAXParseException spe = new SAXParseException(message, tokenizer);
         errorHandler.error(spe);
     }
@@ -237,6 +241,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
      * @throws SAXException
      */
     protected final void warn(String message) throws SAXException {
+        if (errorHandler == null) {
+            return;
+        }
         SAXParseException spe = new SAXParseException(message, tokenizer);
         errorHandler.warning(spe);
     }
@@ -249,6 +256,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         cdataOrRcdataTimesToPop = 0;
         currentPtr = -1;
         formPointer = null;
+        start();
     }
 
     public final void doctype(String name, String publicIdentifier,
@@ -895,6 +903,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     }
 
                     /* Stop parsing. */
+                    end();
                     return;
                     /*
                      * This fails because it doesn't imply HEAD and BODY tags.
@@ -906,6 +915,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                      */
                 case TRAILING_END:
                     /* Stop parsing. */
+                    end();
                     return;
             }
         }
@@ -2736,22 +2746,27 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     private void appendToCurrentNodeAndPushHeadElement(
-            Attributes attributes) {
-        
+            Attributes attributes) throws SAXException {
+        T elt = createElementAppendToCurrentAndPush("head", attributes);
+        headPointer = elt;
+        StackNode<T> node = new StackNode<T>("head", elt);
+        push(node);
     }
 
     private void appendToCurrentNodeAndPushBodyElement(
-            Attributes attributes) {
-        
+            Attributes attributes) throws SAXException {
+        appendToCurrentNodeAndPushElement("body", attributes);
     }
 
-    private void appendToCurrentNodeAndPushBodyElement() {
+    private void appendToCurrentNodeAndPushBodyElement() throws SAXException {
         appendToCurrentNodeAndPushBodyElement(tokenizer.newAttributes());
     }
 
     private void appendToCurrentNodeAndPushElement(String name,
-            Attributes attributes) {
-        
+            Attributes attributes) throws SAXException {
+        T elt = createElementAppendToCurrentAndPush(name, attributes);
+        StackNode<T> node = new StackNode<T>(name, elt);
+        push(node);        
     }
 
     private void appendHtmlElementToDocument() throws SAXException {

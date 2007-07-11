@@ -29,6 +29,7 @@ public class TreeDumpContentHandler implements ContentHandler, LexicalHandler {
     private void printLead() throws IOException {
         if (inCharacters) {
             writer.write("\"\n");
+            inCharacters = false;
         }
         writer.write("| ");
         for (int i = 0; i < level; i++) {

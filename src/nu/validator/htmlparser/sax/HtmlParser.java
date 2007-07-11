@@ -56,8 +56,7 @@ public class HtmlParser implements XMLReader {
     }
 
     public void parse(InputSource input) throws IOException, SAXException {
-        // TODO Auto-generated method stub
-        
+        tokenizer.tokenize(input);
     }
 
     public void parse(String systemId) throws IOException, SAXException {
@@ -66,8 +65,7 @@ public class HtmlParser implements XMLReader {
     }
 
     public void setContentHandler(ContentHandler handler) {
-        // TODO Auto-generated method stub
-        
+        treeBuilder.setContentHandler(handler);
     }
 
     public void setDTDHandler(DTDHandler handler) {
