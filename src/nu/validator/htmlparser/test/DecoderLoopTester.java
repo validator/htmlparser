@@ -35,8 +35,6 @@ import nu.validator.htmlparser.HtmlInputStreamReader;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
 
-import fi.iki.hsivonen.xml.SystemErrErrorHandler;
-
 public class DecoderLoopTester {
     
     private static final int LEAD_OFFSET = 0xD800 - (0x10000 >> 10);

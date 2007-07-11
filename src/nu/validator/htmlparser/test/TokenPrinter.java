@@ -37,8 +37,6 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
-import fi.iki.hsivonen.xml.SystemErrErrorHandler;
-
 public class TokenPrinter implements TokenHandler, ErrorHandler {
 
     private final Writer writer;
