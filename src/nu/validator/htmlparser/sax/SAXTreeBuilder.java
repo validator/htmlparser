@@ -1,19 +1,24 @@
 package nu.validator.htmlparser.sax;
 
 import nu.validator.htmlparser.TreeBuilder;
+import nu.validator.htmlparser.XmlViolationPolicy;
 import nu.validator.saxtree.Characters;
 import nu.validator.saxtree.Comment;
 import nu.validator.saxtree.Document;
 import nu.validator.saxtree.Element;
 import nu.validator.saxtree.NodeType;
 import nu.validator.saxtree.ParentNode;
+import nu.validator.saxtree.TreeParser;
 
 import org.xml.sax.Attributes;
+import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.ext.LexicalHandler;
 
 public class SAXTreeBuilder extends TreeBuilder<Element> {
 
+    private ContentHandler contentHandler;
+    
     private LexicalHandler lexicalHandler;
     
     private Element currentNode;
@@ -21,6 +26,10 @@ public class SAXTreeBuilder extends TreeBuilder<Element> {
     private Element rootElement;
     
     private Document document;
+    
+    public SAXTreeBuilder() {
+        super(XmlViolationPolicy.ALLOW, false);
+    }
     
     @Override
     protected void appendCommentToCurrentNode(char[] buf, int length) {
@@ -108,6 +117,57 @@ public class SAXTreeBuilder extends TreeBuilder<Element> {
             return (Element) parent;
         }
         return null;
+    }
+
+    @Override
+    protected void addAttributesToElement(Element element, Attributes attributes) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    /**
+     * Returns the document.
+     * 
+     * @return the document
+     */
+    public Document getDocument() {
+        return document;
+    }
+
+    /**
+     * @throws SAXException 
+     * @see nu.validator.htmlparser.TreeBuilder#end()
+     */
+    @Override
+    protected void end() throws SAXException {
+        document.setEndLocator(tokenizer);
+        new TreeParser(contentHandler, lexicalHandler).parse(document);
+    }
+
+    /**
+     * @see nu.validator.htmlparser.TreeBuilder#start()
+     */
+    @Override
+    protected void start() {
+        document = new Document(tokenizer);
+    }
+
+    /**
+     * Sets the contentHandler.
+     * 
+     * @param contentHandler the contentHandler to set
+     */
+    public void setContentHandler(ContentHandler contentHandler) {
+        this.contentHandler = contentHandler;
+    }
+
+    /**
+     * Sets the lexicalHandler.
+     * 
+     * @param lexicalHandler the lexicalHandler to set
+     */
+    public void setLexicalHandler(LexicalHandler lexicalHandler) {
+        this.lexicalHandler = lexicalHandler;
     }
 
 }
