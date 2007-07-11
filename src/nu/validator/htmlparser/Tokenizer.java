@@ -2049,19 +2049,6 @@ public final class Tokenizer implements Locator {
                      * Switch to the data state.
                      */
                     return false;
-                case '<':
-                    /* U+003C LESS-THAN SIGN (<) Parse error. */
-                    err("Saw \u201C<\u201C without the previous tag ending with \u201C>\u201C.");
-                    /*
-                     * Emit the current tag token.
-                     */
-                    addAttributeWithoutValue();
-                    emitCurrentTagToken();
-                    /*
-                     * Reconsume the character in the data state.
-                     */
-                    unread(c);
-                    return false;
                 case '\u0000':
                     /* EOF Parse error. */
                     err("Saw end of file without the previous tag ending with \u201C>\u201C.");
