@@ -26,6 +26,7 @@ import nu.validator.htmlparser.TreeBuilder;
 import nu.validator.htmlparser.XmlViolationPolicy;
 import nu.validator.saxtree.Characters;
 import nu.validator.saxtree.Comment;
+import nu.validator.saxtree.DTD;
 import nu.validator.saxtree.Document;
 import nu.validator.saxtree.Element;
 import nu.validator.saxtree.NodeType;
@@ -147,6 +148,16 @@ public class SAXTreeBuilder extends TreeBuilder<Element> {
         
     }
 
+    /**
+     * @see nu.validator.htmlparser.TreeBuilder#appendDoctypeToDocument(java.lang.String, java.lang.String, java.lang.String)
+     */
+    @Override
+    protected void appendDoctypeToDocument(String name, String publicIdentifier, String systemIdentifier) {
+         DTD dtd = new DTD(tokenizer, name, publicIdentifier, systemIdentifier);
+         dtd.setEndLocator(tokenizer);
+         document.appendChild(dtd);
+    }
+    
     /**
      * Returns the document.
      * 

@@ -38,6 +38,7 @@ public class TreePrinter {
         TreeDumpContentHandler treeDumpContentHandler = new TreeDumpContentHandler(new OutputStreamWriter(System.out, "UTF-8")); 
         HtmlParser htmlParser = new HtmlParser();
         htmlParser.setContentHandler(treeDumpContentHandler);
+        htmlParser.setLexicalHandler(treeDumpContentHandler);
         File file = new File(args[0]);
         InputSource is = new InputSource(new FileInputStream(file));
         is.setSystemId(file.toURI().toASCIIString());

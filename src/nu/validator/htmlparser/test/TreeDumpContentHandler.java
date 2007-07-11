@@ -118,7 +118,7 @@ public class TreeDumpContentHandler implements ContentHandler, LexicalHandler {
             printLead();
             writer.write("<!DOCTYPE ");
             writer.write(name);
-            writer.write(">");            
+            writer.write(">\n");            
         } catch (IOException e) {
             throw new SAXException(e);
         }
