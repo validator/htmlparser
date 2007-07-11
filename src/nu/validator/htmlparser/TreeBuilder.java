@@ -154,6 +154,12 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     
     private final StackNode<T> MARKER = new StackNode<T>(null, null);
 
+    private final boolean nonConformingAndStreaming;
+
+    private final boolean conformingAndStreaming;
+    
+    private final boolean coalescingText;   
+    
     private Phase phase = Phase.INITIAL;
 
     private Phase phaseBeforeSwitchingToTrailingEnd;
@@ -169,10 +175,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     private int cdataOrRcdataTimesToPop;
 
     private boolean scriptingEnabled;
-
-    private boolean nonConformingAndStreaming;
-
-    private boolean conformingAndStreaming;
     
     private boolean needToDropLF;
 
@@ -196,6 +198,12 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private T headPointer;
     
+    protected TreeBuilder(XmlViolationPolicy streamabilityViolationPolicy, boolean coalescingText) {
+        this.conformingAndStreaming = streamabilityViolationPolicy == XmlViolationPolicy.FATAL;
+        this.nonConformingAndStreaming = streamabilityViolationPolicy == XmlViolationPolicy.ALTER_INFOSET;
+        this.coalescingText = coalescingText;
+    }
+    
     /**
      * Reports an condition that would make the infoset incompatible with XML
      * 1.0 as fatal.
@@ -203,7 +211,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
      * @throws SAXException
      * @throws SAXParseException
      */
-    protected void fatal() throws SAXException {
+    protected final void fatal() throws SAXException {
         SAXParseException spe = new SAXParseException("Last error required non-streamable recovery.", tokenizer);
         errorHandler.fatalError(spe);
         throw spe;
@@ -216,7 +224,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
      *            the message
      * @throws SAXException
      */
-    protected void err(String message) throws SAXException {
+    protected final void err(String message) throws SAXException {
         SAXParseException spe = new SAXParseException(message, tokenizer);
         errorHandler.error(spe);
     }
@@ -228,7 +236,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
      *            the message
      * @throws SAXException
      */
-    protected void warn(String message) throws SAXException {
+    protected final void warn(String message) throws SAXException {
         SAXParseException spe = new SAXParseException(message, tokenizer);
         errorHandler.warning(spe);
     }
@@ -2162,7 +2170,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         return NOT_FOUND_ON_STACK;
     }
 
-    private void generateImpliedEndTagsExceptFor(String name) {
+    private void generateImpliedEndTagsExceptFor(String name) throws SAXException {
         for (;;) {
             String stackName = stack[currentPtr].name;
             if (name != stackName && ("p" == stackName || "li" == stackName || "dd" == stackName || "dt" == stackName)) {
@@ -2173,7 +2181,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
     }
     
-    private void generateImpliedEndTags() {
+    private void generateImpliedEndTags() throws SAXException {
         for (;;) {
             String stackName = stack[currentPtr].name;
             if ("p" == stackName || "li" == stackName || "dd" == stackName || "dt" == stackName) {
@@ -2399,7 +2407,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     private void appendToCurrentNodeAndPushFormattingElement(String name,
-            Attributes attributes) {
+            Attributes attributes) throws SAXException {
         T elt = createElementAppendToCurrentAndPush(name, attributes);
         StackNode<T> node = new StackNode<T>(name, elt);
         push(node);
@@ -2626,23 +2634,27 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         return NOT_FOUND_ON_STACK;
     }
 
-    private void appendToCurrentNodeAndPushFormElement(Attributes attributes) {
+    private void appendToCurrentNodeAndPushFormElement(Attributes attributes) throws SAXException {
         T elt = createElementAppendToCurrentAndPush("form", attributes);
         formPointer = elt;
         StackNode<T> node = new StackNode<T>("form", elt);
         push(node);
     }
 
-    private void addAttributesToBody(Attributes attributes) {
-        // TODO Auto-generated method stub
-
+    private void addAttributesToBody(Attributes attributes) throws SAXException {
+        if (currentPtr >= 1) {
+            StackNode<T> body = stack[1];
+            if (body.name == "body") {
+                addAttributesToElement(body.node, attributes);                
+            }
+        }
     }
 
     private void pushHeadPointerOntoStack() {
         push(new StackNode<T>("head", headPointer));
     }
 
-    private void appendHtmlElementToDocument(Attributes attributes) {
+    private void appendHtmlElementToDocument(Attributes attributes) throws SAXException {
         T elt = createHtmlElementSetAsRootAndPush(attributes);
         StackNode<T> node = new StackNode<T>("html", elt);
         push(node);
@@ -2654,9 +2666,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     /**
+     * @throws SAXException 
      * 
      */
-    private void reconstructTheActiveFormattingElements() {
+    private void reconstructTheActiveFormattingElements() throws SAXException {
         if (listPtr == -1) {
             return;
         }
@@ -2692,7 +2705,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
     }
 
-    private void insertIntoFosterParent(T child) {
+    private void insertIntoFosterParent(T child) throws SAXException {
         int eltPos = findLastOrRoot("table");
         T elt = stack[eltPos].node;
         if (eltPos == 0) {
@@ -2716,7 +2729,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         return false;
     }
 
-    private void popCurrentNode() {
+    private void popCurrentNode() throws SAXException {
         StackNode<T> node = stack[currentPtr];
         currentPtr--;
         elementPopped(node.name, stack[currentPtr].node);
@@ -2741,11 +2754,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         
     }
 
-    private void appendHtmlElementToDocument() {
+    private void appendHtmlElementToDocument() throws SAXException {
         appendHtmlElementToDocument(tokenizer.newAttributes());
     }
 
-    private void appendToCurrentNodeAndPushElementWithFormPointer(String name, Attributes attributes) {
+    private void appendToCurrentNodeAndPushElementWithFormPointer(String name, Attributes attributes) throws SAXException {
         T elt = createElementAppendToCurrentAndPush(name, attributes, formPointer);
         StackNode<T> node = new StackNode<T>(name, elt);
         push(node);
@@ -2761,56 +2774,75 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
     
     protected T createElementAppendToCurrentAndPush(String name,
-            Attributes attributes, T form) {
+            Attributes attributes, T form) throws SAXException {
         return createElementAppendToCurrentAndPush(name, attributes);
     }
 
     protected void createElementAppendToCurrent(String name,
-            Attributes attributes, T form) {
+            Attributes attributes, T form) throws SAXException {
         createElementAppendToCurrentAndPush(name, attributes, form);
         elementPopped(name, stack[currentPtr].node);
     }
     
-    protected void createElementAppendToCurrent(String name, Attributes attributes) {
+    protected void createElementAppendToCurrent(String name, Attributes attributes) throws SAXException {
         createElementAppendToCurrentAndPush(name, attributes);
         elementPopped(name, stack[currentPtr].node);    
     }
 
     protected abstract T createElementAppendToCurrentAndPush(String name,
-            Attributes attributes);
+            Attributes attributes) throws SAXException;
     
-    protected abstract void elementPopped(String poppedElemenName, T newCurrentNode);
+    protected abstract void elementPopped(String poppedElemenName, T newCurrentNode) throws SAXException;
 
-    protected abstract T createHtmlElementSetAsRootAndPush(Attributes attributes);
+    protected abstract T createHtmlElementSetAsRootAndPush(Attributes attributes) throws SAXException;
     
-    protected abstract void detachFromParent(T element);
+    protected abstract void detachFromParent(T element) throws SAXException;
 
-    protected abstract boolean hasChildren(T element);
+    protected abstract boolean hasChildren(T element) throws SAXException;
     
-    protected abstract T shallowClone(T element);
+    protected abstract T shallowClone(T element) throws SAXException;
     
-    protected abstract void detachFromParentAndAppendToNewParent(T child, T newParent);
+    protected abstract void detachFromParentAndAppendToNewParent(T child, T newParent) throws SAXException;
 
     /**
      * Get the parent element. MUST return <code>null</code> if there is no parent
      * <em>or</em> the parent is not an element.
      */
-    protected abstract T parentElementFor(T child);
+    protected abstract T parentElementFor(T child) throws SAXException;
     
-    protected abstract void insertBefore(T child, T sibling, T parent);
+    protected abstract void insertBefore(T child, T sibling, T parent) throws SAXException;
     
     protected abstract void appendCharactersToCurrentNode(char[] buf,
-            int start, int length);
+            int start, int length) throws SAXException;
     
-    protected abstract void appendCommentToCurrentNode(char[] buf, int length);
+    protected abstract void appendCommentToCurrentNode(char[] buf, int length) throws SAXException;
 
-    protected abstract void appendCommentToDocument(char[] buf, int length);
+    protected abstract void appendCommentToDocument(char[] buf, int length) throws SAXException;
 
-    protected abstract void appendCommentToRootElement(char[] buf, int length);
+    protected abstract void appendCommentToRootElement(char[] buf, int length) throws SAXException;
+    
+    protected abstract void addAttributesToElement(T element, Attributes attributes) throws SAXException;
 
+    protected void start() throws SAXException {
+        
+    }
+
+    protected void end() throws SAXException {
+        
+    }
+    
     /**
      * @see nu.validator.htmlparser.TokenHandler#wantsComments()
      */
     public abstract boolean wantsComments() throws SAXException;
+
+    /**
+     * Sets the errorHandler.
+     * 
+     * @param errorHandler the errorHandler to set
+     */
+    public void setErrorHandler(ErrorHandler errorHandler) {
+        this.errorHandler = errorHandler;
+    }
 
 }
