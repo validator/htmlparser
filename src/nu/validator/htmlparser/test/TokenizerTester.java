@@ -167,13 +167,13 @@ public class TokenizerTester {
                 writer.write(actualTokens.render(false));
                 writer.write("\n");
             }
-        } catch (Exception e) {
+        } catch (Throwable t) {
             writer.write("Failure\n");
             writer.write(description);
             writer.write("\nInput:\n");
             writer.write(inputString);
             writer.write("\n");
-            e.printStackTrace(new PrintWriter(writer, false));
+            t.printStackTrace(new PrintWriter(writer, false));
         }
     }
 
