@@ -168,7 +168,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private DocumentModeHandler documentModeHandler;
 
-    private DoctypeExpectation doctypeExpectation;
+    private DoctypeExpectation doctypeExpectation = DoctypeExpectation.HTML;
 
     private int cdataOrRcdataTimesToPop;
 
@@ -2214,10 +2214,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
     }
 
-    protected void appendDoctypeToDocument(String name,
-            String publicIdentifier, String systemIdentifier) {
-    }
-
     private boolean isAlmostStandards(String publicIdentifierLC,
             String systemIdentifierLC) {
         if ("-//w3c//dtd xhtml 1.0 transitional//en".equals(publicIdentifierLC)) {
@@ -2843,6 +2839,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     protected void end() throws SAXException {
+        
+    }
+    
+    protected void appendDoctypeToDocument(String name,
+            String publicIdentifier, String systemIdentifier) {
         
     }
     

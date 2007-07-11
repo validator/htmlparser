@@ -35,6 +35,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXNotRecognizedException;
 import org.xml.sax.SAXNotSupportedException;
 import org.xml.sax.XMLReader;
+import org.xml.sax.ext.LexicalHandler;
 
 public class HtmlParser implements XMLReader {
 
@@ -90,6 +91,10 @@ public class HtmlParser implements XMLReader {
         treeBuilder.setContentHandler(handler);
     }
 
+    public void setLexicalHandler(LexicalHandler handler) {
+        treeBuilder.setLexicalHandler(handler);
+    }
+    
     public void setDTDHandler(DTDHandler handler) {
         // TODO Auto-generated method stub
         
