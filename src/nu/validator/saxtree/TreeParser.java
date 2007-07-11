@@ -53,14 +53,14 @@ public final class TreeParser implements Locator {
             }
             for (;;) {
                 current.revisit(this);
+                if (current == node) {
+                    return;
+                }
                 if ((next = current.getNextSibling()) != null) {
                     current = next;
                     break;
                 }
                 current = current.getParentNode();
-                if (current == node) {
-                    return;
-                }
             }
         }
     }
