@@ -782,13 +782,13 @@ public final class Tokenizer implements Locator {
      * @throws IOException
      */
     private char read() throws SAXException, IOException {
-        assert (bufLen > -1);
         for (;;) { // the loop is here for the CRLF case
             if (unreadBuffer != -1) {
                 char c = (char) unreadBuffer;
                 unreadBuffer = -1;
                 return c;
             }
+            assert (bufLen > -1);
             pos++;
             assert pos <= bufLen;
             col++;
