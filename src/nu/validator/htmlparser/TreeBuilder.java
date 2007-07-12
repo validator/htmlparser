@@ -83,6 +83,14 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             this.special = ("address" == name || "area" == name || "base" == name || "basefont" == name || "bgsound" == name || "blockquote" == name || "body" == name || "br" == name || "center" == name || "col" == name || "colgroup" == name || "dd" == name || "dir" == name || "div" == name || "dl" == name || "dt" == name || "embed" == name || "fieldset" == name || "form" == name || "frame" == name || "frameset" == name || "h1" == name || "h2" == name || "h3" == name || "h4" == name || "h5" == name || "h6" == name || "head" == name || "hr" == name || "iframe" == name || "image" == name || "img" == name || "input" == name || "isindex" == name || "li" == name || "link" == name || "listing" == name || "menu" == name || "meta" == name || "noembed" == name || "noframes" == name || "noscript" == name || "ol" == name || "optgroup" == name || "option" == name || "p" == name || "param" == name || "plaintext" == name || "pre" == name || "script" == name || "select" == name || "spacer" == name || "style" == name || "tbody" == name || "textarea" == name || "tfoot" == name || "thead" == name || "title" == name || "tr" == name || "ul" == name ||  "wbr" == name);
             this.fosterParenting = ("table" == name || "tbody" == name || "tfoot" == name || "thead" == name || "tr" == name);
         }
+
+        /**
+         * @see java.lang.Object#toString()
+         */
+        @Override
+        public String toString() {
+            return name;
+        }
     }
     
     private final static char[] ISINDEX_PROMPT = "This is a searchable index. Insert your search keywords here: ".toCharArray();
@@ -2448,6 +2456,16 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
     }
 
+    private boolean clearLastStackSlot() {
+        stack[currentPtr] = null;
+        return true;
+    }
+
+    private boolean clearLastListSlot() {
+        listOfActiveFormattingElements[listPtr] = null;
+        return true;
+    }
+    
     private void push(StackNode<T> node) throws SAXException {
         currentPtr++;
         if (currentPtr == stack.length) {
@@ -2492,11 +2510,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             if (conformingAndStreaming) {
                 fatal();
             } else if (nonConformingAndStreaming) {
-                while (currentPtr >= pos) {
-                    pop();
-                }
+                throw new UnsupportedOperationException();
             } else {
                 System.arraycopy(stack, pos + 1, stack, pos, currentPtr - pos);
+                assert clearLastStackSlot();
                 currentPtr--;
             }
         }
@@ -2517,9 +2534,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             if (conformingAndStreaming) {
                 fatal();
             } else if (nonConformingAndStreaming) {
-                while (currentPtr >= pos) {
-                    pop();
-                }
+                throw new UnsupportedOperationException();
             } else {
                 System.arraycopy(stack, pos + 1, stack, pos, currentPtr - pos);
                 currentPtr--;
@@ -2529,11 +2544,13 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private void removeFromListOfActiveFormattingElements(int pos) {
         if (pos == listPtr) {
+            assert clearLastListSlot();
             listPtr--;
             return;
         }
         assert pos < listPtr;
-        System.arraycopy(listOfActiveFormattingElements, pos + 1, listOfActiveFormattingElements, pos, listPtr - pos - 1);
+        System.arraycopy(listOfActiveFormattingElements, pos + 1, listOfActiveFormattingElements, pos, listPtr - pos);
+        assert clearLastListSlot();
         listPtr--;
     }
 
@@ -2796,6 +2813,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private void pop() throws SAXException {
         StackNode<T> node = stack[currentPtr];
+        assert clearLastStackSlot();
         currentPtr--;
         elementPopped(node.name, node.node);
     }
