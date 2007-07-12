@@ -252,6 +252,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         phase = Phase.INITIAL;
         tokenizer = self;
         stack  = new StackNode[64];
+        listOfActiveFormattingElements  = new StackNode[64];
         needToDropLF = false;
         cdataOrRcdataTimesToPop = 0;
         currentPtr = -1;
