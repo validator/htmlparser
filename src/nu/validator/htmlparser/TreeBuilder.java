@@ -257,6 +257,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         cdataOrRcdataTimesToPop = 0;
         currentPtr = -1;
         formPointer = null;
+        wantingComments = wantsComments();
         start();
     }
 
@@ -822,90 +823,109 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     public final void eof() throws SAXException {
-        for (;;) {
-            switch (phase) {
-                case INITIAL:
-                    /*
-                     * Parse error.
-                     */
-                    if (doctypeExpectation != DoctypeExpectation.NO_DOCTYPE_ERRORS) {
-                        err("End of file seen without seeing a doctype first.");
-                    }
-                    /*
-                     * 
-                     * Set the document to quirks mode.
-                     */
-                    documentMode(DocumentMode.QUIRKS_MODE, null, null, false);
-                    /*
-                     * Then, switch to the root element phase of the tree
-                     * construction stage
-                     */
-                    phase = Phase.ROOT_ELEMENT;
-                    /*
-                     * and reprocess the current token.
-                     */
-                    continue;
-                case ROOT_ELEMENT:
-                    /*
-                     * Create an HTMLElement node with the tag name html, in the
-                     * HTML namespace. Append it to the Document object.
-                     */
-                    appendHtmlElementToDocument();
-                    /* Switch to the main phase */
-                    phase = Phase.BEFORE_HEAD;
-                    /*
-                     * reprocess the current token.
-                     */
-                    continue;
-                case BEFORE_HEAD:
-                case IN_HEAD:
-                case IN_HEAD_NOSCRIPT:
-                case AFTER_HEAD:
-                case IN_BODY:
-                case IN_TABLE:
-                case IN_CAPTION:
-                case IN_COLUMN_GROUP:
-                case IN_TABLE_BODY:
-                case IN_ROW:
-                case IN_CELL:
-                case IN_SELECT:
-                case AFTER_BODY:
-                case IN_FRAMESET:
-                case AFTER_FRAMESET:
-                    /*
-                     * Generate implied end tags.
-                     */
-                    generateImpliedEndTags();
-                    /*
-                     * If there are more than two nodes on the stack of open
-                     * elements,
-                     */
-                    if (currentPtr > 1) {
-                        err("End of file seen and there were open elements.");
-                    } else if (currentPtr == 1
-                            && stack[1].name != "body") {
+        try {
+            eofloop: for (;;) {
+                switch (phase) {
+                    case INITIAL:
                         /*
-                         * or if there are two nodes but the second node is not
-                         * a body node, this is a parse error.
+                         * Parse error.
                          */
+                        if (doctypeExpectation != DoctypeExpectation.NO_DOCTYPE_ERRORS) {
+                            err("End of file seen without seeing a doctype first.");
+                        }
+                        /*
+                         * 
+                         * Set the document to quirks mode.
+                         */
+                        documentMode(DocumentMode.QUIRKS_MODE, null, null,
+                                false);
+                        /*
+                         * Then, switch to the root element phase of the tree
+                         * construction stage
+                         */
+                        phase = Phase.ROOT_ELEMENT;
+                        /*
+                         * and reprocess the current token.
+                         */
+                        continue;
+                    case ROOT_ELEMENT:
+                        /*
+                         * Create an HTMLElement node with the tag name html, in
+                         * the HTML namespace. Append it to the Document object.
+                         */
+                        appendHtmlElementToDocument();
+                        /* Switch to the main phase */
+                        phase = Phase.BEFORE_HEAD;
+                        /*
+                         * reprocess the current token.
+                         */
+                        continue;
+                    case BEFORE_HEAD:
+                        appendToCurrentNodeAndPushHeadElement(EmptyAttributes.EMPTY_ATTRIBUTES);
+                        phase = Phase.IN_HEAD;
+                        continue;
+                    case IN_HEAD:
+                        if (currentPtr > 1) {
+                            err("End of file seen and there were open elements.");
+                        }
+                        while (currentPtr > 0) {
+                            popCurrentNode();
+                        }
+                        phase = Phase.AFTER_HEAD;
+                        continue;
+                    case IN_HEAD_NOSCRIPT:
                         err("End of file seen and there were open elements.");
-                    }
-                    if (fragment) {
-                        if (currentPtr > 0 && stack[1].name != "body") {
+                        while (currentPtr > 1) {
+                            popCurrentNode();
+                        }
+                        phase = Phase.IN_HEAD;
+                        continue;
+                    case AFTER_HEAD:
+                        appendToCurrentNodeAndPushBodyElement();
+                        phase = Phase.IN_BODY;
+                        continue;
+                    case IN_BODY:
+                    case IN_TABLE:
+                    case IN_CAPTION:
+                    case IN_COLUMN_GROUP:
+                    case IN_TABLE_BODY:
+                    case IN_ROW:
+                    case IN_CELL:
+                    case IN_SELECT:
+                        /*
+                         * Generate implied end tags.
+                         */
+                        generateImpliedEndTags();
+                        /*
+                         * If there are more than two nodes on the stack of open
+                         * elements,
+                         */
+                        if (currentPtr > 1) {
+                            err("End of file seen and there were open elements.");
+                        } else if (currentPtr == 1 && stack[1].name != "body") {
                             /*
-                             * Otherwise, if the parser was originally created as part
-                             * of the HTML fragment parsing algorithm, and there's more
-                             * than one element in the stack of open elements, and the
-                             * second node on the stack of open elements is not a body
-                             * node, then this is a parse error. (fragment case)
+                             * or if there are two nodes but the second node is
+                             * not a body node, this is a parse error.
                              */
                             err("End of file seen and there were open elements.");
-                        }                        
-                    }
+                        }
+                        if (fragment) {
+                            if (currentPtr > 0 && stack[1].name != "body") {
+                                /*
+                                 * Otherwise, if the parser was originally
+                                 * created as part of the HTML fragment parsing
+                                 * algorithm, and there's more than one element
+                                 * in the stack of open elements, and the second
+                                 * node on the stack of open elements is not a
+                                 * body node, then this is a parse error.
+                                 * (fragment case)
+                                 */
+                                err("End of file seen and there were open elements.");
+                            }
+                        }
 
-                    /* Stop parsing. */
-                    end();
-                    return;
+                        /* Stop parsing. */
+                        break eofloop;                        
                     /*
                      * This fails because it doesn't imply HEAD and BODY tags.
                      * We should probably expand out the insertion modes and
@@ -914,11 +934,19 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                      * out so carefully.
                      * 
                      */
-                case TRAILING_END:
-                    /* Stop parsing. */
-                    end();
-                    return;
+                    case IN_FRAMESET:
+                        err("End of file seen and there were open elements.");
+                        break eofloop;                        
+                    case AFTER_BODY:
+                    case AFTER_FRAMESET:
+                    case TRAILING_END:
+                        break eofloop;                        
+                }
             }
+        } finally {
+            // XXX close elts for SAX
+            /* Stop parsing. */
+            end();
         }
     }
 
@@ -1073,7 +1101,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         // fall through to IN_BODY
                     }
                 case IN_BODY:
-                    if ("base" == name || "link" == name || "meta" == name
+                    if ("html" == name) {
+                        err("Stray \u201Chtml\u201D start tag.");
+                        addAttributesToElement(stack[0].node, attributes);
+                        return;
+                    } else if ("base" == name || "link" == name || "meta" == name
                             || "style" == name || "script" == name) {
                         // Fall through to IN_HEAD
                     } else if ("title" == name) {
@@ -1088,7 +1120,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                 name);
                         return;
                     } else if ("body" == name) {
-                        err("\u201Cbody\u201D start tag found but the \u201Cbody\201D element is already open.");
+                        err("\u201Cbody\u201D start tag found but the \u201Cbody\u201D element is already open.");
                         addAttributesToBody(attributes);
                         return;
                     } else if ("p" == name || "div" == name || "h1" == name
@@ -1145,12 +1177,16 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                 ContentModelFlag.PLAINTEXT, name);
                         return;
                     } else if ("a" == name) {
-                        int activeA = findInListOfActiveFormattingElementsContainsBetweenEndAndLastMarker("a");
-                        if (activeA == -1) {
+                        int activeAPos = findInListOfActiveFormattingElementsContainsBetweenEndAndLastMarker("a");
+                        if (activeAPos != -1) {
                             err("An \u201Ca\u201D start tag seen with already an active \u201Ca\u201D element.");
+                            StackNode<T> activeA = listOfActiveFormattingElements[activeAPos];
                             adoptionAgencyEndTag("a");
-                            removeFromStack(listOfActiveFormattingElements[activeA]);
-                            removeFromListOfActiveFormattingElements(activeA);
+                            removeFromStack(activeA);
+                            activeAPos = findInListOfActiveFormattingElements(activeA);
+                            if (activeAPos != -1) {
+                                removeFromListOfActiveFormattingElements(activeAPos);
+                            }
                         }
                         reconstructTheActiveFormattingElements();
                         appendToCurrentNodeAndPushFormattingElement(name,
@@ -1300,7 +1336,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             || "tbody" == name || "td" == name
                             || "tfoot" == name || "th" == name
                             || "thead" == name || "tr" == name) {
-                        err("Stay start tag \u201C" + name + "\u201D.");
+                        err("Stray start tag \u201C" + name + "\u201D.");
                         return;
                     } else {
                         reconstructTheActiveFormattingElements();
@@ -1308,7 +1344,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         return;
                     }
                 case IN_HEAD:
-                    if ("base" == name) {
+                    if ("html" == name) {
+                        err("Stray \u201Chtml\u201D start tag.");
+                        addAttributesToElement(stack[0].node, attributes);
+                        return;
+                    } else if ("base" == name) {
                         createElementAppendToCurrent(name, attributes);
                         return;
                     } else if ("meta" == name || "link" == name) {
@@ -1350,7 +1390,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     }
                 case IN_HEAD_NOSCRIPT:
                     // XXX did Hixie really mean to omit "base" here?
-                    if ("link" == name) {
+                    if ("html" == name) {
+                        err("Stray \u201Chtml\u201D start tag.");
+                        addAttributesToElement(stack[0].node, attributes);
+                        return;
+                    } else if ("link" == name) {
                         createElementAppendToCurrent(name, attributes);
                         return;
                     } else if ("meta" == name) {
@@ -1376,7 +1420,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         continue;
                     }
                 case IN_COLUMN_GROUP:
-                    if ("col" == name) {
+                    if ("html" == name) {
+                        err("Stray \u201Chtml\u201D start tag.");
+                        addAttributesToElement(stack[0].node, attributes);
+                        return;
+                    } else if ("col" == name) {
                         createElementAppendToCurrent(name, attributes);
                         return;
                     } else {
@@ -1390,7 +1438,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         continue;
                     }
                 case IN_SELECT:
-                    if ("option" == name) {
+                    if ("html" == name) {
+                        err("Stray \u201Chtml\u201D start tag.");
+                        addAttributesToElement(stack[0].node, attributes);
+                        return;
+                    } else if ("option" == name) {
                         if (isCurrent("option")) {
                             popCurrentNode();
                         }
@@ -1424,9 +1476,15 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         return;
                     }
                 case AFTER_BODY:
+                    if ("html" == name) {
+                        err("Stray \u201Chtml\u201D start tag.");
+                        addAttributesToElement(stack[0].node, attributes);
+                        return;
+                    } else {
                     err("Stray \u201C" + name + "\u201D start tag.");
-                    phase = Phase.IN_BODY;
-                    continue;
+                        phase = Phase.IN_BODY;
+                        continue;
+                    }
                 case IN_FRAMESET:
                     if ("frameset" == name) {
                         appendToCurrentNodeAndPushElement(name, attributes);
@@ -1438,7 +1496,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         // fall through to AFTER_FRAMESET
                     }
                 case AFTER_FRAMESET:
-                    if ("noframes" == name) {
+                    if ("html" == name) {
+                        err("Stray \u201Chtml\u201D start tag.");
+                        addAttributesToElement(stack[0].node, attributes);
+                        return;
+                    } else if ("noframes" == name) {
                         appendToCurrentNodeAndPushElement(name, attributes);
                         cdataOrRcdataTimesToPop = 1;
                         tokenizer.setContentModelFlag(ContentModelFlag.CDATA,
@@ -1497,7 +1559,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         continue;
                     }
                 case BEFORE_HEAD:
-                    if ("head" == name) {
+                    if ("html" == name) {
+                        err("Stray \u201Chtml\u201D start tag.");
+                        addAttributesToElement(stack[0].node, attributes);
+                        return;
+                    } else if ("head" == name) {
                         /*
                          * A start tag whose tag name is "head"
                          * 
@@ -1538,7 +1604,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                      */
                     continue;
                 case AFTER_HEAD:
-                    if ("body" == name) {
+                    if ("html" == name) {
+                        err("Stray \u201Chtml\u201D start tag.");
+                        addAttributesToElement(stack[0].node, attributes);
+                        return;
+                    } else if ("body" == name) {
                         if (attributes.getLength() == 0) {
                             // This has the right magic side effect that it
                             // makes attributes in SAX Tree mutable.
@@ -1832,10 +1902,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         }
                         for (int i = 0; i <= currentPtr; i++) {
                             String stackName = stack[i].name;
-                            if ("dd" == stackName || "dt" == stackName || "li" == stackName
+                            if (!("dd" == stackName || "dt" == stackName || "li" == stackName
                                     || "p" == stackName || "tbody" == stackName || "td" == stackName
-                                    || "tfoot" == stackName || "th" == stackName || "thead" == stackName || "tr" == stackName || "body" == stackName || "html" == stackName) {
-                                err("End tag for \u201Cbody\u201D seen but there were unclosed elements.");
+                                    || "tfoot" == stackName || "th" == stackName || "thead" == stackName || "tr" == stackName || "body" == stackName || "html" == stackName)) {
+                                err("End tag for \u201Chtml\u201D seen but there were unclosed elements.");
                                 break;
                             }
                         }
@@ -2468,7 +2538,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             listPtr--;
             return;
         }
-        System.arraycopy(listOfActiveFormattingElements, pos + 1, listOfActiveFormattingElements, pos, listPtr - pos);
+        assert pos < listPtr;
+        System.arraycopy(listOfActiveFormattingElements, pos + 1, listOfActiveFormattingElements, pos, listPtr - pos - 1);
         listPtr--;
     }
 
@@ -2568,6 +2639,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             detachFromParentAndAppendToNewParent(lastNode.node, commonAncestor.node);
             T clone = shallowClone(formattingElt.node);
             StackNode<T> formattingClone = new StackNode<T>(formattingElt.name, clone, formattingElt.scoping, formattingElt.special, formattingElt.fosterParenting);
+            appendChildrenToNewParent(furthestBlock.node, clone);
             detachFromParentAndAppendToNewParent(clone, furthestBlock.node);
             removeFromListOfActiveFormattingElements(formattingEltListPos);
             insertIntoListOfActiveFormattingElements(formattingClone, bookmark);
@@ -2680,7 +2752,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (listPtr == -1) {
             return;
         }
-        if (listOfActiveFormattingElements[listPtr] == MARKER) {
+        StackNode<T> mostRecent = listOfActiveFormattingElements[listPtr];
+        if (mostRecent == MARKER || isInStack(mostRecent)) {
             return;
         }
         int entryPos = listPtr;
@@ -2816,6 +2889,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     
     protected abstract void detachFromParentAndAppendToNewParent(T child, T newParent) throws SAXException;
 
+    protected abstract void appendChildrenToNewParent(T oldParent, T newParent) throws SAXException;
+    
     /**
      * Get the parent element. MUST return <code>null</code> if there is no parent
      * <em>or</em> the parent is not an element.
