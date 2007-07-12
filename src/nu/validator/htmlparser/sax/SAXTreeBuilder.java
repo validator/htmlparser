@@ -44,8 +44,6 @@ public class SAXTreeBuilder extends TreeBuilder<Element> {
     
     private LexicalHandler lexicalHandler;
     
-    private Element currentNode;
-    
     private Element rootElement;
     
     private Document document;
@@ -56,7 +54,7 @@ public class SAXTreeBuilder extends TreeBuilder<Element> {
     
     @Override
     protected void appendCommentToCurrentNode(char[] buf, int length) {
-        currentNode.appendChild(new Comment(tokenizer, buf, 0, length));
+        currentNode().appendChild(new Comment(tokenizer, buf, 0, length));
     }
 
     @Override
@@ -78,20 +76,13 @@ public class SAXTreeBuilder extends TreeBuilder<Element> {
     protected Element createElementAppendToCurrentAndPush(String name,
             Attributes attributes) {
         Element newElt = new Element(tokenizer, "http://www.w3.org/1999/xhtml", name, name, attributes, true, null);
-        currentNode.appendChild(newElt);
-        currentNode = newElt;
+        currentNode().appendChild(newElt);
         return newElt;
     }
 
     @Override
-    protected void elementPopped(String poppedElemenName, Element newCurrentNode) {
-        currentNode.setEndLocator(tokenizer);
-        currentNode = newCurrentNode;
-    }
-
-    @Override
     protected void appendCharactersToCurrentNode(char[] buf, int start, int length) {
-        currentNode.appendChild(new Characters(tokenizer, buf, start, length));
+        currentNode().appendChild(new Characters(tokenizer, buf, start, length));
     }
 
     @Override
@@ -117,10 +108,9 @@ public class SAXTreeBuilder extends TreeBuilder<Element> {
     }
 
     @Override
-    protected Element createHtmlElementSetAsRootAndPush(Attributes attributes) {
+    protected Element createHtmlElementSetAsRoot(Attributes attributes) {
         Element newElt = new Element(tokenizer, "http://www.w3.org/1999/xhtml", "html", "html", attributes, true, null);
         document.appendChild(newElt);
-        currentNode = newElt;
         rootElement = newElt;
         return newElt;
     }
