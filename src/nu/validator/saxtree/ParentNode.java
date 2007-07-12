@@ -78,9 +78,9 @@ public abstract class ParentNode extends Node {
             return appendChild(child);
         }
         child.detach();
+        child.setParentNode(this);
         if (firstChild == sibling) {
             child.setNextSibling(sibling);
-            child.setParentNode(this);
             firstChild = child;
         } else {
             Node prev = firstChild;
@@ -90,7 +90,6 @@ public abstract class ParentNode extends Node {
                 next = next.getNextSibling();
             }
             prev.setNextSibling(child);
-            child.setParentNode(this);
             child.setNextSibling(next);
         }
         return child;
@@ -98,13 +97,13 @@ public abstract class ParentNode extends Node {
     
     public Node appendChild(Node child) {
         child.detach();
+        child.setParentNode(this);
         if (firstChild == null) {
             firstChild = child;
         } else {
             lastChild.setNextSibling(child);
         }
         lastChild = child;
-        child.setParentNode(this);
         return child;
     }
     
@@ -123,6 +122,8 @@ public abstract class ParentNode extends Node {
         do {
             child.setParentNode(this);
         } while ((child = child.getNextSibling()) != null);
+        another.firstChild = null;
+        another.lastChild = null;
     }
 
     void removeChild(Node node) {

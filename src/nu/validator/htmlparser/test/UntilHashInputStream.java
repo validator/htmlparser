@@ -42,6 +42,9 @@ public class UntilHashInputStream extends InputStream {
     public UntilHashInputStream(final InputStream delegate) throws IOException {
         this.delegate = delegate;
         this.buffer = delegate.read();
+        if (buffer == '#') {
+            closed = true;
+        }
     }
 
     public int read() throws IOException {

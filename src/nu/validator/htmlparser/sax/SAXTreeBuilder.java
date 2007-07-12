@@ -85,7 +85,6 @@ public class SAXTreeBuilder extends TreeBuilder<Element> {
 
     @Override
     protected void elementPopped(String poppedElemenName, Element newCurrentNode) {
-        assert poppedElemenName == null || currentNode.getLocalName() == poppedElemenName;
         currentNode.setEndLocator(tokenizer);
         currentNode = newCurrentNode;
     }
@@ -122,6 +121,7 @@ public class SAXTreeBuilder extends TreeBuilder<Element> {
         Element newElt = new Element(tokenizer, "http://www.w3.org/1999/xhtml", "html", "html", attributes, true, null);
         document.appendChild(newElt);
         currentNode = newElt;
+        rootElement = newElt;
         return newElt;
     }
 
@@ -201,6 +201,11 @@ public class SAXTreeBuilder extends TreeBuilder<Element> {
      */
     public void setLexicalHandler(LexicalHandler lexicalHandler) {
         this.lexicalHandler = lexicalHandler;
+    }
+
+    @Override
+    protected void appendChildrenToNewParent(Element oldParent, Element newParent) throws SAXException {
+        newParent.appendChildren(oldParent);
     }
 
 }

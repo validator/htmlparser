@@ -36,18 +36,18 @@ import org.xml.sax.ext.LexicalHandler;
 public class TreeDumpContentHandler implements ContentHandler, LexicalHandler {
 
     private final Writer writer;
-    
+
     private int level = 0;
-    
+
     private boolean inCharacters = false;
-    
+
     /**
      * @param writer
      */
     public TreeDumpContentHandler(final Writer writer) {
         this.writer = writer;
     }
-    
+
     private void printLead() throws IOException {
         if (inCharacters) {
             writer.write("\"\n");
@@ -55,10 +55,10 @@ public class TreeDumpContentHandler implements ContentHandler, LexicalHandler {
         }
         writer.write("| ");
         for (int i = 0; i < level; i++) {
-            writer.write("  ");            
+            writer.write("  ");
         }
     }
-    
+
     public void characters(char[] ch, int start, int length)
             throws SAXException {
         try {
@@ -73,19 +73,28 @@ public class TreeDumpContentHandler implements ContentHandler, LexicalHandler {
         }
     }
 
-
-    public void endElement(String uri, String localName, String qName) throws SAXException {
-        level--;
+    public void endElement(String uri, String localName, String qName)
+            throws SAXException {
+        try {
+            if (inCharacters) {
+                writer.write("\"\n");
+                inCharacters = false;
+            }
+            level--;
+        } catch (IOException e) {
+            throw new SAXException(e);
+        }
     }
 
-    public void startElement(String uri, String localName, String qName, Attributes atts) throws SAXException {
+    public void startElement(String uri, String localName, String qName,
+            Attributes atts) throws SAXException {
         try {
             printLead();
             writer.write('<');
             writer.write(qName);
             writer.write(">\n");
             level++;
-            
+
             TreeMap<String, String> map = new TreeMap<String, String>();
             for (int i = 0; i < atts.getLength(); i++) {
                 map.put(atts.getQName(i), atts.getValue(i));
@@ -95,7 +104,7 @@ public class TreeDumpContentHandler implements ContentHandler, LexicalHandler {
                 writer.write(entry.getKey());
                 writer.write("=\"");
                 writer.write(entry.getValue());
-                writer.write("\n\"");
+                writer.write("\"\n");
             }
         } catch (IOException e) {
             throw new SAXException(e);
@@ -105,20 +114,21 @@ public class TreeDumpContentHandler implements ContentHandler, LexicalHandler {
     public void comment(char[] ch, int offset, int len) throws SAXException {
         try {
             printLead();
-            writer.write("<!--");
+            writer.write("<!-- ");
             writer.write(ch, offset, len);
-            writer.write("-->");            
+            writer.write(" -->\n");
         } catch (IOException e) {
             throw new SAXException(e);
         }
     }
-    
-    public void startDTD(String name, String publicIdentifier, String systemIdentifier) throws SAXException {
+
+    public void startDTD(String name, String publicIdentifier,
+            String systemIdentifier) throws SAXException {
         try {
             printLead();
             writer.write("<!DOCTYPE ");
             writer.write(name);
-            writer.write(">\n");            
+            writer.write(">\n");
         } catch (IOException e) {
             throw new SAXException(e);
         }
@@ -126,14 +136,19 @@ public class TreeDumpContentHandler implements ContentHandler, LexicalHandler {
 
     public void endDocument() throws SAXException {
         try {
+            if (inCharacters) {
+                writer.write("\"\n");
+                inCharacters = false;
+            }
             writer.flush();
             writer.close();
         } catch (IOException e) {
             throw new SAXException(e);
         }
     }
-    
-    public void startPrefixMapping(String prefix, String uri) throws SAXException {
+
+    public void startPrefixMapping(String prefix, String uri)
+            throws SAXException {
     }
 
     public void startEntity(String arg0) throws SAXException {
@@ -154,10 +169,12 @@ public class TreeDumpContentHandler implements ContentHandler, LexicalHandler {
     public void endPrefixMapping(String prefix) throws SAXException {
     }
 
-    public void ignorableWhitespace(char[] ch, int start, int length) throws SAXException {
+    public void ignorableWhitespace(char[] ch, int start, int length)
+            throws SAXException {
     }
 
-    public void processingInstruction(String target, String data) throws SAXException {
+    public void processingInstruction(String target, String data)
+            throws SAXException {
     }
 
     public void setDocumentLocator(Locator locator) {
