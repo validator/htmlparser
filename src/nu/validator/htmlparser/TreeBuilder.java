@@ -1540,7 +1540,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             // makes attributes in SAX Tree mutable.
                             appendHtmlElementToDocument();
                         } else {
-                            appendHtmlElementToDocument(attributes);
+                            appendHtmlElementToDocumentAndPush(attributes);
                         }
                         phase = Phase.BEFORE_HEAD;
                         return;
@@ -2484,14 +2484,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         return name == stack[currentPtr].name;
     }
 
-    private void appendToCurrentNodeAndPushFormattingElement(String name,
-            Attributes attributes) throws SAXException {
-        T elt = createElementAppendToCurrentAndPush(name, attributes);
-        StackNode<T> node = new StackNode<T>(name, elt);
-        push(node);
-        append(node);
-    }
-
     private void removeFromStack(int pos) throws SAXException {
         if (currentPtr == pos) {
             pop();
@@ -2734,17 +2726,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         push(new StackNode<T>("head", headPointer));
     }
 
-    private void appendHtmlElementToDocument(Attributes attributes) throws SAXException {
-        T elt = createHtmlElementSetAsRoot(attributes);
-        StackNode<T> node = new StackNode<T>("html", elt);
-        push(node);
-    }
-
-    private void appendCharToFosterParent(char c) {
-        // TODO Auto-generated method stub
-
-    }
-
     /**
      * @throws SAXException 
      * 
@@ -2816,9 +2797,28 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         elementPopped(node.name, node.node);
     }
 
+    private void appendCharToFosterParent(char c) {
+        // TODO Auto-generated method stub
+
+    }
+    
+    private void appendHtmlElementToDocumentAndPush(Attributes attributes) throws SAXException {
+        T elt = createHtmlElementSetAsRoot(attributes);
+        StackNode<T> node = new StackNode<T>("html", elt);
+        push(node);
+    }
+    
+    private void appendToCurrentNodeAndPushFormattingElement(String name,
+            Attributes attributes) throws SAXException {
+        T elt = createElement(name, attributes);
+        StackNode<T> node = new StackNode<T>(name, elt);
+        push(node);
+        append(node);
+    }
+
     private void appendToCurrentNodeAndPushHeadElement(
             Attributes attributes) throws SAXException {
-        T elt = createElementAppendToCurrentAndPush("head", attributes);
+        T elt = createElement("head", attributes);
         headPointer = elt;
         StackNode<T> node = new StackNode<T>("head", elt);
         push(node);
@@ -2841,11 +2841,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     private void appendHtmlElementToDocument() throws SAXException {
-        appendHtmlElementToDocument(tokenizer.newAttributes());
+        appendHtmlElementToDocumentAndPush(tokenizer.newAttributes());
     }
 
     private void appendToCurrentNodeAndPushElementWithFormPointer(String name, Attributes attributes) throws SAXException {
-        T elt = createElementAppendToCurrentAndPush(name, attributes, formPointer);
+        T elt = createElement(name, attributes, formPointer);
         StackNode<T> node = new StackNode<T>(name, elt);
         push(node);
     }
@@ -2873,8 +2873,21 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         createElementAppendToCurrentAndPush(name, attributes);
     }
 
-    protected abstract T createElementAppendToCurrentAndPush(String name,
-            Attributes attributes) throws SAXException;
+    private T createElementAppendToCurrentAndPush(String name,
+            Attributes attributes) throws SAXException {
+        T elt = createElement(name, attributes);
+        StackNode<T> node = new StackNode<T>(name, elt);
+        push(node);
+        return elt;
+    }
+    
+    // ------------------------------- //
+    
+    protected abstract T createElement(String name, Attributes attributes) throws SAXException;    
+    
+    protected T createElement(String name, Attributes attributes, T form) throws SAXException {
+        return createElement(name, attributes);
+    }
     
     protected abstract T createHtmlElementSetAsRoot(Attributes attributes) throws SAXException;
     
@@ -2914,6 +2927,14 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     protected void end() throws SAXException {
         
     }
+
+    protected void bodyClosed() throws SAXException {
+        
+    }
+
+    protected void htmlClosed() throws SAXException {
+        
+    }
     
     protected void appendDoctypeToDocument(String name,
             String publicIdentifier, String systemIdentifier) throws SAXException {
@@ -2941,8 +2962,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     public void setErrorHandler(ErrorHandler errorHandler) {
         this.errorHandler = errorHandler;
     }
-
-    protected T currentNode() {
+    
+    protected final T currentNode() {
         return stack[currentPtr].node;
     }
 }
