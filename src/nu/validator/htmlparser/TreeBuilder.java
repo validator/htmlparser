@@ -2840,7 +2840,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (current.fosterParenting) {
             if (conformingAndStreaming) {
                 fatal();
-            } else if (!nonConformingAndStreaming) {
+            } else if (nonConformingAndStreaming) {
+                return;
+            } else {
                 insertIntoFosterParent(elt);
             }
         } else {
@@ -2857,7 +2859,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (current.fosterParenting) {
             if (conformingAndStreaming) {
                 fatal();
-            } else if (!nonConformingAndStreaming) {
+            } else if (nonConformingAndStreaming) {
+                return;
+            } else {
                 insertIntoFosterParent(elt);
             }
         } else {
@@ -2883,7 +2887,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (current.fosterParenting) {
             if (conformingAndStreaming) {
                 fatal();
-            } else if (!nonConformingAndStreaming) {
+            } else if (nonConformingAndStreaming) {
+                return;
+            } else {
                 insertIntoFosterParent(elt);
             }
         } else {
@@ -2899,7 +2905,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (current.fosterParenting) {
             if (conformingAndStreaming) {
                 fatal();
-            } else if (!nonConformingAndStreaming) {
+            } else if (nonConformingAndStreaming) {
+                return;
+            } else {
                 insertIntoFosterParent(elt);
             }
         } else {
@@ -2916,7 +2924,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (current.fosterParenting) {
             if (conformingAndStreaming) {
                 fatal();
-            } else if (!nonConformingAndStreaming) {
+            } else if (nonConformingAndStreaming) {
+                return;
+            } else {
                 insertIntoFosterParent(elt);
             }
         } else {
@@ -2930,7 +2940,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (current.fosterParenting) {
             if (conformingAndStreaming) {
                 fatal();
-            } else if (!nonConformingAndStreaming) {
+            } else if (nonConformingAndStreaming) {
+                return;
+            } else {
                 insertIntoFosterParent(elt);
             }
         } else {
