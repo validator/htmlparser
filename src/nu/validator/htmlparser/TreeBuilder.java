@@ -683,7 +683,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                              * Act as if an end tag token with the tag name
                              * "head" had been seen,
                              */
-                            popCurrentNode();
+                            pop();
                             phase = Phase.AFTER_HEAD;
                             /*
                              * and reprocess the current token.
@@ -701,7 +701,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                              * name "noscript" had been seen
                              */
                             err("Non-space character inside \u201Cnoscript\u201D inside \u201Chead\u201D.");
-                            popCurrentNode();
+                            pop();
                             phase = Phase.IN_HEAD;
                             /*
                              * and reprocess the current token.
@@ -761,7 +761,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                 err("Non-space in \u201Ccolgroup\u201D when parsing fragment.");
                                 continue;
                             }
-                            popCurrentNode();
+                            pop();
                             phase = Phase.IN_TABLE;
                             i--;
                             continue;
@@ -869,14 +869,14 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             err("End of file seen and there were open elements.");
                         }
                         while (currentPtr > 0) {
-                            popCurrentNode();
+                            pop();
                         }
                         phase = Phase.AFTER_HEAD;
                         continue;
                     case IN_HEAD_NOSCRIPT:
                         err("End of file seen and there were open elements.");
                         while (currentPtr > 1) {
-                            popCurrentNode();
+                            pop();
                         }
                         phase = Phase.IN_HEAD;
                         continue;
@@ -977,7 +977,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             return;
                         } else {
                             clearStackBackTo(eltPos);
-                            popCurrentNode();
+                            pop();
                             phase = Phase.IN_TABLE;
                             continue;
                         }
@@ -1002,7 +1002,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             return;
                         }
                         clearStackBackTo(eltPos);
-                        popCurrentNode();
+                        pop();
                         phase = Phase.IN_TABLE_BODY;
                         continue;
                     } else {
@@ -1051,7 +1051,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             err("Unclosed elements on stack.");
                         }
                         while (currentPtr >= eltPos) {
-                            popCurrentNode();
+                            pop();
                         }
                         resetTheInsertionMode();
                         continue;
@@ -1076,7 +1076,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             err("Unclosed elements on stack.");
                         }
                         while (currentPtr >= eltPos) {
-                            popCurrentNode();
+                            pop();
                         }
                         clearTheListOfActiveFormattingElementsUpToTheLastMarker();
                         phase = Phase.IN_TABLE;
@@ -1155,7 +1155,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             err("A \u201Cli\u201D start tag was seen but the previous \u201Cli\u201D element had open children.");
                         }
                         while (currentPtr >= eltPos) {
-                            popCurrentNode();
+                            pop();
                         }
                         appendToCurrentNodeAndPushElement(name, attributes);
                         return;
@@ -1166,7 +1166,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             err("A definition list item start tag was seen but the previous definition list item element had open children.");
                         }
                         while (currentPtr >= eltPos) {
-                            popCurrentNode();
+                            pop();
                         }
                         appendToCurrentNodeAndPushElement(name, attributes);
                         return;
@@ -1218,7 +1218,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                 err("There was an open \u201Cbutton\u201D element in scope with unclosed children.");
                             }
                             while (currentPtr >= eltPos) {
-                                popCurrentNode();
+                                pop();
                             }
                             clearTheListOfActiveFormattingElementsUpToTheLastMarker();
                             continue;
@@ -1303,10 +1303,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         }
                         createElementAppendToCurrent("input", inputAttributes, formPointer);
                         // XXX localization
-                        popCurrentNode(); // label
-                        popCurrentNode(); // p
+                        pop(); // label
+                        pop(); // p
                         createElementAppendToCurrent("hr", EmptyAttributes.EMPTY_ATTRIBUTES);
-                        popCurrentNode(); // form
+                        pop(); // form
                         return;
                     } else if ("textarea" == name) {
                         appendToCurrentNodeAndPushElementWithFormPointer(name, attributes);
@@ -1384,7 +1384,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         /* Ignore the token. */
                         return;
                     } else {
-                        popCurrentNode();
+                        pop();
                         phase = Phase.AFTER_HEAD;
                         continue;
                     }
@@ -1415,7 +1415,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         return;
                     } else {
                         err("Bad start tag in \u201Cnoscript\u201D in \u201Chead\u201D.");
-                        popCurrentNode();
+                        pop();
                         phase = Phase.IN_HEAD;
                         continue;
                     }
@@ -1433,7 +1433,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             err("Garbage in \u201Ccolgroup\u201D fragment.");
                             return;
                         }
-                        popCurrentNode();
+                        pop();
                         phase = Phase.IN_TABLE;
                         continue;
                     }
@@ -1444,16 +1444,16 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         return;
                     } else if ("option" == name) {
                         if (isCurrent("option")) {
-                            popCurrentNode();
+                            pop();
                         }
                         appendToCurrentNodeAndPushElement(name, attributes);
                         return;
                     } else if ("optgroup" == name) {
                         if (isCurrent("option")) {
-                            popCurrentNode();
+                            pop();
                         }
                         if (isCurrent("optgroup")) {
-                            popCurrentNode();
+                            pop();
                         }
                         appendToCurrentNodeAndPushElement(name, attributes);
                         return;
@@ -1466,7 +1466,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             return;
                         } else {
                             while (currentPtr >= eltPos) {
-                                popCurrentNode();
+                                pop();
                             }
                             resetTheInsertionMode();
                             return;
@@ -1629,7 +1629,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         }
                         createElementAppendToCurrent(name, attributes);
                         if (nonConformingAndStreaming) {
-                            popCurrentNode(); // head
+                            pop(); // head
                         }
                         return;
                     } else if ("link" == name) {
@@ -1639,7 +1639,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         }
                         createElementAppendToCurrent(name, attributes);
                         if (nonConformingAndStreaming) {
-                            popCurrentNode(); // head
+                            pop(); // head
                         }
                         return;
                     } else if ("meta" == name) {
@@ -1650,7 +1650,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         }
                         createElementAppendToCurrent(name, attributes);
                         if (nonConformingAndStreaming) {
-                            popCurrentNode(); // head
+                            pop(); // head
                         }
                         return;
                     } else if ("script" == name) {
@@ -1704,7 +1704,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         needToDropLF = false;
         if (cdataOrRcdataTimesToPop > 0) {
             while (cdataOrRcdataTimesToPop > 0) {
-                popCurrentNode();
+                pop();
                 cdataOrRcdataTimesToPop--;
             }
             return;
@@ -1721,7 +1721,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             return;
                         }
                         clearStackBackTo(eltPos);
-                        popCurrentNode();
+                        pop();
                         phase = Phase.IN_TABLE_BODY;
                         return;
                     } else if ("table" == name) {
@@ -1732,7 +1732,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             return;
                         }
                         clearStackBackTo(eltPos);
-                        popCurrentNode();
+                        pop();
                         phase = Phase.IN_TABLE_BODY;
                         continue;
                     } else if ("tbody" == name || "thead" == name || "tfoot" == name) {
@@ -1747,7 +1747,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             return;
                         }
                         clearStackBackTo(eltPos);
-                        popCurrentNode();
+                        pop();
                         phase = Phase.IN_TABLE_BODY;
                         continue;
                     } else if ("body" == name || "caption" == name || "col" == name || "colgroup" == name || "html" == name || "td" == name || "th" == name) {
@@ -1764,7 +1764,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             return;
                         }
                         clearStackBackTo(eltPos);
-                        popCurrentNode();
+                        pop();
                         phase = Phase.IN_TABLE;
                         return;
                     } else if ("table" == name) {
@@ -1775,7 +1775,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             return;
                         }
                         clearStackBackTo(eltPos);
-                        popCurrentNode();
+                        pop();
                         phase = Phase.IN_TABLE;
                         continue;
                     } else if ("body" == name || "caption" == name || "col" == name || "colgroup" == name || "html" == name || "td" == name || "th" == name || "tr" == name) {
@@ -1797,7 +1797,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             err("There were unclosed elements.");
                         }
                         if (currentPtr >= eltPos) {
-                            popCurrentNode();
+                            pop();
                         }
                         resetTheInsertionMode();
                         return;
@@ -1819,7 +1819,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             err("Unclosed elements on stack.");
                         }
                         while (currentPtr >= eltPos) {
-                            popCurrentNode();
+                            pop();
                         }
                         clearTheListOfActiveFormattingElementsUpToTheLastMarker();
                         phase = Phase.IN_TABLE;
@@ -1835,7 +1835,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             err("Unclosed elements on stack.");
                         }
                         while (currentPtr >= eltPos) {
-                            popCurrentNode();
+                            pop();
                         }
                         clearTheListOfActiveFormattingElementsUpToTheLastMarker();
                         phase = Phase.IN_TABLE;
@@ -1858,7 +1858,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             err("Unclosed elements.");
                         }
                         while (currentPtr >= eltPos) {
-                            popCurrentNode();
+                            pop();
                         }
                         clearTheListOfActiveFormattingElementsUpToTheLastMarker();
                         phase = Phase.IN_ROW;
@@ -1925,7 +1925,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             err("End tag \u201C" + name + "\u201D seen but there were unclosed elements.");
                         }
                         while (currentPtr >= eltPos) {
-                            popCurrentNode();
+                            pop();
                         }
                         return;
                     } else if ("form" == name) {
@@ -1936,7 +1936,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         if (!isCurrent(name)) {
                             err("End tag \u201Cform\u201D seen but there were unclosed elements.");
                         } else {
-                            popCurrentNode();
+                            pop();
                         }
                         formPointer = null;
                         return;
@@ -1947,7 +1947,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         int eltPos = findLastInScope(name);
                         if (eltPos != NOT_FOUND_ON_STACK) {
                             while (currentPtr >= eltPos) {
-                                popCurrentNode();
+                                pop();
                             }
                         } else {
                             createElementAppendToCurrent(name, EmptyAttributes.EMPTY_ATTRIBUTES);
@@ -1962,7 +1962,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             err("End tag \u201C" + name + "\u201D seen but there were unclosed elements.");
                         }
                         while (currentPtr >= eltPos) {
-                            popCurrentNode();
+                            pop();
                         }
                         return;
                     } else if ("h1" == name || "h2" == name || "h3" == name
@@ -1975,7 +1975,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             err("End tag \u201C" + name + "\u201D seen but there were unclosed elements.");
                         }
                         while (currentPtr >= eltPos) {
-                            popCurrentNode();
+                            pop();
                         }
                         return;
                     } else if ("a" == name || "b" == name || "big" == name || "em" == name || "font" == name || "i" == name || "nobr" == name || "s" == name || "small" == name || "strike" == name || "strong" == name || "tt" == name || "u" == name) {
@@ -1990,7 +1990,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             err("End tag \u201C" + name + "\u201D seen but there were unclosed elements.");
                         }
                         while (currentPtr >= eltPos) {
-                            popCurrentNode();
+                            pop();
                         }
                         clearTheListOfActiveFormattingElementsUpToTheLastMarker();
                         return;
@@ -1999,20 +1999,20 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         return;
                     } else {
                         if (isCurrent(name)) {
-                            popCurrentNode();
+                            pop();
                             return;
                         }
                         for(;;) {
                             generateImpliedEndTags();
                             if (isCurrent(name)) {
-                                popCurrentNode();
+                                pop();
                                 return;
                             }
                             StackNode<T> node = stack[currentPtr];
                             if (!(node.scoping || node.special)) {
                                 err("Unclosed element \u201C" + node.name
                                         + "\u201D.");
-                                popCurrentNode();
+                                pop();
                             } else {
                                 return;
                             }
@@ -2025,7 +2025,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             err("Garbage in \u201Ccolgroup\u201D fragment.");
                             return;
                         }
-                        popCurrentNode();
+                        pop();
                         phase = Phase.IN_TABLE;
                         return;                    
                     } else if ("col" == name) {
@@ -2037,14 +2037,14 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             err("Garbage in \u201Ccolgroup\u201D fragment.");
                             return;
                         }
-                        popCurrentNode();
+                        pop();
                         phase = Phase.IN_TABLE;
                         continue;                   
                     }
                 case IN_SELECT:
                     if ("option" == name) {
                         if (isCurrent("option")) {
-                            popCurrentNode();
+                            pop();
                             return;
                         } else {
                             err("Stray end tag \u201Coption\u201D");
@@ -2052,10 +2052,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         }
                     } else if ("optgroup" == name) {
                         if (isCurrent("option") && "optgroup" == stack[currentPtr - 1].name) {
-                            popCurrentNode();
+                            pop();
                         }
                         if (isCurrent("optgroup")) {
-                            popCurrentNode();
+                            pop();
                         } else {
                             err("Stray end tag \u201Coptgroup\u201D");
                             return;                            
@@ -2068,7 +2068,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             return;                                                        
                         }
                         while (currentPtr >= eltPos) {
-                            popCurrentNode();
+                            pop();
                         }
                         resetTheInsertionMode();
                         return;
@@ -2098,7 +2098,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             err("Stray end tag \u201Cframeset\u201D");
                             return;
                         }
-                        popCurrentNode();
+                        pop();
                         if (!fragment && !isCurrent("frameset")) {
                             phase = Phase.AFTER_FRAMESET;                            
                         }
@@ -2161,11 +2161,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     }
                 case IN_HEAD:
                     if ("head" == name) {
-                        popCurrentNode();
+                        pop();
                         phase = Phase.AFTER_HEAD;
                         return;
                     } else if ("body" == name || "html" == name || "p" == name || "br" == name) {
-                        popCurrentNode();
+                        pop();
                         phase = Phase.AFTER_HEAD;
                         continue;
                     } else {
@@ -2174,12 +2174,12 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     }
                 case IN_HEAD_NOSCRIPT:
                     if ("noscript" == name) {
-                        popCurrentNode();
+                        pop();
                         phase = Phase.IN_HEAD;
                         return;
                     } else if ("p" == name || "br" == name) {
                         err("Stray end tag \u201C" + name + "\u201D.");
-                        popCurrentNode();
+                        pop();
                         phase = Phase.IN_HEAD;
                         continue;
                     } else {
@@ -2255,7 +2255,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         for (;;) {
             String stackName = stack[currentPtr].name;
             if (name != stackName && ("p" == stackName || "li" == stackName || "dd" == stackName || "dt" == stackName)) {
-                popCurrentNode();
+                pop();
             } else {
                 return;
             }
@@ -2266,7 +2266,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         for (;;) {
             String stackName = stack[currentPtr].name;
             if ("p" == stackName || "li" == stackName || "dd" == stackName || "dt" == stackName) {
-                popCurrentNode();
+                pop();
             } else {
                 return;
             }
@@ -2349,7 +2349,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             err("Unclosed elements.");
         }
         while (currentPtr >= eltPos) {
-            popCurrentNode();
+            pop();
         }
         clearTheListOfActiveFormattingElementsUpToTheLastMarker();
         phase = Phase.IN_ROW;
@@ -2372,7 +2372,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (eltPos != currentPtr) {
             err("Unclosed elements.");
             while(currentPtr > eltPos) { // > not >= intentional
-                popCurrentNode();
+                pop();
             }
         }
     }
@@ -2443,11 +2443,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             err("Unclosed elements.");
         }
         while (currentPtr >= eltPos) {
-            popCurrentNode();
+            pop();
         }
     }
 
-    private void push(StackNode<T> node) {
+    private void push(StackNode<T> node) throws SAXException {
         currentPtr++;
         if (currentPtr == stack.length) {
             StackNode<T>[] newStack = new StackNode[stack.length + 64];
@@ -2455,6 +2455,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             stack = newStack;
         }
         stack[currentPtr] = node;
+        elementPushed(node.name, node.node);
     }
 
     private void append(StackNode<T> node) {
@@ -2493,13 +2494,13 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private void removeFromStack(int pos) throws SAXException {
         if (currentPtr == pos) {
-            popCurrentNode();
+            pop();
         } else {
             if (conformingAndStreaming) {
                 fatal();
             } else if (nonConformingAndStreaming) {
                 while (currentPtr >= pos) {
-                    popCurrentNode();
+                    pop();
                 }
             } else {
                 System.arraycopy(stack, pos + 1, stack, pos, currentPtr - pos);
@@ -2510,7 +2511,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     
     private void removeFromStack(StackNode<T> node) throws SAXException {
         if (stack[currentPtr] == node) {
-            popCurrentNode();
+            pop();
         } else {
             int pos = currentPtr - 1;
             while (pos >= 0 && stack[pos] != node) {
@@ -2524,7 +2525,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 fatal();
             } else if (nonConformingAndStreaming) {
                 while (currentPtr >= pos) {
-                    popCurrentNode();
+                    pop();
                 }
             } else {
                 System.arraycopy(stack, pos + 1, stack, pos, currentPtr - pos);
@@ -2596,7 +2597,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             if (furthestBlockPos > currentPtr) {
                 // no furthest block
                 while (currentPtr >= formattingEltStackPos) {
-                    popCurrentNode();
+                    pop();
                 }
                 removeFromListOfActiveFormattingElements(formattingEltListPos);
                 return;
@@ -2729,12 +2730,12 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
     }
 
-    private void pushHeadPointerOntoStack() {
+    private void pushHeadPointerOntoStack() throws SAXException {
         push(new StackNode<T>("head", headPointer));
     }
 
     private void appendHtmlElementToDocument(Attributes attributes) throws SAXException {
-        T elt = createHtmlElementSetAsRootAndPush(attributes);
+        T elt = createHtmlElementSetAsRoot(attributes);
         StackNode<T> node = new StackNode<T>("html", elt);
         push(node);
     }
@@ -2809,10 +2810,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         return false;
     }
 
-    private void popCurrentNode() throws SAXException {
+    private void pop() throws SAXException {
         StackNode<T> node = stack[currentPtr];
         currentPtr--;
-        elementPopped(node.name, stack[currentPtr].node);
+        elementPopped(node.name, node.node);
     }
 
     private void appendToCurrentNodeAndPushHeadElement(
@@ -2866,20 +2867,16 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     protected void createElementAppendToCurrent(String name,
             Attributes attributes, T form) throws SAXException {
         createElementAppendToCurrentAndPush(name, attributes, form);
-        elementPopped(name, stack[currentPtr].node);
     }
     
     protected void createElementAppendToCurrent(String name, Attributes attributes) throws SAXException {
         createElementAppendToCurrentAndPush(name, attributes);
-        elementPopped(name, stack[currentPtr].node);    
     }
 
     protected abstract T createElementAppendToCurrentAndPush(String name,
             Attributes attributes) throws SAXException;
     
-    protected abstract void elementPopped(String poppedElemenName, T newCurrentNode) throws SAXException;
-
-    protected abstract T createHtmlElementSetAsRootAndPush(Attributes attributes) throws SAXException;
+    protected abstract T createHtmlElementSetAsRoot(Attributes attributes) throws SAXException;
     
     protected abstract void detachFromParent(T element) throws SAXException;
 
@@ -2919,10 +2916,18 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
     
     protected void appendDoctypeToDocument(String name,
-            String publicIdentifier, String systemIdentifier) {
+            String publicIdentifier, String systemIdentifier) throws SAXException {
         
     }
     
+    protected void elementPushed(String name, T node) throws SAXException {
+        
+    }
+
+    protected void elementPopped(String name, T node) throws SAXException {
+        
+    }
+
     /**
      * @see nu.validator.htmlparser.TokenHandler#wantsComments()
      */
@@ -2937,4 +2942,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         this.errorHandler = errorHandler;
     }
 
+    protected T currentNode() {
+        return stack[currentPtr].node;
+    }
 }
