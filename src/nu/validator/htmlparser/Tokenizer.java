@@ -3644,7 +3644,12 @@ public final class Tokenizer implements Locator {
                              * attribute, and the last character matched is not
                              * a U+003B SEMICOLON (;),
                              */
-                            c = read();
+                            if (strBufMark == strBufLen) {
+                                c = read();
+                                unread(c);
+                            } else {
+                                c = strBuf[strBufMark];
+                            }
                             if ((c >= '0' && c <= '9')
                                     || (c >= 'A' && c <= 'Z')
                                     || (c >= 'a' && c <= 'z')) {
@@ -3659,10 +3664,8 @@ public final class Tokenizer implements Locator {
                                  * must be unconsumed, and nothing is returned.
                                  */
                                 appendStrBufToLongStrBuf();
-                                unread(c);
                                 return;
                             }
-                            unread(c);
                         }
                     }
 
