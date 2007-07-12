@@ -1113,7 +1113,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         if (nonConformingAndStreaming) {
                             pushHeadPointerOntoStack();
                         }
-                        appendToCurrentNodeAndPushElement(name, attributes);
+                        appendToCurrentNodeAndPushElementMayFoster(name, attributes);
                         cdataOrRcdataTimesToPop = nonConformingAndStreaming ? 1
                                 : 2; // pops head
                         tokenizer.setContentModelFlag(ContentModelFlag.RCDATA,
@@ -1132,11 +1132,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             || "menu" == name || "center" == name
                             || "dir" == name || "listing" == name) {
                         implicitlyCloseP();
-                        appendToCurrentNodeAndPushElement(name, attributes);
+                        appendToCurrentNodeAndPushElementMayFoster(name, attributes);
                         return;
                     } else if ("pre" == name) {
                         implicitlyCloseP();
-                        appendToCurrentNodeAndPushElement(name, attributes);
+                        appendToCurrentNodeAndPushElementMayFoster(name, attributes);
                         needToDropLF = true;
                         return;
                     } else if ("form" == name) {
@@ -1145,7 +1145,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             return;
                         } else {
                             implicitlyCloseP();
-                            appendToCurrentNodeAndPushFormElement(attributes);
+                            appendToCurrentNodeAndPushFormElementMayFoster(attributes);
                             return;
                         }
                     } else if ("li" == name) {
@@ -1157,7 +1157,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         while (currentPtr >= eltPos) {
                             pop();
                         }
-                        appendToCurrentNodeAndPushElement(name, attributes);
+                        appendToCurrentNodeAndPushElementMayFoster(name, attributes);
                         return;
                     } else if ("dd" == name || "dt" == name) {
                         implicitlyCloseP();
@@ -1168,11 +1168,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         while (currentPtr >= eltPos) {
                             pop();
                         }
-                        appendToCurrentNodeAndPushElement(name, attributes);
+                        appendToCurrentNodeAndPushElementMayFoster(name, attributes);
                         return;
                     } else if ("plaintext" == name) {
                         implicitlyCloseP();
-                        appendToCurrentNodeAndPushElement(name, attributes);
+                        appendToCurrentNodeAndPushElementMayFoster(name, attributes);
                         tokenizer.setContentModelFlag(
                                 ContentModelFlag.PLAINTEXT, name);
                         return;
@@ -1189,7 +1189,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             }
                         }
                         reconstructTheActiveFormattingElements();
-                        appendToCurrentNodeAndPushFormattingElement(name,
+                        appendToCurrentNodeAndPushFormattingElementMayFoster(name,
                                 attributes);
                         return;
                     } else if ("i" == name || "b" == name || "em" == name
@@ -1197,7 +1197,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             || "big" == name || "s" == name || "small" == name
                             || "strike" == name || "tt" == name || "u" == name) {
                         reconstructTheActiveFormattingElements();
-                        appendToCurrentNodeAndPushFormattingElement(name,
+                        appendToCurrentNodeAndPushFormattingElementMayFoster(name,
                                 attributes);
                         return;
                     } else if ("nobr" == name) {
@@ -1206,7 +1206,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             err("\u201Cnobr\u201D start tag seen when there was an open \u201Cnobr\u201D element in scope.");
                             adoptionAgencyEndTag("nobr");
                         }
-                        appendToCurrentNodeAndPushFormattingElement(name,
+                        appendToCurrentNodeAndPushFormattingElementMayFoster(name,
                                 attributes);
                         return;
                     } else if ("button" == name) {
@@ -1224,25 +1224,26 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             continue;
                         } else {
                             reconstructTheActiveFormattingElements();
-                            appendToCurrentNodeAndPushElement(name, attributes);
+                            // XXX form
+                            appendToCurrentNodeAndPushElementMayFoster(name, attributes);
                             insertMarker();
                             return;
                         }
                     } else if ("object" == name || "marquee" == name) {
                         reconstructTheActiveFormattingElements();
-                        appendToCurrentNodeAndPushElement(name, attributes);
+                        appendToCurrentNodeAndPushElementMayFoster(name, attributes);
                         insertMarker();
                         return;
                     } else if ("xmp" == name) {
                         reconstructTheActiveFormattingElements();
-                        appendToCurrentNodeAndPushElement(name, attributes);
+                        appendToCurrentNodeAndPushElementMayFoster(name, attributes);
                         cdataOrRcdataTimesToPop = 1;
                         tokenizer.setContentModelFlag(ContentModelFlag.CDATA,
                                 name);
                         return;
                     } else if ("table" == name) {
                         implicitlyCloseP();
-                        appendToCurrentNodeAndPushElement(name, attributes);
+                        appendToCurrentNodeAndPushElementMayFoster(name, attributes);
                         phase = Phase.IN_TABLE;
                         return;
                     } else if ("br" == name || "img" == name || "embed" == name
@@ -1250,11 +1251,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             || "basefont" == name || "bgsound" == name
                             || "spacer" == name || "wbr" == name) {
                         reconstructTheActiveFormattingElements();
-                        createElementAppendToCurrent(name, attributes);
+                        appendVoidElementToCurrentMayFoster(name, attributes);
                         return;
                     } else if ("hr" == name) {
                         implicitlyCloseP();
-                        createElementAppendToCurrent(name, attributes);
+                        appendVoidElementToCurrentMayFoster(name, attributes);
                         return;
                     } else if ("image" == name) {
                         err("Saw a start tag \u201Cimage\201D.");
@@ -1262,7 +1263,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         continue;
                     } else if ("input" == name) {
                         reconstructTheActiveFormattingElements();
-                        createElementAppendToCurrent(name, attributes, formPointer);
+                        appendVoidElementToCurrentMayFoster(name, attributes, formPointer);
                         return;
                     } else if ("isindex" == name) {
                         err("\u201Cisindex\201D seen.");
@@ -1276,11 +1277,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             formAttrs.addAttribute("action",
                                     attributes.getValue(actionIndex));
                         }
-                        appendToCurrentNodeAndPushFormElement(formAttrs);
-                        createElementAppendToCurrent("hr", EmptyAttributes.EMPTY_ATTRIBUTES);
-                        appendToCurrentNodeAndPushElement("p",
+                        appendToCurrentNodeAndPushFormElementMayFoster(formAttrs);
+                        appendVoidElementToCurrentMayFoster("hr", EmptyAttributes.EMPTY_ATTRIBUTES);
+                        appendToCurrentNodeAndPushElementMayFoster("p",
                                 EmptyAttributes.EMPTY_ATTRIBUTES);
-                        appendToCurrentNodeAndPushElement("label",
+                        appendToCurrentNodeAndPushElementMayFoster("label",
                                 EmptyAttributes.EMPTY_ATTRIBUTES);
                         int promptIndex = attributes.getIndex("prompt");
                         if (promptIndex > -1) {
@@ -1301,15 +1302,15 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         attributes.getValue(i));
                             }
                         }
-                        createElementAppendToCurrent("input", inputAttributes, formPointer);
+                        appendVoidElementToCurrentMayFoster("input", inputAttributes, formPointer);
                         // XXX localization
                         pop(); // label
                         pop(); // p
-                        createElementAppendToCurrent("hr", EmptyAttributes.EMPTY_ATTRIBUTES);
+                        appendVoidElementToCurrentMayFoster("hr", EmptyAttributes.EMPTY_ATTRIBUTES);
                         pop(); // form
                         return;
                     } else if ("textarea" == name) {
-                        appendToCurrentNodeAndPushElementWithFormPointer(name, attributes);
+                        appendToCurrentNodeAndPushElementMayFoster(name, attributes, formPointer);
                         tokenizer.setContentModelFlag(ContentModelFlag.RCDATA,
                                 name);
                         cdataOrRcdataTimesToPop = 1;
@@ -1318,7 +1319,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     } else if ("iframe" == name || "noembed" == name
                             || "noframes" == name
                             || ("noscript" == name && scriptingEnabled)) {
-                        appendToCurrentNodeAndPushElement(name, attributes);
+                        appendToCurrentNodeAndPushElementMayFoster(name, attributes);
                         cdataOrRcdataTimesToPop = 1;
                         tokenizer.setContentModelFlag(ContentModelFlag.CDATA,
                                 name);
@@ -1326,7 +1327,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     } else if ("select" == name) {
                         reconstructTheActiveFormattingElements();
                         // XXX form pointer
-                        appendToCurrentNodeAndPushElement(name, attributes);
+                        appendToCurrentNodeAndPushElementMayFoster(name, attributes);
                         phase = Phase.IN_SELECT;
                         return;
                     } else if ("caption" == name || "col" == name
@@ -1340,7 +1341,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         return;
                     } else {
                         reconstructTheActiveFormattingElements();
-                        appendToCurrentNodeAndPushElement(name, attributes);
+                        appendToCurrentNodeAndPushElementMayFoster(name, attributes);
                         return;
                     }
                 case IN_HEAD:
@@ -1349,7 +1350,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         addAttributesToElement(stack[0].node, attributes);
                         return;
                     } else if ("base" == name) {
-                        createElementAppendToCurrent(name, attributes);
+                        appendVoidElementToCurrentMayFoster(name, attributes);
                         return;
                     } else if ("meta" == name || "link" == name) {
                         // Fall through to IN_HEAD_NOSCRIPT
@@ -1395,11 +1396,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         addAttributesToElement(stack[0].node, attributes);
                         return;
                     } else if ("link" == name) {
-                        createElementAppendToCurrent(name, attributes);
+                        appendVoidElementToCurrentMayFoster(name, attributes);
                         return;
                     } else if ("meta" == name) {
                         // XXX do charset stuff
-                        createElementAppendToCurrent(name, attributes);
+                        appendVoidElementToCurrentMayFoster(name, attributes);
                         return;
                     } else if ("style" == name) {
                         appendToCurrentNodeAndPushElement(name, attributes);
@@ -1425,7 +1426,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         addAttributesToElement(stack[0].node, attributes);
                         return;
                     } else if ("col" == name) {
-                        createElementAppendToCurrent(name, attributes);
+                        appendVoidElementToCurrentMayFoster(name, attributes);
                         return;
                     } else {
                         if (currentPtr == 0) {
@@ -1490,7 +1491,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         appendToCurrentNodeAndPushElement(name, attributes);
                         return;
                     } else if ("frame" == name) {
-                        createElementAppendToCurrent(name, attributes);
+                        appendVoidElementToCurrentMayFoster(name, attributes);
                         return;
                     } else {
                         // fall through to AFTER_FRAMESET
@@ -1627,7 +1628,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         if (nonConformingAndStreaming) {
                             pushHeadPointerOntoStack();
                         }
-                        createElementAppendToCurrent(name, attributes);
+                        appendVoidElementToCurrentMayFoster(name, attributes);
                         if (nonConformingAndStreaming) {
                             pop(); // head
                         }
@@ -1637,7 +1638,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         if (nonConformingAndStreaming) {
                             pushHeadPointerOntoStack();
                         }
-                        createElementAppendToCurrent(name, attributes);
+                        appendVoidElementToCurrentMayFoster(name, attributes);
                         if (nonConformingAndStreaming) {
                             pop(); // head
                         }
@@ -1648,7 +1649,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         if (nonConformingAndStreaming) {
                             pushHeadPointerOntoStack();
                         }
-                        createElementAppendToCurrent(name, attributes);
+                        appendVoidElementToCurrentMayFoster(name, attributes);
                         if (nonConformingAndStreaming) {
                             pop(); // head
                         }
@@ -1950,7 +1951,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                 pop();
                             }
                         } else {
-                            createElementAppendToCurrent(name, EmptyAttributes.EMPTY_ATTRIBUTES);
+                            appendVoidElementToCurrentMayFoster(name, EmptyAttributes.EMPTY_ATTRIBUTES);
                         }
                         return;
                     } else if ("dd" == name || "dt" == name || "li" == name) {
@@ -2706,11 +2707,13 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         return NOT_FOUND_ON_STACK;
     }
 
-    private void appendToCurrentNodeAndPushFormElement(Attributes attributes) throws SAXException {
-        T elt = createElementAppendToCurrentAndPush("form", attributes);
-        formPointer = elt;
-        StackNode<T> node = new StackNode<T>("form", elt);
-        push(node);
+    private int findLastOrRoot(String name) {
+        for (int i = currentPtr; i > 0; i--) {
+            if (stack[i].name == name) {
+                return i;
+            }
+        }
+        return 0;
     }
 
     private void addAttributesToBody(Attributes attributes) throws SAXException {
@@ -2807,23 +2810,20 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         StackNode<T> node = new StackNode<T>("html", elt);
         push(node);
     }
-    
-    private void appendToCurrentNodeAndPushFormattingElement(String name,
-            Attributes attributes) throws SAXException {
-        T elt = createElement(name, attributes);
-        StackNode<T> node = new StackNode<T>(name, elt);
-        push(node);
-        append(node);
+
+    private void appendHtmlElementToDocument() throws SAXException {
+        appendHtmlElementToDocumentAndPush(tokenizer.newAttributes());
     }
 
     private void appendToCurrentNodeAndPushHeadElement(
             Attributes attributes) throws SAXException {
         T elt = createElement("head", attributes);
+        detachFromParentAndAppendToNewParent(elt, stack[currentPtr].node);
         headPointer = elt;
         StackNode<T> node = new StackNode<T>("head", elt);
         push(node);
     }
-
+    
     private void appendToCurrentNodeAndPushBodyElement(
             Attributes attributes) throws SAXException {
         appendToCurrentNodeAndPushElement("body", attributes);
@@ -2833,52 +2833,55 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         appendToCurrentNodeAndPushBodyElement(tokenizer.newAttributes());
     }
 
+    private void appendToCurrentNodeAndPushFormElementMayFoster(Attributes attributes) throws SAXException {
+        T elt = createElement("form", attributes);
+        detachFromParentAndAppendToNewParent(elt, stack[currentPtr].node);
+        formPointer = elt;
+        StackNode<T> node = new StackNode<T>("form", elt);
+        push(node);
+    }
+    
+    private void appendToCurrentNodeAndPushFormattingElementMayFoster(String name,
+            Attributes attributes) throws SAXException {
+        T elt = createElement(name, attributes);
+        detachFromParentAndAppendToNewParent(elt, stack[currentPtr].node);
+        StackNode<T> node = new StackNode<T>(name, elt);
+        push(node);
+        append(node);
+    }
+
     private void appendToCurrentNodeAndPushElement(String name,
             Attributes attributes) throws SAXException {
-        T elt = createElementAppendToCurrentAndPush(name, attributes);
+        T elt = createElement(name, attributes);
+        detachFromParentAndAppendToNewParent(elt, stack[currentPtr].node);
         StackNode<T> node = new StackNode<T>(name, elt);
         push(node);        
     }
 
-    private void appendHtmlElementToDocument() throws SAXException {
-        appendHtmlElementToDocumentAndPush(tokenizer.newAttributes());
-    }
-
-    private void appendToCurrentNodeAndPushElementWithFormPointer(String name, Attributes attributes) throws SAXException {
-        T elt = createElement(name, attributes, formPointer);
-        StackNode<T> node = new StackNode<T>(name, elt);
-        push(node);
-    }
-
-    private int findLastOrRoot(String name) {
-        for (int i = currentPtr; i > 0; i--) {
-            if (stack[i].name == name) {
-                return i;
-            }
-        }
-        return 0;
-    }
-    
-    protected T createElementAppendToCurrentAndPush(String name,
-            Attributes attributes, T form) throws SAXException {
-        return createElementAppendToCurrentAndPush(name, attributes);
-    }
-
-    protected void createElementAppendToCurrent(String name,
-            Attributes attributes, T form) throws SAXException {
-        createElementAppendToCurrentAndPush(name, attributes, form);
-    }
-    
-    protected void createElementAppendToCurrent(String name, Attributes attributes) throws SAXException {
-        createElementAppendToCurrentAndPush(name, attributes);
-    }
-
-    private T createElementAppendToCurrentAndPush(String name,
+    private void appendToCurrentNodeAndPushElementMayFoster(String name,
             Attributes attributes) throws SAXException {
         T elt = createElement(name, attributes);
+        detachFromParentAndAppendToNewParent(elt, stack[currentPtr].node);
+        StackNode<T> node = new StackNode<T>(name, elt);
+        push(node);        
+    }
+    
+    private void appendToCurrentNodeAndPushElementMayFoster(String name, Attributes attributes, T form) throws SAXException {
+        T elt = createElement(name, attributes, formPointer);
+        detachFromParentAndAppendToNewParent(elt, stack[currentPtr].node);
         StackNode<T> node = new StackNode<T>(name, elt);
         push(node);
-        return elt;
+    }
+
+    private void appendVoidElementToCurrentMayFoster(String name,
+            Attributes attributes, T form) throws SAXException {
+        T elt = createElement(name, attributes, form);
+        detachFromParentAndAppendToNewParent(elt, stack[currentPtr].node);
+    }
+    
+    private void appendVoidElementToCurrentMayFoster(String name, Attributes attributes) throws SAXException {
+        T elt = createElement(name, attributes);
+        detachFromParentAndAppendToNewParent(elt, stack[currentPtr].node);
     }
     
     // ------------------------------- //
@@ -2928,11 +2931,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         
     }
 
-    protected void bodyClosed() throws SAXException {
+    protected void bodyClosed(T body) throws SAXException {
         
     }
 
-    protected void htmlClosed() throws SAXException {
+    protected void htmlClosed(T html) throws SAXException {
         
     }
     

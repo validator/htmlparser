@@ -73,14 +73,6 @@ public class SAXTreeBuilder extends TreeBuilder<Element> {
     }
 
     @Override
-    protected Element createElementAppendToCurrentAndPush(String name,
-            Attributes attributes) {
-        Element newElt = new Element(tokenizer, "http://www.w3.org/1999/xhtml", name, name, attributes, true, null);
-        currentNode().appendChild(newElt);
-        return newElt;
-    }
-
-    @Override
     protected void appendCharactersToCurrentNode(char[] buf, int start, int length) {
         currentNode().appendChild(new Characters(tokenizer, buf, start, length));
     }
@@ -196,6 +188,11 @@ public class SAXTreeBuilder extends TreeBuilder<Element> {
     @Override
     protected void appendChildrenToNewParent(Element oldParent, Element newParent) throws SAXException {
         newParent.appendChildren(oldParent);
+    }
+
+    @Override
+    protected Element createElement(String name, Attributes attributes) throws SAXException {
+        return new Element(tokenizer, "http://www.w3.org/1999/xhtml", name, name, attributes, true, null);
     }
 
 }
