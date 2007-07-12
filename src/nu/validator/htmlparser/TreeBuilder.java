@@ -2835,16 +2835,34 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private void appendToCurrentNodeAndPushFormElementMayFoster(Attributes attributes) throws SAXException {
         T elt = createElement("form", attributes);
-        detachFromParentAndAppendToNewParent(elt, stack[currentPtr].node);
         formPointer = elt;
+        StackNode<T> current = stack[currentPtr];
+        if (current.fosterParenting) {
+            if (conformingAndStreaming) {
+                fatal();
+            } else if (!nonConformingAndStreaming) {
+                insertIntoFosterParent(elt);
+            }
+        } else {
+            detachFromParentAndAppendToNewParent(elt, current.node);
+        }
         StackNode<T> node = new StackNode<T>("form", elt);
         push(node);
     }
     
     private void appendToCurrentNodeAndPushFormattingElementMayFoster(String name,
             Attributes attributes) throws SAXException {
-        T elt = createElement(name, attributes);
-        detachFromParentAndAppendToNewParent(elt, stack[currentPtr].node);
+        T elt = createElement(name, attributes, formPointer);
+        StackNode<T> current = stack[currentPtr];
+        if (current.fosterParenting) {
+            if (conformingAndStreaming) {
+                fatal();
+            } else if (!nonConformingAndStreaming) {
+                insertIntoFosterParent(elt);
+            }
+        } else {
+            detachFromParentAndAppendToNewParent(elt, current.node);
+        }
         StackNode<T> node = new StackNode<T>(name, elt);
         push(node);
         append(node);
@@ -2861,27 +2879,63 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     private void appendToCurrentNodeAndPushElementMayFoster(String name,
             Attributes attributes) throws SAXException {
         T elt = createElement(name, attributes);
-        detachFromParentAndAppendToNewParent(elt, stack[currentPtr].node);
+        StackNode<T> current = stack[currentPtr];
+        if (current.fosterParenting) {
+            if (conformingAndStreaming) {
+                fatal();
+            } else if (!nonConformingAndStreaming) {
+                insertIntoFosterParent(elt);
+            }
+        } else {
+            detachFromParentAndAppendToNewParent(elt, current.node);
+        }
         StackNode<T> node = new StackNode<T>(name, elt);
-        push(node);        
+        push(node);
     }
     
     private void appendToCurrentNodeAndPushElementMayFoster(String name, Attributes attributes, T form) throws SAXException {
         T elt = createElement(name, attributes, formPointer);
-        detachFromParentAndAppendToNewParent(elt, stack[currentPtr].node);
+        StackNode<T> current = stack[currentPtr];
+        if (current.fosterParenting) {
+            if (conformingAndStreaming) {
+                fatal();
+            } else if (!nonConformingAndStreaming) {
+                insertIntoFosterParent(elt);
+            }
+        } else {
+            detachFromParentAndAppendToNewParent(elt, current.node);
+        }
         StackNode<T> node = new StackNode<T>(name, elt);
         push(node);
     }
 
     private void appendVoidElementToCurrentMayFoster(String name,
             Attributes attributes, T form) throws SAXException {
-        T elt = createElement(name, attributes, form);
-        detachFromParentAndAppendToNewParent(elt, stack[currentPtr].node);
+        T elt = createElement(name, attributes, formPointer);
+        StackNode<T> current = stack[currentPtr];
+        if (current.fosterParenting) {
+            if (conformingAndStreaming) {
+                fatal();
+            } else if (!nonConformingAndStreaming) {
+                insertIntoFosterParent(elt);
+            }
+        } else {
+            detachFromParentAndAppendToNewParent(elt, current.node);
+        }
     }
     
     private void appendVoidElementToCurrentMayFoster(String name, Attributes attributes) throws SAXException {
         T elt = createElement(name, attributes);
-        detachFromParentAndAppendToNewParent(elt, stack[currentPtr].node);
+        StackNode<T> current = stack[currentPtr];
+        if (current.fosterParenting) {
+            if (conformingAndStreaming) {
+                fatal();
+            } else if (!nonConformingAndStreaming) {
+                insertIntoFosterParent(elt);
+            }
+        } else {
+            detachFromParentAndAppendToNewParent(elt, current.node);
+        }
     }
     
     // ------------------------------- //
