@@ -1148,7 +1148,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         needToDropLF = true;
                         return;
                     } else if ("form" == name) {
-                        if (formPointer == null) {
+                        if (formPointer != null) {
                             err("Saw a \u201Cform\u201D start tag, but there was already an active \u201Cform\u201D element.");
                             return;
                         } else {
@@ -2072,8 +2072,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             pop();
                         } else {
                             err("Stray end tag \u201Coptgroup\u201D");
-                            return;                            
                         }
+                        return;                            
                     } else if ("select" == name) {
                         int eltPos = findLastInTableScope("select");
                         if (eltPos == NOT_FOUND_ON_STACK) {

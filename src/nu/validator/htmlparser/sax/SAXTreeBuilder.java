@@ -22,6 +22,7 @@
 
 package nu.validator.htmlparser.sax;
 
+import nu.validator.htmlparser.AttributesImpl;
 import nu.validator.htmlparser.TreeBuilder;
 import nu.validator.htmlparser.XmlViolationPolicy;
 import nu.validator.saxtree.Characters;
@@ -121,8 +122,13 @@ public class SAXTreeBuilder extends TreeBuilder<Element> {
 
     @Override
     protected void addAttributesToElement(Element element, Attributes attributes) {
-        // TODO Auto-generated method stub
-        
+        AttributesImpl existingAttrs = (AttributesImpl) element.getAttributes();
+        for (int i = 0; i < attributes.getLength(); i++) {
+            String qName = attributes.getQName(i);
+            if (existingAttrs.getIndex(qName) < 0) {
+                existingAttrs.addAttribute(qName, attributes.getValue(i));
+            }
+        }
     }
 
     /**
