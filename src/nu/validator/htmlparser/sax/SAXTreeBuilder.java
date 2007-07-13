@@ -190,4 +190,9 @@ public class SAXTreeBuilder extends TreeBuilder<Element> {
         return new Element(tokenizer, "http://www.w3.org/1999/xhtml", name, name, attributes, true, null);
     }
 
+    @Override
+    protected void insertCharactersBefore(char[] buf, int start, int length, Element sibling, Element parent) throws SAXException {
+        parent.insertBefore(new Characters(tokenizer, buf, start, length), sibling);        
+    }
+
 }
