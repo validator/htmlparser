@@ -626,9 +626,9 @@ public final class Tokenizer implements Locator {
         if (strBufLen == strBuf.length) {
             char[] newBuf = new char[strBuf.length + BUFFER_GROW_BY];
             System.arraycopy(strBuf, 0, newBuf, 0, strBuf.length);
-        } else {
-            strBuf[strBufLen++] = c;
+            strBuf = newBuf;
         }
+        strBuf[strBufLen++] = c;
     }
 
     /**
@@ -670,9 +670,9 @@ public final class Tokenizer implements Locator {
         if (longStrBufLen == longStrBuf.length) {
             char[] newBuf = new char[longStrBuf.length + BUFFER_GROW_BY];
             System.arraycopy(longStrBuf, 0, newBuf, 0, longStrBuf.length);
-        } else {
-            longStrBuf[longStrBufLen++] = c;
+            longStrBuf = newBuf;
         }
+        longStrBuf[longStrBufLen++] = c;
     }
 
     /**
