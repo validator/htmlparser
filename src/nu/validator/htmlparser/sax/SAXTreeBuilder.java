@@ -53,8 +53,8 @@ public class SAXTreeBuilder extends TreeBuilder<Element> {
     }
     
     @Override
-    protected void appendCommentToCurrentNode(char[] buf, int length) {
-        currentNode().appendChild(new Comment(tokenizer, buf, 0, length));
+    protected void appendComment(Element parent, char[] buf, int length) {
+        parent.appendChild(new Comment(tokenizer, buf, 0, length));
     }
 
     @Override
@@ -63,18 +63,13 @@ public class SAXTreeBuilder extends TreeBuilder<Element> {
     }
 
     @Override
-    protected void appendCommentToRootElement(char[] buf, int length) {
-        rootElement.appendChild(new Comment(tokenizer, buf, 0, length));
-    }
-
-    @Override
     public boolean wantsComments() throws SAXException {
         return lexicalHandler != null;
     }
 
     @Override
-    protected void appendCharactersToCurrentNode(char[] buf, int start, int length) {
-        currentNode().appendChild(new Characters(tokenizer, buf, start, length));
+    protected void appendCharacters(Element parent, char[] buf, int start, int length) {
+        parent.appendChild(new Characters(tokenizer, buf, start, length));
     }
 
     @Override

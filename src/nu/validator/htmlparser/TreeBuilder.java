@@ -483,7 +483,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                      * comment token.
                      * 
                      */
-                    appendCommentToRootElement(buf, length);
+                    appendComment(stack[0].node, buf, length);
                     return;
                 default:
                     /*
@@ -492,7 +492,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                      * comment token.
                      * 
                      */
-                    appendCommentToCurrentNode(buf, length);
+                    appendComment(stack[currentPtr].node, buf, length);
                     return;
             }
         }
@@ -513,7 +513,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             }
             needToDropLF = false;
         } else if (cdataOrRcdataTimesToPop > 0) {
-            appendCharactersToCurrentNode(buf, start, length);
+            appendCharacters(stack[currentPtr].node, buf, start, length);
             return;
         }
 
@@ -521,7 +521,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (phase == Phase.IN_BODY || phase == Phase.IN_CELL
                 || phase == Phase.IN_CAPTION) {
             reconstructTheActiveFormattingElements();
-            appendCharactersToCurrentNode(buf, start, length);
+            appendCharacters(stack[currentPtr].node, buf, start, length);
             return;
         }
 
@@ -565,7 +565,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         case IN_CAPTION:
                             // XXX is this dead code?
                             if (start < i) {
-                                appendCharactersToCurrentNode(buf, start, i
+                                appendCharacters(stack[currentPtr].node, buf, start, i
                                         - start);
                                 start = i;
                             }
@@ -581,7 +581,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             break loop;
                         case AFTER_BODY:
                             if (start < i) {
-                                appendCharactersToCurrentNode(buf, start, i
+                                appendCharacters(stack[currentPtr].node, buf, start, i
                                         - start);
                                 start = i;
                             }
@@ -597,7 +597,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                 continue;
                             } else {
                                 if (start < i) {
-                                    appendCharactersToCurrentNode(buf, start, i
+                                    appendCharacters(stack[currentPtr].node, buf, start, i
                                             - start);
                                     start = i;
                                 }
@@ -651,7 +651,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                              * html, in the HTML namespace. Append it to the
                              * Document object.
                              */
-                            appendHtmlElementToDocument();
+                            appendHtmlElementToDocumentAndPush();
                             /* Switch to the main phase */
                             phase = Phase.BEFORE_HEAD;
                             /*
@@ -662,7 +662,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             continue;
                         case BEFORE_HEAD:
                             if (start < i) {
-                                appendCharactersToCurrentNode(buf, start, i
+                                appendCharacters(stack[currentPtr].node, buf, start, i
                                         - start);
                                 start = i;
                             }
@@ -683,7 +683,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             continue;
                         case IN_HEAD:
                             if (start < i) {
-                                appendCharactersToCurrentNode(buf, start, i
+                                appendCharacters(stack[currentPtr].node, buf, start, i
                                         - start);
                                 start = i;
                             }
@@ -700,7 +700,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             continue;
                         case IN_HEAD_NOSCRIPT:
                             if (start < i) {
-                                appendCharactersToCurrentNode(buf, start, i
+                                appendCharacters(stack[currentPtr].node, buf, start, i
                                         - start);
                                 start = i;
                             }
@@ -718,7 +718,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             continue;
                         case AFTER_HEAD:
                             if (start < i) {
-                                appendCharactersToCurrentNode(buf, start, i
+                                appendCharacters(stack[currentPtr].node, buf, start, i
                                         - start);
                                 start = i;
                             }
@@ -737,7 +737,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         case IN_CELL:
                         case IN_CAPTION:
                             if (start < i) {
-                                appendCharactersToCurrentNode(buf, start, i
+                                appendCharacters(stack[currentPtr].node, buf, start, i
                                         - start);
                                 start = i;
                             }
@@ -752,7 +752,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         case IN_TABLE_BODY:
                         case IN_ROW:
                             if (start < i) {
-                                appendCharactersToCurrentNode(buf, start, i
+                                appendCharacters(stack[currentPtr].node, buf, start, i
                                         - start);
                             }
                             reconstructTheActiveFormattingElements();
@@ -782,7 +782,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             continue;
                         case IN_FRAMESET:
                             if (start < i) {
-                                appendCharactersToCurrentNode(buf, start, i
+                                appendCharacters(stack[currentPtr].node, buf, start, i
                                         - start);
                                 start = i;
                             }
@@ -797,7 +797,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             continue;
                         case AFTER_FRAMESET:
                             if (start < i) {
-                                appendCharactersToCurrentNode(buf, start, i
+                                appendCharacters(stack[currentPtr].node, buf, start, i
                                         - start);
                                 start = i;
                             }
@@ -826,7 +826,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             }
         }
         if (start < end) {
-            appendCharactersToCurrentNode(buf, start, end - start);
+            appendCharacters(stack[currentPtr].node, buf, start, end - start);
         }
     }
 
@@ -861,7 +861,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                          * Create an HTMLElement node with the tag name html, in
                          * the HTML namespace. Append it to the Document object.
                          */
-                        appendHtmlElementToDocument();
+                        appendHtmlElementToDocumentAndPush();
                         /* Switch to the main phase */
                         phase = Phase.BEFORE_HEAD;
                         /*
@@ -1118,7 +1118,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         // Fall through to IN_HEAD
                     } else if ("title" == name) {
                         err("\u201Ctitle\u201D element found inside \u201Cbody\201D.");
-                        if (nonConformingAndStreaming) {
+                        if (!nonConformingAndStreaming) {
                             pushHeadPointerOntoStack();
                         }
                         appendToCurrentNodeAndPushElementMayFoster(name, attributes);
@@ -1294,12 +1294,12 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         int promptIndex = attributes.getIndex("prompt");
                         if (promptIndex > -1) {
                             char[] prompt = attributes.getValue(promptIndex).toCharArray();
-                            appendCharactersToCurrentNode(prompt, 0,
-                                    prompt.length);
+                            appendCharacters(stack[currentPtr].node, prompt,
+                                    0, prompt.length);
                         } else {
                             // XXX localization
-                            appendCharactersToCurrentNode(ISINDEX_PROMPT, 0,
-                                    ISINDEX_PROMPT.length);
+                            appendCharacters(stack[currentPtr].node, ISINDEX_PROMPT,
+                                    0, ISINDEX_PROMPT.length);
                         }
                         AttributesImpl inputAttributes = tokenizer.newAttributes();
                         for (int i = 0; i < attributes.getLength(); i++) {
@@ -1547,7 +1547,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         if (attributes.getLength() == 0) {
                             // This has the right magic side effect that it
                             // makes attributes in SAX Tree mutable.
-                            appendHtmlElementToDocument();
+                            appendHtmlElementToDocumentAndPush();
                         } else {
                             appendHtmlElementToDocumentAndPush(attributes);
                         }
@@ -1558,7 +1558,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                          * Create an HTMLElement node with the tag name html, in
                          * the HTML namespace. Append it to the Document object.
                          */
-                        appendHtmlElementToDocument();
+                        appendHtmlElementToDocumentAndPush();
                         /* Switch to the main phase */
                         phase = Phase.BEFORE_HEAD;
                         /*
@@ -1633,38 +1633,38 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         return;
                     } else if ("base" == name) {
                         err("\u201Cbase\u201D element outside \u201Chead\u201D.");
-                        if (nonConformingAndStreaming) {
+                        if (!nonConformingAndStreaming) {
                             pushHeadPointerOntoStack();
                         }
                         appendVoidElementToCurrentMayFoster(name, attributes);
-                        if (nonConformingAndStreaming) {
+                        if (!nonConformingAndStreaming) {
                             pop(); // head
                         }
                         return;
                     } else if ("link" == name) {
                         err("\u201Clink\u201D element outside \u201Chead\u201D.");
-                        if (nonConformingAndStreaming) {
+                        if (!nonConformingAndStreaming) {
                             pushHeadPointerOntoStack();
                         }
                         appendVoidElementToCurrentMayFoster(name, attributes);
-                        if (nonConformingAndStreaming) {
+                        if (!nonConformingAndStreaming) {
                             pop(); // head
                         }
                         return;
                     } else if ("meta" == name) {
                         err("\u201Cmeta\u201D element outside \u201Chead\u201D.");
                         // XXX do chaset stuff
-                        if (nonConformingAndStreaming) {
+                        if (!nonConformingAndStreaming) {
                             pushHeadPointerOntoStack();
                         }
                         appendVoidElementToCurrentMayFoster(name, attributes);
-                        if (nonConformingAndStreaming) {
+                        if (!nonConformingAndStreaming) {
                             pop(); // head
                         }
                         return;
                     } else if ("script" == name) {
                         err("\u201Cscript\u201D element between \u201Chead\u201D and \u201Cbody\u201D.");
-                        if (nonConformingAndStreaming) {
+                        if (!nonConformingAndStreaming) {
                             pushHeadPointerOntoStack();
                         }
                         appendToCurrentNodeAndPushElement(name, attributes);
@@ -1675,7 +1675,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         return;
                     } else if ("style" == name) {
                         err("\u201Cstyle\u201D element between \u201Chead\u201D and \u201Cbody\u201D.");
-                        if (nonConformingAndStreaming) {
+                        if (!nonConformingAndStreaming) {
                             pushHeadPointerOntoStack();
                         }
                         appendToCurrentNodeAndPushElement(name, attributes);
@@ -1686,7 +1686,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         return;
                     } else if ("title" == name) {
                         err("\u201Ctitle\u201D element outside \u201Chead\u201D.");
-                        if (nonConformingAndStreaming) {
+                        if (!nonConformingAndStreaming) {
                             pushHeadPointerOntoStack();
                         }
                         appendToCurrentNodeAndPushElement(name, attributes);
@@ -2151,7 +2151,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                      * Create an HTMLElement node with the tag name html, in the
                      * HTML namespace. Append it to the Document object.
                      */
-                    appendHtmlElementToDocument();
+                    appendHtmlElementToDocumentAndPush();
                     /* Switch to the main phase */
                     phase = Phase.BEFORE_HEAD;
                     /*
@@ -2492,7 +2492,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     private void clearTheListOfActiveFormattingElementsUpToTheLastMarker() {
-        for (;;) {
+        while (listPtr > -1) {
             if (listOfActiveFormattingElements[listPtr--] == MARKER) {
                 return;
             }
@@ -2656,17 +2656,21 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             insertIntoListOfActiveFormattingElements(formattingClone, bookmark);
             assert formattingEltStackPos < furthestBlockPos;
             removeFromStack(formattingEltStackPos);
-            insertIntoStack(formattingClone, furthestBlockPos + 1);
+            // furthestBlockPos is now off by one and points to the slot after it
+            insertIntoStack(formattingClone, furthestBlockPos);
         }
     }
 
-    private void insertIntoStack(StackNode<T> formattingClone, int position) {
+    private void insertIntoStack(StackNode<T> node, int position) throws SAXException {
         assert currentPtr + 1 < stack.length;
-        if (position <= currentPtr) {
-            System.arraycopy(listOfActiveFormattingElements, position, listOfActiveFormattingElements, position + 1, (currentPtr - position) + 1);
+        assert position <= currentPtr + 1;
+        if (position == currentPtr + 1) {
+            push(node);
+        } else {
+            System.arraycopy(stack, position, stack, position + 1, (currentPtr - position) + 1);
+            currentPtr++;
+            stack[position] = node;        
         }
-        currentPtr++;
-        listOfActiveFormattingElements[position] = formattingClone;        
     }
 
     private void insertIntoListOfActiveFormattingElements(StackNode<T> formattingClone, int bookmark) {
@@ -2743,6 +2747,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     private void pushHeadPointerOntoStack() throws SAXException {
+        if (conformingAndStreaming) {
+            fatal();
+        }
         push(new StackNode<T>("head", headPointer));
     }
 
@@ -2829,7 +2836,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         push(node);
     }
 
-    private void appendHtmlElementToDocument() throws SAXException {
+    private void appendHtmlElementToDocumentAndPush() throws SAXException {
         appendHtmlElementToDocumentAndPush(tokenizer.newAttributes());
     }
 
@@ -2996,15 +3003,13 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     
     protected abstract void insertBefore(T child, T sibling, T parent) throws SAXException;
     
-    protected abstract void appendCharactersToCurrentNode(char[] buf,
-            int start, int length) throws SAXException;
+    protected abstract void appendCharacters(T parent,
+            char[] buf, int start, int length) throws SAXException;
     
-    protected abstract void appendCommentToCurrentNode(char[] buf, int length) throws SAXException;
+    protected abstract void appendComment(T parent, char[] buf, int length) throws SAXException;
 
     protected abstract void appendCommentToDocument(char[] buf, int length) throws SAXException;
 
-    protected abstract void appendCommentToRootElement(char[] buf, int length) throws SAXException;
-    
     protected abstract void addAttributesToElement(T element, Attributes attributes) throws SAXException;
 
     protected void start() throws SAXException {
