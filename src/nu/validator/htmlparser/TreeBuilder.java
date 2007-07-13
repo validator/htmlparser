@@ -1805,7 +1805,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         if (currentPtr != eltPos) {
                             err("There were unclosed elements.");
                         }
-                        if (currentPtr >= eltPos) {
+                        while (currentPtr >= eltPos) {
                             pop();
                         }
                         resetTheInsertionMode();
@@ -2003,7 +2003,12 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         }
                         clearTheListOfActiveFormattingElementsUpToTheLastMarker();
                         return;
-                    } else if ("area" == name || "basefont" == name || "bgsound" == name || "br" == name || "embed" == name || "hr" == name || "iframe" == name || "image" == name || "img" == name || "input" == name || "isindex" == name || "noembed" == name || "noframes" == name || "param" == name || "select" == name || "spacer" == name || "table" == name || "textarea" == name || "wbr" == name || (scriptingEnabled && "noscript" == name)) {
+                    } else if ("br" == name) {
+                        err("End tag \u201Cbr\u201D.");
+                        reconstructTheActiveFormattingElements();
+                        appendVoidElementToCurrentMayFoster(name, EmptyAttributes.EMPTY_ATTRIBUTES);
+                        return;
+                    } else if ("area" == name || "basefont" == name || "bgsound" == name || "embed" == name || "hr" == name || "iframe" == name || "image" == name || "img" == name || "input" == name || "isindex" == name || "noembed" == name || "noframes" == name || "param" == name || "select" == name || "spacer" == name || "table" == name || "textarea" == name || "wbr" == name || (scriptingEnabled && "noscript" == name)) {
                         err("Stray end tag \u201C" + name + "\u201D.");
                         return;
                     } else {
