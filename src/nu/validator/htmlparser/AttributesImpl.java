@@ -122,7 +122,7 @@ public class AttributesImpl implements Attributes {
         }
     }
 
-    final void addAttribute(String name, String value) {
+    public final void addAttribute(String name, String value) {
         if (array.length == limit) {
             String[] newArray = new String[array.length + 10]; // The first growth covers virtually 100% of elements according to Hixie
             System.arraycopy(array, 0, newArray, 0, array.length);
