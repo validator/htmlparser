@@ -1117,7 +1117,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             || "style" == name || "script" == name) {
                         // Fall through to IN_HEAD
                     } else if ("title" == name) {
-                        err("\u201Ctitle\u201D element found inside \u201Cbody\201D.");
+                        err("\u201Ctitle\u201D element found inside \u201Cbody\u201D.");
                         if (!nonConformingAndStreaming) {
                             pushHeadPointerOntoStack();
                         }
@@ -1266,7 +1266,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         appendVoidElementToCurrentMayFoster(name, attributes);
                         return;
                     } else if ("image" == name) {
-                        err("Saw a start tag \u201Cimage\201D.");
+                        err("Saw a start tag \u201Cimage\u201D.");
                         name = "img";
                         continue;
                     } else if ("input" == name) {
@@ -1274,8 +1274,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         appendVoidElementToCurrentMayFoster(name, attributes, formPointer);
                         return;
                     } else if ("isindex" == name) {
-                        err("\u201Cisindex\201D seen.");
-                        if (formPointer == null) {
+                        err("\u201Cisindex\u201D seen.");
+                        if (formPointer != null) {
                             return;
                         }
                         implicitlyCloseP();
@@ -1302,6 +1302,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     0, ISINDEX_PROMPT.length);
                         }
                         AttributesImpl inputAttributes = tokenizer.newAttributes();
+                        inputAttributes.addAttribute("name", "isindex");
                         for (int i = 0; i < attributes.getLength(); i++) {
                             String attributeQName = attributes.getQName(i);
                             if (!("name".equals(attributeQName)
