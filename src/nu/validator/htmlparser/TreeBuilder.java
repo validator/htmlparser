@@ -756,7 +756,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         - start);
                             }
                             reconstructTheActiveFormattingElements();
-                            appendCharToFosterParent(buf[i]);
+                            appendCharMayFoster(buf, i);
                             start = i + 1;
                             continue;
                         case IN_COLUMN_GROUP:
@@ -2825,11 +2825,32 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         elementPopped(node.name, node.node);
     }
 
-    private void appendCharToFosterParent(char c) {
-        // TODO Auto-generated method stub
-
+    private void appendCharMayFoster(char[] buf, int i) throws SAXException {
+        StackNode<T> current = stack[currentPtr];
+        if (current.fosterParenting) {
+            if (conformingAndStreaming) {
+                fatal();
+            } else if (nonConformingAndStreaming) {
+                return;
+            } else {
+                int eltPos = findLastOrRoot("table");
+                T elt = stack[eltPos].node;
+                if (eltPos == 0) {
+                    appendCharacters(elt, buf, i, 1);
+                    return;
+                }
+                T parent = parentElementFor(elt);
+                if (parent == null) {
+                    appendCharacters(stack[eltPos - 1].node, buf, i, 1);
+                } else {
+                    insertCharactersBefore(buf, i, 1, elt, parent);            
+                }
+            }
+        } else {
+            appendCharacters(current.node, buf, i, 1);
+        }
     }
-    
+
     private void appendHtmlElementToDocumentAndPush(Attributes attributes) throws SAXException {
         T elt = createHtmlElementSetAsRoot(attributes);
         StackNode<T> node = new StackNode<T>("html", elt);
@@ -3002,6 +3023,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     protected abstract T parentElementFor(T child) throws SAXException;
     
     protected abstract void insertBefore(T child, T sibling, T parent) throws SAXException;
+    
+    protected abstract void insertCharactersBefore(char[] buf, int start, int length, T sibling, T parent) throws SAXException;
     
     protected abstract void appendCharacters(T parent,
             char[] buf, int start, int length) throws SAXException;
