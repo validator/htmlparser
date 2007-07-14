@@ -3098,7 +3098,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         this.errorHandler = errorHandler;
     }
     
-    public final void setFragment(String context) {
+    public final void setFragmentContext(String context) {
         this.context = context.intern();
     }
     
