@@ -39,7 +39,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.ext.LexicalHandler;
 
-public class SAXTreeBuilder extends TreeBuilder<Element> {
+class SAXTreeBuilder extends TreeBuilder<Element> {
     
     private Document document;
     
