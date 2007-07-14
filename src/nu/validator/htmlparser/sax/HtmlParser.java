@@ -24,7 +24,9 @@ package nu.validator.htmlparser.sax;
 
 import java.io.IOException;
 
+import nu.validator.htmlparser.ContentModelFlag;
 import nu.validator.htmlparser.Tokenizer;
+import nu.validator.htmlparser.XmlViolationPolicy;
 import nu.validator.saxtree.Document;
 import nu.validator.saxtree.TreeParser;
 
@@ -43,14 +45,14 @@ public class HtmlParser implements XMLReader {
 
     private Tokenizer tokenizer;
     
-    private SAXTreeBuilder treeBuilder;
+    private SaxTreeBuilder treeBuilder;
     
     private ContentHandler contentHandler;
     
     private LexicalHandler lexicalHandler;
     
     public HtmlParser() {
-        this.treeBuilder = new SAXTreeBuilder();
+        this.treeBuilder = new SaxTreeBuilder();
         this.tokenizer = new Tokenizer(treeBuilder);
     }
     
@@ -103,6 +105,7 @@ public class HtmlParser implements XMLReader {
     }
 
     public void setLexicalHandler(LexicalHandler handler) {
+        treeBuilder.setIgnoringComments(handler == null);
         lexicalHandler = handler;
     }
     
@@ -129,6 +132,55 @@ public class HtmlParser implements XMLReader {
     public void setProperty(String name, Object value) throws SAXNotRecognizedException, SAXNotSupportedException {
         // TODO Auto-generated method stub
         
+    }
+
+    /**
+     * @return
+     * @see nu.validator.htmlparser.Tokenizer#isCheckingNormalization()
+     */
+    public boolean isCheckingNormalization() {
+        return tokenizer.isCheckingNormalization();
+    }
+
+    /**
+     * @param enable
+     * @see nu.validator.htmlparser.Tokenizer#setCheckingNormalization(boolean)
+     */
+    public void setCheckingNormalization(boolean enable) {
+        tokenizer.setCheckingNormalization(enable);
+    }
+
+    /**
+     * @param commentPolicy
+     * @see nu.validator.htmlparser.Tokenizer#setCommentPolicy(nu.validator.htmlparser.XmlViolationPolicy)
+     */
+    public void setCommentPolicy(XmlViolationPolicy commentPolicy) {
+        tokenizer.setCommentPolicy(commentPolicy);
+    }
+
+    /**
+     * @param contentModelFlag
+     * @param contentModelElement
+     * @see nu.validator.htmlparser.Tokenizer#setContentModelFlag(nu.validator.htmlparser.ContentModelFlag, java.lang.String)
+     */
+    public void setContentModelFlag(ContentModelFlag contentModelFlag, String contentModelElement) {
+        tokenizer.setContentModelFlag(contentModelFlag, contentModelElement);
+    }
+
+    /**
+     * @param contentNonXmlCharPolicy
+     * @see nu.validator.htmlparser.Tokenizer#setContentNonXmlCharPolicy(nu.validator.htmlparser.XmlViolationPolicy)
+     */
+    public void setContentNonXmlCharPolicy(XmlViolationPolicy contentNonXmlCharPolicy) {
+        tokenizer.setContentNonXmlCharPolicy(contentNonXmlCharPolicy);
+    }
+
+    /**
+     * @param contentSpacePolicy
+     * @see nu.validator.htmlparser.Tokenizer#setContentSpacePolicy(nu.validator.htmlparser.XmlViolationPolicy)
+     */
+    public void setContentSpacePolicy(XmlViolationPolicy contentSpacePolicy) {
+        tokenizer.setContentSpacePolicy(contentSpacePolicy);
     }
 
 }
