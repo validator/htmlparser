@@ -97,10 +97,8 @@ public class TreeTester {
         StringBuilder expectedBuilder = new StringBuilder();
         br = new BufferedReader(new InputStreamReader(new UntilHashInputStream(aggregateStream), "UTF-8"));
         while ((line = br.readLine()) != null) {
-            if (line.startsWith("|")) {
                 expectedBuilder.append(line);
                 expectedBuilder.append('\n');
-            }
         }
         String expected = expectedBuilder.toString();
         String actual = sw.toString();

@@ -1449,6 +1449,7 @@ public final class Tokenizer implements Locator {
                     }
                     tokenHandler.characters(LT_SOLIDUS, 0, 2);
                     emitStrBuf();
+                    cstart = pos; // don't drop the character
                     return;
             }
         } else {
