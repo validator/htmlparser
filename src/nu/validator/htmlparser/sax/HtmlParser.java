@@ -25,6 +25,8 @@ package nu.validator.htmlparser.sax;
 import java.io.IOException;
 
 import nu.validator.htmlparser.Tokenizer;
+import nu.validator.saxtree.Document;
+import nu.validator.saxtree.TreeParser;
 
 import org.xml.sax.ContentHandler;
 import org.xml.sax.DTDHandler;
@@ -42,6 +44,10 @@ public class HtmlParser implements XMLReader {
     private Tokenizer tokenizer;
     
     private SAXTreeBuilder treeBuilder;
+    
+    private ContentHandler contentHandler;
+    
+    private LexicalHandler lexicalHandler;
     
     public HtmlParser() {
         this.treeBuilder = new SAXTreeBuilder();
@@ -79,7 +85,12 @@ public class HtmlParser implements XMLReader {
     }
 
     public void parse(InputSource input) throws IOException, SAXException {
-        tokenizer.tokenize(input);
+        try {
+            tokenizer.tokenize(input);
+        } finally {
+            Document document = treeBuilder.getDocument();
+            new TreeParser(contentHandler, lexicalHandler).parse(document);
+        }
     }
 
     public void parse(String systemId) throws IOException, SAXException {
@@ -88,11 +99,11 @@ public class HtmlParser implements XMLReader {
     }
 
     public void setContentHandler(ContentHandler handler) {
-        treeBuilder.setContentHandler(handler);
+        contentHandler = handler;
     }
 
     public void setLexicalHandler(LexicalHandler handler) {
-        treeBuilder.setLexicalHandler(handler);
+        lexicalHandler = handler;
     }
     
     public void setDTDHandler(DTDHandler handler) {
