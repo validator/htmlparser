@@ -29,6 +29,7 @@ import nu.validator.saxtree.Characters;
 import nu.validator.saxtree.Comment;
 import nu.validator.saxtree.DTD;
 import nu.validator.saxtree.Document;
+import nu.validator.saxtree.DocumentFragment;
 import nu.validator.saxtree.Element;
 import nu.validator.saxtree.NodeType;
 import nu.validator.saxtree.ParentNode;
@@ -43,7 +44,7 @@ class SAXTreeBuilder extends TreeBuilder<Element> {
     
     private Document document;
     
-    public SAXTreeBuilder() {
+    SAXTreeBuilder() {
         super(XmlViolationPolicy.ALLOW, false);
     }
     
@@ -134,8 +135,15 @@ class SAXTreeBuilder extends TreeBuilder<Element> {
      * 
      * @return the document
      */
-    public Document getDocument() {
+    Document getDocument() {
         Document rv = document;
+        document = null;
+        return rv;
+    }
+    
+    DocumentFragment getDocumentFragment() {
+        DocumentFragment rv = new DocumentFragment();
+        rv.appendChildren(document.getFirstChild());
         document = null;
         return rv;
     }

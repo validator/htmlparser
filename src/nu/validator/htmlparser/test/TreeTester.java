@@ -40,8 +40,6 @@ public class TreeTester {
 
     private final InputStream aggregateStream;
 
-    private final StringBuilder builder = new StringBuilder();
-
     /**
      * @param aggregateStream
      */

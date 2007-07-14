@@ -28,6 +28,7 @@ import nu.validator.htmlparser.ContentModelFlag;
 import nu.validator.htmlparser.Tokenizer;
 import nu.validator.htmlparser.XmlViolationPolicy;
 import nu.validator.saxtree.Document;
+import nu.validator.saxtree.DocumentFragment;
 import nu.validator.saxtree.TreeParser;
 
 import org.xml.sax.ContentHandler;
@@ -45,14 +46,14 @@ public class HtmlParser implements XMLReader {
 
     private Tokenizer tokenizer;
     
-    private SaxTreeBuilder treeBuilder;
+    private SAXTreeBuilder treeBuilder;
     
     private ContentHandler contentHandler;
     
     private LexicalHandler lexicalHandler;
     
     public HtmlParser() {
-        this.treeBuilder = new SaxTreeBuilder();
+        this.treeBuilder = new SAXTreeBuilder();
         this.tokenizer = new Tokenizer(treeBuilder);
     }
     
@@ -88,6 +89,7 @@ public class HtmlParser implements XMLReader {
 
     public void parse(InputSource input) throws IOException, SAXException {
         try {
+            treeBuilder.setFragmentContext(null);
             tokenizer.tokenize(input);
         } finally {
             Document document = treeBuilder.getDocument();
@@ -95,6 +97,16 @@ public class HtmlParser implements XMLReader {
         }
     }
 
+    public void parseFragment(InputSource input, String context) throws IOException, SAXException {
+        try {
+            treeBuilder.setFragmentContext(context);
+            tokenizer.tokenize(input);
+        } finally {
+            DocumentFragment fragment = treeBuilder.getDocumentFragment();
+            new TreeParser(contentHandler, lexicalHandler).parse(fragment);
+        }
+    }
+    
     public void parse(String systemId) throws IOException, SAXException {
         // TODO Auto-generated method stub
         
