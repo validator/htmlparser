@@ -40,12 +40,6 @@ import org.xml.sax.SAXException;
 import org.xml.sax.ext.LexicalHandler;
 
 public class SAXTreeBuilder extends TreeBuilder<Element> {
-
-    private ContentHandler contentHandler;
-    
-    private LexicalHandler lexicalHandler;
-    
-    private Element rootElement;
     
     private Document document;
     
@@ -61,11 +55,6 @@ public class SAXTreeBuilder extends TreeBuilder<Element> {
     @Override
     protected void appendCommentToDocument(char[] buf, int length) {
         document.appendChild(new Comment(tokenizer, buf, 0, length));
-    }
-
-    @Override
-    public boolean wantsComments() throws SAXException {
-        return lexicalHandler != null;
     }
 
     @Override
@@ -99,7 +88,6 @@ public class SAXTreeBuilder extends TreeBuilder<Element> {
     protected Element createHtmlElementSetAsRoot(Attributes attributes) {
         Element newElt = new Element(tokenizer, "http://www.w3.org/1999/xhtml", "html", "html", attributes, true, null);
         document.appendChild(newElt);
-        rootElement = newElt;
         return newElt;
     }
 
@@ -147,7 +135,9 @@ public class SAXTreeBuilder extends TreeBuilder<Element> {
      * @return the document
      */
     public Document getDocument() {
-        return document;
+        Document rv = document;
+        document = null;
+        return rv;
     }
 
     /**
@@ -157,7 +147,6 @@ public class SAXTreeBuilder extends TreeBuilder<Element> {
     @Override
     protected void end() throws SAXException {
         document.setEndLocator(tokenizer);
-        new TreeParser(contentHandler, lexicalHandler).parse(document);
     }
 
     /**
@@ -166,24 +155,6 @@ public class SAXTreeBuilder extends TreeBuilder<Element> {
     @Override
     protected void start() {
         document = new Document(tokenizer);
-    }
-
-    /**
-     * Sets the contentHandler.
-     * 
-     * @param contentHandler the contentHandler to set
-     */
-    public void setContentHandler(ContentHandler contentHandler) {
-        this.contentHandler = contentHandler;
-    }
-
-    /**
-     * Sets the lexicalHandler.
-     * 
-     * @param lexicalHandler the lexicalHandler to set
-     */
-    public void setLexicalHandler(LexicalHandler lexicalHandler) {
-        this.lexicalHandler = lexicalHandler;
     }
 
     @Override

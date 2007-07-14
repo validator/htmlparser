@@ -34,10 +34,12 @@
 
 package nu.validator.htmlparser;
 
+import java.io.IOException;
 import java.util.Arrays;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.ErrorHandler;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
@@ -168,8 +170,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     
     private Phase phase = Phase.INITIAL;
 
-    private Phase phaseBeforeSwitchingToTrailingEnd;
-
     protected Tokenizer tokenizer;
 
     private ErrorHandler errorHandler;
@@ -186,9 +186,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private boolean wantingComments;
 
-    private boolean fragment;
-
-    private StackNode<T> context;
+    private String context;
     
     private Phase previousPhaseBeforeTrailingEnd;
     
@@ -257,7 +255,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     public final void start(Tokenizer self) throws SAXException {
-        phase = Phase.INITIAL;
         tokenizer = self;
         stack  = new StackNode[64];
         listOfActiveFormattingElements  = new StackNode[64];
@@ -266,6 +263,15 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         currentPtr = -1;
         formPointer = null;
         wantingComments = wantsComments();
+        if (context == null) {
+            phase = Phase.INITIAL;
+        } else {
+            T elt = createHtmlElementSetAsRoot(tokenizer.newAttributes());
+            StackNode<T> node = new StackNode<T>("html", elt);
+            push(node);
+            resetTheInsertionMode();
+        }
+        
         start();
     }
 
@@ -593,7 +599,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             /* Append the token's character to the current node. */
                             continue;
                         case TRAILING_END:
-                            if (phaseBeforeSwitchingToTrailingEnd == Phase.AFTER_FRAMESET) {
+                            if (previousPhaseBeforeTrailingEnd == Phase.AFTER_FRAMESET) {
                                 continue;
                             } else {
                                 if (start < i) {
@@ -819,7 +825,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                              * Switch back to the main phase and reprocess the
                              * token.
                              */
-                            phase = phaseBeforeSwitchingToTrailingEnd;
+                            phase = previousPhaseBeforeTrailingEnd;
                             i--;
                             continue;
                     }
@@ -917,7 +923,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                              */
                             err("End of file seen and there were open elements.");
                         }
-                        if (fragment) {
+                        if (context != null) {
                             if (currentPtr > 0 && stack[1].name != "body") {
                                 /*
                                  * Otherwise, if the parser was originally
@@ -954,6 +960,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         } finally {
             // XXX close elts for SAX
             /* Stop parsing. */
+            stack = null;
+            listOfActiveFormattingElements = null;
             end();
         }
     }
@@ -1005,7 +1013,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             || "tr" == name) {
                         int eltPos = findLastOrRoot("tr");
                         if (eltPos == 0) {
-                            assert fragment;
+                            assert context != null;
                             err("No table row to close.");
                             return;
                         }
@@ -1050,7 +1058,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         err("Start tag for \u201Ctable\u201D seen but the previous \u201Ctable\u201D is still open.");
                         int eltPos = findLastInTableScope(name);
                         if (eltPos == NOT_FOUND_ON_STACK) {
-                            assert fragment;
+                            assert context != null;
                             return;
                         }
                         generateImpliedEndTags();
@@ -1439,7 +1447,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         return;
                     } else {
                         if (currentPtr == 0) {
-                            assert fragment;
+                            assert context != null;
                             err("Garbage in \u201Ccolgroup\u201D fragment.");
                             return;
                         }
@@ -1471,7 +1479,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         err("\u201Cselect\u201D start tag where end tag expected.");
                         int eltPos = findLastInTableScope(name);
                         if (eltPos == NOT_FOUND_ON_STACK) {
-                            assert fragment;
+                            assert context != null;
                             err("No \u201Cselect\u201D in table scope.");
                             return;
                         } else {
@@ -1726,7 +1734,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     if ("tr" == name) {
                         int eltPos = findLastOrRoot("tr");
                         if (eltPos == 0) {
-                            assert fragment;
+                            assert context != null;
                             err("No table row to close.");
                             return;
                         }
@@ -1737,7 +1745,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     } else if ("table" == name) {
                         int eltPos = findLastOrRoot("tr");
                         if (eltPos == 0) {
-                            assert fragment;
+                            assert context != null;
                             err("No table row to close.");
                             return;
                         }
@@ -1752,7 +1760,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         }
                         int eltPos = findLastOrRoot("tr");
                         if (eltPos == 0) {
-                            assert fragment;
+                            assert context != null;
                             err("No table row to close.");
                             return;
                         }
@@ -1780,7 +1788,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     } else if ("table" == name) {
                             int eltPos = findLastInTableScopeOrRootTbodyTheadTfoot();
                             if (eltPos == 0) {
-                            assert fragment;
+                            assert context != null;
                             err("Stray end tag \u201Ctable\u201D.");
                             return;
                         }
@@ -1798,7 +1806,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     if ("table" == name) {
                         int eltPos = findLast("table");
                         if (eltPos == NOT_FOUND_ON_STACK) {
-                            assert fragment;
+                            assert context != null;
                             err("Stray end tag \u201Ctable\u201D.");
                             return;
                         }
@@ -1889,7 +1897,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 case IN_BODY:
                     if ("body" == name) {
                         if (!isSecondOnStackBody()) {
-                            assert fragment;
+                            assert context != null;
                             err("Stray end tag \u201Cbody\u201D.");
                             return;
                         }
@@ -1906,7 +1914,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         return;
                     } else if ("html" == name) {
                         if (!isSecondOnStackBody()) {
-                            assert fragment;
+                            assert context != null;
                             err("Stray end tag \u201Chtml\u201D.");
                             return;
                         }
@@ -2036,7 +2044,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 case IN_COLUMN_GROUP:
                     if ("colgroup" == name) {
                         if (currentPtr == 0) {
-                            assert fragment;
+                            assert context != null;
                             err("Garbage in \u201Ccolgroup\u201D fragment.");
                             return;
                         }
@@ -2048,7 +2056,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         return;
                     } else {
                         if (currentPtr == 0) {
-                            assert fragment;
+                            assert context != null;
                             err("Garbage in \u201Ccolgroup\u201D fragment.");
                             return;
                         }
@@ -2078,7 +2086,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     } else if ("select" == name) {
                         int eltPos = findLastInTableScope("select");
                         if (eltPos == NOT_FOUND_ON_STACK) {
-                            assert fragment;
+                            assert context != null;
                             err("Stray end tag \u201Cselect\u201D");
                             return;                                                        
                         }
@@ -2093,7 +2101,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     }
                 case AFTER_BODY:
                     if ("html" == name) {
-                        if (fragment) {
+                        if (context != null) {
                             err("Stray end tag \u201Chtml\u201D");
                             return;                            
                         } else {
@@ -2109,12 +2117,12 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 case IN_FRAMESET:
                     if ("frameset" == name) {
                         if (currentPtr == 0) {
-                            assert fragment;
+                            assert context != null;
                             err("Stray end tag \u201Cframeset\u201D");
                             return;
                         }
                         pop();
-                        if (!fragment && !isCurrent("frameset")) {
+                        if ((context == null) && !isCurrent("frameset")) {
                             phase = Phase.AFTER_FRAMESET;                            
                         }
                         return;
@@ -2397,8 +2405,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         for (int i = currentPtr; i >= 0; i--) {
             name = stack[i].name;
             if (i == 0) {
-                if (!(context.name == "td" || context.name == "th")) {
-                    name = context.name;
+                if (!(context == "td" || context == "th")) {
+                    name = context;
                 }
             }
             if ("select" == name) {
@@ -3073,15 +3081,25 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     /**
      * @see nu.validator.htmlparser.TokenHandler#wantsComments()
      */
-    public abstract boolean wantsComments() throws SAXException;
+    public boolean wantsComments() {
+        return wantingComments;
+    }
 
+    public void setIgnoringComments(boolean ignoreComments) {
+        wantingComments = !ignoreComments;
+    }
+    
     /**
      * Sets the errorHandler.
      * 
      * @param errorHandler the errorHandler to set
      */
-    public void setErrorHandler(ErrorHandler errorHandler) {
+    public final void setErrorHandler(ErrorHandler errorHandler) {
         this.errorHandler = errorHandler;
+    }
+    
+    public final void setFragment(String context) {
+        this.context = context.intern();
     }
     
     protected final T currentNode() {
