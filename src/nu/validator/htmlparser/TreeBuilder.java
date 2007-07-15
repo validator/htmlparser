@@ -3099,7 +3099,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
     
     public final void setFragmentContext(String context) {
-        this.context = context.intern();
+        this.context = context == null ? null : context.intern();
     }
     
     protected final T currentNode() {
