@@ -263,6 +263,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         currentPtr = -1;
         formPointer = null;
         wantingComments = wantsComments();
+        start();
         if (context == null) {
             phase = Phase.INITIAL;
         } else {
@@ -270,9 +271,16 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             StackNode<T> node = new StackNode<T>("html", elt);
             push(node);
             resetTheInsertionMode();
+            if ("title" == context || "textarea" == context) {
+                tokenizer.setContentModelFlag(ContentModelFlag.RCDATA, context);
+            } else if ("style" == context || "script" == context || "xmp" == context || "iframe" == context || "noembed" == context || "noframes" == context || (scriptingEnabled && "noscript" == context)) {
+                tokenizer.setContentModelFlag(ContentModelFlag.CDATA, context);                
+            } else if ("plaintext" == context) {
+                tokenizer.setContentModelFlag(ContentModelFlag.PLAINTEXT, context);                       
+            } else {
+                tokenizer.setContentModelFlag(ContentModelFlag.PCDATA, context);                                       
+            }
         }
-        
-        start();
     }
 
     public final void doctype(String name, String publicIdentifier,
@@ -2764,7 +2772,12 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (conformingAndStreaming) {
             fatal();
         }
-        push(new StackNode<T>("head", headPointer));
+        if (headPointer == null) {
+            assert context != null;
+            push(stack[currentPtr]);            
+        } else {
+            push(new StackNode<T>("head", headPointer));
+        }
     }
 
     /**
