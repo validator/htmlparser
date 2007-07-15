@@ -69,6 +69,15 @@ public class TreeTester {
             while (stream.read() != -1) {
                 // spin
             }
+            if (skipLabel()) { // #errors
+                System.err.println("Premature end of test data.");
+                return false;
+            }
+            stream = new UntilHashInputStream(aggregateStream);
+            while (stream.read() != -1) {
+                // spin
+            }            
+            
             StringBuilder sb = new StringBuilder();
             int c;
             while ((c = aggregateStream.read()) != '\n') {
@@ -83,7 +92,8 @@ public class TreeTester {
                 context = sb.toString();
             }
             aggregateStream.reset();
-            if (skipLabel()) { // #data
+            if (skipLabel()) { // #document-fragment
+                System.err.println("Premature end of test data.");
                 return false;
             }
             stream = new UntilHashInputStream(aggregateStream);
@@ -105,6 +115,17 @@ public class TreeTester {
             }
             stream.close();
 
+            if (context != null) {
+                if (skipLabel()) { // #document-fragment
+                    System.err.println("Premature end of test data.");
+                    return false;
+                }
+                stream = new UntilHashInputStream(aggregateStream);
+                while (stream.read() != -1) {
+                    // spin
+                }                
+            }
+            
             if (skipLabel()) { // #errors
                 System.err.println("Premature end of test data.");
                 return false;
