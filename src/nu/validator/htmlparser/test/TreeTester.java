@@ -22,6 +22,7 @@
 
 package nu.validator.htmlparser.test;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -37,20 +38,19 @@ import org.xml.sax.SAXException;
 
 public class TreeTester {
 
-
-    private final InputStream aggregateStream;
+    private final BufferedInputStream aggregateStream;
 
     /**
      * @param aggregateStream
      */
     public TreeTester(InputStream aggregateStream) {
-        this.aggregateStream = aggregateStream;
+        this.aggregateStream = new BufferedInputStream(aggregateStream);
     }
 
     private void runTests() throws Throwable {
         if (aggregateStream.read() != '#') {
             System.err.println("No hash at start!");
-            return;            
+            return;
         }
         while (runTest()) {
             // spin
@@ -60,68 +60,100 @@ public class TreeTester {
     private boolean runTest() throws Throwable {
         UntilHashInputStream stream = null;
         try {
-        if (skipLabel()) { // #data
-            return false;
-        }
-        stream = new UntilHashInputStream(aggregateStream);
-        InputSource is = new InputSource(stream);
-        is.setEncoding("UTF-8");
-        StringWriter sw = new StringWriter();
-        ListErrorHandler leh = new ListErrorHandler();
-        TreeDumpContentHandler treeDumpContentHandler = new TreeDumpContentHandler(sw); 
-        HtmlParser htmlParser = new HtmlParser();
-        htmlParser.setContentHandler(treeDumpContentHandler);
-        htmlParser.setLexicalHandler(treeDumpContentHandler);
-        htmlParser.setErrorHandler(leh);
-        htmlParser.parse(is);
-        stream.close();
-        
-        if (skipLabel()) { // #errors
-            System.err.println("Premature end of test data.");
-            return false;
-        }
-        LinkedList<String> expectedErrors = new LinkedList<String>();
-        BufferedReader br = new BufferedReader(new InputStreamReader(new UntilHashInputStream(aggregateStream), "UTF-8"));
-        String line = null;
-        while ((line = br.readLine()) != null) {
-            expectedErrors.add(line);
-        }
-        
-        if (skipLabel()) { // #document
-            System.err.println("Premature end of test data.");
-            return false;
-        }
-        
-        StringBuilder expectedBuilder = new StringBuilder();
-        br = new BufferedReader(new InputStreamReader(new UntilHashInputStream(aggregateStream), "UTF-8"));
-        while ((line = br.readLine()) != null) {
+            String context = null;
+            aggregateStream.mark(4096);
+            if (skipLabel()) { // #data
+                return false;
+            }
+            stream = new UntilHashInputStream(aggregateStream);
+            while (stream.read() != -1) {
+                // spin
+            }
+            StringBuilder sb = new StringBuilder();
+            int c;
+            while ((c = aggregateStream.read()) != '\n') {
+                sb.append((char)c);
+            }
+            String label = sb.toString();
+            if ("document-fragment".equals(label)) {
+                sb.setLength(0);
+                while ((c = aggregateStream.read()) != '\n') {
+                    sb.append((char)c);
+                }
+                context = sb.toString();
+            }
+            aggregateStream.reset();
+            if (skipLabel()) { // #data
+                return false;
+            }
+            stream = new UntilHashInputStream(aggregateStream);
+            InputSource is = new InputSource(stream);
+            is.setEncoding("UTF-8");
+            StringWriter sw = new StringWriter();
+            ListErrorHandler leh = new ListErrorHandler();
+            TreeDumpContentHandler treeDumpContentHandler = new TreeDumpContentHandler(
+                    sw);
+            HtmlParser htmlParser = new HtmlParser();
+            htmlParser.setContentHandler(treeDumpContentHandler);
+            htmlParser.setLexicalHandler(treeDumpContentHandler);
+            htmlParser.setErrorHandler(leh);
+            if (context == null) {
+                htmlParser.parse(is);                
+            } else {
+                htmlParser.parseFragment(is, context);
+                treeDumpContentHandler.endDocument();
+            }
+            stream.close();
+
+            if (skipLabel()) { // #errors
+                System.err.println("Premature end of test data.");
+                return false;
+            }
+            LinkedList<String> expectedErrors = new LinkedList<String>();
+            BufferedReader br = new BufferedReader(new InputStreamReader(
+                    new UntilHashInputStream(aggregateStream), "UTF-8"));
+            String line = null;
+            while ((line = br.readLine()) != null) {
+                expectedErrors.add(line);
+            }
+
+            if (skipLabel()) { // #document
+                System.err.println("Premature end of test data.");
+                return false;
+            }
+
+            StringBuilder expectedBuilder = new StringBuilder();
+            br = new BufferedReader(new InputStreamReader(
+                    new UntilHashInputStream(aggregateStream), "UTF-8"));
+            while ((line = br.readLine()) != null) {
                 expectedBuilder.append(line);
                 expectedBuilder.append('\n');
-        }
-        String expected = expectedBuilder.toString();
-        String actual = sw.toString();
-        
-        LinkedList<String> actualErrors = leh.getErrors();
-        
-        
-        
-        if (expected.equals(actual) /*&& expectedErrors.size() == actualErrors.size()*/) {
-            System.err.println("Success.");
-            // System.err.println(stream);
-        } else {
-            System.err.print("Failure.\nData:\n"+ stream +"\nExpected:\n" + expected + "Got: \n"
-                    + actual);
-            System.err.println("Expected errors:");
-            for (String err : expectedErrors) {
-                System.err.println(err);
             }
-            System.err.println("Actual errors:");
-            for (String err : actualErrors) {
-                System.err.println(err);
+            String expected = expectedBuilder.toString();
+            String actual = sw.toString();
+
+            LinkedList<String> actualErrors = leh.getErrors();
+
+            if (expected.equals(actual) /*
+                                         * && expectedErrors.size() ==
+                                         * actualErrors.size()
+                                         */) {
+                System.err.println("Success.");
+                // System.err.println(stream);
+            } else {
+                System.err.print("Failure.\nData:\n" + stream + "\nExpected:\n"
+                        + expected + "Got: \n" + actual);
+                System.err.println("Expected errors:");
+                for (String err : expectedErrors) {
+                    System.err.println(err);
+                }
+                System.err.println("Actual errors:");
+                for (String err : actualErrors) {
+                    System.err.println(err);
+                }
             }
-        }
         } catch (Throwable t) {
-            System.err.println("Failure.\nData:\n"+ stream);
+            System.err.println("Failure.\nData:\n" + stream);
             throw t;
         }
         return true;
@@ -144,15 +176,13 @@ public class TreeTester {
 
     /**
      * @param args
-     * @throws Throwable 
+     * @throws Throwable
      */
     public static void main(String[] args) throws Throwable {
         for (int i = 0; i < args.length; i++) {
-            TreeTester tester = new TreeTester(new FileInputStream(
-                    args[i]));
+            TreeTester tester = new TreeTester(new FileInputStream(args[i]));
             tester.runTests();
         }
     }
 
-    
 }

@@ -8,7 +8,7 @@ import nu.validator.htmlparser.XmlViolationPolicy;
 
 public class SAXStreamer extends TreeBuilder<Attributes>{
 
-    public SAXStreamer() {
+    SAXStreamer() {
         super(XmlViolationPolicy.FATAL, false);
     }
     
