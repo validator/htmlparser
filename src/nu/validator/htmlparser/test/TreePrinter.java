@@ -39,6 +39,7 @@ public class TreePrinter {
         HtmlParser htmlParser = new HtmlParser();
         htmlParser.setContentHandler(treeDumpContentHandler);
         htmlParser.setLexicalHandler(treeDumpContentHandler);
+        htmlParser.setErrorHandler(new SystemErrErrorHandler());
         File file = new File(args[0]);
         InputSource is = new InputSource(new FileInputStream(file));
         is.setSystemId(file.toURI().toASCIIString());
