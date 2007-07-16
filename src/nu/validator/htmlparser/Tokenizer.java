@@ -1079,7 +1079,7 @@ public final class Tokenizer implements Locator {
         for (;;) {
             c = read();
             if (c == '&'
-                    && (contentModelFlag == ContentModelFlag.PCDATA || contentModelFlag == ContentModelFlag.RCDATA)) {
+                    && (contentModelFlag == ContentModelFlag.PCDATA || (contentModelFlag == ContentModelFlag.RCDATA) && !escapeFlag)) {
                 /*
                  * U+0026 AMPERSAND (&) When the content model flag is set to
                  * one of the PCDATA or RCDATA states: switch to the entity data

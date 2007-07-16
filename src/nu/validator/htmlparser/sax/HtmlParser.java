@@ -195,4 +195,20 @@ public class HtmlParser implements XMLReader {
         tokenizer.setContentSpacePolicy(contentSpacePolicy);
     }
 
+    /**
+     * @return
+     * @see nu.validator.htmlparser.TreeBuilder#isScriptingEnabled()
+     */
+    public boolean isScriptingEnabled() {
+        return treeBuilder.isScriptingEnabled();
+    }
+
+    /**
+     * @param scriptingEnabled
+     * @see nu.validator.htmlparser.TreeBuilder#setScriptingEnabled(boolean)
+     */
+    public void setScriptingEnabled(boolean scriptingEnabled) {
+        treeBuilder.setScriptingEnabled(scriptingEnabled);
+    }
+
 }

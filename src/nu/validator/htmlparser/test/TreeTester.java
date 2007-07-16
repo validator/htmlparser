@@ -107,6 +107,7 @@ public class TreeTester {
             htmlParser.setContentHandler(treeDumpContentHandler);
             htmlParser.setLexicalHandler(treeDumpContentHandler);
             htmlParser.setErrorHandler(leh);
+            htmlParser.setScriptingEnabled(true);
             if (context == null) {
                 htmlParser.parse(is);                
             } else {

@@ -180,7 +180,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private int cdataOrRcdataTimesToPop;
 
-    private boolean scriptingEnabled;
+    private boolean scriptingEnabled = false;
     
     private boolean needToDropLF;
 
@@ -3117,5 +3117,23 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     
     protected final T currentNode() {
         return stack[currentPtr].node;
+    }
+
+    /**
+     * Returns the scriptingEnabled.
+     * 
+     * @return the scriptingEnabled
+     */
+    public boolean isScriptingEnabled() {
+        return scriptingEnabled;
+    }
+
+    /**
+     * Sets the scriptingEnabled.
+     * 
+     * @param scriptingEnabled the scriptingEnabled to set
+     */
+    public void setScriptingEnabled(boolean scriptingEnabled) {
+        this.scriptingEnabled = scriptingEnabled;
     }
 }
