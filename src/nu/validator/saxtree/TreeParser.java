@@ -34,14 +34,32 @@ public final class TreeParser implements Locator {
     private Locator locatorDelegate;
     
     /**
-     * @param contentHandler
-     * @param lexicalHandler
+     * The constructor.
+     * 
+     * @param contentHandler must not be <code>null</code>
+     * @param lexicalHandler may be <code>null</code>
      */
     public TreeParser(final ContentHandler contentHandler, final LexicalHandler lexicalHandler) {
+        if (contentHandler == null) {
+            throw new IllegalArgumentException("contentHandler was null.");
+        }
         this.contentHandler = contentHandler;
-        this.lexicalHandler = lexicalHandler;
+        if (lexicalHandler == null) {
+            this.lexicalHandler = new NullLexicalHandler();
+        } else {
+            this.lexicalHandler = lexicalHandler;
+        }
     }
 
+    /**
+     * Causes SAX events for the tree rooted at the argument
+     * to be emitted. <code>startDocument()</code> and 
+     * <code>endDocument()</code> are only emitted for a 
+     * <code>Document</code> node.
+     * 
+     * @param node the root
+     * @throws SAXException
+     */
     public void parse(Node node) throws SAXException {
         Node current = node;
         Node next;

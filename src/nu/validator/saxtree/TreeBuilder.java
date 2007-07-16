@@ -31,6 +31,18 @@ import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.ext.LexicalHandler;
 
+/**
+ * Builds a SAX Tree representation of a document or a fragment 
+ * streamed as <code>ContentHandler</code> and 
+ * <code>LexicalHandler</code> events. The start/end event matching 
+ * is expected to adhere to the SAX API contract. Things will 
+ * simply break if this is not the case. Fragments are expected to
+ * omit <code>startDocument()</code> and <code>endDocument()</code>
+ * calls.
+ * 
+ * @version $Id$
+ * @author hsivonen
+ */
 public class TreeBuilder implements ContentHandler, LexicalHandler {
 
     private Locator locator;
@@ -41,12 +53,23 @@ public class TreeBuilder implements ContentHandler, LexicalHandler {
 
     private List<PrefixMapping> prefixMappings;
     
+    /**
+     * Constructs a reusable <code>TreeBuilder</code> that builds 
+     * <code>Document</code>s and copies attributes.
+     */
     public TreeBuilder() {
         this(false, false);
     }
     
     /**
+     * The constructor. The instance will be reusabe if building a full 
+     * document and not reusable if building a fragment.
      * 
+     * @param fragment whether this <code>TreeBuilder</code> should build 
+     * a <code>DocumentFragment</code> instead of a <code>Document</code>.
+     * @param retainAttributes whether instances of the <code>Attributes</code>
+     * interface passed to <code>startElement</code> should be retained 
+     * (the alternative is copying).
      */
     public TreeBuilder(boolean fragment, boolean retainAttributes) {
         if (fragment) {
@@ -135,9 +158,10 @@ public class TreeBuilder implements ContentHandler, LexicalHandler {
     }
 
     /**
-     * Returns the root.
+     * Returns the root (<code>Document</code> if building a full document or 
+     * <code>DocumentFragment</code> if building a fragment.).
      * 
-     * @return the current
+     * @return the root
      */
     public ParentNode getRoot() {
         return current;
