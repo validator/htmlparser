@@ -41,11 +41,18 @@ public class TreeDumpContentHandler implements ContentHandler, LexicalHandler {
 
     private boolean inCharacters = false;
 
+    private boolean close;
+
     /**
      * @param writer
      */
-    public TreeDumpContentHandler(final Writer writer) {
+    public TreeDumpContentHandler(final Writer writer, boolean close) {
         this.writer = writer;
+        this.close = close;
+    }
+
+    public TreeDumpContentHandler(final Writer writer) {
+        this(writer, true);
     }
 
     private void printLead() throws IOException {
@@ -140,8 +147,10 @@ public class TreeDumpContentHandler implements ContentHandler, LexicalHandler {
                 writer.write("\"\n");
                 inCharacters = false;
             }
-            writer.flush();
-            writer.close();
+            if (close) {
+                writer.flush();
+                writer.close();
+            }
         } catch (IOException e) {
             throw new SAXException(e);
         }

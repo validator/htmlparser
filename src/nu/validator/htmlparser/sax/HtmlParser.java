@@ -25,7 +25,10 @@ package nu.validator.htmlparser.sax;
 import java.io.IOException;
 
 import nu.validator.htmlparser.ContentModelFlag;
+import nu.validator.htmlparser.DoctypeExpectation;
+import nu.validator.htmlparser.DocumentModeHandler;
 import nu.validator.htmlparser.Tokenizer;
+import nu.validator.htmlparser.TreeBuilder;
 import nu.validator.htmlparser.XmlViolationPolicy;
 import nu.validator.saxtree.Document;
 import nu.validator.saxtree.DocumentFragment;
@@ -41,109 +44,174 @@ import org.xml.sax.SAXNotRecognizedException;
 import org.xml.sax.SAXNotSupportedException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.ext.LexicalHandler;
+import org.xml.sax.helpers.DefaultHandler;
 
 public class HtmlParser implements XMLReader {
 
-    private Tokenizer tokenizer;
+    private Tokenizer tokenizer = null;
+
+    private TreeBuilder<?> treeBuilder = null;
+
+    private ContentHandler contentHandler = null;
+
+    private LexicalHandler lexicalHandler = null;
+
+    private DTDHandler dtdHandler = null;
+
+    private EntityResolver entityResolver = null;
+
+    private ErrorHandler errorHandler = null;
+
+    private DocumentModeHandler documentModeHandler = null;
+
+    private DoctypeExpectation doctypeExpectation = DoctypeExpectation.HTML;
     
-    private SAXTreeBuilder treeBuilder;
+    private boolean checkingNormalization = false;
     
-    private ContentHandler contentHandler;
-    
-    private LexicalHandler lexicalHandler;
-    
+    private boolean scriptingEnabled = false;
+
+    private XmlViolationPolicy contentSpacePolicy = XmlViolationPolicy.ALLOW;
+
+    private XmlViolationPolicy contentNonXmlCharPolicy = XmlViolationPolicy.ALLOW;
+
+    private XmlViolationPolicy commentPolicy = XmlViolationPolicy.ALLOW;
+
+    private XmlViolationPolicy streamabilityViolationPolicy = XmlViolationPolicy.ALLOW;
+
     public HtmlParser() {
-        this.treeBuilder = new SAXTreeBuilder();
-        this.tokenizer = new Tokenizer(treeBuilder);
     }
-    
+
+    private void lazyInit() {
+        if (tokenizer == null) {
+            if (streamabilityViolationPolicy == XmlViolationPolicy.ALLOW) {
+                this.treeBuilder = new SAXTreeBuilder();
+            } else {
+                this.treeBuilder = new SAXStreamer();
+            }
+            this.tokenizer = new Tokenizer(treeBuilder);
+            this.tokenizer.setErrorHandler(errorHandler);
+            this.treeBuilder.setErrorHandler(errorHandler);
+            this.tokenizer.setCheckingNormalization(checkingNormalization);
+            this.tokenizer.setCommentPolicy(commentPolicy);
+            this.tokenizer.setContentNonXmlCharPolicy(contentNonXmlCharPolicy);
+            this.tokenizer.setContentSpacePolicy(contentSpacePolicy);
+            this.treeBuilder.setDoctypeExpectation(doctypeExpectation);
+            this.treeBuilder.setDocumentModeHandler(documentModeHandler);
+            this.treeBuilder.setIgnoringComments(lexicalHandler == null);
+            this.treeBuilder.setScriptingEnabled(scriptingEnabled);
+        }
+    }
+
     public ContentHandler getContentHandler() {
-        // TODO Auto-generated method stub
-        return null;
+        return contentHandler;
     }
 
     public DTDHandler getDTDHandler() {
-        // TODO Auto-generated method stub
-        return null;
+        return dtdHandler;
     }
 
     public EntityResolver getEntityResolver() {
-        // TODO Auto-generated method stub
-        return null;
+        return entityResolver;
     }
 
     public ErrorHandler getErrorHandler() {
-        // TODO Auto-generated method stub
-        return null;
+        return errorHandler;
     }
 
-    public boolean getFeature(String name) throws SAXNotRecognizedException, SAXNotSupportedException {
+    public boolean getFeature(String name) throws SAXNotRecognizedException,
+            SAXNotSupportedException {
         // TODO Auto-generated method stub
         return false;
     }
 
-    public Object getProperty(String name) throws SAXNotRecognizedException, SAXNotSupportedException {
+    public Object getProperty(String name) throws SAXNotRecognizedException,
+            SAXNotSupportedException {
         // TODO Auto-generated method stub
         return null;
     }
 
     public void parse(InputSource input) throws IOException, SAXException {
+        lazyInit();
         try {
             treeBuilder.setFragmentContext(null);
             tokenizer.tokenize(input);
         } finally {
-            Document document = treeBuilder.getDocument();
-            new TreeParser(contentHandler, lexicalHandler).parse(document);
+            if (treeBuilder instanceof SAXTreeBuilder) {
+                Document document = ((SAXTreeBuilder) treeBuilder).getDocument();
+                new TreeParser(contentHandler, lexicalHandler).parse(document);
+            }
         }
     }
 
-    public void parseFragment(InputSource input, String context) throws IOException, SAXException {
+    public void parseFragment(InputSource input, String context)
+            throws IOException, SAXException {
         try {
             treeBuilder.setFragmentContext(context);
             tokenizer.tokenize(input);
         } finally {
-            DocumentFragment fragment = treeBuilder.getDocumentFragment();
-            new TreeParser(contentHandler, lexicalHandler).parse(fragment);
+            if (treeBuilder instanceof SAXTreeBuilder) {
+                DocumentFragment fragment = ((SAXTreeBuilder) treeBuilder).getDocumentFragment();
+                new TreeParser(contentHandler, lexicalHandler).parse(fragment);
+            }
         }
     }
-    
+
     public void parse(String systemId) throws IOException, SAXException {
-        // TODO Auto-generated method stub
-        
+        InputSource is;
+        if (entityResolver == null) {
+            is = new DefaultHandler().resolveEntity(null, systemId);
+        } else {
+            is = entityResolver.resolveEntity(null, systemId);
+        }
+        parse(is);
     }
 
     public void setContentHandler(ContentHandler handler) {
         contentHandler = handler;
+        if (treeBuilder != null) {
+            if (treeBuilder instanceof SAXStreamer) {
+                ((SAXStreamer)treeBuilder).setContentHandler(handler);
+            }
+        }
     }
 
     public void setLexicalHandler(LexicalHandler handler) {
-        treeBuilder.setIgnoringComments(handler == null);
         lexicalHandler = handler;
+        if (treeBuilder != null) {
+            treeBuilder.setIgnoringComments(handler == null);
+            if (treeBuilder instanceof SAXStreamer) {
+                ((SAXStreamer)treeBuilder).setLexicalHandler(handler);
+            }
+        }
     }
-    
+
     public void setDTDHandler(DTDHandler handler) {
-        // TODO Auto-generated method stub
-        
+        dtdHandler = handler;
     }
 
     public void setEntityResolver(EntityResolver resolver) {
-        // TODO Auto-generated method stub
-        
+        entityResolver = resolver;
     }
 
     public void setErrorHandler(ErrorHandler handler) {
-        tokenizer.setErrorHandler(handler);
-        treeBuilder.setErrorHandler(handler);
+        errorHandler = handler;
+        if (tokenizer != null) {
+            tokenizer.setErrorHandler(handler);
+            treeBuilder.setErrorHandler(handler);
+        }
     }
 
-    public void setFeature(String name, boolean value) throws SAXNotRecognizedException, SAXNotSupportedException {
-        // TODO Auto-generated method stub
-        
+    public void setFeature(String name, boolean value)
+            throws SAXNotRecognizedException, SAXNotSupportedException {
     }
 
-    public void setProperty(String name, Object value) throws SAXNotRecognizedException, SAXNotSupportedException {
-        // TODO Auto-generated method stub
-        
+    public void setProperty(String name, Object value)
+            throws SAXNotRecognizedException, SAXNotSupportedException {
+        if ("http://xml.org/sax/properties/lexical-handler".equals(name)) {
+            setLexicalHandler((LexicalHandler) value);
+        } else {
+            throw new SAXNotRecognizedException();
+        }
     }
 
     /**
@@ -175,7 +243,8 @@ public class HtmlParser implements XMLReader {
      * @param contentModelElement
      * @see nu.validator.htmlparser.Tokenizer#setContentModelFlag(nu.validator.htmlparser.ContentModelFlag, java.lang.String)
      */
-    public void setContentModelFlag(ContentModelFlag contentModelFlag, String contentModelElement) {
+    public void setContentModelFlag(ContentModelFlag contentModelFlag,
+            String contentModelElement) {
         tokenizer.setContentModelFlag(contentModelFlag, contentModelElement);
     }
 
@@ -183,7 +252,8 @@ public class HtmlParser implements XMLReader {
      * @param contentNonXmlCharPolicy
      * @see nu.validator.htmlparser.Tokenizer#setContentNonXmlCharPolicy(nu.validator.htmlparser.XmlViolationPolicy)
      */
-    public void setContentNonXmlCharPolicy(XmlViolationPolicy contentNonXmlCharPolicy) {
+    public void setContentNonXmlCharPolicy(
+            XmlViolationPolicy contentNonXmlCharPolicy) {
         tokenizer.setContentNonXmlCharPolicy(contentNonXmlCharPolicy);
     }
 
@@ -209,6 +279,61 @@ public class HtmlParser implements XMLReader {
      */
     public void setScriptingEnabled(boolean scriptingEnabled) {
         treeBuilder.setScriptingEnabled(scriptingEnabled);
+    }
+
+    /**
+     * Returns the doctypeExpectation.
+     * 
+     * @return the doctypeExpectation
+     */
+    public DoctypeExpectation getDoctypeExpectation() {
+        return doctypeExpectation;
+    }
+
+    /**
+     * Sets the doctypeExpectation.
+     * 
+     * @param doctypeExpectation the doctypeExpectation to set
+     */
+    public void setDoctypeExpectation(DoctypeExpectation doctypeExpectation) {
+        this.doctypeExpectation = doctypeExpectation;
+    }
+
+    /**
+     * Returns the documentModeHandler.
+     * 
+     * @return the documentModeHandler
+     */
+    public DocumentModeHandler getDocumentModeHandler() {
+        return documentModeHandler;
+    }
+
+    /**
+     * Sets the documentModeHandler.
+     * 
+     * @param documentModeHandler the documentModeHandler to set
+     */
+    public void setDocumentModeHandler(DocumentModeHandler documentModeHandler) {
+        this.documentModeHandler = documentModeHandler;
+    }
+
+    /**
+     * Returns the streamabilityViolationPolicy.
+     * 
+     * @return the streamabilityViolationPolicy
+     */
+    public XmlViolationPolicy getStreamabilityViolationPolicy() {
+        return streamabilityViolationPolicy;
+    }
+
+    /**
+     * Sets the streamabilityViolationPolicy.
+     * 
+     * @param streamabilityViolationPolicy the streamabilityViolationPolicy to set
+     */
+    public void setStreamabilityViolationPolicy(
+            XmlViolationPolicy streamabilityViolationPolicy) {
+        this.streamabilityViolationPolicy = streamabilityViolationPolicy;
     }
 
 }

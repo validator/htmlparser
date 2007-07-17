@@ -1,12 +1,17 @@
 package nu.validator.htmlparser.sax;
 
 import org.xml.sax.Attributes;
+import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
+import org.xml.sax.ext.LexicalHandler;
 
 import nu.validator.htmlparser.TreeBuilder;
 import nu.validator.htmlparser.XmlViolationPolicy;
 
 public class SAXStreamer extends TreeBuilder<Attributes>{
+
+    private ContentHandler contentHandler;
+    private LexicalHandler lexicalHandler;
 
     SAXStreamer() {
         super(XmlViolationPolicy.FATAL, false);
@@ -31,13 +36,13 @@ public class SAXStreamer extends TreeBuilder<Attributes>{
     }
 
     @Override
-    protected void appendComment(Attributes parent, char[] buf, int length) throws SAXException {
+    protected void appendComment(Attributes parent, char[] buf, int start, int length) throws SAXException {
         // TODO Auto-generated method stub
         
     }
 
     @Override
-    protected void appendCommentToDocument(char[] buf, int length) throws SAXException {
+    protected void appendCommentToDocument(char[] buf, int start, int length) throws SAXException {
         // TODO Auto-generated method stub
         
     }
@@ -88,6 +93,14 @@ public class SAXStreamer extends TreeBuilder<Attributes>{
     @Override
     protected Attributes shallowClone(Attributes element) throws SAXException {
         return element;
+    }
+    
+    public void setContentHandler(ContentHandler handler) {
+        contentHandler = handler;
+    }
+
+    public void setLexicalHandler(LexicalHandler handler) {
+        lexicalHandler = handler;
     }
 
 }

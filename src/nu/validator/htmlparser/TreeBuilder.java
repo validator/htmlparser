@@ -487,7 +487,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                      * object with the data attribute set to the data given in
                      * the comment token.
                      */
-                    appendCommentToDocument(buf, length);
+                    appendCommentToDocument(buf, 0, length);
                     return;
                 case AFTER_BODY:
                     /*
@@ -497,7 +497,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                      * comment token.
                      * 
                      */
-                    appendComment(stack[0].node, buf, length);
+                    appendComment(stack[0].node, buf, 0, length);
                     return;
                 default:
                     /*
@@ -506,7 +506,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                      * comment token.
                      * 
                      */
-                    appendComment(stack[currentPtr].node, buf, length);
+                    appendComment(stack[currentPtr].node, buf, 0, length);
                     return;
             }
         }
@@ -3056,9 +3056,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     protected abstract void appendCharacters(T parent,
             char[] buf, int start, int length) throws SAXException;
     
-    protected abstract void appendComment(T parent, char[] buf, int length) throws SAXException;
+    protected abstract void appendComment(T parent, char[] buf, int start, int length) throws SAXException;
 
-    protected abstract void appendCommentToDocument(char[] buf, int length) throws SAXException;
+    protected abstract void appendCommentToDocument(char[] buf, int start, int length) throws SAXException;
 
     protected abstract void addAttributesToElement(T element, Attributes attributes) throws SAXException;
 
@@ -3135,5 +3135,23 @@ public abstract class TreeBuilder<T> implements TokenHandler {
      */
     public void setScriptingEnabled(boolean scriptingEnabled) {
         this.scriptingEnabled = scriptingEnabled;
+    }
+
+    /**
+     * Sets the doctypeExpectation.
+     * 
+     * @param doctypeExpectation the doctypeExpectation to set
+     */
+    public void setDoctypeExpectation(DoctypeExpectation doctypeExpectation) {
+        this.doctypeExpectation = doctypeExpectation;
+    }
+
+    /**
+     * Sets the documentModeHandler.
+     * 
+     * @param documentModeHandler the documentModeHandler to set
+     */
+    public void setDocumentModeHandler(DocumentModeHandler documentModeHandler) {
+        this.documentModeHandler = documentModeHandler;
     }
 }
