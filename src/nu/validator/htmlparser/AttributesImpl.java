@@ -134,8 +134,4 @@ public class AttributesImpl implements Attributes {
         limit += 2;
     }
 
-    final void addAttribute(String name) {
-        addAttribute(name, "");
-    }
-
 }

@@ -366,6 +366,8 @@ public final class Tokenizer implements Locator {
 
     private boolean swallowBom;
 
+    private boolean html4ModeCompatibleWithXhtml1Schemata;
+
     // start public API
 
     /**
@@ -1899,7 +1901,20 @@ public final class Tokenizer implements Locator {
             err("A \u201Ccharset\u201D attribute on a \u201Cmeta\u201D element found after the first 512 bytes.");
         }
         if (shouldAddAttributes) {
-            attributes.addAttribute(attributeName);
+            if (html4) {
+                if (AttributeInfo.isBoolean(attributeName)) {
+                    if (html4ModeCompatibleWithXhtml1Schemata) {
+                        attributes.addAttribute(attributeName, attributeName);
+                    } else {
+                        attributes.addAttribute(attributeName, "");                        
+                    }
+                } else {
+                    err("Attribute value omitted for a non-boolean attribute. (HTML4-only error.)");
+                    attributes.addAttribute(attributeName, "");                    
+                }
+            } else {
+                attributes.addAttribute(attributeName, "");
+            }
         }
     }
 

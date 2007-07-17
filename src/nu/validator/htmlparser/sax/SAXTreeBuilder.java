@@ -49,13 +49,13 @@ class SAXTreeBuilder extends TreeBuilder<Element> {
     }
     
     @Override
-    protected void appendComment(Element parent, char[] buf, int length) {
-        parent.appendChild(new Comment(tokenizer, buf, 0, length));
+    protected void appendComment(Element parent, char[] buf, int start, int length) {
+        parent.appendChild(new Comment(tokenizer, buf, start, length));
     }
 
     @Override
-    protected void appendCommentToDocument(char[] buf, int length) {
-        document.appendChild(new Comment(tokenizer, buf, 0, length));
+    protected void appendCommentToDocument(char[] buf, int start, int length) {
+        document.appendChild(new Comment(tokenizer, buf, start, length));
     }
 
     @Override
