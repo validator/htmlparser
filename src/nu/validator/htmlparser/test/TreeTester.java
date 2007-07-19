@@ -31,14 +31,18 @@ import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.util.LinkedList;
 
+import nu.validator.htmlparser.XmlViolationPolicy;
 import nu.validator.htmlparser.sax.HtmlParser;
 
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
 public class TreeTester {
 
     private final BufferedInputStream aggregateStream;
+
+    private boolean streaming = true;
 
     /**
      * @param aggregateStream
@@ -76,23 +80,23 @@ public class TreeTester {
             stream = new UntilHashInputStream(aggregateStream);
             while (stream.read() != -1) {
                 // spin
-            }            
-            
+            }
+
             StringBuilder sb = new StringBuilder();
             int c;
             while ((c = aggregateStream.read()) != '\n') {
-                sb.append((char)c);
+                sb.append((char) c);
             }
             String label = sb.toString();
             if ("document-fragment".equals(label)) {
                 sb.setLength(0);
                 while ((c = aggregateStream.read()) != '\n') {
-                    sb.append((char)c);
+                    sb.append((char) c);
                 }
                 context = sb.toString();
             }
             aggregateStream.reset();
-            if (skipLabel()) { // #document-fragment
+            if (skipLabel()) { // #data
                 System.err.println("Premature end of test data.");
                 return false;
             }
@@ -104,29 +108,25 @@ public class TreeTester {
             TreeDumpContentHandler treeDumpContentHandler = new TreeDumpContentHandler(
                     sw);
             HtmlParser htmlParser = new HtmlParser();
+            if (streaming) {
+                htmlParser.setStreamabilityViolationPolicy(XmlViolationPolicy.FATAL);
+            }
             htmlParser.setContentHandler(treeDumpContentHandler);
             htmlParser.setLexicalHandler(treeDumpContentHandler);
             htmlParser.setErrorHandler(leh);
             htmlParser.setScriptingEnabled(true);
-            if (context == null) {
-                htmlParser.parse(is);                
-            } else {
-                htmlParser.parseFragment(is, context);
-                treeDumpContentHandler.endDocument();
+            try {
+                if (context == null) {
+                    htmlParser.parse(is);
+                } else {
+                    htmlParser.parseFragment(is, context);
+                    treeDumpContentHandler.endDocument();
+                }
+            } catch (SAXParseException e) {
+                // ignore
             }
             stream.close();
 
-            if (context != null) {
-                if (skipLabel()) { // #document-fragment
-                    System.err.println("Premature end of test data.");
-                    return false;
-                }
-                stream = new UntilHashInputStream(aggregateStream);
-                while (stream.read() != -1) {
-                    // spin
-                }                
-            }
-            
             if (skipLabel()) { // #errors
                 System.err.println("Premature end of test data.");
                 return false;
@@ -138,6 +138,18 @@ public class TreeTester {
             while ((line = br.readLine()) != null) {
                 expectedErrors.add(line);
             }
+
+            if (context != null) {
+                if (skipLabel()) { // #document-fragment
+                    System.err.println("Premature end of test data.");
+                    return false;
+                }
+                UntilHashInputStream stream2 = new UntilHashInputStream(aggregateStream);
+                while (stream2.read() != -1) {
+                    // spin
+                }
+            }
+
 
             if (skipLabel()) { // #document
                 System.err.println("Premature end of test data.");
@@ -156,10 +168,10 @@ public class TreeTester {
 
             LinkedList<String> actualErrors = leh.getErrors();
 
-            if (expected.equals(actual) /*
-                                         * && expectedErrors.size() ==
-                                         * actualErrors.size()
-                                         */) {
+            if (expected.equals(actual) || (streaming && leh.isFatal()) /*
+             * && expectedErrors.size() ==
+             * actualErrors.size()
+             */) {
                 System.err.println("Success.");
                 // System.err.println(stream);
             } else {

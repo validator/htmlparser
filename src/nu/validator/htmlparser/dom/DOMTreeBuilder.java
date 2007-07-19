@@ -37,7 +37,7 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
                 }
             }
         } catch (DOMException e) {
-            throw new SAXParseException(e.getMessage(), tokenizer, e);
+            fatal(e);
         }
     }
 
@@ -48,7 +48,7 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
             parent.appendChild(document.createTextNode(new String(buf, start,
                     length)));
         } catch (DOMException e) {
-            throw new SAXParseException(e.getMessage(), tokenizer, e);
+            fatal(e);
         }
     }
 
@@ -60,7 +60,7 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
                 newParent.appendChild(oldParent.getFirstChild());
             }
         } catch (DOMException e) {
-            throw new SAXParseException(e.getMessage(), tokenizer, e);
+            fatal(e);
         }
     }
 
@@ -71,7 +71,7 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
             parent.appendChild(document.createComment(new String(buf, start,
                     length)));
         } catch (DOMException e) {
-            throw new SAXParseException(e.getMessage(), tokenizer, e);
+            fatal(e);
         }
     }
 
@@ -82,7 +82,7 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
             document.appendChild(document.createComment(new String(buf, start,
                     length)));
         } catch (DOMException e) {
-            throw new SAXParseException(e.getMessage(), tokenizer, e);
+            fatal(e);
         }
     }
 
@@ -98,7 +98,8 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
             }
             return rv;
         } catch (DOMException e) {
-            throw new SAXParseException(e.getMessage(), tokenizer, e);
+            fatal(e);
+            throw new RuntimeException("Unreachable");
         }
     }
 
@@ -115,7 +116,8 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
             document.appendChild(rv);
             return rv;
         } catch (DOMException e) {
-            throw new SAXParseException(e.getMessage(), tokenizer, e);
+            fatal(e);
+            throw new RuntimeException("Unreachable");
         }
     }
 
@@ -127,7 +129,7 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
                 parent.removeChild(element);
             }
         } catch (DOMException e) {
-            throw new SAXParseException(e.getMessage(), tokenizer, e);
+            fatal(e);
         }
     }
 
@@ -137,7 +139,7 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
         try {
             newParent.appendChild(child);
         } catch (DOMException e) {
-            throw new SAXParseException(e.getMessage(), tokenizer, e);
+            fatal(e);
         }
     }
 
@@ -146,7 +148,8 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
         try {
             return element.hasChildNodes();
         } catch (DOMException e) {
-            throw new SAXParseException(e.getMessage(), tokenizer, e);
+            fatal(e);
+            throw new RuntimeException("Unreachable");
         }
     }
 
@@ -156,7 +159,7 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
         try {
             parent.insertBefore(child, sibling);
         } catch (DOMException e) {
-            throw new SAXParseException(e.getMessage(), tokenizer, e);
+            fatal(e);
         }
     }
 
@@ -166,7 +169,7 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
         try {
             parent.insertBefore(document.createTextNode(new String(buf, start, length)), sibling);
         } catch (DOMException e) {
-            throw new SAXParseException(e.getMessage(), tokenizer, e);
+            fatal(e);
         }
     }
 
@@ -180,7 +183,8 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
                 return null;
             }
         } catch (DOMException e) {
-            throw new SAXParseException(e.getMessage(), tokenizer, e);
+            fatal(e);
+            throw new RuntimeException("Unreachable");
         }
     }
 
@@ -189,7 +193,8 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
         try {
             return (Element) element.cloneNode(false);
         } catch (DOMException e) {
-            throw new SAXParseException(e.getMessage(), tokenizer, e);
+            fatal(e);
+            throw new RuntimeException("Unreachable");
         }
     }
 
@@ -225,7 +230,8 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
             
             return rv;
         } catch (DOMException e) {
-            throw new SAXParseException(e.getMessage(), tokenizer, e);
+            fatal(e);
+            return null;
         }
     }
 
@@ -233,7 +239,7 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
      * @see nu.validator.htmlparser.TreeBuilder#start()
      */
     @Override
-    protected void start() throws SAXException {
+    protected void start(boolean fragment) throws SAXException {
         document = implementation.createDocument(null, null, null);
     }
 }

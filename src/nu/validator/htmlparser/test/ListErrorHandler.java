@@ -30,6 +30,8 @@ import org.xml.sax.SAXParseException;
 
 public class ListErrorHandler implements ErrorHandler {
 
+    private boolean fatal = false;
+    
     private LinkedList<String> errors = new LinkedList<String>();
     
     public void error(SAXParseException spe) throws SAXException {
@@ -37,6 +39,7 @@ public class ListErrorHandler implements ErrorHandler {
     }
 
     public void fatalError(SAXParseException arg0) throws SAXException {
+        fatal = true;
     }
 
     public void warning(SAXParseException arg0) throws SAXException {
@@ -49,6 +52,15 @@ public class ListErrorHandler implements ErrorHandler {
      */
     public LinkedList<String> getErrors() {
         return errors;
+    }
+
+    /**
+     * Returns the fatal.
+     * 
+     * @return the fatal
+     */
+    public boolean isFatal() {
+        return fatal;
     }
 
 }

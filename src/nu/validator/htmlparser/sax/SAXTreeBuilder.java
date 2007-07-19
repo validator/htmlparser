@@ -161,7 +161,7 @@ class SAXTreeBuilder extends TreeBuilder<Element> {
      * @see nu.validator.htmlparser.TreeBuilder#start()
      */
     @Override
-    protected void start() {
+    protected void start(boolean fragment) {
         document = new Document(tokenizer);
     }
 
