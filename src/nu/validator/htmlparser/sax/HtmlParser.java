@@ -99,6 +99,11 @@ public class HtmlParser implements XMLReader {
             this.treeBuilder.setDocumentModeHandler(documentModeHandler);
             this.treeBuilder.setIgnoringComments(lexicalHandler == null);
             this.treeBuilder.setScriptingEnabled(scriptingEnabled);
+            if (treeBuilder instanceof SAXStreamer) {
+                SAXStreamer streamer = (SAXStreamer) treeBuilder;
+                streamer.setContentHandler(contentHandler);
+                streamer.setLexicalHandler(lexicalHandler);
+            }
         }
     }
 
@@ -145,6 +150,7 @@ public class HtmlParser implements XMLReader {
 
     public void parseFragment(InputSource input, String context)
             throws IOException, SAXException {
+        lazyInit();
         try {
             treeBuilder.setFragmentContext(context);
             tokenizer.tokenize(input);
@@ -270,7 +276,7 @@ public class HtmlParser implements XMLReader {
      * @see nu.validator.htmlparser.TreeBuilder#isScriptingEnabled()
      */
     public boolean isScriptingEnabled() {
-        return treeBuilder.isScriptingEnabled();
+        return scriptingEnabled;
     }
 
     /**
@@ -278,7 +284,10 @@ public class HtmlParser implements XMLReader {
      * @see nu.validator.htmlparser.TreeBuilder#setScriptingEnabled(boolean)
      */
     public void setScriptingEnabled(boolean scriptingEnabled) {
-        treeBuilder.setScriptingEnabled(scriptingEnabled);
+        this.scriptingEnabled = scriptingEnabled;
+        if (treeBuilder != null) {
+            treeBuilder.setScriptingEnabled(scriptingEnabled);
+        }
     }
 
     /**

@@ -223,7 +223,15 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         errorHandler.fatalError(spe);
         throw spe;
     }
-
+    protected final void fatal(Exception e) throws SAXException {
+        if (errorHandler == null) {
+            return;
+        }
+        SAXParseException spe = new SAXParseException(e.getMessage(), tokenizer, e);;
+        errorHandler.fatalError(spe);
+        throw spe;
+    }
+    
     /**
      * Reports a Parse Error.
      * 
@@ -263,13 +271,14 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         currentPtr = -1;
         formPointer = null;
         wantingComments = wantsComments();
-        start();
+        start(context != null);
         if (context == null) {
             phase = Phase.INITIAL;
         } else {
             T elt = createHtmlElementSetAsRoot(tokenizer.newAttributes());
             StackNode<T> node = new StackNode<T>("html", elt);
-            push(node);
+            currentPtr++;
+            stack[currentPtr] = node;
             resetTheInsertionMode();
             if ("title" == context || "textarea" == context) {
                 tokenizer.setContentModelFlag(ContentModelFlag.RCDATA, context);
@@ -791,6 +800,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             break loop;
                         case AFTER_BODY:
                             err("Non-space character after body.");
+                            if (conformingAndStreaming) {
+                                fatal();
+                            }
                             phase = Phase.IN_BODY;
                             i--;
                             continue;
@@ -947,7 +959,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         }
 
                         /* Stop parsing. */
-                        break eofloop;                        
+                        if (context == null) {
+                            bodyClosed(stack[1].node);
+                        }
+                        phase = Phase.AFTER_BODY;
+                        continue;
                     /*
                      * This fails because it doesn't imply HEAD and BODY tags.
                      * We should probably expand out the insertion modes and
@@ -961,6 +977,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         break eofloop;                        
                     case AFTER_BODY:
                     case AFTER_FRAMESET:
+                        if (context == null) {
+                            htmlClosed(stack[0].node);
+                        }
                     case TRAILING_END:
                         break eofloop;                        
                 }
@@ -1507,7 +1526,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         addAttributesToElement(stack[0].node, attributes);
                         return;
                     } else {
-                    err("Stray \u201C" + name + "\u201D start tag.");
+                        err("Stray \u201C" + name + "\u201D start tag.");
+                        if (conformingAndStreaming) {
+                            fatal();
+                        }
                         phase = Phase.IN_BODY;
                         continue;
                     }
@@ -3062,7 +3084,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     protected abstract void addAttributesToElement(T element, Attributes attributes) throws SAXException;
 
-    protected void start() throws SAXException {
+    protected void start(boolean fragment) throws SAXException {
         
     }
 
