@@ -2331,7 +2331,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     private void documentMode(DocumentMode mode, String publicIdentifier,
-            String systemIdentifier, boolean html4SpecificAdditionalErrorChecks) {
+            String systemIdentifier, boolean html4SpecificAdditionalErrorChecks) throws SAXException {
         if (documentModeHandler != null) {
             documentModeHandler.documentMode(mode, publicIdentifier,
                     systemIdentifier, html4SpecificAdditionalErrorChecks);
@@ -3027,6 +3027,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         } else {
             detachFromParentAndAppendToNewParent(elt, current.node);
         }
+        if (conformingAndStreaming || nonConformingAndStreaming) {
+            elementPushed(name, (T) attributes);
+            elementPopped(name, null);
+        }
     }
     
     private void appendVoidElementToCurrentMayFoster(String name, Attributes attributes) throws SAXException {
@@ -3042,6 +3046,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             }
         } else {
             detachFromParentAndAppendToNewParent(elt, current.node);
+        }
+        if (conformingAndStreaming || nonConformingAndStreaming) {
+            elementPushed(name, (T) attributes);
+            elementPopped(name, null);
         }
     }
     

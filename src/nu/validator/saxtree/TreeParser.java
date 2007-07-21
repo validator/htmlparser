@@ -61,6 +61,7 @@ public final class TreeParser implements Locator {
      * @throws SAXException
      */
     public void parse(Node node) throws SAXException {
+        contentHandler.setDocumentLocator(this);
         Node current = node;
         Node next;
         for (;;) {
