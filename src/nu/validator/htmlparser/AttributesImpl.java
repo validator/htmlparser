@@ -60,7 +60,7 @@ public class AttributesImpl implements Attributes {
         return length;
     }
 
-    public String getLocalName(int index) {
+    public final String getLocalName(int index) {
         return getQName(index);
     }
 
@@ -105,7 +105,7 @@ public class AttributesImpl implements Attributes {
         return index < length ? array[index * 2 + 1] : null;
     }
 
-    public String getValue(String qName) {
+    public final String getValue(String qName) {
         int index = getIndex(qName);
         if (index == -1) {
             return null;

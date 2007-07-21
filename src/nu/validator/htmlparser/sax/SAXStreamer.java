@@ -176,6 +176,7 @@ public class SAXStreamer extends TreeBuilder<Attributes>{
      */
     @Override
     protected void start(boolean fragment) throws SAXException {
+        contentHandler.setDocumentLocator(tokenizer);
         if (fragment) {
             depth = 1;
         } else {

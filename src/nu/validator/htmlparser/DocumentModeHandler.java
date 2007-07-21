@@ -22,6 +22,8 @@
 
 package nu.validator.htmlparser;
 
+import org.xml.sax.SAXException;
+
 public interface DocumentModeHandler {
-    public void documentMode(DocumentMode mode, String publicIdentifier, String systemIdentifier, boolean html4SpecificAdditionalErrorChecks);
+    public void documentMode(DocumentMode mode, String publicIdentifier, String systemIdentifier, boolean html4SpecificAdditionalErrorChecks) throws SAXException;
 }

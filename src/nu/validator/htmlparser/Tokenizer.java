@@ -368,6 +368,8 @@ public final class Tokenizer implements Locator {
 
     private boolean html4ModeCompatibleWithXhtml1Schemata;
 
+    private boolean mappingLangToXmlLang;
+
     // start public API
 
     /**
@@ -474,6 +476,16 @@ public final class Tokenizer implements Locator {
         this.contentSpacePolicy = contentSpacePolicy;
     }
 
+    /**
+     * Sets the html4ModeCompatibleWithXhtml1Schemata.
+     * 
+     * @param html4ModeCompatibleWithXhtml1Schemata the html4ModeCompatibleWithXhtml1Schemata to set
+     */
+    public void setHtml4ModeCompatibleWithXhtml1Schemata(
+            boolean html4ModeCompatibleWithXhtml1Schemata) {
+        this.html4ModeCompatibleWithXhtml1Schemata = html4ModeCompatibleWithXhtml1Schemata;
+    }
+    
     /**
      * Runs the tokenization. This is the main entry point.
      * 
@@ -608,7 +620,11 @@ public final class Tokenizer implements Locator {
     }
 
     AttributesImpl newAttributes() {
-        return new AttributesImpl();
+        if (mappingLangToXmlLang) {
+            return new XmlLangAttributesImpl();
+        } else {
+            return new AttributesImpl();
+        }
     }
     
     /**
@@ -890,7 +906,7 @@ public final class Tokenizer implements Locator {
                             err("Found low surrogate without high surrogate.");
                             c = buf[pos] = '\uFFFD';
                         }
-                    } else if (inContent && (c < ' ' || isNonCharacter(c))) {
+                    } else if (inContent && (c < ' ' || isNonCharacter(c)) && (c != '\t')) {
                         if (contentNonXmlCharPolicy == XmlViolationPolicy.FATAL) {
                             fatal("This document is not mappable to XML 1.0 without data loss due to a character that is not a legal XML 1.0 character.");
                         } else {
@@ -1877,7 +1893,7 @@ public final class Tokenizer implements Locator {
     private void attributeNameComplete() throws SAXException {
         attributeName = strBufToString();
         if (attributes == null) {
-            attributes = new AttributesImpl();
+            attributes = newAttributes();
         }
         /*
          * When the user agent leaves the attribute name state (and before
@@ -3876,7 +3892,7 @@ public final class Tokenizer implements Locator {
              * whose code point is that number.
              */
             char c = (char) value;
-            if (c < '\t' || (c > '\r' || c < ' ') || isNonCharacter(c)) {
+            if (c < '\t' || (c > '\r' && c < ' ') || isNonCharacter(c)) {
                 if (contentNonXmlCharPolicy != XmlViolationPolicy.FATAL) {
                     if (contentNonXmlCharPolicy == XmlViolationPolicy.ALTER_INFOSET) {
                         c = '\uFFFD';
@@ -3922,5 +3938,23 @@ public final class Tokenizer implements Locator {
         } else {
             tokenHandler.characters(val, 0, val.length);
         }
+    }
+
+    /**
+     * Returns the mappingLangToXmlLang.
+     * 
+     * @return the mappingLangToXmlLang
+     */
+    public boolean isMappingLangToXmlLang() {
+        return mappingLangToXmlLang;
+    }
+
+    /**
+     * Sets the mappingLangToXmlLang.
+     * 
+     * @param mappingLangToXmlLang the mappingLangToXmlLang to set
+     */
+    public void setMappingLangToXmlLang(boolean mappingLangToXmlLang) {
+        this.mappingLangToXmlLang = mappingLangToXmlLang;
     }
 }

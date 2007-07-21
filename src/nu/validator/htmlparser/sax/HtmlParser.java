@@ -39,6 +39,7 @@ import org.xml.sax.DTDHandler;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
+import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXNotRecognizedException;
 import org.xml.sax.SAXNotSupportedException;
@@ -51,7 +52,11 @@ public class HtmlParser implements XMLReader {
     private Tokenizer tokenizer = null;
 
     private TreeBuilder<?> treeBuilder = null;
+    
+    private SAXStreamer saxStreamer = null; // work around javac bug
 
+    private SAXTreeBuilder saxTreeBuilder = null; // work around javac bug
+    
     private ContentHandler contentHandler = null;
 
     private LexicalHandler lexicalHandler = null;
@@ -78,15 +83,23 @@ public class HtmlParser implements XMLReader {
 
     private XmlViolationPolicy streamabilityViolationPolicy = XmlViolationPolicy.ALLOW;
 
+    private boolean html4ModeCompatibleWithXhtml1Schemata;
+
+    private boolean mappingLangToXmlLang;
+
     public HtmlParser() {
     }
 
     private void lazyInit() {
         if (tokenizer == null) {
             if (streamabilityViolationPolicy == XmlViolationPolicy.ALLOW) {
-                this.treeBuilder = new SAXTreeBuilder();
+                this.saxTreeBuilder = new SAXTreeBuilder();
+                this.treeBuilder = this.saxTreeBuilder;
+                this.saxStreamer = null;
             } else {
-                this.treeBuilder = new SAXStreamer();
+                this.saxStreamer = new SAXStreamer();
+                this.treeBuilder = this.saxStreamer;
+                this.saxTreeBuilder = null;
             }
             this.tokenizer = new Tokenizer(treeBuilder);
             this.tokenizer.setErrorHandler(errorHandler);
@@ -95,14 +108,15 @@ public class HtmlParser implements XMLReader {
             this.tokenizer.setCommentPolicy(commentPolicy);
             this.tokenizer.setContentNonXmlCharPolicy(contentNonXmlCharPolicy);
             this.tokenizer.setContentSpacePolicy(contentSpacePolicy);
+            this.tokenizer.setHtml4ModeCompatibleWithXhtml1Schemata(html4ModeCompatibleWithXhtml1Schemata);
+            this.tokenizer.setMappingLangToXmlLang(mappingLangToXmlLang);
             this.treeBuilder.setDoctypeExpectation(doctypeExpectation);
             this.treeBuilder.setDocumentModeHandler(documentModeHandler);
             this.treeBuilder.setIgnoringComments(lexicalHandler == null);
             this.treeBuilder.setScriptingEnabled(scriptingEnabled);
-            if (treeBuilder instanceof SAXStreamer) {
-                SAXStreamer streamer = (SAXStreamer) treeBuilder;
-                streamer.setContentHandler(contentHandler);
-                streamer.setLexicalHandler(lexicalHandler);
+            if (saxStreamer != null) {
+                saxStreamer.setContentHandler(contentHandler == null ? new DefaultHandler() : contentHandler);
+                saxStreamer.setLexicalHandler(lexicalHandler);
             }
         }
     }
@@ -141,8 +155,8 @@ public class HtmlParser implements XMLReader {
             treeBuilder.setFragmentContext(null);
             tokenizer.tokenize(input);
         } finally {
-            if (treeBuilder instanceof SAXTreeBuilder) {
-                Document document = ((SAXTreeBuilder) treeBuilder).getDocument();
+            if (saxTreeBuilder != null) {
+                Document document = saxTreeBuilder.getDocument();
                 new TreeParser(contentHandler, lexicalHandler).parse(document);
             }
         }
@@ -155,8 +169,8 @@ public class HtmlParser implements XMLReader {
             treeBuilder.setFragmentContext(context);
             tokenizer.tokenize(input);
         } finally {
-            if (treeBuilder instanceof SAXTreeBuilder) {
-                DocumentFragment fragment = ((SAXTreeBuilder) treeBuilder).getDocumentFragment();
+            if (saxTreeBuilder != null) {
+                DocumentFragment fragment = saxTreeBuilder.getDocumentFragment();
                 new TreeParser(contentHandler, lexicalHandler).parse(fragment);
             }
         }
@@ -174,10 +188,8 @@ public class HtmlParser implements XMLReader {
 
     public void setContentHandler(ContentHandler handler) {
         contentHandler = handler;
-        if (treeBuilder != null) {
-            if (treeBuilder instanceof SAXStreamer) {
-                ((SAXStreamer)treeBuilder).setContentHandler(handler);
-            }
+        if (saxStreamer != null) {
+                saxStreamer.setContentHandler(contentHandler == null ? new DefaultHandler() : contentHandler);
         }
     }
 
@@ -185,8 +197,8 @@ public class HtmlParser implements XMLReader {
         lexicalHandler = handler;
         if (treeBuilder != null) {
             treeBuilder.setIgnoringComments(handler == null);
-            if (treeBuilder instanceof SAXStreamer) {
-                ((SAXStreamer)treeBuilder).setLexicalHandler(handler);
+            if (saxStreamer != null) {
+                saxStreamer.setLexicalHandler(handler);
             }
         }
     }
@@ -343,6 +355,46 @@ public class HtmlParser implements XMLReader {
     public void setStreamabilityViolationPolicy(
             XmlViolationPolicy streamabilityViolationPolicy) {
         this.streamabilityViolationPolicy = streamabilityViolationPolicy;
+    }
+
+    public void setHtml4ModeCompatibleWithXhtml1Schemata(boolean html4ModeCompatibleWithXhtml1Schemata) {
+        this.html4ModeCompatibleWithXhtml1Schemata = html4ModeCompatibleWithXhtml1Schemata;
+        if (tokenizer != null) {
+            tokenizer.setHtml4ModeCompatibleWithXhtml1Schemata(html4ModeCompatibleWithXhtml1Schemata);
+        }
+    }
+    
+    public Locator getDocumentLocator() {
+        return tokenizer;
+    }
+
+    /**
+     * Returns the html4ModeCompatibleWithXhtml1Schemata.
+     * 
+     * @return the html4ModeCompatibleWithXhtml1Schemata
+     */
+    public boolean isHtml4ModeCompatibleWithXhtml1Schemata() {
+        return html4ModeCompatibleWithXhtml1Schemata;
+    }
+
+    /**
+     * @param mappingLangToXmlLang
+     * @see nu.validator.htmlparser.Tokenizer#setMappingLangToXmlLang(boolean)
+     */
+    public void setMappingLangToXmlLang(boolean mappingLangToXmlLang) {
+        this.mappingLangToXmlLang = mappingLangToXmlLang;
+        if (tokenizer != null) {
+            tokenizer.setMappingLangToXmlLang(mappingLangToXmlLang);
+        }        
+    }
+
+    /**
+     * Returns the mappingLangToXmlLang.
+     * 
+     * @return the mappingLangToXmlLang
+     */
+    public boolean isMappingLangToXmlLang() {
+        return mappingLangToXmlLang;
     }
 
 }
