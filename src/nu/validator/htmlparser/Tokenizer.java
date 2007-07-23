@@ -364,6 +364,8 @@ public final class Tokenizer implements Locator {
      */
     private XmlViolationPolicy commentPolicy = XmlViolationPolicy.ALLOW;
 
+    private XmlViolationPolicy xmlnsPolicy = XmlViolationPolicy.ALLOW;
+    
     private boolean swallowBom;
 
     private boolean html4ModeCompatibleWithXhtml1Schemata;
@@ -474,6 +476,18 @@ public final class Tokenizer implements Locator {
      */
     public void setContentSpacePolicy(XmlViolationPolicy contentSpacePolicy) {
         this.contentSpacePolicy = contentSpacePolicy;
+    }
+
+    /**
+     * Sets the xmlnsPolicy.
+     * 
+     * @param xmlnsPolicy the xmlnsPolicy to set
+     */
+    public void setXmlnsPolicy(XmlViolationPolicy xmlnsPolicy) {
+        if (xmlnsPolicy == XmlViolationPolicy.FATAL) {
+            throw new IllegalArgumentException("Can't use FATAL here.");
+        }
+        this.xmlnsPolicy = xmlnsPolicy;
     }
 
     /**
@@ -1935,12 +1949,22 @@ public final class Tokenizer implements Locator {
     }
 
     private void addAttributeWithValue() throws SAXException {
-        if (metaBoundaryPassed && "charset".equals(attributeName)
-                && "meta".equals(tagName)) {
+        if (metaBoundaryPassed && "meta" == tagName
+                && "charset".equals(attributeName)) {
             err("A \u201Ccharset\u201D attribute on a \u201Cmeta\u201D element found after the first 512 bytes.");
         }
         if (shouldAddAttributes) {
-            attributes.addAttribute(attributeName, longStrBufToString());
+            String value = longStrBufToString();
+            if (xmlnsPolicy != XmlViolationPolicy.ALLOW && !html4) {
+                if (!endTag && "html" == tagName
+                        && "xmlns".equals(attributeName)
+                        && "http://www.w3.org/1999/xhtml".equals(value)) {
+                    if (xmlnsPolicy == XmlViolationPolicy.ALTER_INFOSET) {
+                        return;
+                    }
+                }
+            }
+            attributes.addAttribute(attributeName, value);
         }
     }
 

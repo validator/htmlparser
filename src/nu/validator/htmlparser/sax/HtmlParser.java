@@ -87,6 +87,8 @@ public class HtmlParser implements XMLReader {
 
     private boolean mappingLangToXmlLang;
 
+    private XmlViolationPolicy xmlnsPolicy;
+
     public HtmlParser() {
     }
 
@@ -110,6 +112,7 @@ public class HtmlParser implements XMLReader {
             this.tokenizer.setContentSpacePolicy(contentSpacePolicy);
             this.tokenizer.setHtml4ModeCompatibleWithXhtml1Schemata(html4ModeCompatibleWithXhtml1Schemata);
             this.tokenizer.setMappingLangToXmlLang(mappingLangToXmlLang);
+            this.tokenizer.setXmlnsPolicy(xmlnsPolicy);
             this.treeBuilder.setDoctypeExpectation(doctypeExpectation);
             this.treeBuilder.setDocumentModeHandler(documentModeHandler);
             this.treeBuilder.setIgnoringComments(lexicalHandler == null);
@@ -395,6 +398,26 @@ public class HtmlParser implements XMLReader {
      */
     public boolean isMappingLangToXmlLang() {
         return mappingLangToXmlLang;
+    }
+
+    /**
+     * @param xmlnsPolicy
+     * @see nu.validator.htmlparser.Tokenizer#setXmlnsPolicy(nu.validator.htmlparser.XmlViolationPolicy)
+     */
+    public void setXmlnsPolicy(XmlViolationPolicy xmlnsPolicy) {
+        this.xmlnsPolicy = xmlnsPolicy;
+        if (tokenizer != null) {
+            tokenizer.setXmlnsPolicy(xmlnsPolicy);
+        }        
+    }
+
+    /**
+     * Returns the xmlnsPolicy.
+     * 
+     * @return the xmlnsPolicy
+     */
+    public XmlViolationPolicy getXmlnsPolicy() {
+        return xmlnsPolicy;
     }
 
 }
