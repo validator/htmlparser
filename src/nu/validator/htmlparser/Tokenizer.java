@@ -1949,6 +1949,9 @@ public final class Tokenizer implements Locator {
                     attributes.addAttribute(attributeName, "");
                 }
             } else {
+                if ("src".equals(attributeName) || "href".equals(attributeName)) {
+                    warn("Attribute \u201C" + attributeName + "\u201D without an explicit value seen. The attribute may be dropped by IE7.");
+                }
                 attributes.addAttribute(attributeName, "");
             }
         }
