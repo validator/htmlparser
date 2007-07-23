@@ -365,7 +365,7 @@ public final class Tokenizer implements Locator {
     private XmlViolationPolicy commentPolicy = XmlViolationPolicy.ALLOW;
 
     private XmlViolationPolicy xmlnsPolicy = XmlViolationPolicy.ALLOW;
-    
+
     private boolean swallowBom;
 
     private boolean html4ModeCompatibleWithXhtml1Schemata;
@@ -481,7 +481,8 @@ public final class Tokenizer implements Locator {
     /**
      * Sets the xmlnsPolicy.
      * 
-     * @param xmlnsPolicy the xmlnsPolicy to set
+     * @param xmlnsPolicy
+     *            the xmlnsPolicy to set
      */
     public void setXmlnsPolicy(XmlViolationPolicy xmlnsPolicy) {
         if (xmlnsPolicy == XmlViolationPolicy.FATAL) {
@@ -493,13 +494,14 @@ public final class Tokenizer implements Locator {
     /**
      * Sets the html4ModeCompatibleWithXhtml1Schemata.
      * 
-     * @param html4ModeCompatibleWithXhtml1Schemata the html4ModeCompatibleWithXhtml1Schemata to set
+     * @param html4ModeCompatibleWithXhtml1Schemata
+     *            the html4ModeCompatibleWithXhtml1Schemata to set
      */
     public void setHtml4ModeCompatibleWithXhtml1Schemata(
             boolean html4ModeCompatibleWithXhtml1Schemata) {
         this.html4ModeCompatibleWithXhtml1Schemata = html4ModeCompatibleWithXhtml1Schemata;
     }
-    
+
     /**
      * Runs the tokenization. This is the main entry point.
      * 
@@ -640,7 +642,7 @@ public final class Tokenizer implements Locator {
             return new AttributesImpl();
         }
     }
-    
+
     /**
      * Clears the smaller buffer.
      */
@@ -920,7 +922,8 @@ public final class Tokenizer implements Locator {
                             err("Found low surrogate without high surrogate.");
                             c = buf[pos] = '\uFFFD';
                         }
-                    } else if (inContent && (c < ' ' || isNonCharacter(c)) && (c != '\t')) {
+                    } else if (inContent && (c < ' ' || isNonCharacter(c))
+                            && (c != '\t')) {
                         if (contentNonXmlCharPolicy == XmlViolationPolicy.FATAL) {
                             fatal("This document is not mappable to XML 1.0 without data loss due to a character that is not a legal XML 1.0 character.");
                         } else {
@@ -1111,7 +1114,8 @@ public final class Tokenizer implements Locator {
         for (;;) {
             c = read();
             if (c == '&'
-                    && (contentModelFlag == ContentModelFlag.PCDATA || (contentModelFlag == ContentModelFlag.RCDATA) && !escapeFlag)) {
+                    && (contentModelFlag == ContentModelFlag.PCDATA || (contentModelFlag == ContentModelFlag.RCDATA)
+                            && !escapeFlag)) {
                 /*
                  * U+0026 AMPERSAND (&) When the content model flag is set to
                  * one of the PCDATA or RCDATA states: switch to the entity data
@@ -1400,18 +1404,20 @@ public final class Tokenizer implements Locator {
                     folded += 0x20;
                 }
                 if (folded != e) {
-                    if (html4) {
-                        err((contentModelFlag == ContentModelFlag.CDATA ? "CDATA"
-                                : "RCDATA")
-                                + " element \u201C"
-                                + contentModelElement
-                                + "\u201D contained the string \u201C</\u201D, but it was not the start of the end tag. (HTML4-only error)");
-                    } else {
-                        warn((contentModelFlag == ContentModelFlag.CDATA ? "CDATA"
-                                : "RCDATA")
-                                + " element \u201C"
-                                + contentModelElement
-                                + "\u201D contained the string \u201C</\u201D, but this did not close the element.");
+                    if (i > 0 || (folded >= 'a' && folded <= 'z')) {
+                        if (html4) {
+                            err((contentModelFlag == ContentModelFlag.CDATA ? "CDATA"
+                                    : "RCDATA")
+                                    + " element \u201C"
+                                    + contentModelElement
+                                    + "\u201D contained the string \u201C</\u201D, but it was not the start of the end tag. (HTML4-only error)");
+                        } else {
+                            warn((contentModelFlag == ContentModelFlag.CDATA ? "CDATA"
+                                    : "RCDATA")
+                                    + " element \u201C"
+                                    + contentModelElement
+                                    + "\u201D contained the string \u201C</\u201D, but this did not close the element.");
+                        }
                     }
                     tokenHandler.characters(LT_SOLIDUS, 0, 2);
                     emitStrBuf();
@@ -1771,7 +1777,7 @@ public final class Tokenizer implements Locator {
          * col, input
          */
         if (endTag) {
-            err("Stray \u201C/\u201D in an end tag.");            
+            err("Stray \u201C/\u201D in an end tag.");
             return;
         }
         char c = read();
@@ -1936,11 +1942,11 @@ public final class Tokenizer implements Locator {
                     if (html4ModeCompatibleWithXhtml1Schemata) {
                         attributes.addAttribute(attributeName, attributeName);
                     } else {
-                        attributes.addAttribute(attributeName, "");                        
+                        attributes.addAttribute(attributeName, "");
                     }
                 } else {
                     err("Attribute value omitted for a non-boolean attribute. (HTML4-only error.)");
-                    attributes.addAttribute(attributeName, "");                    
+                    attributes.addAttribute(attributeName, "");
                 }
             } else {
                 attributes.addAttribute(attributeName, "");
@@ -2984,10 +2990,11 @@ public final class Tokenizer implements Locator {
                     return;
                 default:
                     /*
-                     * Otherwise, this is the parse error. */
+                     * Otherwise, this is the parse error.
+                     */
                     err("Bogus doctype.");
-                    /*Switch to the bogus
-                     * DOCTYPE state.
+                    /*
+                     * Switch to the bogus DOCTYPE state.
                      */
                     bogusDoctypeState();
                     return;
@@ -3976,7 +3983,8 @@ public final class Tokenizer implements Locator {
     /**
      * Sets the mappingLangToXmlLang.
      * 
-     * @param mappingLangToXmlLang the mappingLangToXmlLang to set
+     * @param mappingLangToXmlLang
+     *            the mappingLangToXmlLang to set
      */
     public void setMappingLangToXmlLang(boolean mappingLangToXmlLang) {
         this.mappingLangToXmlLang = mappingLangToXmlLang;
