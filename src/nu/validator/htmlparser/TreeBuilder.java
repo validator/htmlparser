@@ -201,6 +201,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     private T formPointer;
 
     private T headPointer;
+
+    private boolean reportingDoctype = true;
     
     protected TreeBuilder(XmlViolationPolicy streamabilityViolationPolicy, boolean coalescingText) {
         this.conformingAndStreaming = streamabilityViolationPolicy == XmlViolationPolicy.FATAL;
@@ -320,9 +322,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                  * with the Document object so that it is returned as the value
                  * of the doctype attribute of the Document object.
                  */
+                if (reportingDoctype ) {
                 appendDoctypeToDocument(name, publicIdentifier == null ? ""
                         : publicIdentifier, systemIdentifier == null ? ""
                         : systemIdentifier);
+                }
                 /*
                  * Then, if the DOCTYPE token matches one of the conditions in
                  * the following list, then set the document to quirks mode:
@@ -3183,5 +3187,14 @@ public abstract class TreeBuilder<T> implements TokenHandler {
      */
     public void setDocumentModeHandler(DocumentModeHandler documentModeHandler) {
         this.documentModeHandler = documentModeHandler;
+    }
+
+    /**
+     * Sets the reportingDoctype.
+     * 
+     * @param reportingDoctype the reportingDoctype to set
+     */
+    public void setReportingDoctype(boolean reportingDoctype) {
+        this.reportingDoctype = reportingDoctype;
     }
 }
