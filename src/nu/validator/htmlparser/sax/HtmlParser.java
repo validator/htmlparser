@@ -24,7 +24,6 @@ package nu.validator.htmlparser.sax;
 
 import java.io.IOException;
 
-import nu.validator.htmlparser.ContentModelFlag;
 import nu.validator.htmlparser.DoctypeExpectation;
 import nu.validator.htmlparser.DocumentModeHandler;
 import nu.validator.htmlparser.Tokenizer;
@@ -52,11 +51,11 @@ public class HtmlParser implements XMLReader {
     private Tokenizer tokenizer = null;
 
     private TreeBuilder<?> treeBuilder = null;
-    
+
     private SAXStreamer saxStreamer = null; // work around javac bug
 
     private SAXTreeBuilder saxTreeBuilder = null; // work around javac bug
-    
+
     private ContentHandler contentHandler = null;
 
     private LexicalHandler lexicalHandler = null;
@@ -70,9 +69,9 @@ public class HtmlParser implements XMLReader {
     private DocumentModeHandler documentModeHandler = null;
 
     private DoctypeExpectation doctypeExpectation = DoctypeExpectation.HTML;
-    
+
     private boolean checkingNormalization = false;
-    
+
     private boolean scriptingEnabled = false;
 
     private XmlViolationPolicy contentSpacePolicy = XmlViolationPolicy.ALLOW;
@@ -88,6 +87,8 @@ public class HtmlParser implements XMLReader {
     private boolean mappingLangToXmlLang;
 
     private XmlViolationPolicy xmlnsPolicy;
+
+    private boolean reportingDoctype = true;
 
     public HtmlParser() {
     }
@@ -117,8 +118,10 @@ public class HtmlParser implements XMLReader {
             this.treeBuilder.setDocumentModeHandler(documentModeHandler);
             this.treeBuilder.setIgnoringComments(lexicalHandler == null);
             this.treeBuilder.setScriptingEnabled(scriptingEnabled);
+            this.treeBuilder.setReportingDoctype(reportingDoctype);
             if (saxStreamer != null) {
-                saxStreamer.setContentHandler(contentHandler == null ? new DefaultHandler() : contentHandler);
+                saxStreamer.setContentHandler(contentHandler == null ? new DefaultHandler()
+                        : contentHandler);
                 saxStreamer.setLexicalHandler(lexicalHandler);
             }
         }
@@ -140,16 +143,168 @@ public class HtmlParser implements XMLReader {
         return errorHandler;
     }
 
+    /**
+     * Exposes the configuration of the emulated XML parser as well as
+     * boolean-valued configuration without using non-<code>XMLReader</code>
+     * getters directly.
+     * 
+     * <dl>
+     * <dt><code>http://xml.org/sax/features/external-general-entities</code></dt>
+     * <dd><code>false</code></dd>
+     * <dt><code>http://xml.org/sax/features/external-parameter-entities</code></dt>
+     * <dd><code>false</code></dd>
+     * <dt><code>http://xml.org/sax/features/is-standalone</code></dt>
+     * <dd><code>true</code></dd>
+     * <dt><code>http://xml.org/sax/features/lexical-handler/parameter-entities</code></dt>
+     * <dd><code>false</code></dd>
+     * <dt><code>http://xml.org/sax/features/namespaces</code></dt>
+     * <dd><code>true</code></dd>
+     * <dt><code>http://xml.org/sax/features/namespace-prefixes</code></dt>
+     * <dd><code>false</code></dd>
+     * <dt><code>http://xml.org/sax/features/resolve-dtd-uris</code></dt>
+     * <dd><code>true</code></dd>
+     * <dt><code>http://xml.org/sax/features/string-interning</code></dt>
+     * <dd><code>false</code></dd>
+     * <dt><code>http://xml.org/sax/features/unicode-normalization-checking</code></dt>
+     * <dd><code>isCheckingNormalization</code></dd>
+     * <dt><code>http://xml.org/sax/features/use-attributes2</code></dt>
+     * <dd><code>false</code></dd>
+     * <dt><code>http://xml.org/sax/features/use-locator2</code></dt>
+     * <dd><code>false</code></dd>
+     * <dt><code>http://xml.org/sax/features/use-entity-resolver2</code></dt>
+     * <dd><code>false</code></dd>
+     * <dt><code>http://xml.org/sax/features/validation</code></dt>
+     * <dd><code>false</code></dd>
+     * <dt><code>http://xml.org/sax/features/xmlns-uris</code></dt>
+     * <dd><code>false</code></dd>
+     * <dt><code>http://xml.org/sax/features/xml-1.1</code></dt>
+     * <dd><code>false</code></dd>
+     * <dt><code>http://validator.nu/features/html4-mode-compatible-with-xhtml1-schemata</code></dt>
+     * <dd><code>isHtml4ModeCompatibleWithXhtml1Schemata</code></dd>
+     * <dt><code>http://validator.nu/features/mapping-lang-to-xml-lang</code></dt>
+     * <dd><code>isMappingLangToXmlLang</code></dd>
+     * <dt><code>http://validator.nu/features/scripting-enabled</code></dt>
+     * <dd><code>isScriptingEnabled</code></dd>
+     * </dl>
+     * 
+     * @param name
+     *            feature URI string
+     * @return a value per the list above
+     * @see org.xml.sax.XMLReader#getFeature(java.lang.String)
+     */
     public boolean getFeature(String name) throws SAXNotRecognizedException,
             SAXNotSupportedException {
-        // TODO Auto-generated method stub
-        return false;
+        if ("http://xml.org/sax/features/external-general-entities".equals(name)) {
+            return false;
+        } else if ("http://xml.org/sax/features/external-parameter-entities".equals(name)) {
+            return false;
+        } else if ("http://xml.org/sax/features/is-standalone".equals(name)) {
+            return true;
+        } else if ("http://xml.org/sax/features/lexical-handler/parameter-entities".equals(name)) {
+            return false;
+        } else if ("http://xml.org/sax/features/namespaces".equals(name)) {
+            return true;
+        } else if ("http://xml.org/sax/features/namespace-prefixes".equals(name)) {
+            return false;
+        } else if ("http://xml.org/sax/features/resolve-dtd-uris".equals(name)) {
+            return true; // default value--applicable scenario never happens
+        } else if ("http://xml.org/sax/features/string-interning".equals(name)) {
+            return false; // XXX revisit
+        } else if ("http://xml.org/sax/features/unicode-normalization-checking".equals(name)) {
+            return isCheckingNormalization(); // the checks aren't really per
+            // XML 1.1
+        } else if ("http://xml.org/sax/features/use-attributes2".equals(name)) {
+            return false;
+        } else if ("http://xml.org/sax/features/use-locator2".equals(name)) {
+            return false;
+        } else if ("http://xml.org/sax/features/use-entity-resolver2".equals(name)) {
+            return false;
+        } else if ("http://xml.org/sax/features/validation".equals(name)) {
+            return false;
+        } else if ("http://xml.org/sax/features/xmlns-uris".equals(name)) {
+            return false;
+        } else if ("http://xml.org/sax/features/xml-1.1".equals(name)) {
+            return false;
+        } else if ("http://validator.nu/features/html4-mode-compatible-with-xhtml1-schemata".equals(name)) {
+            return isHtml4ModeCompatibleWithXhtml1Schemata();
+        } else if ("http://validator.nu/features/mapping-lang-to-xml-lang".equals(name)) {
+            return isMappingLangToXmlLang();
+        } else if ("http://validator.nu/features/scripting-enabled".equals(name)) {
+            return isScriptingEnabled();
+        } else {
+            throw new SAXNotRecognizedException();
+        }
     }
 
+    /**
+     * Allows <code>XMLReader</code>-level access to non-boolean valued
+     * getters.
+     * 
+     * <p>
+     * The properties are mapped as follows:
+     * 
+     * <dl>
+     * <dt><code>http://xml.org/sax/properties/document-xml-version</code></dt>
+     * <dd><code>"1.0"</code></dd>
+     * <dt><code>http://xml.org/sax/properties/lexical-handler</code></dt>
+     * <dd><code>getLexicalHandler</code></dd>
+     * <dt><code>http://validator.nu/properties/content-space-policy</code></dt>
+     * <dd><code>getContentSpacePolicy</code></dd>
+     * <dt><code>http://validator.nu/properties/content-non-xml-char-policy</code></dt>
+     * <dd><code>getContentNonXmlCharPolicy</code></dd>
+     * <dt><code>http://validator.nu/properties/comment-policy</code></dt>
+     * <dd><code>getCommentPolicy</code></dd>
+     * <dt><code>http://validator.nu/properties/xmlns-policy</code></dt>
+     * <dd><code>getXmlnsPolicy</code></dd>
+     * <dt><code>http://validator.nu/properties/streamability-violation-policy</code></dt>
+     * <dd><code>getStreamabilityViolationPolicy</code></dd>
+     * <dt><code>http://validator.nu/properties/document-mode-handler</code></dt>
+     * <dd><code>getDocumentModeHandler</code></dd>
+     * <dt><code>http://validator.nu/properties/doctype-expectation</code></dt>
+     * <dd><code>getDoctypeExpectation</code></dd>
+     * <dt><code>http://xml.org/sax/features/unicode-normalization-checking</code></dt>
+     * </dl>
+     * 
+     * @param name
+     *            property URI string
+     * @return a value per the list above
+     * @see org.xml.sax.XMLReader#getProperty(java.lang.String)
+     */
     public Object getProperty(String name) throws SAXNotRecognizedException,
             SAXNotSupportedException {
-        // TODO Auto-generated method stub
-        return null;
+        if ("http://xml.org/sax/properties/declaration-handler".equals(name)) {
+            throw new SAXNotSupportedException(
+                    "This parser does not suppert DeclHandler.");
+        } else if ("http://xml.org/sax/properties/document-xml-version".equals(name)) {
+            return "1.0"; // Emulating an XML 1.1 parser is not supported.
+        } else if ("http://xml.org/sax/properties/dom-node".equals(name)) {
+            throw new SAXNotSupportedException(
+                    "This parser does not walk the DOM.");
+        } else if ("http://xml.org/sax/properties/lexical-handler".equals(name)) {
+            return getLexicalHandler();
+        } else if ("http://xml.org/sax/properties/xml-string".equals(name)) {
+            throw new SAXNotSupportedException(
+                    "This parser does not expose the source as a string.");
+        } else if ("http://validator.nu/properties/content-space-policy".equals(name)) {
+            return getContentSpacePolicy();
+        } else if ("http://validator.nu/properties/content-non-xml-char-policy".equals(name)) {
+            return getContentNonXmlCharPolicy();
+        } else if ("http://validator.nu/properties/comment-policy".equals(name)) {
+            return getCommentPolicy();
+        } else if ("http://validator.nu/properties/xmlns-policy".equals(name)) {
+            return getXmlnsPolicy();
+        } else if ("http://validator.nu/properties/streamability-violation-policy".equals(name)) {
+            return getStreamabilityViolationPolicy();
+        } else if ("http://validator.nu/properties/document-mode-handler".equals(name)) {
+            return getDocumentModeHandler();
+        } else if ("http://validator.nu/properties/doctype-expectation".equals(name)) {
+            return getDoctypeExpectation();
+        } else if ("http://validator.nu/properties/xml-policy".equals(name)) {
+            throw new SAXNotSupportedException(
+                    "Cannot get a convenience setter.");
+        } else {
+            throw new SAXNotRecognizedException();
+        }
     }
 
     public void parse(InputSource input) throws IOException, SAXException {
@@ -192,7 +347,8 @@ public class HtmlParser implements XMLReader {
     public void setContentHandler(ContentHandler handler) {
         contentHandler = handler;
         if (saxStreamer != null) {
-                saxStreamer.setContentHandler(contentHandler == null ? new DefaultHandler() : contentHandler);
+            saxStreamer.setContentHandler(contentHandler == null ? new DefaultHandler()
+                    : contentHandler);
         }
     }
 
@@ -222,14 +378,127 @@ public class HtmlParser implements XMLReader {
         }
     }
 
+    /**
+     * Sets a boolean feature without having to use non-<code>XMLReader</code>
+     * setters directly.
+     * 
+     * <p>
+     * The supported features are:
+     * 
+     * <dl>
+     * <dt><code>http://xml.org/sax/features/unicode-normalization-checking</code></dt>
+     * <dd><code>setCheckingNormalization</code></dd>
+     * <dt><code>http://validator.nu/features/html4-mode-compatible-with-xhtml1-schemata</code></dt>
+     * <dd><code>setHtml4ModeCompatibleWithXhtml1Schemata</code></dd>
+     * <dt><code>http://validator.nu/features/mapping-lang-to-xml-lang</code></dt>
+     * <dd><code>setMappingLangToXmlLang</code></dd>
+     * <dt><code>http://validator.nu/features/scripting-enabled</code></dt>
+     * <dd><code>setScriptingEnabled</code></dd>
+     * </dl>
+     * 
+     * @see org.xml.sax.XMLReader#setFeature(java.lang.String, boolean)
+     */
     public void setFeature(String name, boolean value)
             throws SAXNotRecognizedException, SAXNotSupportedException {
+        if ("http://xml.org/sax/features/external-general-entities".equals(name)) {
+            throw new SAXNotSupportedException("Cannot set " + name + ".");
+        } else if ("http://xml.org/sax/features/external-parameter-entities".equals(name)) {
+            throw new SAXNotSupportedException("Cannot set " + name + ".");
+        } else if ("http://xml.org/sax/features/is-standalone".equals(name)) {
+            throw new SAXNotSupportedException("Cannot set " + name + ".");
+        } else if ("http://xml.org/sax/features/lexical-handler/parameter-entities".equals(name)) {
+            throw new SAXNotSupportedException("Cannot set " + name + ".");
+        } else if ("http://xml.org/sax/features/namespaces".equals(name)) {
+            throw new SAXNotSupportedException("Cannot set " + name + ".");
+        } else if ("http://xml.org/sax/features/namespace-prefixes".equals(name)) {
+            throw new SAXNotSupportedException("Cannot set " + name + ".");
+        } else if ("http://xml.org/sax/features/resolve-dtd-uris".equals(name)) {
+            throw new SAXNotSupportedException("Cannot set " + name + ".");
+        } else if ("http://xml.org/sax/features/string-interning".equals(name)) {
+            throw new SAXNotSupportedException("Cannot set " + name + ".");
+        } else if ("http://xml.org/sax/features/unicode-normalization-checking".equals(name)) {
+            setCheckingNormalization(value);
+        } else if ("http://xml.org/sax/features/use-attributes2".equals(name)) {
+            throw new SAXNotSupportedException("Cannot set " + name + ".");
+        } else if ("http://xml.org/sax/features/use-locator2".equals(name)) {
+            throw new SAXNotSupportedException("Cannot set " + name + ".");
+        } else if ("http://xml.org/sax/features/use-entity-resolver2".equals(name)) {
+            throw new SAXNotSupportedException("Cannot set " + name + ".");
+        } else if ("http://xml.org/sax/features/validation".equals(name)) {
+            throw new SAXNotSupportedException("Cannot set " + name + ".");
+        } else if ("http://xml.org/sax/features/xmlns-uris".equals(name)) {
+            throw new SAXNotSupportedException("Cannot set " + name + ".");
+        } else if ("http://xml.org/sax/features/xml-1.1".equals(name)) {
+            throw new SAXNotSupportedException("Cannot set " + name + ".");
+        } else if ("http://validator.nu/features/html4-mode-compatible-with-xhtml1-schemata".equals(name)) {
+            setHtml4ModeCompatibleWithXhtml1Schemata(value);
+        } else if ("http://validator.nu/features/mapping-lang-to-xml-lang".equals(name)) {
+            setMappingLangToXmlLang(value);
+        } else if ("http://validator.nu/features/scripting-enabled".equals(name)) {
+            setScriptingEnabled(value);
+        } else {
+            throw new SAXNotRecognizedException();
+        }
     }
 
+    /**
+     * Sets a non-boolean property without having to use non-<code>XMLReader</code>
+     * setters directly.
+     * 
+     * <dl>
+     * <dt><code>http://xml.org/sax/properties/lexical-handler</code></dt>
+     * <dd><code>setLexicalHandler</code></dd>
+     * <dt><code>http://validator.nu/properties/content-space-policy</code></dt>
+     * <dd><code>setContentSpacePolicy</code></dd>
+     * <dt><code>http://validator.nu/properties/content-non-xml-char-policy</code></dt>
+     * <dd><code>setContentNonXmlCharPolicy</code></dd>
+     * <dt><code>http://validator.nu/properties/comment-policy</code></dt>
+     * <dd><code>setCommentPolicy</code></dd>
+     * <dt><code>http://validator.nu/properties/xmlns-policy</code></dt>
+     * <dd><code>setXmlnsPolicy</code></dd>
+     * <dt><code>http://validator.nu/properties/streamability-violation-policy</code></dt>
+     * <dd><code>setStreamabilityViolationPolicy</code></dd>
+     * <dt><code>http://validator.nu/properties/document-mode-handler</code></dt>
+     * <dd><code>setDocumentModeHandler</code></dd>
+     * <dt><code>http://validator.nu/properties/doctype-expectation</code></dt>
+     * <dd><code>setDoctypeExpectation</code></dd>
+     * <dt><code>http://validator.nu/properties/xml-policy</code></dt>
+     * <dd><code>setXmlPolicy</code></dd>
+     * </dl>
+     * 
+     * @see org.xml.sax.XMLReader#setProperty(java.lang.String,
+     *      java.lang.Object)
+     */
     public void setProperty(String name, Object value)
             throws SAXNotRecognizedException, SAXNotSupportedException {
-        if ("http://xml.org/sax/properties/lexical-handler".equals(name)) {
+        if ("http://xml.org/sax/properties/declaration-handler".equals(name)) {
+            throw new SAXNotSupportedException(
+                    "This parser does not suppert DeclHandler.");
+        } else if ("http://xml.org/sax/properties/document-xml-version".equals(name)) {
+            throw new SAXNotSupportedException(
+                    "Can't set document-xml-version.");
+        } else if ("http://xml.org/sax/properties/dom-node".equals(name)) {
+            throw new SAXNotSupportedException("Can't set dom-node.");
+        } else if ("http://xml.org/sax/properties/lexical-handler".equals(name)) {
             setLexicalHandler((LexicalHandler) value);
+        } else if ("http://xml.org/sax/properties/xml-string".equals(name)) {
+            throw new SAXNotSupportedException("Can't set xml-string.");
+        } else if ("http://validator.nu/properties/content-space-policy".equals(name)) {
+            setContentSpacePolicy((XmlViolationPolicy) value);
+        } else if ("http://validator.nu/properties/content-non-xml-char-policy".equals(name)) {
+            setContentNonXmlCharPolicy((XmlViolationPolicy) value);
+        } else if ("http://validator.nu/properties/comment-policy".equals(name)) {
+            setCommentPolicy((XmlViolationPolicy) value);
+        } else if ("http://validator.nu/properties/xmlns-policy".equals(name)) {
+            setXmlnsPolicy((XmlViolationPolicy) value);
+        } else if ("http://validator.nu/properties/streamability-violation-policy".equals(name)) {
+            setStreamabilityViolationPolicy((XmlViolationPolicy) value);
+        } else if ("http://validator.nu/properties/document-mode-handler".equals(name)) {
+            setDocumentModeHandler((DocumentModeHandler) value);
+        } else if ("http://validator.nu/properties/doctype-expectation".equals(name)) {
+            setDoctypeExpectation((DoctypeExpectation) value);
+        } else if ("http://validator.nu/properties/xml-policy".equals(name)) {
+            setXmlPolicy((XmlViolationPolicy) value);
         } else {
             throw new SAXNotRecognizedException();
         }
@@ -257,16 +526,6 @@ public class HtmlParser implements XMLReader {
      */
     public void setCommentPolicy(XmlViolationPolicy commentPolicy) {
         tokenizer.setCommentPolicy(commentPolicy);
-    }
-
-    /**
-     * @param contentModelFlag
-     * @param contentModelElement
-     * @see nu.validator.htmlparser.Tokenizer#setContentModelFlag(nu.validator.htmlparser.ContentModelFlag, java.lang.String)
-     */
-    public void setContentModelFlag(ContentModelFlag contentModelFlag,
-            String contentModelElement) {
-        tokenizer.setContentModelFlag(contentModelFlag, contentModelElement);
     }
 
     /**
@@ -317,7 +576,8 @@ public class HtmlParser implements XMLReader {
     /**
      * Sets the doctypeExpectation.
      * 
-     * @param doctypeExpectation the doctypeExpectation to set
+     * @param doctypeExpectation
+     *            the doctypeExpectation to set
      */
     public void setDoctypeExpectation(DoctypeExpectation doctypeExpectation) {
         this.doctypeExpectation = doctypeExpectation;
@@ -335,7 +595,8 @@ public class HtmlParser implements XMLReader {
     /**
      * Sets the documentModeHandler.
      * 
-     * @param documentModeHandler the documentModeHandler to set
+     * @param documentModeHandler
+     *            the documentModeHandler to set
      */
     public void setDocumentModeHandler(DocumentModeHandler documentModeHandler) {
         this.documentModeHandler = documentModeHandler;
@@ -353,20 +614,22 @@ public class HtmlParser implements XMLReader {
     /**
      * Sets the streamabilityViolationPolicy.
      * 
-     * @param streamabilityViolationPolicy the streamabilityViolationPolicy to set
+     * @param streamabilityViolationPolicy
+     *            the streamabilityViolationPolicy to set
      */
     public void setStreamabilityViolationPolicy(
             XmlViolationPolicy streamabilityViolationPolicy) {
         this.streamabilityViolationPolicy = streamabilityViolationPolicy;
     }
 
-    public void setHtml4ModeCompatibleWithXhtml1Schemata(boolean html4ModeCompatibleWithXhtml1Schemata) {
+    public void setHtml4ModeCompatibleWithXhtml1Schemata(
+            boolean html4ModeCompatibleWithXhtml1Schemata) {
         this.html4ModeCompatibleWithXhtml1Schemata = html4ModeCompatibleWithXhtml1Schemata;
         if (tokenizer != null) {
             tokenizer.setHtml4ModeCompatibleWithXhtml1Schemata(html4ModeCompatibleWithXhtml1Schemata);
         }
     }
-    
+
     public Locator getDocumentLocator() {
         return tokenizer;
     }
@@ -388,7 +651,7 @@ public class HtmlParser implements XMLReader {
         this.mappingLangToXmlLang = mappingLangToXmlLang;
         if (tokenizer != null) {
             tokenizer.setMappingLangToXmlLang(mappingLangToXmlLang);
-        }        
+        }
     }
 
     /**
@@ -408,7 +671,7 @@ public class HtmlParser implements XMLReader {
         this.xmlnsPolicy = xmlnsPolicy;
         if (tokenizer != null) {
             tokenizer.setXmlnsPolicy(xmlnsPolicy);
-        }        
+        }
     }
 
     /**
@@ -420,4 +683,69 @@ public class HtmlParser implements XMLReader {
         return xmlnsPolicy;
     }
 
+    /**
+     * Returns the lexicalHandler.
+     * 
+     * @return the lexicalHandler
+     */
+    public LexicalHandler getLexicalHandler() {
+        return lexicalHandler;
+    }
+
+    /**
+     * Returns the commentPolicy.
+     * 
+     * @return the commentPolicy
+     */
+    public XmlViolationPolicy getCommentPolicy() {
+        return commentPolicy;
+    }
+
+    /**
+     * Returns the contentNonXmlCharPolicy.
+     * 
+     * @return the contentNonXmlCharPolicy
+     */
+    public XmlViolationPolicy getContentNonXmlCharPolicy() {
+        return contentNonXmlCharPolicy;
+    }
+
+    /**
+     * Returns the contentSpacePolicy.
+     * 
+     * @return the contentSpacePolicy
+     */
+    public XmlViolationPolicy getContentSpacePolicy() {
+        return contentSpacePolicy;
+    }
+
+    /**
+     * @param reportingDoctype
+     * @see nu.validator.htmlparser.TreeBuilder#setReportingDoctype(boolean)
+     */
+    public void setReportingDoctype(boolean reportingDoctype) {
+        this.reportingDoctype = reportingDoctype;
+        if (treeBuilder != null) {
+            treeBuilder.setReportingDoctype(reportingDoctype);
+        }
+    }
+
+    /**
+     * Returns the reportingDoctype.
+     * 
+     * @return the reportingDoctype
+     */
+    public boolean isReportingDoctype() {
+        return reportingDoctype;
+    }
+
+    /**
+     * This is a catch-all convenience method for setting various policies in
+     * one go.
+     * 
+     * @param xmlPolicy
+     */
+    public void setXmlPolicy(XmlViolationPolicy xmlPolicy) {
+
+    }
 }

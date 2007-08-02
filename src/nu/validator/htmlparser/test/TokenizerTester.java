@@ -34,6 +34,7 @@ import java.io.Writer;
 
 import nu.validator.htmlparser.ContentModelFlag;
 import nu.validator.htmlparser.Tokenizer;
+import nu.validator.htmlparser.XmlViolationPolicy;
 
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -91,13 +92,21 @@ public class TokenizerTester {
 
     private TokenizerTester(InputStream stream) throws TokenStreamException,
             RecognitionException, UnsupportedEncodingException {
-        JSONParser jsonParser = new JSONParser(new InputStreamReader(stream,
-                "UTF-8"));
-        tests = (JSONArray) ((JSONObject) jsonParser.nextValue()).get("tests");
         tokenHandler = new JSONArrayTokenHandler();
         tokenizer = new Tokenizer(tokenHandler);
         tokenizer.setErrorHandler(tokenHandler);
         writer = new OutputStreamWriter(System.out, "UTF-8");
+        JSONParser jsonParser = new JSONParser(new InputStreamReader(stream,
+                "UTF-8"));
+        JSONObject obj = (JSONObject) jsonParser.nextValue();
+        tests = (JSONArray) obj.get("tests");
+        if (tests == null) {
+            tests = (JSONArray) obj.get("xmlViolationTests");
+            tokenizer.setCommentPolicy(XmlViolationPolicy.ALTER_INFOSET);
+            tokenizer.setContentNonXmlCharPolicy(XmlViolationPolicy.ALTER_INFOSET);
+            tokenizer.setNamePolicy(XmlViolationPolicy.ALTER_INFOSET);
+            tokenizer.setXmlnsPolicy(XmlViolationPolicy.ALTER_INFOSET);
+        }
     }
 
     private void runTests() throws SAXException, IOException {
