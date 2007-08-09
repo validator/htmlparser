@@ -524,6 +524,9 @@ public final class Tokenizer implements Locator {
      *             if the stream threw
      */
     public void tokenize(InputSource is) throws SAXException, IOException {
+        if (is == null) {
+            throw new IllegalArgumentException("InputSource was null.");
+        }
         swallowBom = true;
         this.systemId = is.getSystemId();
         this.publicId = is.getPublicId();
@@ -1033,7 +1036,9 @@ public final class Tokenizer implements Locator {
      */
     private void fatal(String message) throws SAXException {
         SAXParseException spe = new SAXParseException(message, this);
-        errorHandler.fatalError(spe);
+        if (errorHandler != null) {
+            errorHandler.fatalError(spe);
+        }
         throw spe;
     }
 
@@ -1045,6 +1050,9 @@ public final class Tokenizer implements Locator {
      * @throws SAXException
      */
     private void err(String message) throws SAXException {
+        if (errorHandler == null) {
+            return;
+        }
         SAXParseException spe = new SAXParseException(message, this);
         errorHandler.error(spe);
     }
@@ -1057,6 +1065,9 @@ public final class Tokenizer implements Locator {
      * @throws SAXException
      */
     private void warn(String message) throws SAXException {
+        if (errorHandler == null) {
+            return;
+        }
         SAXParseException spe = new SAXParseException(message, this);
         errorHandler.warning(spe);
     }
