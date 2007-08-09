@@ -23,6 +23,7 @@
 package nu.validator.htmlparser.sax;
 
 import java.io.IOException;
+import java.net.URL;
 
 import nu.validator.htmlparser.DoctypeExpectation;
 import nu.validator.htmlparser.DocumentModeHandler;
@@ -46,6 +47,37 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.ext.LexicalHandler;
 import org.xml.sax.helpers.DefaultHandler;
 
+/**
+ * This class implements an HTML5 parser that exposes data through the SAX2 
+ * interface. 
+ * 
+ * <p>By default, when using the constructor without arguments, the 
+ * this parser treats XML 1.0-incompatible infosets as fatal errors in 
+ * order to adhere to the SAX2 API contract strictly. This corresponds to 
+ * <code>FATAL</code> as the general XML violation policy. To make the browser 
+ * support non-conforming HTML fully per the HTML 5 spec while on the other 
+ * hand potentially violating the SAX2 API contract, set the general XML 
+ * violation policy to <code>ALLOW</code>. Handling all input without fatal 
+ * errors and without violating the SAX2 API contract is possible by setting 
+ * the general XML violation policy to <code>ALTER_INFOSET</code>. <em>This 
+ * makes the parser non-conforming</em> but is probably the most useful 
+ * setting for most applications.
+ * 
+ * <p>By default, this parser doesn't do true streaming but buffers everything 
+ * first. The parser can be made truly streaming by calling 
+ * <code>setStreamabilityViolationPolicy(XmlViolationPolicy.FATAL)</code>. This 
+ * has the consequence that errors that require non-streamable recovery are 
+ * treated as fatal.
+ * 
+ * <p>By default, in order to make the parse events emulate the parse events 
+ * for a DTDless XML document, the parser does not report the doctype through 
+ * <code>LexicalHandler</code>. Doctype reporting through 
+ * <code>LexicalHandler</code> can be turned on by calling 
+ * <code>setReportingDoctype(true)</code>.
+ * 
+ * @version $Id$
+ * @author hsivonen
+ */
 public class HtmlParser implements XMLReader {
 
     private Tokenizer tokenizer = null;
@@ -74,14 +106,16 @@ public class HtmlParser implements XMLReader {
 
     private boolean scriptingEnabled = false;
 
-    private XmlViolationPolicy contentSpacePolicy = XmlViolationPolicy.ALLOW;
+    private XmlViolationPolicy contentSpacePolicy = XmlViolationPolicy.FATAL;
 
-    private XmlViolationPolicy contentNonXmlCharPolicy = XmlViolationPolicy.ALLOW;
+    private XmlViolationPolicy contentNonXmlCharPolicy = XmlViolationPolicy.FATAL;
 
-    private XmlViolationPolicy commentPolicy = XmlViolationPolicy.ALLOW;
+    private XmlViolationPolicy commentPolicy = XmlViolationPolicy.FATAL;
+
+    private XmlViolationPolicy namePolicy = XmlViolationPolicy.FATAL;
 
     private XmlViolationPolicy streamabilityViolationPolicy = XmlViolationPolicy.ALLOW;
-
+    
     private boolean html4ModeCompatibleWithXhtml1Schemata;
 
     private boolean mappingLangToXmlLang;
@@ -90,9 +124,19 @@ public class HtmlParser implements XMLReader {
 
     private boolean reportingDoctype = true;
 
-    public HtmlParser() {
-    }
 
+    public HtmlParser() {
+        this(XmlViolationPolicy.FATAL);
+    }
+    
+    public HtmlParser(XmlViolationPolicy xmlPolicy) {
+        setXmlPolicy(xmlPolicy);
+    }    
+
+    /**
+     * This class wraps differnt tree builders depending on configuration. This 
+     * method does the work of hiding this from the user of the class.
+     */
     private void lazyInit() {
         if (tokenizer == null) {
             if (streamabilityViolationPolicy == XmlViolationPolicy.ALLOW) {
@@ -256,6 +300,8 @@ public class HtmlParser implements XMLReader {
      * <dd><code>getCommentPolicy</code></dd>
      * <dt><code>http://validator.nu/properties/xmlns-policy</code></dt>
      * <dd><code>getXmlnsPolicy</code></dd>
+     * <dt><code>http://validator.nu/properties/name-policy</code></dt>
+     * <dd><code>getNamePolicy</code></dd>
      * <dt><code>http://validator.nu/properties/streamability-violation-policy</code></dt>
      * <dd><code>getStreamabilityViolationPolicy</code></dd>
      * <dt><code>http://validator.nu/properties/document-mode-handler</code></dt>
@@ -293,6 +339,8 @@ public class HtmlParser implements XMLReader {
             return getCommentPolicy();
         } else if ("http://validator.nu/properties/xmlns-policy".equals(name)) {
             return getXmlnsPolicy();
+        } else if ("http://validator.nu/properties/name-policy".equals(name)) {
+            return getNamePolicy();
         } else if ("http://validator.nu/properties/streamability-violation-policy".equals(name)) {
             return getStreamabilityViolationPolicy();
         } else if ("http://validator.nu/properties/document-mode-handler".equals(name)) {
@@ -315,7 +363,9 @@ public class HtmlParser implements XMLReader {
         } finally {
             if (saxTreeBuilder != null) {
                 Document document = saxTreeBuilder.getDocument();
-                new TreeParser(contentHandler, lexicalHandler).parse(document);
+                if (document != null) {
+                    new TreeParser(contentHandler, lexicalHandler).parse(document);
+                }
             }
         }
     }
@@ -335,11 +385,14 @@ public class HtmlParser implements XMLReader {
     }
 
     public void parse(String systemId) throws IOException, SAXException {
-        InputSource is;
-        if (entityResolver == null) {
-            is = new DefaultHandler().resolveEntity(null, systemId);
-        } else {
+        InputSource is = null;
+        if (entityResolver != null) {
             is = entityResolver.resolveEntity(null, systemId);
+        }
+        if (is == null) {
+            is = new InputSource();
+            is.setSystemId(systemId);
+            is.setByteStream(new URL(systemId).openStream());
         }
         parse(is);
     }
@@ -456,6 +509,8 @@ public class HtmlParser implements XMLReader {
      * <dd><code>setCommentPolicy</code></dd>
      * <dt><code>http://validator.nu/properties/xmlns-policy</code></dt>
      * <dd><code>setXmlnsPolicy</code></dd>
+     * <dt><code>http://validator.nu/properties/name-policy</code></dt>
+     * <dd><code>setNamePolicy</code></dd>
      * <dt><code>http://validator.nu/properties/streamability-violation-policy</code></dt>
      * <dd><code>setStreamabilityViolationPolicy</code></dd>
      * <dt><code>http://validator.nu/properties/document-mode-handler</code></dt>
@@ -491,6 +546,8 @@ public class HtmlParser implements XMLReader {
             setCommentPolicy((XmlViolationPolicy) value);
         } else if ("http://validator.nu/properties/xmlns-policy".equals(name)) {
             setXmlnsPolicy((XmlViolationPolicy) value);
+        } else if ("http://validator.nu/properties/name-policy".equals(name)) {
+            setNamePolicy((XmlViolationPolicy) value);
         } else if ("http://validator.nu/properties/streamability-violation-policy".equals(name)) {
             setStreamabilityViolationPolicy((XmlViolationPolicy) value);
         } else if ("http://validator.nu/properties/document-mode-handler".equals(name)) {
@@ -509,7 +566,7 @@ public class HtmlParser implements XMLReader {
      * @see nu.validator.htmlparser.Tokenizer#isCheckingNormalization()
      */
     public boolean isCheckingNormalization() {
-        return tokenizer.isCheckingNormalization();
+        return checkingNormalization;
     }
 
     /**
@@ -517,7 +574,10 @@ public class HtmlParser implements XMLReader {
      * @see nu.validator.htmlparser.Tokenizer#setCheckingNormalization(boolean)
      */
     public void setCheckingNormalization(boolean enable) {
-        tokenizer.setCheckingNormalization(enable);
+        this.checkingNormalization = enable;
+        if (tokenizer != null) {
+            tokenizer.setCheckingNormalization(checkingNormalization);
+        }
     }
 
     /**
@@ -525,7 +585,10 @@ public class HtmlParser implements XMLReader {
      * @see nu.validator.htmlparser.Tokenizer#setCommentPolicy(nu.validator.htmlparser.XmlViolationPolicy)
      */
     public void setCommentPolicy(XmlViolationPolicy commentPolicy) {
-        tokenizer.setCommentPolicy(commentPolicy);
+        this.commentPolicy = commentPolicy;
+        if (tokenizer != null) {
+            tokenizer.setCommentPolicy(commentPolicy);
+        }
     }
 
     /**
@@ -534,7 +597,10 @@ public class HtmlParser implements XMLReader {
      */
     public void setContentNonXmlCharPolicy(
             XmlViolationPolicy contentNonXmlCharPolicy) {
-        tokenizer.setContentNonXmlCharPolicy(contentNonXmlCharPolicy);
+        this.contentNonXmlCharPolicy = contentNonXmlCharPolicy;
+        if (tokenizer != null) {
+            tokenizer.setContentNonXmlCharPolicy(contentNonXmlCharPolicy);
+        }
     }
 
     /**
@@ -542,7 +608,10 @@ public class HtmlParser implements XMLReader {
      * @see nu.validator.htmlparser.Tokenizer#setContentSpacePolicy(nu.validator.htmlparser.XmlViolationPolicy)
      */
     public void setContentSpacePolicy(XmlViolationPolicy contentSpacePolicy) {
-        tokenizer.setContentSpacePolicy(contentSpacePolicy);
+        this.contentSpacePolicy = contentSpacePolicy;
+        if (tokenizer != null) {
+            tokenizer.setContentSpacePolicy(contentSpacePolicy);
+        }
     }
 
     /**
@@ -668,6 +737,9 @@ public class HtmlParser implements XMLReader {
      * @see nu.validator.htmlparser.Tokenizer#setXmlnsPolicy(nu.validator.htmlparser.XmlViolationPolicy)
      */
     public void setXmlnsPolicy(XmlViolationPolicy xmlnsPolicy) {
+        if (xmlnsPolicy == XmlViolationPolicy.FATAL) {
+            throw new IllegalArgumentException("Can't use FATAL here.");
+        }
         this.xmlnsPolicy = xmlnsPolicy;
         if (tokenizer != null) {
             tokenizer.setXmlnsPolicy(xmlnsPolicy);
@@ -740,12 +812,37 @@ public class HtmlParser implements XMLReader {
     }
 
     /**
-     * This is a catch-all convenience method for setting various policies in
-     * one go.
+     * @param namePolicy
+     * @see nu.validator.htmlparser.Tokenizer#setNamePolicy(nu.validator.htmlparser.XmlViolationPolicy)
+     */
+    public void setNamePolicy(XmlViolationPolicy namePolicy) {
+        this.namePolicy = namePolicy;
+        if (tokenizer != null) {
+            tokenizer.setNamePolicy(namePolicy);
+        }
+    }
+
+    /**
+     * This is a catch-all convenience method for setting name, xmlns, content space, 
+     * content non-XML char and comment policies in one go. This does not affect the 
+     * streamability policy or doctype reporting.
      * 
      * @param xmlPolicy
      */
     public void setXmlPolicy(XmlViolationPolicy xmlPolicy) {
+        setNamePolicy(xmlPolicy);
+        setXmlnsPolicy(xmlPolicy == XmlViolationPolicy.FATAL ? XmlViolationPolicy.ALTER_INFOSET : xmlPolicy);
+        setContentSpacePolicy(xmlPolicy);
+        setContentNonXmlCharPolicy(xmlPolicy);
+        setCommentPolicy(xmlPolicy);
+    }
 
+    /**
+     * Returns the namePolicy.
+     * 
+     * @return the namePolicy
+     */
+    public XmlViolationPolicy getNamePolicy() {
+        return namePolicy;
     }
 }

@@ -226,11 +226,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         throw spe;
     }
     protected final void fatal(Exception e) throws SAXException {
-        if (errorHandler == null) {
-            return;
-        }
         SAXParseException spe = new SAXParseException(e.getMessage(), tokenizer, e);;
-        errorHandler.fatalError(spe);
+        if (errorHandler != null) {
+            errorHandler.fatalError(spe);
+        }
         throw spe;
     }
     

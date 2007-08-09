@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005 Henri Sivonen
+ * Copyright (c) 2005, 2007 Henri Sivonen
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -27,6 +27,10 @@ import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 
+import javax.xml.transform.ErrorListener;
+import javax.xml.transform.SourceLocator;
+import javax.xml.transform.TransformerException;
+
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -35,12 +39,12 @@ import org.xml.sax.SAXParseException;
  * @version $Id: SystemErrErrorHandler.java 3 2007-05-28 12:04:07Z hsivonen $
  * @author hsivonen
  */
-public class SystemErrErrorHandler implements ErrorHandler {
+public class SystemErrErrorHandler implements ErrorHandler, ErrorListener {
 
     private Writer out;
-    
+
     private boolean inError = false;
-    
+
     public SystemErrErrorHandler() {
         try {
             out = new OutputStreamWriter(System.err, "UTF-8");
@@ -48,7 +52,7 @@ public class SystemErrErrorHandler implements ErrorHandler {
             throw new RuntimeException(e);
         }
     }
-    
+
     /**
      * @see org.xml.sax.ErrorHandler#warning(org.xml.sax.SAXParseException)
      */
@@ -126,6 +130,72 @@ public class SystemErrErrorHandler implements ErrorHandler {
     public void reset() {
         inError = false;
     }
-    
-    
+
+    public void error(TransformerException e) throws TransformerException {
+        inError = true;
+        try {
+            out.write("Error:\n");
+            out.write(e.getMessage());
+            SourceLocator sourceLocator = e.getLocator();
+            if (sourceLocator != null) {
+                out.write("\nFile: ");
+                String systemId = sourceLocator.getSystemId();
+                out.write((systemId == null) ? "Unknown" : systemId);
+                out.write("\nLine: ");
+                out.write(Integer.toString(sourceLocator.getLineNumber()));
+                out.write(" Col: ");
+                out.write(Integer.toString(sourceLocator.getColumnNumber()));
+            }
+            out.write("\n\n");
+            out.flush();
+        } catch (IOException e1) {
+            throw new TransformerException(e1);
+        }
+    }
+
+    public void fatalError(TransformerException e)
+            throws TransformerException {
+        inError = true;
+        try {
+            out.write("Fatal Error:\n");
+            out.write(e.getMessage());
+            SourceLocator sourceLocator = e.getLocator();
+            if (sourceLocator != null) {
+                out.write("\nFile: ");
+                String systemId = sourceLocator.getSystemId();
+                out.write((systemId == null) ? "Unknown" : systemId);
+                out.write("\nLine: ");
+                out.write(Integer.toString(sourceLocator.getLineNumber()));
+                out.write(" Col: ");
+                out.write(Integer.toString(sourceLocator.getColumnNumber()));
+            }
+            out.write("\n\n");
+            out.flush();
+        } catch (IOException e1) {
+            throw new TransformerException(e1);
+        }
+    }
+
+    public void warning(TransformerException e)
+            throws TransformerException {
+        try {
+            out.write("Warning:\n");
+            out.write(e.getMessage());
+            SourceLocator sourceLocator = e.getLocator();
+            if (sourceLocator != null) {
+                out.write("\nFile: ");
+                String systemId = sourceLocator.getSystemId();
+                out.write((systemId == null) ? "Unknown" : systemId);
+                out.write("\nLine: ");
+                out.write(Integer.toString(sourceLocator.getLineNumber()));
+                out.write(" Col: ");
+                out.write(Integer.toString(sourceLocator.getColumnNumber()));
+            }
+            out.write("\n\n");
+            out.flush();
+        } catch (IOException e1) {
+            throw new TransformerException(e1);
+        }
+    }
+
 }
