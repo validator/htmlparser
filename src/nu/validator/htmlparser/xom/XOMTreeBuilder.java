@@ -20,30 +20,28 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-package nu.validator.htmlparser.dom;
-
-import org.w3c.dom.DOMException;
-import org.w3c.dom.DOMImplementation;
-import org.w3c.dom.Document;
-import org.w3c.dom.DocumentFragment;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
+package nu.validator.htmlparser.xom;
 
 import nu.validator.htmlparser.TreeBuilder;
 import nu.validator.htmlparser.XmlViolationPolicy;
+import nu.xom.Attribute;
+import nu.xom.Document;
+import nu.xom.Element;
+import nu.xom.Nodes;
+import nu.xom.ParentNode;
+import nu.xom.XMLException;
 
-class DOMTreeBuilder extends TreeBuilder<Element> {
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
 
-    private DOMImplementation implementation;
+class XOMTreeBuilder extends TreeBuilder<Element> {
 
+    private SimpleNodeFactory nodeFactory;
+    
     private Document document;
 
-    protected DOMTreeBuilder(DOMImplementation implementation) {
+    protected XOMTreeBuilder() {
         super(XmlViolationPolicy.ALLOW, true);
-        this.implementation = implementation;
     }
 
     @Override
@@ -53,12 +51,11 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
             for (int i = 0; i < attributes.getLength(); i++) {
                 String localName = attributes.getLocalName(i);
                 String uri = attributes.getURI(i);
-                if (!element.hasAttributeNS(uri, localName)) {
-                    element.setAttributeNS(uri, localName,
-                            attributes.getValue(i));
+                if (element.getAttribute(localName, uri) == null) {
+                    element.addAttribute(nodeFactory.makeAttribute(localName, uri, attributes.getValue(i), attributes.getType(i) == "ID" ? Attribute.Type.ID : Attribute.Type.CDATA));
                 }
             }
-        } catch (DOMException e) {
+        } catch (XMLException e) {
             fatal(e);
         }
     }
@@ -67,9 +64,9 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
     protected void appendCharacters(Element parent, char[] buf, int start,
             int length) throws SAXException {
         try {
-            parent.appendChild(document.createTextNode(new String(buf, start,
+            parent.appendChild(nodeFactory.makeText(new String(buf, start,
                     length)));
-        } catch (DOMException e) {
+        } catch (XMLException e) {
             fatal(e);
         }
     }
@@ -78,10 +75,11 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
     protected void appendChildrenToNewParent(Element oldParent,
             Element newParent) throws SAXException {
         try {
-            while (oldParent.hasChildNodes()) {
-                newParent.appendChild(oldParent.getFirstChild());
+            Nodes children = oldParent.removeChildren();
+            for (int i = 0; i < children.size(); i++) {
+                newParent.appendChild(children.get(i));
             }
-        } catch (DOMException e) {
+        } catch (XMLException e) {
             fatal(e);
         }
     }
@@ -90,9 +88,9 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
     protected void appendComment(Element parent, char[] buf, int start,
             int length) throws SAXException {
         try {
-            parent.appendChild(document.createComment(new String(buf, start,
+            parent.appendChild(nodeFactory.makeComment(new String(buf, start,
                     length)));
-        } catch (DOMException e) {
+        } catch (XMLException e) {
             fatal(e);
         }
     }
@@ -101,9 +99,15 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
     protected void appendCommentToDocument(char[] buf, int start, int length)
             throws SAXException {
         try {
-            document.appendChild(document.createComment(new String(buf, start,
+            Element root = document.getRootElement();
+            if ("http://www.xom.nu/fakeRoot".equals(root.getNamespaceURI())) {
+                document.insertChild(nodeFactory.makeComment(new String(buf, start,
+                    length)), document.indexOf(root));
+            } else {
+                document.appendChild(nodeFactory.makeComment(new String(buf, start,
                     length)));
-        } catch (DOMException e) {
+            }
+        } catch (XMLException e) {
             fatal(e);
         }
     }
@@ -112,14 +116,13 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
     protected Element createElement(String name, Attributes attributes)
             throws SAXException {
         try {
-            Element rv = document.createElementNS(
-                    "http://www.w3.org/1999/xhtml", name);
+            Element rv = nodeFactory.makeElement(name,
+                    "http://www.w3.org/1999/xhtml");
             for (int i = 0; i < attributes.getLength(); i++) {
-                rv.setAttributeNS(attributes.getURI(i),
-                        attributes.getLocalName(i), attributes.getValue(i));
+                rv.addAttribute(nodeFactory.makeAttribute(attributes.getLocalName(i), attributes.getURI(i), attributes.getValue(i), attributes.getType(i) == "ID" ? Attribute.Type.ID : Attribute.Type.CDATA));
             }
             return rv;
-        } catch (DOMException e) {
+        } catch (XMLException e) {
             fatal(e);
             throw new RuntimeException("Unreachable");
         }
@@ -129,15 +132,13 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
     protected Element createHtmlElementSetAsRoot(Attributes attributes)
             throws SAXException {
         try {
-            Element rv = document.createElementNS(
-                    "http://www.w3.org/1999/xhtml", "html");
+            Element rv = nodeFactory.makeElement("html", "http://www.w3.org/1999/xhtml");
             for (int i = 0; i < attributes.getLength(); i++) {
-                rv.setAttributeNS(attributes.getURI(i),
-                        attributes.getLocalName(i), attributes.getValue(i));
+                rv.addAttribute(nodeFactory.makeAttribute(attributes.getLocalName(i), attributes.getURI(i), attributes.getValue(i), attributes.getType(i) == "ID" ? Attribute.Type.ID : Attribute.Type.CDATA));
             }
-            document.appendChild(rv);
+            document.replaceChild(document.getRootElement(), rv);
             return rv;
-        } catch (DOMException e) {
+        } catch (XMLException e) {
             fatal(e);
             throw new RuntimeException("Unreachable");
         }
@@ -146,11 +147,8 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
     @Override
     protected void detachFromParent(Element element) throws SAXException {
         try {
-            Node parent = element.getParentNode();
-            if (parent != null) {
-                parent.removeChild(element);
-            }
-        } catch (DOMException e) {
+            element.detach();
+        } catch (XMLException e) {
             fatal(e);
         }
     }
@@ -159,8 +157,9 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
     protected void detachFromParentAndAppendToNewParent(Element child,
             Element newParent) throws SAXException {
         try {
+            child.detach();
             newParent.appendChild(child);
-        } catch (DOMException e) {
+        } catch (XMLException e) {
             fatal(e);
         }
     }
@@ -168,8 +167,8 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
     @Override
     protected boolean hasChildren(Element element) throws SAXException {
         try {
-            return element.hasChildNodes();
-        } catch (DOMException e) {
+            return element.getChildCount() != 0;
+        } catch (XMLException e) {
             fatal(e);
             throw new RuntimeException("Unreachable");
         }
@@ -179,8 +178,8 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
     protected void insertBefore(Element child, Element sibling, Element parent)
             throws SAXException {
         try {
-            parent.insertBefore(child, sibling);
-        } catch (DOMException e) {
+            parent.insertChild(child, parent.indexOf(sibling));
+        } catch (XMLException e) {
             fatal(e);
         }
     }
@@ -189,8 +188,8 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
     protected void insertCharactersBefore(char[] buf, int start, int length,
             Element sibling, Element parent) throws SAXException {
         try {
-            parent.insertBefore(document.createTextNode(new String(buf, start, length)), sibling);
-        } catch (DOMException e) {
+            parent.insertChild(nodeFactory.makeText(new String(buf, start, length)), parent.indexOf(sibling));
+        } catch (XMLException e) {
             fatal(e);
         }
     }
@@ -198,13 +197,13 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
     @Override
     protected Element parentElementFor(Element child) throws SAXException {
         try {
-            Node parent = child.getParentNode();
-            if (parent != null && parent.getNodeType() == Node.ELEMENT_NODE) {
+            ParentNode parent = child.getParent();
+            if (parent != null && parent instanceof Element) {
                 return (Element) parent;
             } else {
                 return null;
             }
-        } catch (DOMException e) {
+        } catch (XMLException e) {
             fatal(e);
             throw new RuntimeException("Unreachable");
         }
@@ -213,8 +212,13 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
     @Override
     protected Element shallowClone(Element element) throws SAXException {
         try {
-            return (Element) element.cloneNode(false);
-        } catch (DOMException e) {
+            Element rv = nodeFactory.makeElement(element.getLocalName(), element.getNamespaceURI());
+            for (int i = 0; i < element.getAttributeCount(); i++) {
+                Attribute attribute = element.getAttribute(i);
+                rv.addAttribute(nodeFactory.makeAttribute(attribute.getLocalName(), attribute.getNamespaceURI(), attribute.getValue(), attribute.getType()));
+            }
+            return rv;
+        } catch (XMLException e) {
             fatal(e);
             throw new RuntimeException("Unreachable");
         }
@@ -231,12 +235,9 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
         return rv;
     }
 
-    DocumentFragment getDocumentFragment() {
-        DocumentFragment rv = document.createDocumentFragment();
-        Node rootElt = document.getFirstChild();
-        while (rootElt.hasChildNodes()) {
-            rv.appendChild(rootElt.getFirstChild());
-        }
+    Nodes getDocumentFragment() {
+        Element rootElt = document.getRootElement();
+        Nodes rv = rootElt.removeChildren();
         document = null;
         return rv;
     }
@@ -248,12 +249,15 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
     protected Element createElement(String name, Attributes attributes,
             Element form) throws SAXException {
         try {
-            Element rv = createElement(name, attributes);
-            
+            Element rv = nodeFactory.makeElement(name,
+                    "http://www.w3.org/1999/xhtml", form);
+            for (int i = 0; i < attributes.getLength(); i++) {
+                rv.addAttribute(nodeFactory.makeAttribute(attributes.getLocalName(i), attributes.getURI(i), attributes.getValue(i), attributes.getType(i) == "ID" ? Attribute.Type.ID : Attribute.Type.CDATA));
+            }
             return rv;
-        } catch (DOMException e) {
+        } catch (XMLException e) {
             fatal(e);
-            return null;
+            throw new RuntimeException("Unreachable");
         }
     }
 
@@ -262,6 +266,6 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
      */
     @Override
     protected void start(boolean fragment) throws SAXException {
-        document = implementation.createDocument(null, null, null);
+        document = nodeFactory.makeDocument();
     }
 }
