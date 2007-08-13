@@ -27,7 +27,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 
-import sax.helpers.AttributesImpl;
+import org.xml.sax.helpers.AttributesImpl;
 
 /**
  * Quick and dirty hack to work around Xalan xmlns weirdness.
