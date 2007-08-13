@@ -32,6 +32,8 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
+import nu.validator.htmlparser.DocumentMode;
+import nu.validator.htmlparser.DocumentModeHandler;
 import nu.validator.htmlparser.TreeBuilder;
 import nu.validator.htmlparser.XmlViolationPolicy;
 
@@ -249,7 +251,7 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
             Element form) throws SAXException {
         try {
             Element rv = createElement(name, attributes);
-            
+            rv.setUserData("nu.validator.form-pointer", form, null);
             return rv;
         } catch (DOMException e) {
             fatal(e);
@@ -263,5 +265,9 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
     @Override
     protected void start(boolean fragment) throws SAXException {
         document = implementation.createDocument(null, null, null);
+    }
+
+    protected void documentMode(DocumentMode mode, String publicIdentifier, String systemIdentifier, boolean html4SpecificAdditionalErrorChecks) throws SAXException {
+        document.setUserData("nu.validator.document-mode", mode, null);
     }
 }

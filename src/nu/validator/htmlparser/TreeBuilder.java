@@ -34,12 +34,10 @@
 
 package nu.validator.htmlparser;
 
-import java.io.IOException;
 import java.util.Arrays;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.ErrorHandler;
-import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
@@ -351,18 +349,18 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         if (isQuirky(name, publicIdentifierLC,
                                 systemIdentifierLC, correct)) {
                             err("Quirky doctype.");
-                            documentMode(DocumentMode.QUIRKS_MODE,
+                            documentModeInternal(DocumentMode.QUIRKS_MODE,
                                     publicIdentifier, systemIdentifier, false);
                         } else if (isAlmostStandards(publicIdentifierLC,
                                 systemIdentifierLC)) {
                             err("Almost standards mode doctype.");
-                            documentMode(DocumentMode.ALMOST_STANDARDS_MODE,
+                            documentModeInternal(DocumentMode.ALMOST_STANDARDS_MODE,
                                     publicIdentifier, systemIdentifier, false);
                         } else {
                             if (!(publicIdentifier == null && systemIdentifier == null)) {
                                 err("Legacy doctype.");
                             }
-                            documentMode(DocumentMode.STANDARDS_MODE,
+                            documentModeInternal(DocumentMode.STANDARDS_MODE,
                                     publicIdentifier, systemIdentifier, false);
                         }
                         break;
@@ -371,12 +369,12 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         if (isQuirky(name, publicIdentifierLC,
                                 systemIdentifierLC, correct)) {
                             err("Quirky doctype.");
-                            documentMode(DocumentMode.QUIRKS_MODE,
+                            documentModeInternal(DocumentMode.QUIRKS_MODE,
                                     publicIdentifier, systemIdentifier, true);
                         } else if (isAlmostStandards(publicIdentifierLC,
                                 systemIdentifierLC)) {
                             err("Almost standards mode doctype.");
-                            documentMode(DocumentMode.ALMOST_STANDARDS_MODE,
+                            documentModeInternal(DocumentMode.ALMOST_STANDARDS_MODE,
                                     publicIdentifier, systemIdentifier, true);
                         } else {
                             if ("-//W3C//DTD HTML 4.01//EN".equals(publicIdentifier)) {
@@ -386,7 +384,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             } else {
                                 err("The doctype was not the HTML 4.01 Strict doctype.");
                             }
-                            documentMode(DocumentMode.STANDARDS_MODE,
+                            documentModeInternal(DocumentMode.STANDARDS_MODE,
                                     publicIdentifier, systemIdentifier, true);
                         }
                         break;
@@ -395,7 +393,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         if (isQuirky(name, publicIdentifierLC,
                                 systemIdentifierLC, correct)) {
                             err("Quirky doctype.");
-                            documentMode(DocumentMode.QUIRKS_MODE,
+                            documentModeInternal(DocumentMode.QUIRKS_MODE,
                                     publicIdentifier, systemIdentifier, true);
                         } else if (isAlmostStandards(publicIdentifierLC,
                                 systemIdentifierLC)) {
@@ -407,11 +405,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             } else {
                                 err("The doctype was not a non-quirky HTML 4.01 Transitional doctype.");
                             }
-                            documentMode(DocumentMode.ALMOST_STANDARDS_MODE,
+                            documentModeInternal(DocumentMode.ALMOST_STANDARDS_MODE,
                                     publicIdentifier, systemIdentifier, true);
                         } else {
                             err("The doctype was not the HTML 4.01 Transitional doctype.");
-                            documentMode(DocumentMode.STANDARDS_MODE,
+                            documentModeInternal(DocumentMode.STANDARDS_MODE,
                                     publicIdentifier, systemIdentifier, true);
                         }
                         break;
@@ -419,7 +417,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         if (isQuirky(name, publicIdentifierLC,
                                 systemIdentifierLC, correct)) {
                             err("Quirky doctype.");
-                            documentMode(DocumentMode.QUIRKS_MODE,
+                            documentModeInternal(DocumentMode.QUIRKS_MODE,
                                     publicIdentifier, systemIdentifier, false);
                         } else if (isAlmostStandards(publicIdentifierLC,
                                 systemIdentifierLC)) {
@@ -432,7 +430,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             } else {
                                 err("Almost standards mode doctype.");
                             }
-                            documentMode(DocumentMode.ALMOST_STANDARDS_MODE,
+                            documentModeInternal(DocumentMode.ALMOST_STANDARDS_MODE,
                                     publicIdentifier, systemIdentifier, html4);
                         } else {
                             boolean html4 = "-//W3C//DTD HTML 4.01//EN".equals(publicIdentifier);
@@ -446,21 +444,21 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     err("Legacy doctype.");
                                 }
                             }
-                            documentMode(DocumentMode.STANDARDS_MODE,
+                            documentModeInternal(DocumentMode.STANDARDS_MODE,
                                     publicIdentifier, systemIdentifier, html4);
                         }
                         break;
                     case NO_DOCTYPE_ERRORS:
                         if (isQuirky(name, publicIdentifierLC,
                                 systemIdentifierLC, correct)) {
-                            documentMode(DocumentMode.QUIRKS_MODE,
+                            documentModeInternal(DocumentMode.QUIRKS_MODE,
                                     publicIdentifier, systemIdentifier, false);
                         } else if (isAlmostStandards(publicIdentifierLC,
                                 systemIdentifierLC)) {
-                            documentMode(DocumentMode.ALMOST_STANDARDS_MODE,
+                            documentModeInternal(DocumentMode.ALMOST_STANDARDS_MODE,
                                     publicIdentifier, systemIdentifier, false);
                         } else {
-                            documentMode(DocumentMode.STANDARDS_MODE,
+                            documentModeInternal(DocumentMode.STANDARDS_MODE,
                                     publicIdentifier, systemIdentifier, false);
                         }
                         break;
@@ -657,7 +655,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                              * 
                              * Set the document to quirks mode.
                              */
-                            documentMode(DocumentMode.QUIRKS_MODE, null, null,
+                            documentModeInternal(DocumentMode.QUIRKS_MODE, null, null,
                                     false);
                             /*
                              * Then, switch to the root element phase of the
@@ -874,7 +872,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                          * 
                          * Set the document to quirks mode.
                          */
-                        documentMode(DocumentMode.QUIRKS_MODE, null, null,
+                        documentModeInternal(DocumentMode.QUIRKS_MODE, null, null,
                                 false);
                         /*
                          * Then, switch to the root element phase of the tree
@@ -1572,7 +1570,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                      * 
                      * Set the document to quirks mode.
                      */
-                    documentMode(DocumentMode.QUIRKS_MODE, null, null, false);
+                    documentModeInternal(DocumentMode.QUIRKS_MODE, null, null, false);
                     /*
                      * Then, switch to the root element phase of the tree
                      * construction stage
@@ -2183,7 +2181,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                      * 
                      * Set the document to quirks mode.
                      */
-                    documentMode(DocumentMode.QUIRKS_MODE, null, null, false);
+                    documentModeInternal(DocumentMode.QUIRKS_MODE, null, null, false);
                     /*
                      * Then, switch to the root element phase of the tree
                      * construction stage
@@ -2333,12 +2331,14 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         return currentPtr >= 1 && stack[1].name == "body";
     }
 
-    private void documentMode(DocumentMode mode, String publicIdentifier,
+    private void documentModeInternal(DocumentMode mode, String publicIdentifier,
             String systemIdentifier, boolean html4SpecificAdditionalErrorChecks) throws SAXException {
         if (documentModeHandler != null) {
             documentModeHandler.documentMode(mode, publicIdentifier,
                     systemIdentifier, html4SpecificAdditionalErrorChecks);
         }
+        documentMode(mode, publicIdentifier,
+                systemIdentifier, html4SpecificAdditionalErrorChecks);
     }
 
     private boolean isAlmostStandards(String publicIdentifierLC,
@@ -3122,6 +3122,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     protected void elementPopped(String name, T node) throws SAXException {
         
+    }
+
+    protected void documentMode(DocumentMode mode, String publicIdentifier, String systemIdentifier, boolean html4SpecificAdditionalErrorChecks) throws SAXException {
+
     }
 
     /**
