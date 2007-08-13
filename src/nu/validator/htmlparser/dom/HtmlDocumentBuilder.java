@@ -23,6 +23,7 @@
 package nu.validator.htmlparser.dom;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -34,6 +35,7 @@ import nu.validator.htmlparser.XmlViolationPolicy;
 
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
+import org.w3c.dom.DocumentFragment;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
@@ -61,6 +63,8 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
     private final DOMTreeBuilder domTreeBuilder;
 
     private final DOMImplementation implementation;
+
+    private EntityResolver entityResolver;
 
     /**
      * @param implementation
@@ -98,18 +102,50 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
 
     @Override
     public Document parse(InputSource is) throws SAXException, IOException {
+        domTreeBuilder.setFragmentContext(null);
+        tokenize(is);
+        return domTreeBuilder.getDocument();
+    }
+
+    public DocumentFragment parseFragment(InputSource is, String context)
+            throws IOException, SAXException {
+        domTreeBuilder.setFragmentContext(context);
+        tokenize(is);
+        return domTreeBuilder.getDocumentFragment();
+    }
+
+    /**
+     * @param is
+     * @throws SAXException
+     * @throws IOException
+     * @throws MalformedURLException
+     */
+    private void tokenize(InputSource is) throws SAXException, IOException,
+            MalformedURLException {
+        if (is == null) {
+            throw new IllegalArgumentException("Null input.");
+        }
         if (is.getByteStream() == null || is.getCharacterStream() == null) {
             String systemId = is.getSystemId();
-            is = new InputSource();
-            is.setSystemId(systemId);
-            is.setByteStream(new URL(systemId).openStream());
+            if (systemId == null) {
+                throw new IllegalArgumentException(
+                        "No byte stream, no character stream nor URI.");
+            }
+            if (entityResolver != null) {
+                is = entityResolver.resolveEntity(is.getPublicId(), systemId);
+            }
+            if (is.getByteStream() == null || is.getCharacterStream() == null) {
+                is = new InputSource();
+                is.setSystemId(systemId);
+                is.setByteStream(new URL(systemId).openStream());
+            }
         }
         tokenizer.tokenize(is);
-        return domTreeBuilder.getDocument();
     }
 
     @Override
     public void setEntityResolver(EntityResolver resolver) {
+        this.entityResolver = resolver;
     }
 
     @Override

@@ -23,6 +23,7 @@
 package nu.validator.htmlparser.sax;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 
 import nu.validator.htmlparser.DoctypeExpectation;
@@ -359,7 +360,7 @@ public class HtmlParser implements XMLReader {
         lazyInit();
         try {
             treeBuilder.setFragmentContext(null);
-            tokenizer.tokenize(input);
+            tokenize(input);
         } finally {
             if (saxTreeBuilder != null) {
                 Document document = saxTreeBuilder.getDocument();
@@ -375,7 +376,7 @@ public class HtmlParser implements XMLReader {
         lazyInit();
         try {
             treeBuilder.setFragmentContext(context);
-            tokenizer.tokenize(input);
+            tokenize(input);
         } finally {
             if (saxTreeBuilder != null) {
                 DocumentFragment fragment = saxTreeBuilder.getDocumentFragment();
@@ -383,18 +384,36 @@ public class HtmlParser implements XMLReader {
             }
         }
     }
+    
+    /**
+     * @param is
+     * @throws SAXException
+     * @throws IOException
+     * @throws MalformedURLException
+     */
+    private void tokenize(InputSource is) throws SAXException, IOException, MalformedURLException {
+        if (is == null) {
+            throw new IllegalArgumentException("Null input.");            
+        }
+        if (is.getByteStream() == null || is.getCharacterStream() == null) {
+            String systemId = is.getSystemId();
+            if (systemId == null) {
+                throw new IllegalArgumentException("No byte stream, no character stream nor URI.");
+            }
+            if (entityResolver != null) {
+                is = entityResolver.resolveEntity(is.getPublicId(), systemId);
+            }
+            if (is.getByteStream() == null || is.getCharacterStream() == null) {
+                is = new InputSource();
+                is.setSystemId(systemId);
+                is.setByteStream(new URL(systemId).openStream());
+            }
+        }
+        tokenizer.tokenize(is);
+    }
 
     public void parse(String systemId) throws IOException, SAXException {
-        InputSource is = null;
-        if (entityResolver != null) {
-            is = entityResolver.resolveEntity(null, systemId);
-        }
-        if (is == null) {
-            is = new InputSource();
-            is.setSystemId(systemId);
-            is.setByteStream(new URL(systemId).openStream());
-        }
-        parse(is);
+        parse(new InputSource(systemId));
     }
 
     public void setContentHandler(ContentHandler handler) {
