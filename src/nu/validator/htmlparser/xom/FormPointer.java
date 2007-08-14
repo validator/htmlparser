@@ -22,38 +22,22 @@
 
 package nu.validator.htmlparser.xom;
 
-import nu.xom.Attribute;
-import nu.xom.Comment;
-import nu.xom.Document;
 import nu.xom.Element;
-import nu.xom.Node;
-import nu.xom.Text;
-import nu.xom.Attribute.Type;
 
-public class SimpleNodeFactory {
+public interface FormPointer {
 
-    public Attribute makeAttribute(String localName, String uri, String value, Type type) {
-        return new Attribute(localName, uri, value, type);
-    }
+    /**
+     * Returns the form.
+     * 
+     * @return the form
+     */
+    public abstract Element getForm();
 
-    public Text makeText(String string) {
-        return new Text(string);
-    }
+    /**
+     * Sets the form.
+     * 
+     * @param form the form to set
+     */
+    public abstract void setForm(Element form);
 
-    public Comment makeComment(String string) {
-        return new Comment(string);
-    }
-
-    public Element makeElement(String name, String namespace) {
-        return new Element(name, namespace);
-    }
-
-    public Element makeElement(String name, String namespace, Element form) {
-        return new FormPtrElement(name, namespace, form);
-    }
-    
-    public Document makeDocument() {
-        return new ModalDocument(new Element("root", "http://www.xom.nu/fakeRoot"));
-    }
-    
 }

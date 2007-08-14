@@ -22,6 +22,7 @@
 
 package nu.validator.htmlparser.xom;
 
+import nu.validator.htmlparser.DocumentMode;
 import nu.validator.htmlparser.TreeBuilder;
 import nu.validator.htmlparser.XmlViolationPolicy;
 import nu.xom.Attribute;
@@ -268,5 +269,16 @@ class XOMTreeBuilder extends TreeBuilder<Element> {
     @Override
     protected void start(boolean fragment) throws SAXException {
         document = nodeFactory.makeDocument();
+    }
+
+    /**
+     * @see nu.validator.htmlparser.TreeBuilder#documentMode(nu.validator.htmlparser.DocumentMode, java.lang.String, java.lang.String, boolean)
+     */
+    @Override
+    protected void documentMode(DocumentMode mode, String publicIdentifier, String systemIdentifier, boolean html4SpecificAdditionalErrorChecks) throws SAXException {
+        if (document instanceof Mode) {
+            Mode modal = (Mode) document;
+            modal.setMode(mode);
+        }
     }
 }
