@@ -185,7 +185,7 @@ public class XSLT4HTML5 {
         transformerFactory.setErrorListener(errorHandler);
         TemplatesHandler templatesHandler = transformerFactory.newTemplatesHandler();
         reader.setContentHandler(templatesHandler);
-        reader.parse(new File(template).toURL().toString());
+        reader.parse(new File(template).toURI().toASCIIString());
 
         Templates templates = templatesHandler.getTemplates();
 
@@ -219,7 +219,7 @@ public class XSLT4HTML5 {
                 inputDoc = builder.parse(new File(input));
             }
             DOMSource inputSource = new DOMSource(inputDoc,
-                    new File(input).toURL().toString());
+                    new File(input).toURI().toASCIIString());
             Transformer transformer = templates.newTransformer();
             transformer.setErrorListener(errorHandler);
             transformer.transform(inputSource, result);
@@ -235,7 +235,7 @@ public class XSLT4HTML5 {
             reader.setErrorHandler(errorHandler);
             reader.setContentHandler(transformerHandler);
             reader.setProperty("http://xml.org/sax/properties/lexical-handler", transformerHandler);
-            reader.parse(new File(input).toURL().toString());
+            reader.parse(new File(input).toURI().toASCIIString());
         }
         outputStream.flush();
         outputStream.close();
