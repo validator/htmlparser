@@ -22,38 +22,22 @@
 
 package nu.validator.htmlparser.xom;
 
-import nu.xom.Attribute;
-import nu.xom.Comment;
-import nu.xom.Document;
-import nu.xom.Element;
-import nu.xom.Node;
-import nu.xom.Text;
-import nu.xom.Attribute.Type;
+import nu.validator.htmlparser.DocumentMode;
 
-public class SimpleNodeFactory {
+public interface Mode {
 
-    public Attribute makeAttribute(String localName, String uri, String value, Type type) {
-        return new Attribute(localName, uri, value, type);
-    }
+    /**
+     * Returns the mode.
+     * 
+     * @return the mode
+     */
+    public abstract DocumentMode getMode();
 
-    public Text makeText(String string) {
-        return new Text(string);
-    }
+    /**
+     * Sets the mode.
+     * 
+     * @param mode the mode to set
+     */
+    public abstract void setMode(DocumentMode mode);
 
-    public Comment makeComment(String string) {
-        return new Comment(string);
-    }
-
-    public Element makeElement(String name, String namespace) {
-        return new Element(name, namespace);
-    }
-
-    public Element makeElement(String name, String namespace, Element form) {
-        return new FormPtrElement(name, namespace, form);
-    }
-    
-    public Document makeDocument() {
-        return new ModalDocument(new Element("root", "http://www.xom.nu/fakeRoot"));
-    }
-    
 }
