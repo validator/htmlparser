@@ -204,20 +204,19 @@ public class XSLT4HTML5 {
 
         if (mode == Mode.DOM) {
             Document inputDoc;
+            DocumentBuilder builder;
             if (inputHtml) {
-                HtmlDocumentBuilder documentBuilder = new HtmlDocumentBuilder();
-                inputDoc = documentBuilder.parse(new File(input));
+                builder = new HtmlDocumentBuilder();
             } else {
                 DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
                 factory.setNamespaceAware(true);
-                DocumentBuilder builder;
                 try {
                     builder = builderFactory.newDocumentBuilder();
                 } catch (ParserConfigurationException e) {
                     throw new RuntimeException(e);
                 }
-                inputDoc = builder.parse(new File(input));
             }
+            inputDoc = builder.parse(new File(input));
             DOMSource inputSource = new DOMSource(inputDoc,
                     new File(input).toURI().toASCIIString());
             Transformer transformer = templates.newTransformer();
