@@ -36,12 +36,13 @@ import org.xml.sax.SAXException;
 
 class XOMTreeBuilder extends TreeBuilder<Element> {
 
-    private SimpleNodeFactory nodeFactory;
+    private final SimpleNodeFactory nodeFactory;
     
     private Document document;
 
-    protected XOMTreeBuilder() {
+    protected XOMTreeBuilder(SimpleNodeFactory nodeFactory) {
         super(XmlViolationPolicy.ALLOW, true);
+        this.nodeFactory = nodeFactory;
     }
 
     @Override
