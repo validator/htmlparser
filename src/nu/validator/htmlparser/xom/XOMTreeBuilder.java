@@ -38,7 +38,7 @@ import org.xml.sax.SAXException;
 class XOMTreeBuilder extends TreeBuilder<Element> {
 
     private final SimpleNodeFactory nodeFactory;
-    
+
     private Document document;
 
     protected XOMTreeBuilder(SimpleNodeFactory nodeFactory) {
@@ -54,7 +54,10 @@ class XOMTreeBuilder extends TreeBuilder<Element> {
                 String localName = attributes.getLocalName(i);
                 String uri = attributes.getURI(i);
                 if (element.getAttribute(localName, uri) == null) {
-                    element.addAttribute(nodeFactory.makeAttribute(localName, uri, attributes.getValue(i), attributes.getType(i) == "ID" ? Attribute.Type.ID : Attribute.Type.CDATA));
+                    element.addAttribute(nodeFactory.makeAttribute(localName,
+                            uri, attributes.getValue(i),
+                            attributes.getType(i) == "ID" ? Attribute.Type.ID
+                                    : Attribute.Type.CDATA));
                 }
             }
         } catch (XMLException e) {
@@ -103,11 +106,11 @@ class XOMTreeBuilder extends TreeBuilder<Element> {
         try {
             Element root = document.getRootElement();
             if ("http://www.xom.nu/fakeRoot".equals(root.getNamespaceURI())) {
-                document.insertChild(nodeFactory.makeComment(new String(buf, start,
-                    length)), document.indexOf(root));
+                document.insertChild(nodeFactory.makeComment(new String(buf,
+                        start, length)), document.indexOf(root));
             } else {
-                document.appendChild(nodeFactory.makeComment(new String(buf, start,
-                    length)));
+                document.appendChild(nodeFactory.makeComment(new String(buf,
+                        start, length)));
             }
         } catch (XMLException e) {
             fatal(e);
@@ -121,7 +124,11 @@ class XOMTreeBuilder extends TreeBuilder<Element> {
             Element rv = nodeFactory.makeElement(name,
                     "http://www.w3.org/1999/xhtml");
             for (int i = 0; i < attributes.getLength(); i++) {
-                rv.addAttribute(nodeFactory.makeAttribute(attributes.getLocalName(i), attributes.getURI(i), attributes.getValue(i), attributes.getType(i) == "ID" ? Attribute.Type.ID : Attribute.Type.CDATA));
+                rv.addAttribute(nodeFactory.makeAttribute(
+                        attributes.getLocalName(i), attributes.getURI(i),
+                        attributes.getValue(i),
+                        attributes.getType(i) == "ID" ? Attribute.Type.ID
+                                : Attribute.Type.CDATA));
             }
             return rv;
         } catch (XMLException e) {
@@ -134,11 +141,16 @@ class XOMTreeBuilder extends TreeBuilder<Element> {
     protected Element createHtmlElementSetAsRoot(Attributes attributes)
             throws SAXException {
         try {
-            Element rv = nodeFactory.makeElement("html", "http://www.w3.org/1999/xhtml");
+            Element rv = nodeFactory.makeElement("html",
+                    "http://www.w3.org/1999/xhtml");
             for (int i = 0; i < attributes.getLength(); i++) {
-                rv.addAttribute(nodeFactory.makeAttribute(attributes.getLocalName(i), attributes.getURI(i), attributes.getValue(i), attributes.getType(i) == "ID" ? Attribute.Type.ID : Attribute.Type.CDATA));
+                rv.addAttribute(nodeFactory.makeAttribute(
+                        attributes.getLocalName(i), attributes.getURI(i),
+                        attributes.getValue(i),
+                        attributes.getType(i) == "ID" ? Attribute.Type.ID
+                                : Attribute.Type.CDATA));
             }
-            document.replaceChild(document.getRootElement(), rv);
+            document.setRootElement(rv);
             return rv;
         } catch (XMLException e) {
             fatal(e);
@@ -190,7 +202,8 @@ class XOMTreeBuilder extends TreeBuilder<Element> {
     protected void insertCharactersBefore(char[] buf, int start, int length,
             Element sibling, Element parent) throws SAXException {
         try {
-            parent.insertChild(nodeFactory.makeText(new String(buf, start, length)), parent.indexOf(sibling));
+            parent.insertChild(nodeFactory.makeText(new String(buf, start,
+                    length)), parent.indexOf(sibling));
         } catch (XMLException e) {
             fatal(e);
         }
@@ -214,10 +227,13 @@ class XOMTreeBuilder extends TreeBuilder<Element> {
     @Override
     protected Element shallowClone(Element element) throws SAXException {
         try {
-            Element rv = nodeFactory.makeElement(element.getLocalName(), element.getNamespaceURI());
+            Element rv = nodeFactory.makeElement(element.getLocalName(),
+                    element.getNamespaceURI());
             for (int i = 0; i < element.getAttributeCount(); i++) {
                 Attribute attribute = element.getAttribute(i);
-                rv.addAttribute(nodeFactory.makeAttribute(attribute.getLocalName(), attribute.getNamespaceURI(), attribute.getValue(), attribute.getType()));
+                rv.addAttribute(nodeFactory.makeAttribute(
+                        attribute.getLocalName(), attribute.getNamespaceURI(),
+                        attribute.getValue(), attribute.getType()));
             }
             return rv;
         } catch (XMLException e) {
@@ -245,7 +261,8 @@ class XOMTreeBuilder extends TreeBuilder<Element> {
     }
 
     /**
-     * @see nu.validator.htmlparser.TreeBuilder#createElement(java.lang.String, org.xml.sax.Attributes, java.lang.Object)
+     * @see nu.validator.htmlparser.TreeBuilder#createElement(java.lang.String,
+     *      org.xml.sax.Attributes, java.lang.Object)
      */
     @Override
     protected Element createElement(String name, Attributes attributes,
@@ -254,7 +271,11 @@ class XOMTreeBuilder extends TreeBuilder<Element> {
             Element rv = nodeFactory.makeElement(name,
                     "http://www.w3.org/1999/xhtml", form);
             for (int i = 0; i < attributes.getLength(); i++) {
-                rv.addAttribute(nodeFactory.makeAttribute(attributes.getLocalName(i), attributes.getURI(i), attributes.getValue(i), attributes.getType(i) == "ID" ? Attribute.Type.ID : Attribute.Type.CDATA));
+                rv.addAttribute(nodeFactory.makeAttribute(
+                        attributes.getLocalName(i), attributes.getURI(i),
+                        attributes.getValue(i),
+                        attributes.getType(i) == "ID" ? Attribute.Type.ID
+                                : Attribute.Type.CDATA));
             }
             return rv;
         } catch (XMLException e) {
@@ -272,10 +293,13 @@ class XOMTreeBuilder extends TreeBuilder<Element> {
     }
 
     /**
-     * @see nu.validator.htmlparser.TreeBuilder#documentMode(nu.validator.htmlparser.DocumentMode, java.lang.String, java.lang.String, boolean)
+     * @see nu.validator.htmlparser.TreeBuilder#documentMode(nu.validator.htmlparser.DocumentMode,
+     *      java.lang.String, java.lang.String, boolean)
      */
     @Override
-    protected void documentMode(DocumentMode mode, String publicIdentifier, String systemIdentifier, boolean html4SpecificAdditionalErrorChecks) throws SAXException {
+    protected void documentMode(DocumentMode mode, String publicIdentifier,
+            String systemIdentifier, boolean html4SpecificAdditionalErrorChecks)
+            throws SAXException {
         if (document instanceof Mode) {
             Mode modal = (Mode) document;
             modal.setMode(mode);
