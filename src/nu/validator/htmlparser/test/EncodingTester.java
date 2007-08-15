@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 
-import nu.validator.htmlparser.HtmlInputStreamReader;
+import nu.validator.htmlparser.impl.HtmlInputStreamReader;
 
 import org.xml.sax.SAXException;
 

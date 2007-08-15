@@ -20,10 +20,10 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-package nu.validator.htmlparser;
+package nu.validator.htmlparser.common;
 
-import org.xml.sax.SAXException;
-
-public interface DocumentModeHandler {
-    public void documentMode(DocumentMode mode, String publicIdentifier, String systemIdentifier, boolean html4SpecificAdditionalErrorChecks) throws SAXException;
+public enum DocumentMode {
+STANDARDS_MODE,
+ALMOST_STANDARDS_MODE,
+QUIRKS_MODE
 }

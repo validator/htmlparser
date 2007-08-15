@@ -20,7 +20,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-package nu.validator.htmlparser;
+package nu.validator.htmlparser.impl;
 
 /**
  * @version $Id$

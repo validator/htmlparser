@@ -20,7 +20,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-package nu.validator.htmlparser;
+package nu.validator.htmlparser.impl;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -29,6 +29,7 @@ import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.Locator;

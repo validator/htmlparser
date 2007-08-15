@@ -22,7 +22,7 @@
 
 package nu.validator.htmlparser.xom;
 
-import nu.validator.htmlparser.DocumentMode;
+import nu.validator.htmlparser.common.DocumentMode;
 
 public interface Mode {
 

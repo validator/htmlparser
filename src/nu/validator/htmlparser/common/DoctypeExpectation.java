@@ -20,7 +20,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-package nu.validator.htmlparser;
+package nu.validator.htmlparser.common;
 
 /**
  * Used for indicating desired behavior with legacy doctypes.

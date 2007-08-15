@@ -26,11 +26,11 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import nu.validator.htmlparser.DoctypeExpectation;
-import nu.validator.htmlparser.DocumentModeHandler;
-import nu.validator.htmlparser.Tokenizer;
-import nu.validator.htmlparser.TreeBuilder;
-import nu.validator.htmlparser.XmlViolationPolicy;
+import nu.validator.htmlparser.common.DoctypeExpectation;
+import nu.validator.htmlparser.common.DocumentModeHandler;
+import nu.validator.htmlparser.common.XmlViolationPolicy;
+import nu.validator.htmlparser.impl.Tokenizer;
+import nu.validator.htmlparser.impl.TreeBuilder;
 import nu.validator.saxtree.Document;
 import nu.validator.saxtree.DocumentFragment;
 import nu.validator.saxtree.TreeParser;
@@ -582,7 +582,7 @@ public class HtmlParser implements XMLReader {
 
     /**
      * @return
-     * @see nu.validator.htmlparser.Tokenizer#isCheckingNormalization()
+     * @see nu.validator.htmlparser.impl.Tokenizer#isCheckingNormalization()
      */
     public boolean isCheckingNormalization() {
         return checkingNormalization;
@@ -590,7 +590,7 @@ public class HtmlParser implements XMLReader {
 
     /**
      * @param enable
-     * @see nu.validator.htmlparser.Tokenizer#setCheckingNormalization(boolean)
+     * @see nu.validator.htmlparser.impl.Tokenizer#setCheckingNormalization(boolean)
      */
     public void setCheckingNormalization(boolean enable) {
         this.checkingNormalization = enable;
@@ -601,7 +601,7 @@ public class HtmlParser implements XMLReader {
 
     /**
      * @param commentPolicy
-     * @see nu.validator.htmlparser.Tokenizer#setCommentPolicy(nu.validator.htmlparser.XmlViolationPolicy)
+     * @see nu.validator.htmlparser.impl.Tokenizer#setCommentPolicy(nu.validator.htmlparser.common.XmlViolationPolicy)
      */
     public void setCommentPolicy(XmlViolationPolicy commentPolicy) {
         this.commentPolicy = commentPolicy;
@@ -612,7 +612,7 @@ public class HtmlParser implements XMLReader {
 
     /**
      * @param contentNonXmlCharPolicy
-     * @see nu.validator.htmlparser.Tokenizer#setContentNonXmlCharPolicy(nu.validator.htmlparser.XmlViolationPolicy)
+     * @see nu.validator.htmlparser.impl.Tokenizer#setContentNonXmlCharPolicy(nu.validator.htmlparser.common.XmlViolationPolicy)
      */
     public void setContentNonXmlCharPolicy(
             XmlViolationPolicy contentNonXmlCharPolicy) {
@@ -624,7 +624,7 @@ public class HtmlParser implements XMLReader {
 
     /**
      * @param contentSpacePolicy
-     * @see nu.validator.htmlparser.Tokenizer#setContentSpacePolicy(nu.validator.htmlparser.XmlViolationPolicy)
+     * @see nu.validator.htmlparser.impl.Tokenizer#setContentSpacePolicy(nu.validator.htmlparser.common.XmlViolationPolicy)
      */
     public void setContentSpacePolicy(XmlViolationPolicy contentSpacePolicy) {
         this.contentSpacePolicy = contentSpacePolicy;
@@ -635,7 +635,7 @@ public class HtmlParser implements XMLReader {
 
     /**
      * @return
-     * @see nu.validator.htmlparser.TreeBuilder#isScriptingEnabled()
+     * @see nu.validator.htmlparser.impl.TreeBuilder#isScriptingEnabled()
      */
     public boolean isScriptingEnabled() {
         return scriptingEnabled;
@@ -643,7 +643,7 @@ public class HtmlParser implements XMLReader {
 
     /**
      * @param scriptingEnabled
-     * @see nu.validator.htmlparser.TreeBuilder#setScriptingEnabled(boolean)
+     * @see nu.validator.htmlparser.impl.TreeBuilder#setScriptingEnabled(boolean)
      */
     public void setScriptingEnabled(boolean scriptingEnabled) {
         this.scriptingEnabled = scriptingEnabled;
@@ -733,7 +733,7 @@ public class HtmlParser implements XMLReader {
 
     /**
      * @param mappingLangToXmlLang
-     * @see nu.validator.htmlparser.Tokenizer#setMappingLangToXmlLang(boolean)
+     * @see nu.validator.htmlparser.impl.Tokenizer#setMappingLangToXmlLang(boolean)
      */
     public void setMappingLangToXmlLang(boolean mappingLangToXmlLang) {
         this.mappingLangToXmlLang = mappingLangToXmlLang;
@@ -753,7 +753,7 @@ public class HtmlParser implements XMLReader {
 
     /**
      * @param xmlnsPolicy
-     * @see nu.validator.htmlparser.Tokenizer#setXmlnsPolicy(nu.validator.htmlparser.XmlViolationPolicy)
+     * @see nu.validator.htmlparser.impl.Tokenizer#setXmlnsPolicy(nu.validator.htmlparser.common.XmlViolationPolicy)
      */
     public void setXmlnsPolicy(XmlViolationPolicy xmlnsPolicy) {
         if (xmlnsPolicy == XmlViolationPolicy.FATAL) {
@@ -812,7 +812,7 @@ public class HtmlParser implements XMLReader {
 
     /**
      * @param reportingDoctype
-     * @see nu.validator.htmlparser.TreeBuilder#setReportingDoctype(boolean)
+     * @see nu.validator.htmlparser.impl.TreeBuilder#setReportingDoctype(boolean)
      */
     public void setReportingDoctype(boolean reportingDoctype) {
         this.reportingDoctype = reportingDoctype;
@@ -832,7 +832,7 @@ public class HtmlParser implements XMLReader {
 
     /**
      * @param namePolicy
-     * @see nu.validator.htmlparser.Tokenizer#setNamePolicy(nu.validator.htmlparser.XmlViolationPolicy)
+     * @see nu.validator.htmlparser.impl.Tokenizer#setNamePolicy(nu.validator.htmlparser.common.XmlViolationPolicy)
      */
     public void setNamePolicy(XmlViolationPolicy namePolicy) {
         this.namePolicy = namePolicy;

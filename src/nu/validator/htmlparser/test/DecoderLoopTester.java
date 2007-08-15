@@ -30,7 +30,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CodingErrorAction;
 
-import nu.validator.htmlparser.HtmlInputStreamReader;
+import nu.validator.htmlparser.impl.HtmlInputStreamReader;
 
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;

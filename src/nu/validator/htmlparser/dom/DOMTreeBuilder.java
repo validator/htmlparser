@@ -32,10 +32,10 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
-import nu.validator.htmlparser.DocumentMode;
-import nu.validator.htmlparser.DocumentModeHandler;
-import nu.validator.htmlparser.TreeBuilder;
-import nu.validator.htmlparser.XmlViolationPolicy;
+import nu.validator.htmlparser.common.DocumentMode;
+import nu.validator.htmlparser.common.DocumentModeHandler;
+import nu.validator.htmlparser.common.XmlViolationPolicy;
+import nu.validator.htmlparser.impl.TreeBuilder;
 
 class DOMTreeBuilder extends TreeBuilder<Element> {
 
@@ -244,7 +244,7 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
     }
 
     /**
-     * @see nu.validator.htmlparser.TreeBuilder#createElement(java.lang.String, org.xml.sax.Attributes, java.lang.Object)
+     * @see nu.validator.htmlparser.impl.TreeBuilder#createElement(java.lang.String, org.xml.sax.Attributes, java.lang.Object)
      */
     @Override
     protected Element createElement(String name, Attributes attributes,
@@ -260,7 +260,7 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
     }
 
     /**
-     * @see nu.validator.htmlparser.TreeBuilder#start()
+     * @see nu.validator.htmlparser.impl.TreeBuilder#start()
      */
     @Override
     protected void start(boolean fragment) throws SAXException {

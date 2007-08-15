@@ -22,9 +22,9 @@
 
 package nu.validator.htmlparser.test;
 
-import nu.validator.htmlparser.ContentModelFlag;
-import nu.validator.htmlparser.TokenHandler;
-import nu.validator.htmlparser.Tokenizer;
+import nu.validator.htmlparser.impl.ContentModelFlag;
+import nu.validator.htmlparser.impl.TokenHandler;
+import nu.validator.htmlparser.impl.Tokenizer;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.ErrorHandler;

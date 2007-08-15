@@ -22,9 +22,9 @@
 
 package nu.validator.htmlparser.sax;
 
-import nu.validator.htmlparser.AttributesImpl;
-import nu.validator.htmlparser.TreeBuilder;
-import nu.validator.htmlparser.XmlViolationPolicy;
+import nu.validator.htmlparser.common.XmlViolationPolicy;
+import nu.validator.htmlparser.impl.AttributesImpl;
+import nu.validator.htmlparser.impl.TreeBuilder;
 import nu.validator.saxtree.Characters;
 import nu.validator.saxtree.Comment;
 import nu.validator.saxtree.DTD;
@@ -121,7 +121,7 @@ class SAXTreeBuilder extends TreeBuilder<Element> {
     }
 
     /**
-     * @see nu.validator.htmlparser.TreeBuilder#appendDoctypeToDocument(java.lang.String, java.lang.String, java.lang.String)
+     * @see nu.validator.htmlparser.impl.TreeBuilder#appendDoctypeToDocument(java.lang.String, java.lang.String, java.lang.String)
      */
     @Override
     protected void appendDoctypeToDocument(String name, String publicIdentifier, String systemIdentifier) {
@@ -150,7 +150,7 @@ class SAXTreeBuilder extends TreeBuilder<Element> {
 
     /**
      * @throws SAXException 
-     * @see nu.validator.htmlparser.TreeBuilder#end()
+     * @see nu.validator.htmlparser.impl.TreeBuilder#end()
      */
     @Override
     protected void end() throws SAXException {
@@ -158,7 +158,7 @@ class SAXTreeBuilder extends TreeBuilder<Element> {
     }
 
     /**
-     * @see nu.validator.htmlparser.TreeBuilder#start()
+     * @see nu.validator.htmlparser.impl.TreeBuilder#start()
      */
     @Override
     protected void start(boolean fragment) {

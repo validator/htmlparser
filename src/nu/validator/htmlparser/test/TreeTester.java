@@ -31,7 +31,7 @@ import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.util.LinkedList;
 
-import nu.validator.htmlparser.XmlViolationPolicy;
+import nu.validator.htmlparser.common.XmlViolationPolicy;
 import nu.validator.htmlparser.sax.HtmlParser;
 
 import org.xml.sax.InputSource;

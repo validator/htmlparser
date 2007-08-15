@@ -32,9 +32,14 @@
  * create derivative works of this document."
  */
 
-package nu.validator.htmlparser;
+package nu.validator.htmlparser.impl;
 
 import java.util.Arrays;
+
+import nu.validator.htmlparser.common.DoctypeExpectation;
+import nu.validator.htmlparser.common.DocumentMode;
+import nu.validator.htmlparser.common.DocumentModeHandler;
+import nu.validator.htmlparser.common.XmlViolationPolicy;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.ErrorHandler;
@@ -523,7 +528,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     /**
-     * @see nu.validator.htmlparser.TokenHandler#characters(char[], int, int)
+     * @see nu.validator.htmlparser.impl.TokenHandler#characters(char[], int, int)
      */
     public final void characters(char[] buf, int start, int length)
             throws SAXException {
@@ -3129,7 +3134,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     /**
-     * @see nu.validator.htmlparser.TokenHandler#wantsComments()
+     * @see nu.validator.htmlparser.impl.TokenHandler#wantsComments()
      */
     public boolean wantsComments() {
         return wantingComments;
