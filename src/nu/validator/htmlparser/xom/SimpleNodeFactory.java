@@ -32,26 +32,64 @@ import nu.xom.Attribute.Type;
 
 public class SimpleNodeFactory {
 
+    /**
+     * <code>return new Attribute(localName, uri, value, type);</code>
+     * @param localName
+     * @param uri
+     * @param value
+     * @param type
+     * @return
+     */
     public Attribute makeAttribute(String localName, String uri, String value, Type type) {
         return new Attribute(localName, uri, value, type);
     }
 
+    /**
+     * <code>return new Text(string);</code>
+     * @param string
+     * @return
+     */
     public Text makeText(String string) {
         return new Text(string);
     }
 
+    /**
+     * <code>return new Comment(string);</code>
+     * @param string
+     * @return
+     */
     public Comment makeComment(String string) {
         return new Comment(string);
     }
 
+    /**
+     * <code>return new Element(name, namespace);</code>
+     * @param name
+     * @param namespace
+     * @return
+     */
     public Element makeElement(String name, String namespace) {
         return new Element(name, namespace);
     }
 
+    /**
+     * <code>return new FormPtrElement(name, namespace, form);</code>
+     * @param name
+     * @param namespace
+     * @param form
+     * @return
+     */
     public Element makeElement(String name, String namespace, Element form) {
         return new FormPtrElement(name, namespace, form);
     }
     
+    /**
+     * <code>return new ModalDocument(new Element("root", "http://www.xom.nu/fakeRoot"));</code>
+     * 
+     * <p>Subclasses adviced to return an instance of <code>Mode</code>. (Not required, though.)
+     * 
+     * @return
+     */
     public Document makeDocument() {
         return new ModalDocument(new Element("root", "http://www.xom.nu/fakeRoot"));
     }

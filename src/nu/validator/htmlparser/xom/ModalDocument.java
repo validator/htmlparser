@@ -26,19 +26,38 @@ import nu.validator.htmlparser.common.DocumentMode;
 import nu.xom.Document;
 import nu.xom.Element;
 
+/**
+ * Document with <code>Mode</code>.
+ * @version $Id$
+ * @author hsivonen
+ */
 public class ModalDocument extends Document implements Mode {
 
     private DocumentMode mode = null;
     
+    /**
+     * Copy constructor (<code>Mode</code>-aware).
+     * @param doc
+     */
     public ModalDocument(Document doc) {
         super(doc);
+        if (doc instanceof Mode) {
+            Mode modal = (Mode) doc;
+            setMode(modal.getMode());
+        }
     }
 
+    /**
+     * With root.
+     * 
+     * @param elt
+     */
     public ModalDocument(Element elt) {
         super(elt);
     }
 
     /**
+     * Gets the mode.
      * @see nu.validator.htmlparser.xom.Mode#getMode()
      */
     public DocumentMode getMode() {
@@ -46,6 +65,7 @@ public class ModalDocument extends Document implements Mode {
     }
 
     /**
+     * Sets the mode.
      * @see nu.validator.htmlparser.xom.Mode#setMode(nu.validator.htmlparser.common.DocumentMode)
      */
     public void setMode(DocumentMode mode) {

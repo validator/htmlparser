@@ -24,22 +24,31 @@ package nu.validator.htmlparser.xom;
 
 import nu.xom.Element;
 
+/**
+ * Element with an associated form.
+ * 
+ * @version $Id$
+ * @author hsivonen
+ */
 public class FormPtrElement extends Element implements FormPointer {
 
     private Element form = null;
     
     /**
-     * @param arg0
+     * Copy constructor (<code>FormPointer</code>-aware).
+     * @param elt
      */
     public FormPtrElement(Element elt) {
         super(elt);
-        if (elt instanceof FormPtrElement) {
+        if (elt instanceof FormPointer) {
             FormPointer other = (FormPointer) elt;
             this.setForm(other.getForm());
         }
     }
 
     /**
+     * Null form.
+     * 
      * @param name
      * @param uri
      */
@@ -47,12 +56,20 @@ public class FormPtrElement extends Element implements FormPointer {
         super(name, uri);
     }
 
+    /**
+     * Full constructor.
+     * 
+     * @param name
+     * @param uri
+     * @param form
+     */
     public FormPtrElement(String name, String uri, Element form) {
         super(name, uri);
         this.form = form;
     }
     
     /**
+     * Gets the form.
      * @see nu.validator.htmlparser.xom.FormPointer#getForm()
      */
     public Element getForm() {
@@ -60,6 +77,7 @@ public class FormPtrElement extends Element implements FormPointer {
     }
 
     /**
+     * Sets the form.
      * @see nu.validator.htmlparser.xom.FormPointer#setForm(nu.xom.Element)
      */
     public void setForm(Element form) {
