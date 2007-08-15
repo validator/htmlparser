@@ -31,6 +31,8 @@ import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import nu.validator.htmlparser.common.DoctypeExpectation;
+import nu.validator.htmlparser.common.DocumentModeHandler;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
 import nu.validator.htmlparser.impl.Tokenizer;
 import nu.xom.Builder;
@@ -193,12 +195,137 @@ public class HtmlBuilder extends Builder {
         return simpleNodeFactory;
     }
 
+    /**
+     * Sets the entity resolver for URI-only inputs.
+     * @param resolver the resolver
+     * @see javax.xml.parsers.DocumentBuilder#setEntityResolver(org.xml.sax.EntityResolver)
+     */
     public void setEntityResolver(EntityResolver resolver) {
         this.entityResolver = resolver;
     }
 
+    /**
+     * @see javax.xml.parsers.DocumentBuilder#setErrorHandler(org.xml.sax.ErrorHandler)
+     */
     public void setErrorHandler(ErrorHandler errorHandler) {
         xomTreeBuilder.setErrorHandler(errorHandler);
         tokenizer.setErrorHandler(errorHandler);
     }
+
+    /**
+     * Sets whether comment nodes appear in the tree.
+     * @param ignoreComments <code>true</code> to ignore comments
+     * @see nu.validator.htmlparser.impl.TreeBuilder#setIgnoringComments(boolean)
+     */
+    public void setIgnoringComments(boolean ignoreComments) {
+        xomTreeBuilder.setIgnoringComments(ignoreComments);
+    }
+
+    /**
+     * Sets whether the parser considers scripting to be enabled for noscript treatment.
+     * @param scriptingEnabled <code>true</code> to enable
+     * @see nu.validator.htmlparser.impl.TreeBuilder#setScriptingEnabled(boolean)
+     */
+    public void setScriptingEnabled(boolean scriptingEnabled) {
+        xomTreeBuilder.setScriptingEnabled(scriptingEnabled);
+    }
+
+    /**
+     * Toggles the checking of the NFC normalization of source.
+     * @param enable <code>true</code> to check normalization
+     * @see nu.validator.htmlparser.impl.Tokenizer#setCheckingNormalization(boolean)
+     */
+    public void setCheckingNormalization(boolean enable) {
+        tokenizer.setCheckingNormalization(enable);
+    }
+
+    /**
+     * Sets the policy for consecutive hyphens in comments.
+     * @param commentPolicy the policy
+     * @see nu.validator.htmlparser.impl.Tokenizer#setCommentPolicy(nu.validator.htmlparser.common.XmlViolationPolicy)
+     */
+    public void setCommentPolicy(XmlViolationPolicy commentPolicy) {
+        tokenizer.setCommentPolicy(commentPolicy);
+    }
+
+    /**
+     * Sets the policy for non-XML characters except white space.
+     * @param contentNonXmlCharPolicy the policy
+     * @see nu.validator.htmlparser.impl.Tokenizer#setContentNonXmlCharPolicy(nu.validator.htmlparser.common.XmlViolationPolicy)
+     */
+    public void setContentNonXmlCharPolicy(
+            XmlViolationPolicy contentNonXmlCharPolicy) {
+        tokenizer.setContentNonXmlCharPolicy(contentNonXmlCharPolicy);
+    }
+
+    /**
+     * Sets the policy for non-XML white space.
+     * @param contentSpacePolicy the policy
+     * @see nu.validator.htmlparser.impl.Tokenizer#setContentSpacePolicy(nu.validator.htmlparser.common.XmlViolationPolicy)
+     */
+    public void setContentSpacePolicy(XmlViolationPolicy contentSpacePolicy) {
+        tokenizer.setContentSpacePolicy(contentSpacePolicy);
+    }
+
+
+    /**
+     * Whether the HTML 4 mode reports boolean attributes in a way that repeats
+     * the name in the value.
+     * @param html4ModeCompatibleWithXhtml1Schemata
+     */
+    public void setHtml4ModeCompatibleWithXhtml1Schemata(
+            boolean html4ModeCompatibleWithXhtml1Schemata) {
+        tokenizer.setHtml4ModeCompatibleWithXhtml1Schemata(html4ModeCompatibleWithXhtml1Schemata);
+    }
+
+    /**
+     * @param mappingLangToXmlLang
+     * @see nu.validator.htmlparser.impl.Tokenizer#setMappingLangToXmlLang(boolean)
+     */
+    public void setMappingLangToXmlLang(boolean mappingLangToXmlLang) {
+        tokenizer.setMappingLangToXmlLang(mappingLangToXmlLang);
+    }
+
+    /**
+     * @param namePolicy
+     * @see nu.validator.htmlparser.impl.Tokenizer#setNamePolicy(nu.validator.htmlparser.common.XmlViolationPolicy)
+     */
+    public void setNamePolicy(XmlViolationPolicy namePolicy) {
+        tokenizer.setNamePolicy(namePolicy);
+    }
+
+    /**
+     * This is a catch-all convenience method for setting name, content space,
+     * content non-XML char and comment policies in one go.
+     * 
+     * @param xmlPolicy
+     */
+    public void setXmlPolicy(XmlViolationPolicy xmlPolicy) {
+        setNamePolicy(xmlPolicy);
+        setContentSpacePolicy(xmlPolicy);
+        setContentNonXmlCharPolicy(xmlPolicy);
+        setCommentPolicy(xmlPolicy);
+    }
+
+    /**
+     * Sets the doctype expectation.
+     * 
+     * @param doctypeExpectation
+     *            the doctypeExpectation to set
+     * @see nu.validator.htmlparser.impl.TreeBuilder#setDoctypeExpectation(nu.validator.htmlparser.common.DoctypeExpectation)
+     */
+    public void setDoctypeExpectation(DoctypeExpectation doctypeExpectation) {
+        xomTreeBuilder.setDoctypeExpectation(doctypeExpectation);
+    }
+
+    /**
+     * Sets the document mode handler.
+     * 
+     * @param documentModeHandler
+     * @see nu.validator.htmlparser.impl.TreeBuilder#setDocumentModeHandler(nu.validator.htmlparser.common.DocumentModeHandler)
+     */
+    public void setDocumentModeHandler(DocumentModeHandler documentModeHandler) {
+        xomTreeBuilder.setDocumentModeHandler(documentModeHandler);
+    }
+    
 }
