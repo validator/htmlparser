@@ -24,6 +24,11 @@ package nu.validator.htmlparser.xom;
 
 import nu.validator.htmlparser.common.DocumentMode;
 
+/**
+ * Interface for attaching a <code>DocumentMode</code> on a Document.
+ * @version $Id$
+ * @author hsivonen
+ */
 public interface Mode {
 
     /**

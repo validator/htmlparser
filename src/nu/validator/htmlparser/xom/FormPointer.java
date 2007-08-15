@@ -24,6 +24,12 @@ package nu.validator.htmlparser.xom;
 
 import nu.xom.Element;
 
+/**
+ * Interface for elements that have an associated form pointer.
+ * 
+ * @version $Id$
+ * @author hsivonen
+ */
 public interface FormPointer {
 
     /**
