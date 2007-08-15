@@ -40,6 +40,7 @@ import nu.xom.ParsingException;
 import nu.xom.ValidityException;
 
 import org.xml.sax.EntityResolver;
+import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -192,4 +193,12 @@ public class HtmlBuilder extends Builder {
         return simpleNodeFactory;
     }
 
+    public void setEntityResolver(EntityResolver resolver) {
+        this.entityResolver = resolver;
+    }
+
+    public void setErrorHandler(ErrorHandler errorHandler) {
+        xomTreeBuilder.setErrorHandler(errorHandler);
+        tokenizer.setErrorHandler(errorHandler);
+    }
 }

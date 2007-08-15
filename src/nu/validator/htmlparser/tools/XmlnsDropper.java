@@ -35,7 +35,7 @@ import org.xml.sax.helpers.AttributesImpl;
  * @version $Id$
  * @author hsivonen
  */
-public class XmlnsDropper implements ContentHandler {
+class XmlnsDropper implements ContentHandler {
 
     private final ContentHandler delegate;
 

@@ -55,7 +55,7 @@ import org.xml.sax.helpers.DefaultHandler;
  * <p>By default, when using the constructor without arguments, the 
  * this parser treats XML 1.0-incompatible infosets as fatal errors in 
  * order to adhere to the SAX2 API contract strictly. This corresponds to 
- * <code>FATAL</code> as the general XML violation policy. To make the browser 
+ * <code>FATAL</code> as the general XML violation policy. To make the parser 
  * support non-conforming HTML fully per the HTML 5 spec while on the other 
  * hand potentially violating the SAX2 API contract, set the general XML 
  * violation policy to <code>ALLOW</code>. Handling all input without fatal 
