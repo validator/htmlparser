@@ -267,7 +267,8 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
     }
 
     /**
-     * @param scriptingEnabled
+     * Sets whether the parser considers scripting to be enabled for noscript treatment.
+     * @param scriptingEnabled <code>true</code> to enable
      * @see nu.validator.htmlparser.impl.TreeBuilder#setScriptingEnabled(boolean)
      */
     public void setScriptingEnabled(boolean scriptingEnabled) {
@@ -275,7 +276,8 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
     }
 
     /**
-     * @param enable
+     * Toggles the checking of the NFC normalization of source.
+     * @param enable <code>true</code> to check normalization
      * @see nu.validator.htmlparser.impl.Tokenizer#setCheckingNormalization(boolean)
      */
     public void setCheckingNormalization(boolean enable) {
@@ -283,7 +285,8 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
     }
 
     /**
-     * @param commentPolicy
+     * Sets the policy for consecutive hyphens in comments.
+     * @param commentPolicy the policy
      * @see nu.validator.htmlparser.impl.Tokenizer#setCommentPolicy(nu.validator.htmlparser.common.XmlViolationPolicy)
      */
     public void setCommentPolicy(XmlViolationPolicy commentPolicy) {
@@ -291,7 +294,8 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
     }
 
     /**
-     * @param contentNonXmlCharPolicy
+     * Sets the policy for non-XML characters except white space.
+     * @param contentNonXmlCharPolicy the policy
      * @see nu.validator.htmlparser.impl.Tokenizer#setContentNonXmlCharPolicy(nu.validator.htmlparser.common.XmlViolationPolicy)
      */
     public void setContentNonXmlCharPolicy(
@@ -300,16 +304,19 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
     }
 
     /**
-     * @param contentSpacePolicy
+     * Sets the policy for non-XML white space.
+     * @param contentSpacePolicy the policy
      * @see nu.validator.htmlparser.impl.Tokenizer#setContentSpacePolicy(nu.validator.htmlparser.common.XmlViolationPolicy)
      */
     public void setContentSpacePolicy(XmlViolationPolicy contentSpacePolicy) {
         tokenizer.setContentSpacePolicy(contentSpacePolicy);
     }
 
+
     /**
+     * Whether the HTML 4 mode reports boolean attributes in a way that repeats
+     * the name in the value.
      * @param html4ModeCompatibleWithXhtml1Schemata
-     * @see nu.validator.htmlparser.impl.Tokenizer#setHtml4ModeCompatibleWithXhtml1Schemata(boolean)
      */
     public void setHtml4ModeCompatibleWithXhtml1Schemata(
             boolean html4ModeCompatibleWithXhtml1Schemata) {
@@ -346,7 +353,10 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
     }
 
     /**
+     * Sets the doctype expectation.
+     * 
      * @param doctypeExpectation
+     *            the doctypeExpectation to set
      * @see nu.validator.htmlparser.impl.TreeBuilder#setDoctypeExpectation(nu.validator.htmlparser.common.DoctypeExpectation)
      */
     public void setDoctypeExpectation(DoctypeExpectation doctypeExpectation) {
@@ -354,6 +364,8 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
     }
 
     /**
+     * Sets the document mode handler.
+     * 
      * @param documentModeHandler
      * @see nu.validator.htmlparser.impl.TreeBuilder#setDocumentModeHandler(nu.validator.htmlparser.common.DocumentModeHandler)
      */

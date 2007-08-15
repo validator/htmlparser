@@ -723,6 +723,7 @@ public class HtmlParser implements XMLReader {
      * 
      * @param doctypeExpectation
      *            the doctypeExpectation to set
+     * @see nu.validator.htmlparser.impl.TreeBuilder#setDoctypeExpectation(nu.validator.htmlparser.common.DoctypeExpectation)
      */
     public void setDoctypeExpectation(DoctypeExpectation doctypeExpectation) {
         this.doctypeExpectation = doctypeExpectation;
@@ -745,6 +746,7 @@ public class HtmlParser implements XMLReader {
      * 
      * @param documentModeHandler
      *            the documentModeHandler to set
+     * @see nu.validator.htmlparser.impl.TreeBuilder#setDocumentModeHandler(nu.validator.htmlparser.common.DocumentModeHandler)
      */
     public void setDocumentModeHandler(DocumentModeHandler documentModeHandler) {
         this.documentModeHandler = documentModeHandler;
