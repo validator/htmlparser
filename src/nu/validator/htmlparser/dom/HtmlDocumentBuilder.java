@@ -238,11 +238,19 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
         tokenizer.tokenize(is);
     }
 
+    /**
+     * Sets the entity resolver for URI-only inputs.
+     * @param resolver the resolver
+     * @see javax.xml.parsers.DocumentBuilder#setEntityResolver(org.xml.sax.EntityResolver)
+     */
     @Override
     public void setEntityResolver(EntityResolver resolver) {
         this.entityResolver = resolver;
     }
 
+    /**
+     * @see javax.xml.parsers.DocumentBuilder#setErrorHandler(org.xml.sax.ErrorHandler)
+     */
     @Override
     public void setErrorHandler(ErrorHandler errorHandler) {
         domTreeBuilder.setErrorHandler(errorHandler);
@@ -250,7 +258,8 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
     }
 
     /**
-     * @param ignoreComments
+     * Sets whether comment nodes appear in the tree.
+     * @param ignoreComments <code>true</code> to ignore comments
      * @see nu.validator.htmlparser.impl.TreeBuilder#setIgnoringComments(boolean)
      */
     public void setIgnoringComments(boolean ignoreComments) {

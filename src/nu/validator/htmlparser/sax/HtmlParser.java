@@ -125,11 +125,18 @@ public class HtmlParser implements XMLReader {
 
     private boolean reportingDoctype = true;
 
-
+    /**
+     * Instantiates the parser with a fatal XML violation policy.
+     *
+     */
     public HtmlParser() {
         this(XmlViolationPolicy.FATAL);
     }
     
+    /**
+     * Instantiates the parser with a specific XML violation policy.
+     * @param xmlPolicy the policy
+     */
     public HtmlParser(XmlViolationPolicy xmlPolicy) {
         setXmlPolicy(xmlPolicy);
     }    
@@ -172,18 +179,30 @@ public class HtmlParser implements XMLReader {
         }
     }
 
+    /**
+     * @see org.xml.sax.XMLReader#getContentHandler()
+     */
     public ContentHandler getContentHandler() {
         return contentHandler;
     }
 
+    /**
+     * @see org.xml.sax.XMLReader#getDTDHandler()
+     */
     public DTDHandler getDTDHandler() {
         return dtdHandler;
     }
 
+    /**
+     * @see org.xml.sax.XMLReader#getEntityResolver()
+     */
     public EntityResolver getEntityResolver() {
         return entityResolver;
     }
 
+    /**
+     * @see org.xml.sax.XMLReader#getErrorHandler()
+     */
     public ErrorHandler getErrorHandler() {
         return errorHandler;
     }
@@ -356,6 +375,9 @@ public class HtmlParser implements XMLReader {
         }
     }
 
+    /**
+     * @see org.xml.sax.XMLReader#parse(org.xml.sax.InputSource)
+     */
     public void parse(InputSource input) throws IOException, SAXException {
         lazyInit();
         try {
@@ -371,6 +393,14 @@ public class HtmlParser implements XMLReader {
         }
     }
 
+    /**
+     * Parser a fragment.
+     * 
+     * @param input the input to parse
+     * @param context the name of the context element
+     * @throws IOException
+     * @throws SAXException
+     */
     public void parseFragment(InputSource input, String context)
             throws IOException, SAXException {
         lazyInit();
@@ -412,10 +442,16 @@ public class HtmlParser implements XMLReader {
         tokenizer.tokenize(is);
     }
 
+    /**
+     * @see org.xml.sax.XMLReader#parse(java.lang.String)
+     */
     public void parse(String systemId) throws IOException, SAXException {
         parse(new InputSource(systemId));
     }
 
+    /**
+     * @see org.xml.sax.XMLReader#setContentHandler(org.xml.sax.ContentHandler)
+     */
     public void setContentHandler(ContentHandler handler) {
         contentHandler = handler;
         if (saxStreamer != null) {
@@ -424,6 +460,10 @@ public class HtmlParser implements XMLReader {
         }
     }
 
+    /**
+     * Sets the lexical handler.
+     * @param handler the hander.
+     */
     public void setLexicalHandler(LexicalHandler handler) {
         lexicalHandler = handler;
         if (treeBuilder != null) {
@@ -434,14 +474,23 @@ public class HtmlParser implements XMLReader {
         }
     }
 
+    /**
+     * @see org.xml.sax.XMLReader#setDTDHandler(org.xml.sax.DTDHandler)
+     */
     public void setDTDHandler(DTDHandler handler) {
         dtdHandler = handler;
     }
 
+    /**
+     * @see org.xml.sax.XMLReader#setEntityResolver(org.xml.sax.EntityResolver)
+     */
     public void setEntityResolver(EntityResolver resolver) {
         entityResolver = resolver;
     }
 
+    /**
+     * @see org.xml.sax.XMLReader#setErrorHandler(org.xml.sax.ErrorHandler)
+     */
     public void setErrorHandler(ErrorHandler handler) {
         errorHandler = handler;
         if (tokenizer != null) {
@@ -581,7 +630,8 @@ public class HtmlParser implements XMLReader {
     }
 
     /**
-     * @return
+     * Indicates whether NFC normalization of source is being checked.
+     * @return <code>true</code> if NFC normalization of source is being checked.
      * @see nu.validator.htmlparser.impl.Tokenizer#isCheckingNormalization()
      */
     public boolean isCheckingNormalization() {
@@ -589,7 +639,8 @@ public class HtmlParser implements XMLReader {
     }
 
     /**
-     * @param enable
+     * Toggles the checking of the NFC normalization of source.
+     * @param enable <code>true</code> to check normalization
      * @see nu.validator.htmlparser.impl.Tokenizer#setCheckingNormalization(boolean)
      */
     public void setCheckingNormalization(boolean enable) {
@@ -600,7 +651,8 @@ public class HtmlParser implements XMLReader {
     }
 
     /**
-     * @param commentPolicy
+     * Sets the policy for consecutive hyphens in comments.
+     * @param commentPolicy the policy
      * @see nu.validator.htmlparser.impl.Tokenizer#setCommentPolicy(nu.validator.htmlparser.common.XmlViolationPolicy)
      */
     public void setCommentPolicy(XmlViolationPolicy commentPolicy) {
@@ -611,7 +663,8 @@ public class HtmlParser implements XMLReader {
     }
 
     /**
-     * @param contentNonXmlCharPolicy
+     * Sets the policy for non-XML characters except white space.
+     * @param contentNonXmlCharPolicy the policy
      * @see nu.validator.htmlparser.impl.Tokenizer#setContentNonXmlCharPolicy(nu.validator.htmlparser.common.XmlViolationPolicy)
      */
     public void setContentNonXmlCharPolicy(
@@ -623,7 +676,8 @@ public class HtmlParser implements XMLReader {
     }
 
     /**
-     * @param contentSpacePolicy
+     * Sets the policy for non-XML white space.
+     * @param contentSpacePolicy the policy
      * @see nu.validator.htmlparser.impl.Tokenizer#setContentSpacePolicy(nu.validator.htmlparser.common.XmlViolationPolicy)
      */
     public void setContentSpacePolicy(XmlViolationPolicy contentSpacePolicy) {
@@ -634,7 +688,9 @@ public class HtmlParser implements XMLReader {
     }
 
     /**
-     * @return
+     * Whether the parser considers scripting to be enabled for noscript treatment.
+     * 
+     * @return <code>true</code> if enabled
      * @see nu.validator.htmlparser.impl.TreeBuilder#isScriptingEnabled()
      */
     public boolean isScriptingEnabled() {
@@ -642,7 +698,8 @@ public class HtmlParser implements XMLReader {
     }
 
     /**
-     * @param scriptingEnabled
+     * Sets whether the parser considers scripting to be enabled for noscript treatment.
+     * @param scriptingEnabled <code>true</code> to enable
      * @see nu.validator.htmlparser.impl.TreeBuilder#setScriptingEnabled(boolean)
      */
     public void setScriptingEnabled(boolean scriptingEnabled) {
@@ -653,7 +710,7 @@ public class HtmlParser implements XMLReader {
     }
 
     /**
-     * Returns the doctypeExpectation.
+     * Returns the doctype expectation.
      * 
      * @return the doctypeExpectation
      */
@@ -662,17 +719,20 @@ public class HtmlParser implements XMLReader {
     }
 
     /**
-     * Sets the doctypeExpectation.
+     * Sets the doctype expectation.
      * 
      * @param doctypeExpectation
      *            the doctypeExpectation to set
      */
     public void setDoctypeExpectation(DoctypeExpectation doctypeExpectation) {
         this.doctypeExpectation = doctypeExpectation;
+        if (treeBuilder != null) {
+            treeBuilder.setDoctypeExpectation(doctypeExpectation);
+        }
     }
 
     /**
-     * Returns the documentModeHandler.
+     * Returns the document mode handler.
      * 
      * @return the documentModeHandler
      */
@@ -681,7 +741,7 @@ public class HtmlParser implements XMLReader {
     }
 
     /**
-     * Sets the documentModeHandler.
+     * Sets the document mode handler.
      * 
      * @param documentModeHandler
      *            the documentModeHandler to set
@@ -710,6 +770,11 @@ public class HtmlParser implements XMLReader {
         this.streamabilityViolationPolicy = streamabilityViolationPolicy;
     }
 
+    /**
+     * Whether the HTML 4 mode reports boolean attributes in a way that repeats
+     * the name in the value.
+     * @param html4ModeCompatibleWithXhtml1Schemata
+     */
     public void setHtml4ModeCompatibleWithXhtml1Schemata(
             boolean html4ModeCompatibleWithXhtml1Schemata) {
         this.html4ModeCompatibleWithXhtml1Schemata = html4ModeCompatibleWithXhtml1Schemata;
@@ -718,12 +783,17 @@ public class HtmlParser implements XMLReader {
         }
     }
 
+    /**
+     * Returns the <code>Locator</code> during parse.
+     * @return the <code>Locator</code>
+     */
     public Locator getDocumentLocator() {
         return tokenizer;
     }
 
     /**
-     * Returns the html4ModeCompatibleWithXhtml1Schemata.
+     * Whether the HTML 4 mode reports boolean attributes in a way that repeats
+     * the name in the value.
      * 
      * @return the html4ModeCompatibleWithXhtml1Schemata
      */
@@ -732,6 +802,7 @@ public class HtmlParser implements XMLReader {
     }
 
     /**
+     * Whether <code>lang</code> is mapped to <code>xml:lang</code>.
      * @param mappingLangToXmlLang
      * @see nu.validator.htmlparser.impl.Tokenizer#setMappingLangToXmlLang(boolean)
      */
@@ -743,7 +814,7 @@ public class HtmlParser implements XMLReader {
     }
 
     /**
-     * Returns the mappingLangToXmlLang.
+     * Whether <code>lang</code> is mapped to <code>xml:lang</code>.
      * 
      * @return the mappingLangToXmlLang
      */
@@ -752,6 +823,8 @@ public class HtmlParser implements XMLReader {
     }
 
     /**
+     * Whether the <code>xmlns</code> attribute on the root element is 
+     * passed to through. (FATAL not allowed.)
      * @param xmlnsPolicy
      * @see nu.validator.htmlparser.impl.Tokenizer#setXmlnsPolicy(nu.validator.htmlparser.common.XmlViolationPolicy)
      */
@@ -831,6 +904,7 @@ public class HtmlParser implements XMLReader {
     }
 
     /**
+     * The policy for non-NCName element and attribute names.
      * @param namePolicy
      * @see nu.validator.htmlparser.impl.Tokenizer#setNamePolicy(nu.validator.htmlparser.common.XmlViolationPolicy)
      */
@@ -857,7 +931,7 @@ public class HtmlParser implements XMLReader {
     }
 
     /**
-     * Returns the namePolicy.
+     * The policy for non-NCName element and attribute names.
      * 
      * @return the namePolicy
      */
