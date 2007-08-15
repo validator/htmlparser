@@ -32,9 +32,9 @@ import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 
-import nu.validator.htmlparser.ContentModelFlag;
-import nu.validator.htmlparser.Tokenizer;
-import nu.validator.htmlparser.XmlViolationPolicy;
+import nu.validator.htmlparser.common.XmlViolationPolicy;
+import nu.validator.htmlparser.impl.ContentModelFlag;
+import nu.validator.htmlparser.impl.Tokenizer;
 
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;

@@ -1,9 +1,10 @@
-package nu.validator.htmlparser;
+package nu.validator.htmlparser.impl;
+
 
 public class XmlLangAttributesImpl extends AttributesImpl {
 
     /**
-     * @see nu.validator.htmlparser.AttributesImpl#getIndex(java.lang.String, java.lang.String)
+     * @see nu.validator.htmlparser.impl.AttributesImpl#getIndex(java.lang.String, java.lang.String)
      */
     @Override
     public int getIndex(String uri, String localName) {
@@ -15,7 +16,7 @@ public class XmlLangAttributesImpl extends AttributesImpl {
     }
 
     /**
-     * @see nu.validator.htmlparser.AttributesImpl#getURI(int)
+     * @see nu.validator.htmlparser.impl.AttributesImpl#getURI(int)
      */
     @Override
     public String getURI(int index) {
@@ -30,7 +31,7 @@ public class XmlLangAttributesImpl extends AttributesImpl {
     }
 
     /**
-     * @see nu.validator.htmlparser.AttributesImpl#getValue(java.lang.String, java.lang.String)
+     * @see nu.validator.htmlparser.impl.AttributesImpl#getValue(java.lang.String, java.lang.String)
      */
     @Override
     public String getValue(String uri, String localName) {
@@ -42,7 +43,7 @@ public class XmlLangAttributesImpl extends AttributesImpl {
     }
 
     /**
-     * @see nu.validator.htmlparser.AttributesImpl#getType(java.lang.String, java.lang.String)
+     * @see nu.validator.htmlparser.impl.AttributesImpl#getType(java.lang.String, java.lang.String)
      */
     @Override
     public String getType(String uri, String localName) {

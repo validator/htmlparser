@@ -20,8 +20,11 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-package nu.validator.htmlparser;
+package nu.validator.htmlparser.common;
 
-public enum ContentModelFlag {
-    PCDATA, RCDATA, CDATA, PLAINTEXT
+
+import org.xml.sax.SAXException;
+
+public interface DocumentModeHandler {
+    public void documentMode(DocumentMode mode, String publicIdentifier, String systemIdentifier, boolean html4SpecificAdditionalErrorChecks) throws SAXException;
 }

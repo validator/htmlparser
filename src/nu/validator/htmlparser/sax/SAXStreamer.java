@@ -27,9 +27,9 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.ext.LexicalHandler;
 
-import nu.validator.htmlparser.AttributesImpl;
-import nu.validator.htmlparser.TreeBuilder;
-import nu.validator.htmlparser.XmlViolationPolicy;
+import nu.validator.htmlparser.common.XmlViolationPolicy;
+import nu.validator.htmlparser.impl.AttributesImpl;
+import nu.validator.htmlparser.impl.TreeBuilder;
 
 class SAXStreamer extends TreeBuilder<Attributes>{
 
@@ -135,7 +135,7 @@ class SAXStreamer extends TreeBuilder<Attributes>{
     }
 
     /**
-     * @see nu.validator.htmlparser.TreeBuilder#appendDoctypeToDocument(java.lang.String, java.lang.String, java.lang.String)
+     * @see nu.validator.htmlparser.impl.TreeBuilder#appendDoctypeToDocument(java.lang.String, java.lang.String, java.lang.String)
      */
     @Override
     protected void appendDoctypeToDocument(String name, String publicIdentifier, String systemIdentifier) throws SAXException {
@@ -146,7 +146,7 @@ class SAXStreamer extends TreeBuilder<Attributes>{
     }
 
     /**
-     * @see nu.validator.htmlparser.TreeBuilder#bodyClosed(java.lang.Object)
+     * @see nu.validator.htmlparser.impl.TreeBuilder#bodyClosed(java.lang.Object)
      */
     @Override
     protected void bodyClosed(Attributes body) throws SAXException {
@@ -155,7 +155,7 @@ class SAXStreamer extends TreeBuilder<Attributes>{
     }
 
     /**
-     * @see nu.validator.htmlparser.TreeBuilder#elementPopped(java.lang.String, java.lang.Object)
+     * @see nu.validator.htmlparser.impl.TreeBuilder#elementPopped(java.lang.String, java.lang.Object)
      */
     @Override
     protected void elementPopped(String name, Attributes node) throws SAXException {
@@ -164,7 +164,7 @@ class SAXStreamer extends TreeBuilder<Attributes>{
     }
 
     /**
-     * @see nu.validator.htmlparser.TreeBuilder#elementPushed(java.lang.String, java.lang.Object)
+     * @see nu.validator.htmlparser.impl.TreeBuilder#elementPushed(java.lang.String, java.lang.Object)
      */
     @Override
     protected void elementPushed(String name, Attributes node) throws SAXException {
@@ -176,7 +176,7 @@ class SAXStreamer extends TreeBuilder<Attributes>{
     }
 
     /**
-     * @see nu.validator.htmlparser.TreeBuilder#end()
+     * @see nu.validator.htmlparser.impl.TreeBuilder#end()
      */
     @Override
     protected void end() throws SAXException {
@@ -184,7 +184,7 @@ class SAXStreamer extends TreeBuilder<Attributes>{
     }
 
     /**
-     * @see nu.validator.htmlparser.TreeBuilder#htmlClosed(java.lang.Object)
+     * @see nu.validator.htmlparser.impl.TreeBuilder#htmlClosed(java.lang.Object)
      */
     @Override
     protected void htmlClosed(Attributes html) throws SAXException {
@@ -194,7 +194,7 @@ class SAXStreamer extends TreeBuilder<Attributes>{
     }
 
     /**
-     * @see nu.validator.htmlparser.TreeBuilder#start()
+     * @see nu.validator.htmlparser.impl.TreeBuilder#start()
      */
     @Override
     protected void start(boolean fragment) throws SAXException {

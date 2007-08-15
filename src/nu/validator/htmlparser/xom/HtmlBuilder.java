@@ -31,8 +31,8 @@ import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import nu.validator.htmlparser.Tokenizer;
-import nu.validator.htmlparser.XmlViolationPolicy;
+import nu.validator.htmlparser.common.XmlViolationPolicy;
+import nu.validator.htmlparser.impl.Tokenizer;
 import nu.xom.Builder;
 import nu.xom.Document;
 import nu.xom.Nodes;

@@ -30,10 +30,10 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import nu.validator.htmlparser.DoctypeExpectation;
-import nu.validator.htmlparser.DocumentModeHandler;
-import nu.validator.htmlparser.Tokenizer;
-import nu.validator.htmlparser.XmlViolationPolicy;
+import nu.validator.htmlparser.common.DoctypeExpectation;
+import nu.validator.htmlparser.common.DocumentModeHandler;
+import nu.validator.htmlparser.common.XmlViolationPolicy;
+import nu.validator.htmlparser.impl.Tokenizer;
 
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
@@ -251,7 +251,7 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
 
     /**
      * @param ignoreComments
-     * @see nu.validator.htmlparser.TreeBuilder#setIgnoringComments(boolean)
+     * @see nu.validator.htmlparser.impl.TreeBuilder#setIgnoringComments(boolean)
      */
     public void setIgnoringComments(boolean ignoreComments) {
         domTreeBuilder.setIgnoringComments(ignoreComments);
@@ -259,7 +259,7 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
 
     /**
      * @param scriptingEnabled
-     * @see nu.validator.htmlparser.TreeBuilder#setScriptingEnabled(boolean)
+     * @see nu.validator.htmlparser.impl.TreeBuilder#setScriptingEnabled(boolean)
      */
     public void setScriptingEnabled(boolean scriptingEnabled) {
         domTreeBuilder.setScriptingEnabled(scriptingEnabled);
@@ -267,7 +267,7 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
 
     /**
      * @param enable
-     * @see nu.validator.htmlparser.Tokenizer#setCheckingNormalization(boolean)
+     * @see nu.validator.htmlparser.impl.Tokenizer#setCheckingNormalization(boolean)
      */
     public void setCheckingNormalization(boolean enable) {
         tokenizer.setCheckingNormalization(enable);
@@ -275,7 +275,7 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
 
     /**
      * @param commentPolicy
-     * @see nu.validator.htmlparser.Tokenizer#setCommentPolicy(nu.validator.htmlparser.XmlViolationPolicy)
+     * @see nu.validator.htmlparser.impl.Tokenizer#setCommentPolicy(nu.validator.htmlparser.common.XmlViolationPolicy)
      */
     public void setCommentPolicy(XmlViolationPolicy commentPolicy) {
         tokenizer.setCommentPolicy(commentPolicy);
@@ -283,7 +283,7 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
 
     /**
      * @param contentNonXmlCharPolicy
-     * @see nu.validator.htmlparser.Tokenizer#setContentNonXmlCharPolicy(nu.validator.htmlparser.XmlViolationPolicy)
+     * @see nu.validator.htmlparser.impl.Tokenizer#setContentNonXmlCharPolicy(nu.validator.htmlparser.common.XmlViolationPolicy)
      */
     public void setContentNonXmlCharPolicy(
             XmlViolationPolicy contentNonXmlCharPolicy) {
@@ -292,7 +292,7 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
 
     /**
      * @param contentSpacePolicy
-     * @see nu.validator.htmlparser.Tokenizer#setContentSpacePolicy(nu.validator.htmlparser.XmlViolationPolicy)
+     * @see nu.validator.htmlparser.impl.Tokenizer#setContentSpacePolicy(nu.validator.htmlparser.common.XmlViolationPolicy)
      */
     public void setContentSpacePolicy(XmlViolationPolicy contentSpacePolicy) {
         tokenizer.setContentSpacePolicy(contentSpacePolicy);
@@ -300,7 +300,7 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
 
     /**
      * @param html4ModeCompatibleWithXhtml1Schemata
-     * @see nu.validator.htmlparser.Tokenizer#setHtml4ModeCompatibleWithXhtml1Schemata(boolean)
+     * @see nu.validator.htmlparser.impl.Tokenizer#setHtml4ModeCompatibleWithXhtml1Schemata(boolean)
      */
     public void setHtml4ModeCompatibleWithXhtml1Schemata(
             boolean html4ModeCompatibleWithXhtml1Schemata) {
@@ -309,7 +309,7 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
 
     /**
      * @param mappingLangToXmlLang
-     * @see nu.validator.htmlparser.Tokenizer#setMappingLangToXmlLang(boolean)
+     * @see nu.validator.htmlparser.impl.Tokenizer#setMappingLangToXmlLang(boolean)
      */
     public void setMappingLangToXmlLang(boolean mappingLangToXmlLang) {
         tokenizer.setMappingLangToXmlLang(mappingLangToXmlLang);
@@ -317,7 +317,7 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
 
     /**
      * @param namePolicy
-     * @see nu.validator.htmlparser.Tokenizer#setNamePolicy(nu.validator.htmlparser.XmlViolationPolicy)
+     * @see nu.validator.htmlparser.impl.Tokenizer#setNamePolicy(nu.validator.htmlparser.common.XmlViolationPolicy)
      */
     public void setNamePolicy(XmlViolationPolicy namePolicy) {
         tokenizer.setNamePolicy(namePolicy);
@@ -338,7 +338,7 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
 
     /**
      * @param doctypeExpectation
-     * @see nu.validator.htmlparser.TreeBuilder#setDoctypeExpectation(nu.validator.htmlparser.DoctypeExpectation)
+     * @see nu.validator.htmlparser.impl.TreeBuilder#setDoctypeExpectation(nu.validator.htmlparser.common.DoctypeExpectation)
      */
     public void setDoctypeExpectation(DoctypeExpectation doctypeExpectation) {
         domTreeBuilder.setDoctypeExpectation(doctypeExpectation);
@@ -346,7 +346,7 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
 
     /**
      * @param documentModeHandler
-     * @see nu.validator.htmlparser.TreeBuilder#setDocumentModeHandler(nu.validator.htmlparser.DocumentModeHandler)
+     * @see nu.validator.htmlparser.impl.TreeBuilder#setDocumentModeHandler(nu.validator.htmlparser.common.DocumentModeHandler)
      */
     public void setDocumentModeHandler(DocumentModeHandler documentModeHandler) {
         domTreeBuilder.setDocumentModeHandler(documentModeHandler);

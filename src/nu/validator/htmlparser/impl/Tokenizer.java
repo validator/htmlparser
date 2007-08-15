@@ -32,7 +32,7 @@
  * create derivative works of this document."
  */
 
-package nu.validator.htmlparser;
+package nu.validator.htmlparser.impl;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,6 +44,8 @@ import java.nio.charset.UnsupportedCharsetException;
 import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import nu.validator.htmlparser.common.XmlViolationPolicy;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.ErrorHandler;

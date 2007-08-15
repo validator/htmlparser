@@ -22,7 +22,7 @@
 
 package nu.validator.htmlparser.xom;
 
-import nu.validator.htmlparser.DocumentMode;
+import nu.validator.htmlparser.common.DocumentMode;
 import nu.xom.Document;
 import nu.xom.Element;
 
@@ -46,7 +46,7 @@ public class ModalDocument extends Document implements Mode {
     }
 
     /**
-     * @see nu.validator.htmlparser.xom.Mode#setMode(nu.validator.htmlparser.DocumentMode)
+     * @see nu.validator.htmlparser.xom.Mode#setMode(nu.validator.htmlparser.common.DocumentMode)
      */
     public void setMode(DocumentMode mode) {
         this.mode = mode;
