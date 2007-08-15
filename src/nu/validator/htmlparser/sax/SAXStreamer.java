@@ -31,7 +31,7 @@ import nu.validator.htmlparser.AttributesImpl;
 import nu.validator.htmlparser.TreeBuilder;
 import nu.validator.htmlparser.XmlViolationPolicy;
 
-public class SAXStreamer extends TreeBuilder<Attributes>{
+class SAXStreamer extends TreeBuilder<Attributes>{
 
     private ContentHandler contentHandler;
     private LexicalHandler lexicalHandler;
