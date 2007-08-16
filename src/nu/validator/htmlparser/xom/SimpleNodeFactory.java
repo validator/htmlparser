@@ -30,6 +30,12 @@ import nu.xom.Node;
 import nu.xom.Text;
 import nu.xom.Attribute.Type;
 
+/**
+ * A simpler node factory that does not use <code>Nodes</code>..
+ * 
+ * @version $Id$
+ * @author hsivonen
+ */
 public class SimpleNodeFactory {
 
     /**

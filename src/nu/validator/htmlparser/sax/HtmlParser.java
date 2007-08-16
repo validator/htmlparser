@@ -425,7 +425,7 @@ public class HtmlParser implements XMLReader {
         if (is == null) {
             throw new IllegalArgumentException("Null input.");            
         }
-        if (is.getByteStream() == null || is.getCharacterStream() == null) {
+        if (is.getByteStream() == null && is.getCharacterStream() == null) {
             String systemId = is.getSystemId();
             if (systemId == null) {
                 throw new IllegalArgumentException("No byte stream, no character stream nor URI.");

@@ -42,7 +42,7 @@ public class TreeTester {
 
     private final BufferedInputStream aggregateStream;
 
-    private boolean streaming = true;
+    private boolean streaming = false;
 
     /**
      * @param aggregateStream
@@ -107,7 +107,7 @@ public class TreeTester {
             ListErrorHandler leh = new ListErrorHandler();
             TreeDumpContentHandler treeDumpContentHandler = new TreeDumpContentHandler(
                     sw);
-            HtmlParser htmlParser = new HtmlParser();
+            HtmlParser htmlParser = new HtmlParser(XmlViolationPolicy.ALLOW);
             if (streaming) {
                 htmlParser.setStreamabilityViolationPolicy(XmlViolationPolicy.FATAL);
             }
