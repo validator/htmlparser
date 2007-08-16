@@ -346,6 +346,9 @@ public class HtmlBuilder extends Builder {
      * @see nu.validator.htmlparser.impl.Tokenizer#setCommentPolicy(nu.validator.htmlparser.common.XmlViolationPolicy)
      */
     public void setCommentPolicy(XmlViolationPolicy commentPolicy) {
+        if (commentPolicy == XmlViolationPolicy.ALLOW) {
+            throw new IllegalArgumentException("Only XML 1.0-compatible policies allowed. Cannot use ALLOW.");
+        }
         tokenizer.setCommentPolicy(commentPolicy);
     }
 
@@ -356,6 +359,9 @@ public class HtmlBuilder extends Builder {
      */
     public void setContentNonXmlCharPolicy(
             XmlViolationPolicy contentNonXmlCharPolicy) {
+        if (contentNonXmlCharPolicy == XmlViolationPolicy.ALLOW) {
+            throw new IllegalArgumentException("Only XML 1.0-compatible policies allowed. Cannot use ALLOW.");
+        }
         tokenizer.setContentNonXmlCharPolicy(contentNonXmlCharPolicy);
     }
 
@@ -365,6 +371,9 @@ public class HtmlBuilder extends Builder {
      * @see nu.validator.htmlparser.impl.Tokenizer#setContentSpacePolicy(nu.validator.htmlparser.common.XmlViolationPolicy)
      */
     public void setContentSpacePolicy(XmlViolationPolicy contentSpacePolicy) {
+        if (contentSpacePolicy == XmlViolationPolicy.ALLOW) {
+            throw new IllegalArgumentException("Only XML 1.0-compatible policies allowed. Cannot use ALLOW.");
+        }
         tokenizer.setContentSpacePolicy(contentSpacePolicy);
     }
 
@@ -392,6 +401,9 @@ public class HtmlBuilder extends Builder {
      * @see nu.validator.htmlparser.impl.Tokenizer#setNamePolicy(nu.validator.htmlparser.common.XmlViolationPolicy)
      */
     public void setNamePolicy(XmlViolationPolicy namePolicy) {
+        if (namePolicy == XmlViolationPolicy.ALLOW) {
+            throw new IllegalArgumentException("Only XML 1.0-compatible policies allowed. Cannot use ALLOW.");
+        }
         tokenizer.setNamePolicy(namePolicy);
     }
 
