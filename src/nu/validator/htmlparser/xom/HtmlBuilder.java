@@ -47,6 +47,35 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
+/**
+ * This class implements an HTML5 parser that exposes data through the XOM 
+ * interface. 
+ * 
+ * <p>By default, when using the constructor without arguments, the 
+ * this parser treats XML 1.0-incompatible infosets as fatal errors. 
+ * This corresponds to 
+ * <code>FATAL</code> as the general XML violation policy. Handling 
+ * all input without fatal errors and without 
+ * violating the XOM API contract is possible by setting 
+ * the general XML violation policy to <code>ALTER_INFOSET</code>. <em>This 
+ * makes the parser non-conforming</em> but is probably the most useful 
+ * setting for most applications.
+ * 
+ * <p>The doctype is not represented in the tree.
+ * 
+ * <p>The document mode is represented via the <code>Mode</code> 
+ * interface on the <code>Document</code> node if the node implements 
+ * that interface (depends on the used node factory).
+ * 
+ * <p>The form pointer is stored if the node factory supports storing it.
+ * 
+ * <p>This package has its own node factory class because the official 
+ * XOM node factory may return multiple nodes instead of one confusing 
+ * the assumptions of the DOM-oriented HTML5 parsing algorithm.
+ * 
+ * @version $Id$
+ * @author hsivonen
+ */
 public class HtmlBuilder extends Builder {
 
     private final Tokenizer tokenizer;
@@ -58,21 +87,40 @@ public class HtmlBuilder extends Builder {
     private EntityResolver entityResolver;
 
     /**
-     * 
+     * Constructor with default node factory and fatal XML violation policy.
      */
     public HtmlBuilder() {
-        this(new SimpleNodeFactory());
+        this(new SimpleNodeFactory(), XmlViolationPolicy.FATAL);
+    }
+    
+    /**
+     * Constructor with given node factory and fatal XML violation policy.
+     * @param nodeFactory the factory
+     */
+    public HtmlBuilder(SimpleNodeFactory nodeFactory) {
+        this(nodeFactory, XmlViolationPolicy.FATAL);
     }
 
     /**
-     * @param arg0
+     * Constructor with default node factory and given XML violation policy.
+     * @param xmlPolicy the policy
      */
-    public HtmlBuilder(SimpleNodeFactory nodeFactory) {
+    public HtmlBuilder(XmlViolationPolicy xmlPolicy) {
+        this(new SimpleNodeFactory(), xmlPolicy);
+    }
+    
+    /**
+     * Constructor with given node factory and given XML violation policy.
+     * @param nodeFactory the factory
+     * @param xmlPolicy the policy
+     */
+    public HtmlBuilder(SimpleNodeFactory nodeFactory, XmlViolationPolicy xmlPolicy) {
         super();
         this.simpleNodeFactory = nodeFactory;
         this.xomTreeBuilder = new XOMTreeBuilder(nodeFactory);
         this.tokenizer = new Tokenizer(xomTreeBuilder);
         this.tokenizer.setXmlnsPolicy(XmlViolationPolicy.ALTER_INFOSET);
+        setXmlPolicy(xmlPolicy);
     }
 
     private void tokenize(InputSource is) throws ParsingException, IOException,
@@ -81,7 +129,7 @@ public class HtmlBuilder extends Builder {
             if (is == null) {
                 throw new IllegalArgumentException("Null input.");
             }
-            if (is.getByteStream() == null || is.getCharacterStream() == null) {
+            if (is.getByteStream() == null && is.getCharacterStream() == null) {
                 String systemId = is.getSystemId();
                 if (systemId == null) {
                     throw new IllegalArgumentException(
@@ -107,12 +155,27 @@ public class HtmlBuilder extends Builder {
         }
     }
 
+    /**
+     * Parse from SAX <code>InputSource</code>.
+     * @param is the <code>InputSource</code>
+     * @return the document
+     * @throws ParsingException in case of an XML violation
+     * @throws IOException if IO goes wrang
+     */
     public Document build(InputSource is) throws ParsingException, IOException {
         xomTreeBuilder.setFragmentContext(null);
         tokenize(is);
         return xomTreeBuilder.getDocument();
     }
 
+    /**
+     * Parse a fragment from SAX <code>InputSource</code>.
+     * @param is the <code>InputSource</code>
+     * @param context the name of the context element
+     * @return the fragment
+     * @throws ParsingException in case of an XML violation
+     * @throws IOException if IO goes wrang
+     */
     public Nodes buildFragment(InputSource is, String context)
             throws IOException, ParsingException {
         xomTreeBuilder.setFragmentContext(context);
@@ -122,6 +185,11 @@ public class HtmlBuilder extends Builder {
 
     
     /**
+     * Parse from <code>File</code>.
+     * @param file the file
+     * @return the document
+     * @throws ParsingException in case of an XML violation
+     * @throws IOException if IO goes wrang
      * @see nu.xom.Builder#build(java.io.File)
      */
     @Override
@@ -131,6 +199,12 @@ public class HtmlBuilder extends Builder {
     }
 
     /**
+     * Parse from <code>InputStream</code>.
+     * @param stream the stream
+     * @param uri the base URI
+     * @return the document
+     * @throws ParsingException in case of an XML violation
+     * @throws IOException if IO goes wrang
      * @see nu.xom.Builder#build(java.io.InputStream, java.lang.String)
      */
     @Override
@@ -142,6 +216,11 @@ public class HtmlBuilder extends Builder {
     }
 
     /**
+     * Parse from <code>InputStream</code>.
+     * @param stream the stream
+     * @return the document
+     * @throws ParsingException in case of an XML violation
+     * @throws IOException if IO goes wrang
      * @see nu.xom.Builder#build(java.io.InputStream)
      */
     @Override
@@ -151,6 +230,12 @@ public class HtmlBuilder extends Builder {
     }
 
     /**
+     * Parse from <code>Reader</code>.
+     * @param stream the reader
+     * @param uri the base URI
+     * @return the document
+     * @throws ParsingException in case of an XML violation
+     * @throws IOException if IO goes wrang
      * @see nu.xom.Builder#build(java.io.Reader, java.lang.String)
      */
     @Override
@@ -162,6 +247,11 @@ public class HtmlBuilder extends Builder {
     }
 
     /**
+     * Parse from <code>Reader</code>.
+     * @param stream the reader
+     * @return the document
+     * @throws ParsingException in case of an XML violation
+     * @throws IOException if IO goes wrang
      * @see nu.xom.Builder#build(java.io.Reader)
      */
     @Override
@@ -171,6 +261,12 @@ public class HtmlBuilder extends Builder {
     }
 
     /**
+     * Parse from <code>String</code>.
+     * @param content the HTML source as string
+     * @param uri the base URI
+     * @return the document
+     * @throws ParsingException in case of an XML violation
+     * @throws IOException if IO goes wrang
      * @see nu.xom.Builder#build(java.lang.String, java.lang.String)
      */
     @Override
@@ -180,6 +276,11 @@ public class HtmlBuilder extends Builder {
     }
 
     /**
+     * Parse from URI.
+     * @param uri the URI of the document
+     * @return the document
+     * @throws ParsingException in case of an XML violation
+     * @throws IOException if IO goes wrang
      * @see nu.xom.Builder#build(java.lang.String)
      */
     @Override
@@ -189,7 +290,7 @@ public class HtmlBuilder extends Builder {
     }
 
     /**
-     * @see nu.xom.Builder#getNodeFactory()
+     * Gets the node factory
      */
     public SimpleNodeFactory getSimpleNodeFactory() {
         return simpleNodeFactory;
