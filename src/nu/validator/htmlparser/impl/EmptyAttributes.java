@@ -25,7 +25,7 @@ package nu.validator.htmlparser.impl;
 import org.xml.sax.Attributes;
 
 /**
- * @version $Id: EmptyAttributes.java 3 2007-05-28 12:04:07Z hsivonen $
+ * @version $Id$
  * @author hsivonen
  */
 public class EmptyAttributes implements Attributes {

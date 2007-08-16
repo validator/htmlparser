@@ -33,7 +33,7 @@ import com.ibm.icu.text.Normalizer;
 import com.ibm.icu.text.UnicodeSet;
 
 /**
- * @version $Id: NormalizationChecker.java 169 2007-05-25 07:21:55Z hsivonen $
+ * @version $Id$
  * @author hsivonen
  */
 public final class NormalizationChecker {

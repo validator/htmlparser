@@ -36,7 +36,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 /**
- * @version $Id: SystemErrErrorHandler.java 3 2007-05-28 12:04:07Z hsivonen $
+ * @version $Id$
  * @author hsivonen
  */
 public class SystemErrErrorHandler implements ErrorHandler, ErrorListener {
