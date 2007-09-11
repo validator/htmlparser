@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
+ * Copyright (c) 2007 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -206,7 +207,7 @@ public class XSLT4HTML5 {
             Document inputDoc;
             DocumentBuilder builder;
             if (inputHtml) {
-                builder = new HtmlDocumentBuilder();
+                builder = new HtmlDocumentBuilder(XmlViolationPolicy.ALTER_INFOSET);
             } else {
                 DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
                 factory.setNamespaceAware(true);
@@ -224,7 +225,7 @@ public class XSLT4HTML5 {
             transformer.transform(inputSource, result);
         } else {
             if (inputHtml) {
-                reader = new HtmlParser();
+                reader = new HtmlParser(XmlViolationPolicy.ALTER_INFOSET);
                 if (mode == Mode.STREAMING_SAX) {
                     reader.setProperty("http://validator.nu/properties/streamability-violation-policy", XmlViolationPolicy.FATAL);
                 }

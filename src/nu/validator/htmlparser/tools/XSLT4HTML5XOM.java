@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
+ * Copyright (c) 2007 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -28,6 +29,7 @@ import java.io.IOException;
 
 import org.xml.sax.SAXException;
 
+import nu.validator.htmlparser.common.XmlViolationPolicy;
 import nu.validator.htmlparser.sax.HtmlSerializer;
 import nu.validator.htmlparser.test.SystemErrErrorHandler;
 import nu.validator.htmlparser.xom.HtmlBuilder;
@@ -140,7 +142,7 @@ public class XSLT4HTML5XOM {
 
         Document inputDoc;
         if (inputHtml) {
-            builder = new HtmlBuilder();
+            builder = new HtmlBuilder(XmlViolationPolicy.ALTER_INFOSET);
         }
         inputDoc = builder.build(new File(input));
         Nodes result = transform.transform(inputDoc);

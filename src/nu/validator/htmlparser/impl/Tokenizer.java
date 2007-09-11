@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2005, 2006, 2007 Henri Sivonen
+ * Copyright (c) 2007 Mozilla Foundation
  * Portions of comments Copyright 2004-2007 Apple Computer, Inc., Mozilla 
  * Foundation, and Opera Software ASA.
  *
@@ -380,6 +381,8 @@ public final class Tokenizer implements Locator {
 
     private boolean mappingLangToXmlLang;
 
+    private XmlViolationPolicy bogusXmlnsPolicy;
+
     // start public API
 
     /**
@@ -503,6 +506,15 @@ public final class Tokenizer implements Locator {
         this.namePolicy = namePolicy;
     }
     
+    /**
+     * Sets the bogusXmlnsPolicy.
+     * 
+     * @param bogusXmlnsPolicy the bogusXmlnsPolicy to set
+     */
+    public void setBogusXmlnsPolicy(XmlViolationPolicy bogusXmlnsPolicy) {
+        this.bogusXmlnsPolicy = bogusXmlnsPolicy;
+    }
+
     /**
      * Sets the html4ModeCompatibleWithXhtml1Schemata.
      * 
@@ -2015,13 +2027,32 @@ public final class Tokenizer implements Locator {
         }
         if (shouldAddAttributes) {
             String value = longStrBufToString();
-            if (xmlnsPolicy != XmlViolationPolicy.ALLOW && !html4) {
-                if (!endTag && "html" == tagName
-                        && "xmlns".equals(attributeName)
-                        && "http://www.w3.org/1999/xhtml".equals(value)) {
-                    if (xmlnsPolicy == XmlViolationPolicy.ALTER_INFOSET) {
-                        return;
+            if (!endTag) {
+                if ("xmlns".equals(attributeName)) {
+                    if ("html" == tagName
+                            && "http://www.w3.org/1999/xhtml".equals(value)) {
+                        if (xmlnsPolicy == XmlViolationPolicy.ALTER_INFOSET) {
+                            return;
+                        }
+                    } else {
+                        if (bogusXmlnsPolicy == XmlViolationPolicy.FATAL) {
+                            fatal("Forbidden attribute \u201C" + attributeName + "\u201D is not mappable to namespace-aware XML 1.0.");
+                        } else {
+                            warn("Forbidden attribute \u201C" + attributeName + "\u201D is not mappable to namespace-aware XML 1.0.");
+                            if (bogusXmlnsPolicy == XmlViolationPolicy.ALTER_INFOSET) {
+                                return;
+                            }
+                        }
                     }
+                } else if (attributeName.startsWith("xmlns:")) {
+                    if (bogusXmlnsPolicy == XmlViolationPolicy.FATAL) {
+                        fatal("Forbidden attribute \u201C" + attributeName + "\u201D is not mappable to namespace-aware XML 1.0.");
+                    } else {
+                        warn("Forbidden attribute \u201C" + attributeName + "\u201D is not mappable to namespace-aware XML 1.0.");
+                        if (bogusXmlnsPolicy == XmlViolationPolicy.ALTER_INFOSET) {
+                            return;
+                        }
+                    }                    
                 }
             }
             attributes.addAttribute(attributeName, value);

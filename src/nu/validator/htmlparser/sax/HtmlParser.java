@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
+ * Copyright (c) 2007 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -123,6 +124,8 @@ public class HtmlParser implements XMLReader {
 
     private XmlViolationPolicy xmlnsPolicy;
 
+    private XmlViolationPolicy bogusXmlnsPolicy;
+    
     private boolean reportingDoctype = true;
 
     /**
@@ -930,6 +933,7 @@ public class HtmlParser implements XMLReader {
         setContentSpacePolicy(xmlPolicy);
         setContentNonXmlCharPolicy(xmlPolicy);
         setCommentPolicy(xmlPolicy);
+        setBogusXmlnsPolicy(xmlPolicy);
     }
 
     /**
@@ -939,5 +943,27 @@ public class HtmlParser implements XMLReader {
      */
     public XmlViolationPolicy getNamePolicy() {
         return namePolicy;
+    }
+
+    /**
+     * Sets the policy for forbidden <code>xmlns</code> attributes.
+     * @param bogusXmlnsPolicy the policy
+     * @see nu.validator.htmlparser.impl.Tokenizer#setBogusXmlnsPolicy(nu.validator.htmlparser.common.XmlViolationPolicy)
+     */
+    public void setBogusXmlnsPolicy(
+            XmlViolationPolicy bogusXmlnsPolicy) {
+        this.bogusXmlnsPolicy = bogusXmlnsPolicy;
+        if (tokenizer != null) {
+            tokenizer.setBogusXmlnsPolicy(bogusXmlnsPolicy);
+        }
+    }
+
+    /**
+     * Returns the bogusXmlnsPolicy.
+     * 
+     * @return the bogusXmlnsPolicy
+     */
+    public XmlViolationPolicy getBogusXmlnsPolicy() {
+        return bogusXmlnsPolicy;
     }
 }
