@@ -352,9 +352,10 @@ public final class Tokenizer implements Locator {
     private String systemIdentifier;
 
     /**
-     * Used for NFC checking if non-<code>null</code>.
+     * Used for NFC checking if non-<code>null</code>, source code 
+     * capture, etc.
      */
-    private NormalizationChecker normalizationChecker = null;
+    private CharacterHandler[] characterHandlers = new CharacterHandler[0];
 
     /**
      * The policy for vertical tab and form feed.
@@ -403,20 +404,55 @@ public final class Tokenizer implements Locator {
      */
     public void setCheckingNormalization(boolean enable) {
         if (enable) {
-            normalizationChecker = new NormalizationChecker(this);
-            normalizationChecker.setErrorHandler(errorHandler);
+            if (isCheckingNormalization()) {
+                return;
+            } else {
+                NormalizationChecker normalizationChecker = new NormalizationChecker(this);
+                normalizationChecker.setErrorHandler(errorHandler);
+                
+            }
         } else {
-            normalizationChecker = null;
+            if (isCheckingNormalization()) {
+                CharacterHandler[] newHandlers = new CharacterHandler[characterHandlers.length - 1];
+                boolean skipped = false;
+                int j = 0;
+                for (int i = 0; i < characterHandlers.length; i++) {
+                    CharacterHandler ch = characterHandlers[i];
+                    if (!(!skipped && (ch instanceof NormalizationChecker))) {
+                        newHandlers[j] = ch;
+                        j++;
+                    }
+                }                
+                characterHandlers = newHandlers;
+            } else {
+                return;
+            }
         }
     }
 
+    public void addCharacterHandler(CharacterHandler characterHandler) {
+        if (characterHandler == null) {
+            throw new IllegalArgumentException("Null argument.");
+        }
+        CharacterHandler[] newHandlers = new CharacterHandler[characterHandlers.length + 1];
+        System.arraycopy(characterHandlers, 0, newHandlers, 0, characterHandlers.length);
+        newHandlers[characterHandlers.length] = characterHandler;
+        characterHandlers = newHandlers;
+    }
+    
     /**
      * Query if checking normalization.
      * 
      * @return <code>true</code> if checking on
      */
     public boolean isCheckingNormalization() {
-        return normalizationChecker != null;
+        for (int i = 0; i < characterHandlers.length; i++) {
+            CharacterHandler ch = characterHandlers[i];
+            if (ch instanceof NormalizationChecker) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -426,8 +462,12 @@ public final class Tokenizer implements Locator {
      */
     public void setErrorHandler(ErrorHandler eh) {
         this.errorHandler = eh;
-        if (this.normalizationChecker != null) {
-            this.normalizationChecker.setErrorHandler(eh);
+        for (int i = 0; i < characterHandlers.length; i++) {
+            CharacterHandler ch = characterHandlers[i];
+            if (ch instanceof NormalizationChecker) {
+                NormalizationChecker nc = (NormalizationChecker) ch;
+                nc.setErrorHandler(eh);
+            }
         }
     }
 
@@ -574,6 +614,10 @@ public final class Tokenizer implements Locator {
         alreadyWarnedAboutPrivateUseCharacters = false;
         metaBoundaryPassed = false;
         tokenHandler.start(this);
+        for (int i = 0; i < characterHandlers.length; i++) {
+            CharacterHandler ch = characterHandlers[i];
+            ch.start();
+        }
         wantsComments = tokenHandler.wantsComments();
         try {
             if (swallowBom) {
@@ -593,6 +637,10 @@ public final class Tokenizer implements Locator {
             tagName = null;
             attributeName = null;
             tokenHandler.eof();
+            for (int i = 0; i < characterHandlers.length; i++) {
+                CharacterHandler ch = characterHandlers[i];
+                ch.end();
+            }
             reader.close();
         }
     }
@@ -868,8 +916,11 @@ public final class Tokenizer implements Locator {
                 assert bufLen <= buf.length;
                 if (bufLen == -1) {
                     return '\u0000';
-                } else if (normalizationChecker != null) {
-                    normalizationChecker.characters(buf, 0, bufLen);
+                } else {
+                    for (int i = 0; i < characterHandlers.length; i++) {
+                        CharacterHandler ch = characterHandlers[i];
+                        ch.characters(buf, 0, bufLen);
+                    }
                 }
                 if (charDataContinuation) {
                     cstart = 0;

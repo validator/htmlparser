@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2006, 2007 Henri Sivonen
+ * Copyright (c) 2007 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -22,7 +23,6 @@
 
 package nu.validator.htmlparser.impl;
 
-import org.xml.sax.Attributes;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
@@ -36,7 +36,7 @@ import com.ibm.icu.text.UnicodeSet;
  * @version $Id$
  * @author hsivonen
  */
-public final class NormalizationChecker {
+public final class NormalizationChecker implements CharacterHandler {
 
     private ErrorHandler errorHandler;
 
@@ -127,29 +127,20 @@ public final class NormalizationChecker {
      */
     public NormalizationChecker(Locator locator) {
         super();
-        reset();
+        start();
     }
 
     /**
-     * @see org.whattf.checker.Checker#reset()
+     * @see nu.validator.htmlparser.impl.CharacterHandler#start()
      */
-    public void reset() {
+    public void start() {
         atStartOfRun = true;
         alreadyComplainedAboutThisRun = false;
         pos = 0;
-        if (bufHolder != null) {
-            // restore the original small buffer to avoid leaking
-            // memory if this checker is recycled
-            buf = bufHolder;
-            bufHolder = null;
-        }
     }
 
     /**
-     * In the normal mode, this method has the usual SAX semantics. In the 
-     * source text mode, this method is used for reporting the source text.
-     * 
-     * @see org.whattf.checker.Checker#characters(char[], int, int)
+     * @see nu.validator.htmlparser.impl.CharacterHandler#characters(char[], int, int)
      */
     public void characters(char[] ch, int start, int length)
             throws SAXException {
@@ -253,18 +244,19 @@ public final class NormalizationChecker {
     }
 
     /**
-     * Called to indicate the end of a run of characters. When this class is 
-     * used for checking source text, this method should be called after all 
-     * the calls to <code>characters()</code>.
-     * 
-     * @throws SAXException if the <code>ErrorHandler</code> throws.
+     * @see nu.validator.htmlparser.impl.CharacterHandler#end()
      */
-    public void flush() throws SAXException {
+    public void end() throws SAXException {
         if (!alreadyComplainedAboutThisRun
                 && !Normalizer.isNormalized(buf, 0, pos, Normalizer.NFC, 0)) {
             errAboutTextRun();
         }
-        reset();
+        if (bufHolder != null) {
+            // restore the original small buffer to avoid leaking
+            // memory if this checker is recycled
+            buf = bufHolder;
+            bufHolder = null;
+        }
     }
 
     public void setErrorHandler(ErrorHandler errorHandler) {
