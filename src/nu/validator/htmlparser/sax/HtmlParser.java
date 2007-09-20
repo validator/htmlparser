@@ -26,10 +26,13 @@ package nu.validator.htmlparser.sax;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.LinkedList;
+import java.util.List;
 
 import nu.validator.htmlparser.common.DoctypeExpectation;
 import nu.validator.htmlparser.common.DocumentModeHandler;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
+import nu.validator.htmlparser.impl.CharacterHandler;
 import nu.validator.htmlparser.impl.Tokenizer;
 import nu.validator.htmlparser.impl.TreeBuilder;
 import nu.validator.saxtree.Document;
@@ -108,6 +111,8 @@ public class HtmlParser implements XMLReader {
 
     private boolean scriptingEnabled = false;
 
+    private final List<CharacterHandler> characterHandlers = new LinkedList<CharacterHandler>();
+    
     private XmlViolationPolicy contentSpacePolicy = XmlViolationPolicy.FATAL;
 
     private XmlViolationPolicy contentNonXmlCharPolicy = XmlViolationPolicy.FATAL;
@@ -169,6 +174,9 @@ public class HtmlParser implements XMLReader {
             this.tokenizer.setHtml4ModeCompatibleWithXhtml1Schemata(html4ModeCompatibleWithXhtml1Schemata);
             this.tokenizer.setMappingLangToXmlLang(mappingLangToXmlLang);
             this.tokenizer.setXmlnsPolicy(xmlnsPolicy);
+            for (CharacterHandler characterHandler : characterHandlers) {
+                this.tokenizer.addCharacterHandler(characterHandler);
+            }
             this.treeBuilder.setDoctypeExpectation(doctypeExpectation);
             this.treeBuilder.setDocumentModeHandler(documentModeHandler);
             this.treeBuilder.setIgnoringComments(lexicalHandler == null);
@@ -965,5 +973,12 @@ public class HtmlParser implements XMLReader {
      */
     public XmlViolationPolicy getBogusXmlnsPolicy() {
         return bogusXmlnsPolicy;
+    }
+    
+    public void addCharacterHandler(CharacterHandler characterHandler) {
+        this.characterHandlers.add(characterHandler);
+        if (tokenizer != null) {
+            tokenizer.addCharacterHandler(characterHandler);
+        }
     }
 }
