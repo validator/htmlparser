@@ -917,6 +917,7 @@ public final class Tokenizer implements Locator {
             assert (bufLen > -1);
             pos++;
             assert pos <= bufLen;
+            linePrev = line;
             colPrevPrev = colPrev;
             colPrev = col;
             col++;
