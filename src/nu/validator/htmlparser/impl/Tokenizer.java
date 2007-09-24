@@ -208,17 +208,17 @@ public final class Tokenizer implements Locator {
     private int line;
 
     private int linePrev;
-
+    
     /**
      * The current column number in the current resource being tokenized. (First
      * column is 1, counted by UTF-16 code units.) Passed on as locator data.
      */
     private int col;
-
+    
     private int colPrev;
-
-    private int colPrevPrev;
-
+    
+    private boolean nextCharOnNewLine;
+    
     /**
      * The SAX public id for the resource being tokenized. (Only passed to back
      * as part of locator data.)
@@ -613,11 +613,9 @@ public final class Tokenizer implements Locator {
         inContent = true;
         pos = -1;
         cstart = -1;
-        line = 1;
-        linePrev = 1;
-        col = 0;
-        colPrev = 0;
-        colPrevPrev = 0;
+        line = linePrev = 0;
+        col = colPrev = 1;
+        nextCharOnNewLine = true;
         prev = '\u0000';
         bufLen = 0;
         nonAsciiProhibited = false;
@@ -636,7 +634,9 @@ public final class Tokenizer implements Locator {
                 // Swallow the BOM
                 char c = read();
                 if (c == '\uFEFF') {
-                    col = 0;
+                    line = linePrev = 0;
+                    col = colPrev = 1;
+                    nextCharOnNewLine = true;
                 } else {
                     unread(c);
                 }
@@ -918,9 +918,14 @@ public final class Tokenizer implements Locator {
             pos++;
             assert pos <= bufLen;
             linePrev = line;
-            colPrevPrev = colPrev;
             colPrev = col;
-            col++;
+            if (nextCharOnNewLine) {
+                line++;
+                col = 1;
+                nextCharOnNewLine = false;
+            } else {
+                col++;
+            }
             if (pos == bufLen) {
                 boolean charDataContinuation = false;
                 if (cstart > -1) {
@@ -958,29 +963,22 @@ public final class Tokenizer implements Locator {
                      */
                     if (prev == '\r') {
                         // swallow the LF
-                        colPrev = colPrevPrev;
-                        col = 0;
                         if (cstart != -1) {
                             flushChars();
                             cstart = pos + 1;
                         }
+                        col = colPrev;
+                        line = linePrev;
+                        nextCharOnNewLine = true;
                         prev = c;
                         continue;
                     } else {
-                        linePrev = line;
-                        line++;
-                        colPrevPrev = colPrev;
-                        colPrev = col;
-                        col = 0;
+                        nextCharOnNewLine = true;
                     }
                     break;
                 case '\r':
                     c = buf[pos] = '\n';
-                    linePrev = line;
-                    line++;
-                    colPrevPrev = colPrev;
-                    colPrev = col;
-                    col = 0;
+                    nextCharOnNewLine = true;
                     prev = '\r';
                     if (contentModelFlag != ContentModelFlag.PCDATA) {
                         prevFourPtr++;
@@ -1106,15 +1104,15 @@ public final class Tokenizer implements Locator {
     private void flushChars() throws SAXException, IOException {
         if (cstart != -1) {
             if (pos > cstart) {
-                int currCol = col;
                 int currLine = line;
-                col = colPrev;
+                int currCol = col;
                 line = linePrev;
+                col = colPrev;
                 try {
                     tokenHandler.characters(buf, cstart, pos - cstart);
                 } finally {
-                    col = currCol;
                     line = currLine;
+                    col = currCol;
                 }
             }
         }
