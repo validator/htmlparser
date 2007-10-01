@@ -1526,11 +1526,13 @@ public final class Tokenizer implements Locator {
                 if (folded != e) {
                     if (i > 0 || (folded >= 'a' && folded <= 'z')) {
                         if (html4) {
-                            err((contentModelFlag == ContentModelFlag.CDATA ? "CDATA"
-                                    : "RCDATA")
-                                    + " element \u201C"
-                                    + contentModelElement
-                                    + "\u201D contained the string \u201C</\u201D, but it was not the start of the end tag. (HTML4-only error)");
+                            if (!"iframe".equals(contentModelElement)) {
+                                err((contentModelFlag == ContentModelFlag.CDATA ? "CDATA"
+                                        : "RCDATA")
+                                        + " element \u201C"
+                                        + contentModelElement
+                                        + "\u201D contained the string \u201C</\u201D, but it was not the start of the end tag. (HTML4-only error)");
+                            }
                         } else {
                             warn((contentModelFlag == ContentModelFlag.CDATA ? "CDATA"
                                     : "RCDATA")
@@ -1901,6 +1903,10 @@ public final class Tokenizer implements Locator {
             return;
         }
         char c = read();
+        int saveLine = line;
+        int saveCol = col;
+        line = linePrev;
+        col = colPrev;
         if (c == '>') {
             if (!currentIsVoid() && !html4) {
                 if (html4) {
@@ -1914,6 +1920,8 @@ public final class Tokenizer implements Locator {
         } else {
             err("Stray \u201C/\u201D in tag.");
         }
+        line = saveLine;
+        col = saveCol;
         unread(c);
     }
 
