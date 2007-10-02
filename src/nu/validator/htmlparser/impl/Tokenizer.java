@@ -692,14 +692,22 @@ public final class Tokenizer implements Locator {
      * @see org.xml.sax.Locator#getLineNumber()
      */
     public int getLineNumber() {
-        return line;
+        if (line > 0) {
+            return line;
+        } else {
+            return -1;
+        }
     }
 
     /**
      * @see org.xml.sax.Locator#getColumnNumber()
      */
     public int getColumnNumber() {
-        return col;
+        if (col > 0) {
+            return col;
+        } else {
+            return -1;
+        }
     }
 
     // end Locator impl
