@@ -133,6 +133,8 @@ public class HtmlParser implements XMLReader {
     
     private boolean reportingDoctype = true;
 
+    private ErrorHandler treeBuilderErrorHandler;
+
     /**
      * Instantiates the parser with a fatal XML violation policy.
      *
@@ -166,7 +168,7 @@ public class HtmlParser implements XMLReader {
             }
             this.tokenizer = new Tokenizer(treeBuilder);
             this.tokenizer.setErrorHandler(errorHandler);
-            this.treeBuilder.setErrorHandler(errorHandler);
+            this.treeBuilder.setErrorHandler(treeBuilderErrorHandler);
             this.tokenizer.setCheckingNormalization(checkingNormalization);
             this.tokenizer.setCommentPolicy(commentPolicy);
             this.tokenizer.setContentNonXmlCharPolicy(contentNonXmlCharPolicy);
@@ -504,12 +506,24 @@ public class HtmlParser implements XMLReader {
      */
     public void setErrorHandler(ErrorHandler handler) {
         errorHandler = handler;
+        treeBuilderErrorHandler = handler;
         if (tokenizer != null) {
             tokenizer.setErrorHandler(handler);
             treeBuilder.setErrorHandler(handler);
         }
     }
 
+    /**
+     * @see org.xml.sax.XMLReader#setErrorHandler(org.xml.sax.ErrorHandler)
+     * @deprecated For Validator.nu internal use
+     */
+    public void setTreeBuilderErrorHandlerOverride(ErrorHandler handler) {
+        treeBuilderErrorHandler = handler;
+        if (tokenizer != null) {
+            treeBuilder.setErrorHandler(handler);
+        }
+    }
+    
     /**
      * Sets a boolean feature without having to use non-<code>XMLReader</code>
      * setters directly.
