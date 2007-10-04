@@ -55,6 +55,8 @@ import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
+import com.sun.org.apache.xml.internal.serialize.XHTMLSerializer;
+
 /**
  * An implementatition of
  * http://www.whatwg.org/specs/web-apps/current-work/multipage/section-tokenisation.html
@@ -2164,10 +2166,27 @@ public final class Tokenizer implements Locator {
                             return;
                         }
                     }
+                } else if (html4 && html4ModeCompatibleWithXhtml1Schemata && AttributeInfo.isCaseFolded(attributeName)) {
+                    value = toAsciiLowerCase(value);
                 }
             }
             attributes.addAttribute(attributeName, value);
         }
+    }
+    
+    private String toAsciiLowerCase(String str) {
+        if (str == null) {
+            return null;
+        }
+        char[] b = new char[str.length()];
+        for (int i = 0; i < str.length(); i++) {
+            char c = str.charAt(i);
+            if (c >= 'A' && c <= 'Z') {
+                c += 0x20;
+            }
+            b[i] = c;
+        }
+        return new String(b);
     }
 
     /**
