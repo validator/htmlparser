@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
+ * Copyright (c) 2007 Mozilla Foundation
  * Portions of comments Copyright 2004-2007 Apple Computer, Inc., Mozilla 
  * Foundation, and Opera Software ASA.
  *
@@ -100,6 +101,15 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     
     private final static char[] ISINDEX_PROMPT = "This is a searchable index. Insert your search keywords here: ".toCharArray();
 
+    private final static String[] HTML4_PUBLIC_IDS = {
+        "-//W3C//DTD HTML 4.0 Frameset//EN",
+        "-//W3C//DTD HTML 4.0 Transitional//EN",
+        "-//W3C//DTD HTML 4.0//EN",
+        "-//W3C//DTD HTML 4.01 Frameset//EN",
+        "-//W3C//DTD HTML 4.01 Transitional//EN",
+        "-//W3C//DTD HTML 4.01//EN"
+    };
+    
     private final static String[] QUIRKY_PUBLIC_IDS = {
             "+//silmaril//dtd html pro v0r11 19970101//en",
             "-//advasoft ltd//dtd html 3.0 aswedit + extensions//en",
@@ -426,15 +436,18 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         }
                         break;
                     case AUTO:
+                        boolean html4 = isHtml4Doctype(publicIdentifier);
+                        if (html4) {
+                            tokenizer.turnOnAdditionalHtml4Errors();
+                        }
                         if (isQuirky(name, publicIdentifierLC,
                                 systemIdentifierLC, correct)) {
                             err("Quirky doctype.");
                             documentModeInternal(DocumentMode.QUIRKS_MODE,
-                                    publicIdentifier, systemIdentifier, false);
+                                    publicIdentifier, systemIdentifier, html4);
                         } else if (isAlmostStandards(publicIdentifierLC,
                                 systemIdentifierLC)) {
-                            boolean html4 = "-//W3C//DTD HTML 4.01 Transitional//EN".equals(publicIdentifier);
-                            if (html4) {
+                            if ("-//W3C//DTD HTML 4.01 Transitional//EN".equals(publicIdentifier)) {
                                 tokenizer.turnOnAdditionalHtml4Errors();
                                 if (!"http://www.w3.org/TR/html4/loose.dtd".equals(systemIdentifier)) {
                                     warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification.");
@@ -445,8 +458,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             documentModeInternal(DocumentMode.ALMOST_STANDARDS_MODE,
                                     publicIdentifier, systemIdentifier, html4);
                         } else {
-                            boolean html4 = "-//W3C//DTD HTML 4.01//EN".equals(publicIdentifier);
-                            if (html4) {
+                            if ("-//W3C//DTD HTML 4.01//EN".equals(publicIdentifier)) {
                                 tokenizer.turnOnAdditionalHtml4Errors();
                                 if (!"http://www.w3.org/TR/html4/strict.dtd".equals(systemIdentifier)) {
                                     warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification.");
@@ -495,6 +507,14 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                  */
                 return;
         }
+    }
+
+    private boolean isHtml4Doctype(String publicIdentifier) {
+        if (publicIdentifier != null
+                && (Arrays.binarySearch(HTML4_PUBLIC_IDS, publicIdentifier) > -1)) {
+            return true;
+        }
+        return false;
     }
 
     public final void comment(char[] buf, int length) throws SAXException {
