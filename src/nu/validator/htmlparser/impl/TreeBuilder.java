@@ -220,7 +220,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     private char[] charBuffer;
     
     private int charBufferLen = 0;
-    
+
     protected TreeBuilder(XmlViolationPolicy streamabilityViolationPolicy, boolean coalescingText) {
         this.conformingAndStreaming = streamabilityViolationPolicy == XmlViolationPolicy.FATAL;
         this.nonConformingAndStreaming = streamabilityViolationPolicy == XmlViolationPolicy.ALTER_INFOSET;
@@ -238,11 +238,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
      * @throws SAXParseException
      */
     protected final void fatal() throws SAXException {
-        if (errorHandler == null) {
-            return;
-        }
         SAXParseException spe = new SAXParseException("Last error required non-streamable recovery.", tokenizer);
-        errorHandler.fatalError(spe);
+        if (errorHandler != null) {
+            errorHandler.fatalError(spe);
+        }
         throw spe;
     }
     protected final void fatal(Exception e) throws SAXException {
