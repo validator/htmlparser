@@ -55,8 +55,6 @@ import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
-import com.sun.org.apache.xml.internal.serialize.XHTMLSerializer;
-
 /**
  * An implementatition of
  * http://www.whatwg.org/specs/web-apps/current-work/multipage/section-tokenisation.html
