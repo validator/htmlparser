@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
+ * Copyright (c) 2007 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -40,10 +41,17 @@ public abstract class Node implements Locator {
     private ParentNode parentNode = null;
 
     Node(Locator locator) {
-        this.systemId = locator.getSystemId();
-        this.publicId = locator.getPublicId();
-        this.column = locator.getColumnNumber();
-        this.line = locator.getLineNumber();
+        if (locator == null) {
+            this.systemId = null;
+            this.publicId = null;
+            this.column = -1;
+            this.line = -1;
+        } else {
+            this.systemId = locator.getSystemId();
+            this.publicId = locator.getPublicId();
+            this.column = locator.getColumnNumber();
+            this.line = locator.getLineNumber();
+        }
     }
     
     public int getColumnNumber() {
