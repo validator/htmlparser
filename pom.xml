@@ -1,0 +1,83 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>nu.validator.htmlparser</groupId>
+  <artifactId>htmlparser</artifactId>
+  <packaging>jar</packaging>
+  <version>1.0.5</version>
+  <name>htmlparser</name>
+  <url>http://about.validator.nu/htmlparser/</url>
+  <description>The Validator.nu HTML Parser is an implementation of the HTML5 parsing algorithm in Java for applications that do not run scripts. The parser is designed to work as a drop-in replacement for the XML parser in applications that already support XHTML 1.x content with an XML parser and use SAX, DOM or XOM to interface with the parser.</description>
+  <developers>
+    <developer>
+      <id>hsivonen</id>
+      <name>Henri Sivonen</name>
+      <email>hsivonen@iki.fi</email>
+      <url>http://hsivonen.iki.fi/</url>
+    </developer>
+  </developers>
+  <licenses>
+    <license>
+      <name>The MIT License</name>
+      <url>http://www.opensource.org/licenses/mit-license.php</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <scm>
+    <connection>scm:svn:http://svn.versiondude.net/whattf/htmlparser/</connection>
+  </scm>
+  <build>
+    <sourceDirectory>${basedir}/src</sourceDirectory>
+    <testSourceDirectory>${basedir}/test-src</testSourceDirectory>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>1.5</source>
+          <target>1.5</target>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  <dependencies>
+    <dependency>
+      <!-- As of this writing, the needed icu4j 3.8 doesn't yet exist in the Maven repository -->
+      <!-- wget ftp://ibiblio.org/pub/packages/maven2/com/ibm/icu/icu4j/3.4.4/icu4j-3.4.4.pom -->
+      <!-- cat icu4j-3.4.4.pom | sed 's/3.4.4/3.8/g' > icu4j-3.8.pom -->
+      <!-- wget http://download.icu-project.org/files/icu4j/3.8/icu4j-3_8.jar -->
+      <!-- mvn install:install-file -DgroupId=com.ibm.icu -DartifactId=icu4j -Dversion=3.8 -Dpackaging=jar -DpomFile=icu4j-3.8.pom -Dfile=icu4j-3_8.jar -->
+      <groupId>com.ibm.icu</groupId>
+      <artifactId>icu4j</artifactId>
+      <version>3.8</version>
+      <scope>compile</scope>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>xom</groupId>
+      <artifactId>xom</artifactId>
+      <version>1.1</version>
+      <scope>compile</scope>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>xalan</groupId>
+      <artifactId>xalan</artifactId>
+      <version>2.7.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.sdicons.jsontools</groupId>
+      <artifactId>jsontools-core</artifactId>
+      <version>1.4</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>
