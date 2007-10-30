@@ -50,7 +50,7 @@
   <dependencies>
     <dependency>
       <!-- As of this writing, the needed icu4j 3.8 doesn't yet exist in the Maven repository -->
-      <!-- wget ftp://ibiblio.org/pub/packages/maven2/com/ibm/icu/icu4j/3.4.4/icu4j-3.4.4.pom -->
+      <!-- wget http://ibiblio.org/pub/packages/maven2/com/ibm/icu/icu4j/3.4.4/icu4j-3.4.4.pom -->
       <!-- cat icu4j-3.4.4.pom | sed 's/3.4.4/3.8/g' > icu4j-3.8.pom -->
       <!-- wget http://download.icu-project.org/files/icu4j/3.8/icu4j-3_8.jar -->
       <!-- mvn install:install-file -DgroupId=com.ibm.icu -DartifactId=icu4j -Dversion=3.8 -Dpackaging=jar -DpomFile=icu4j-3.8.pom -Dfile=icu4j-3_8.jar -->
