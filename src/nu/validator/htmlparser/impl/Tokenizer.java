@@ -820,9 +820,9 @@ public final class Tokenizer implements Locator {
     private void appendToComment(char c) throws SAXException {
         if (longStrBufPending == '-' && c == '-') {
             if (commentPolicy == XmlViolationPolicy.FATAL) {
-                fatal("This document is not mappable to XML 1.0 without data loss to \u201C--\u201D in a comment.");
+                fatal("This document is not mappable to XML 1.0 without data loss due to \u201C--\u201D in a comment.");
             } else {
-                warn("This document is not mappable to XML 1.0 without data loss to \u201C--\u201D in a comment.");
+                warn("This document is not mappable to XML 1.0 without data loss due to \u201C--\u201D in a comment.");
                 if (wantsComments) {
                     if (commentPolicy == XmlViolationPolicy.ALLOW) {
                         appendLongStrBuf('-');
