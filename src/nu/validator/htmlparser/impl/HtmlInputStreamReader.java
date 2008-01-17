@@ -256,7 +256,9 @@ public final class HtmlInputStreamReader extends Reader implements
                     } else {
                         // The usual stuff. Want more bytes next time.
                         shouldReadBytes = true;
-                        return charBuffer.position();
+                        // return -1 if zero
+                        int cPos = charBuffer.position();
+                        return cPos == 0 ? -1 : cPos;
                     }
                 } else {
                     // The result is in error. No need to test.
@@ -283,7 +285,9 @@ public final class HtmlInputStreamReader extends Reader implements
                     if (finalDecode) {
                         // These were the last bytes of input. Return without
                         // relooping.
-                        return charBuffer.position();
+                        // return -1 if zero
+                        int cPos = charBuffer.position();
+                        return cPos == 0 ? -1 : cPos;
                     }
                 }
             }

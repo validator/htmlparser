@@ -941,6 +941,7 @@ public final class Tokenizer implements Locator {
                     charDataContinuation = true;
                 }
                 bufLen = reader.read(buf);
+                assert bufLen != 0;
                 assert bufLen <= buf.length;
                 if (bufLen == -1) {
                     return '\u0000';
