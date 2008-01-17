@@ -643,7 +643,7 @@ public final class Tokenizer implements Locator {
             }
             dataState();
             if (nonAsciiProhibited && !alreadyComplainedAboutNonAscii) {
-                warnWithoutLocation("The character encoding of the document was not labeled. Even though this document contained only ASCII, other documents from the same workflow may easily end up as invalid.");
+                warnWithoutLocation("The character encoding of the document was not declared.");
             }
         } finally {
             systemIdentifier = null;
