@@ -119,8 +119,9 @@ public final class HtmlInputStreamReader extends Reader implements
             if (this.decoder == null) {
                 if (tokenizer != null) {
                     tokenizer.noEncodingDeclared();
+                } else {
+                    err("Could not determine the character encoding of the document. Using \u201CWindows-1252\u201D.");
                 }
-                err("Could not determine the character encoding of the document. Using \u201CWindows-1252\u201D.");
                 this.decoder = Charset.forName("Windows-1252").newDecoder();
             }
         }

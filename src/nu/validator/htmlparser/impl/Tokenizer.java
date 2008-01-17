@@ -590,6 +590,8 @@ public final class Tokenizer implements Locator {
         if (is == null) {
             throw new IllegalArgumentException("InputSource was null.");
         }
+        nonAsciiProhibited = false;
+        alreadyComplainedAboutNonAscii = false;
         swallowBom = true;
         this.systemId = is.getSystemId();
         this.publicId = is.getPublicId();
@@ -618,8 +620,6 @@ public final class Tokenizer implements Locator {
         nextCharOnNewLine = true;
         prev = '\u0000';
         bufLen = 0;
-        nonAsciiProhibited = false;
-        alreadyComplainedAboutNonAscii = false;
         html4 = false;
         alreadyWarnedAboutPrivateUseCharacters = false;
         metaBoundaryPassed = false;
@@ -642,6 +642,9 @@ public final class Tokenizer implements Locator {
                 }
             }
             dataState();
+            if (nonAsciiProhibited && !alreadyComplainedAboutNonAscii) {
+                warnWithoutLocation("The character encoding of the document was not labeled. Even though this document contained only ASCII, other documents from the same workflow may easily end up as invalid.");
+            }
         } finally {
             systemIdentifier = null;
             publicIdentifier = null;
@@ -957,9 +960,10 @@ public final class Tokenizer implements Locator {
                 pos = 0;
             }
             char c = buf[pos];
-            if (c > '\u007F' && nonAsciiProhibited
-                    && !alreadyComplainedAboutNonAscii) {
+            if (nonAsciiProhibited
+                    && !alreadyComplainedAboutNonAscii && c > '\u007F') {
                 err("The character encoding of the document was not explicit but the document contains non-ASCII.");
+                alreadyComplainedAboutNonAscii = true;
             }
             switch (c) {
                 case '\n':
@@ -1175,6 +1179,21 @@ public final class Tokenizer implements Locator {
         errorHandler.warning(spe);
     }
 
+    /**
+     * Reports a warning without line/col
+     * 
+     * @param message
+     *            the message
+     * @throws SAXException
+     */
+    private void warnWithoutLocation(String message) throws SAXException {
+        if (errorHandler == null) {
+            return;
+        }
+        SAXParseException spe = new SAXParseException(message, null, getSystemId(), -1, -1);
+        errorHandler.warning(spe);
+    }
+    
     /**
      * Initializes a decoder from external decl.
      */
