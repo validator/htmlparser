@@ -93,13 +93,14 @@ public class EncodingInfo {
     private static String[] notAsciiSuperset;   
 
     static {
-        byte[] testBuf = new byte[0x63];
-        for (int i = 0; i < 0x60; i++) {
-            testBuf[i] = (byte) (i + 0x20);
+        byte[] testBuf = new byte[0x7F];
+        for (int i = 0; i < 0x7F; i++) {
+            if (isAsciiSupersetnessSensitive(i)) {
+                testBuf[i] = (byte) i;                
+            } else {
+                testBuf[i] = (byte) 0x20;                                
+            }
         }
-        testBuf[0x60] = (byte) '\n';
-        testBuf[0x61] = (byte) '\r';
-        testBuf[0x62] = (byte) '\t';
 
         SortedSet<String> asciiSupersetSet = new TreeSet<String>();
         SortedSet<String> notAsciiSupersetSet = new TreeSet<String>();
@@ -121,6 +122,12 @@ public class EncodingInfo {
         notAsciiSuperset = notAsciiSupersetSet.toArray(new String[0]);
     }
 
+    private static boolean isAsciiSupersetnessSensitive(int c) {
+        return (c >= 0x09 && c <= 0x0D) || (c >= 0x20 && c <= 0x22)
+                || (c >= 0x26 && c <= 0x27) || (c >= 0x2C && c <= 0x3F)
+                || (c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A);
+    }
+    
     public static boolean isAsciiSuperset(String preferredIanaName) {
         return (Arrays.binarySearch(asciiSuperset, preferredIanaName) > -1);
     }
@@ -154,20 +161,17 @@ public class EncodingInfo {
         dec.onUnmappableCharacter(CodingErrorAction.REPORT);
         Reader r = new InputStreamReader(new ByteArrayInputStream(testBuf), dec);
         try {
-            for (int i = 0; i < 0x60; i++) {
-                if ((i + 0x20) != r.read()) {
-                    return false;
+            for (int i = 0; i < 0x7F; i++) {
+                if (isAsciiSupersetnessSensitive(i)) {
+                    if (r.read() != i) {
+                        return false;
+                    }
+                } else {
+                    if (r.read() != 0x20) {
+                        return false;
+                    }
                 }
             }
-            if ('\n' != r.read()) {
-                return false;
-            }
-            if ('\r' != r.read()) {
-                return false;
-            }
-            if ('\t' != r.read()) {
-                return false;
-            }        
         } catch (IOException e) {
             return false;
         } catch (Exception e) {
