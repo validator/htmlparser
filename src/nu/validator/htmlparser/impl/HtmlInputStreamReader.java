@@ -137,7 +137,7 @@ public final class HtmlInputStreamReader extends Reader implements
      * 
      */
     private void initDecoder() {
-        if ("ISO-8859-1".equals(this.decoder.charset().name())) {
+        if ("ISO-8859-1".equalsIgnoreCase(this.decoder.charset().name())) {
             this.decoder = Charset.forName("Windows-1252").newDecoder();
         }
         this.decoder.onMalformedInput(CodingErrorAction.REPORT);
