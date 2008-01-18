@@ -44,8 +44,10 @@ public class EncodingInfo {
         "utf-32le",
         "x-jis0208" };
     
-    private static String[] BANNED = { "bocu-1", "cesu-8", "scsu", "utf-7",
-            "x-imap-mailbox-name", "x-jisautodetect", "x-utf16_oppositeendian",
+    private static String[] BANNED = { "bocu-1", "cesu-8", "compound_text",
+            "scsu", "utf-7", "x-imap-mailbox-name", "x-jisautodetect",
+            "x-utf-16be-bom", "x-utf-16le-bom", "x-utf-32be-bom",
+            "x-utf-32le-bom", "x-utf16_oppositeendian",
             "x-utf16_platformendian", "x-utf32_oppositeendian",
             "x-utf32_platformendian" };
     
@@ -106,7 +108,6 @@ public class EncodingInfo {
         for (Map.Entry<String, Charset> entry : charsets.entrySet()) {
             Charset cs = entry.getValue();
             String name = cs.name();
-            System.out.println(name);
             if (!isBanned(name)) {
                 if (asciiMapsToBasicLatin(testBuf, cs)) {
                     asciiSupersetSet.add(name.intern());
