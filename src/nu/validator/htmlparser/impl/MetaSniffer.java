@@ -405,6 +405,9 @@ public final class MetaSniffer implements Locator {
             } else {
                 Charset cs = Charset.forName(encoding);
                 String canonName = cs.name();
+                if (EncodingInfo.isBanned(canonName)) {
+                    throw new UnsupportedCharsetException(canonName);
+                }
                 if (!EncodingInfo.isAsciiSuperset(canonName)) {
                     err("The encoding \u201C"
                                 + encoding
@@ -427,6 +430,10 @@ public final class MetaSniffer implements Locator {
                 }
                 if (EncodingInfo.isObscure(canonName)) {
                     warn("The character encoding \u201C" + encoding + "\u201D is not widely supported. Better interoperability may be achieved by using \u201CUTF-8\u201D.");
+                } else if (EncodingInfo.isShouldNot(canonName)) {
+                    warn("Authors should not use the character encoding \u201C"
+                            + encoding
+                            + "\u201D. It is recommended to use \u201CUTF-8\u201D.");                
                 }
                 this.charsetDecoder = cs.newDecoder();
                 throw new StopSniffingException();

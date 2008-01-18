@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2006 Henri Sivonen
+ * Copyright (c) 2008 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -30,7 +31,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.SortedSet;
@@ -38,33 +38,44 @@ import java.util.TreeSet;
 
 public class EncodingInfo {
 
-    private static String[] NOT_OBSCURE = {"Big5",
-        "Big5-HKSCS",
-        "EUC-JP",
-        "EUC-KR",
-        "GB18030",
-        "GBK",
-        "ISO-2022-JP",
-        "ISO-2022-KR",
-        "ISO-8859-1",
-        "ISO-8859-13",
-        "ISO-8859-15",
-        "ISO-8859-2",
-        "ISO-8859-3",
-        "ISO-8859-4",
-        "ISO-8859-5",
-        "ISO-8859-6",
-        "ISO-8859-7",
-        "ISO-8859-8",
-        "ISO-8859-9",
-        "KOI8-R",
-        "Shift_JIS",
-        "TIS-620",
-        "US-ASCII",
-        "UTF-16",
-        "UTF-16BE",
-        "UTF-16LE",
-        "UTF-8",
+    private static String[] SHOULD_NOT = { "jis_x0212-1990",
+        "utf-32",
+        "utf-32be",
+        "utf-32le",
+        "x-jis0208" };
+    
+    private static String[] BANNED = { "bocu-1", "cesu-8", "scsu", "utf-7",
+            "x-imap-mailbox-name", "x-jisautodetect", "x-utf16_oppositeendian",
+            "x-utf16_platformendian", "x-utf32_oppositeendian",
+            "x-utf32_platformendian" };
+    
+    private static String[] NOT_OBSCURE = {"big5",
+        "big5-hkscs",
+        "euc-jp",
+        "euc-kr",
+        "gb18030",
+        "gbk",
+        "iso-2022-jp",
+        "iso-2022-kr",
+        "iso-8859-1",
+        "iso-8859-13",
+        "iso-8859-15",
+        "iso-8859-2",
+        "iso-8859-3",
+        "iso-8859-4",
+        "iso-8859-5",
+        "iso-8859-6",
+        "iso-8859-7",
+        "iso-8859-8",
+        "iso-8859-9",
+        "koi8-r",
+        "shift_jis",
+        "tis-620",
+        "us-ascii",
+        "utf-16",
+        "utf-16be",
+        "utf-16le",
+        "utf-8",
         "windows-1250",
         "windows-1251",
         "windows-1252",
@@ -91,19 +102,22 @@ public class EncodingInfo {
         SortedSet<String> asciiSupersetSet = new TreeSet<String>();
         SortedSet<String> notAsciiSupersetSet = new TreeSet<String>();
         
-        SortedMap charsets = Charset.availableCharsets();
-        for (Iterator iter = charsets.entrySet().iterator(); iter.hasNext();) {
-            Map.Entry entry = (Map.Entry) iter.next();
-            Charset cs = (Charset) entry.getValue();
-            if (asciiMapsToBasicLatin(testBuf, cs)) {
-                asciiSupersetSet.add(cs.name().intern());
-            } else {
-                notAsciiSupersetSet.add(cs.name().intern());
+        SortedMap<String, Charset> charsets = Charset.availableCharsets();
+        for (Map.Entry<String, Charset> entry : charsets.entrySet()) {
+            Charset cs = entry.getValue();
+            String name = cs.name();
+            System.out.println(name);
+            if (!isBanned(name)) {
+                if (asciiMapsToBasicLatin(testBuf, cs)) {
+                    asciiSupersetSet.add(name.intern());
+                } else {
+                    notAsciiSupersetSet.add(name.intern());
+                }
             }
         }
         
-        asciiSuperset = (String[]) asciiSupersetSet.toArray(new String[0]);
-        notAsciiSuperset = (String[]) notAsciiSupersetSet.toArray(new String[0]);
+        asciiSuperset = asciiSupersetSet.toArray(new String[0]);
+        notAsciiSuperset = notAsciiSupersetSet.toArray(new String[0]);
     }
 
     public static boolean isAsciiSuperset(String preferredIanaName) {
@@ -115,7 +129,18 @@ public class EncodingInfo {
     }
 
     public static boolean isObscure(String preferredIanaName) {
-        return !(Arrays.binarySearch(NOT_OBSCURE, preferredIanaName) > -1);
+        // XXX Turkish i
+        return !(Arrays.binarySearch(NOT_OBSCURE, preferredIanaName.toLowerCase()) > -1);
+    }
+
+    public static boolean isBanned(String preferredIanaName) {
+        // XXX Turkish i
+        return (Arrays.binarySearch(BANNED, preferredIanaName.toLowerCase()) > -1);
+    }
+
+    public static boolean isShouldNot(String preferredIanaName) {
+        // XXX Turkish i
+        return (Arrays.binarySearch(SHOULD_NOT, preferredIanaName.toLowerCase()) > -1);
     }
     
     /**
@@ -160,6 +185,16 @@ public class EncodingInfo {
         System.out.println("ASCII does not map to Basic Latin:");
         for (int i = 0; i < notAsciiSuperset.length; i++) {
             System.out.println(notAsciiSuperset[i]);            
+        }
+    }
+
+    public static boolean isLikelyEbcdic(String canonName) {
+        if (isNotAsciiSuperset(canonName)) {
+            // XXX Turkish i
+            canonName = canonName.toLowerCase();
+            return (canonName.startsWith("cp") || canonName.startsWith("ibm"));
+        } else {
+            return false;
         }
     }
 }
