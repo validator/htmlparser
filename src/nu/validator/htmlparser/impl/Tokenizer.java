@@ -1232,16 +1232,16 @@ public final class Tokenizer implements Locator {
                         + "\u201D is not the preferred name of the character encoding in use. The preferred name is \u201C"
                         + canonName + "\u201D. (Charmod C024)");
             }
-            if (EncodingInfo.isObscure(canonName)) {
-                warn("The character encoding \u201C"
-                        + encoding
-                        + "\u201D is not widely supported. Better interoperability may be achieved by using \u201CUTF-8\u201D.");
-            } else if (EncodingInfo.isShouldNot(canonName)) {
+            if (EncodingInfo.isShouldNot(canonName)) {
                 warn("Authors should not use the character encoding \u201C"
                         + encoding
                         + "\u201D. It is recommended to use \u201CUTF-8\u201D.");                
             } else if (EncodingInfo.isLikelyEbcdic(canonName)) {
                 warn("Authors should not use EBCDIC-based encodings. It is recommended to use \u201CUTF-8\u201D.");                
+            } else if (EncodingInfo.isObscure(canonName)) {
+                warn("The character encoding \u201C"
+                        + encoding
+                        + "\u201D is not widely supported. Better interoperability may be achieved by using \u201CUTF-8\u201D.");
             }
             return cs.newDecoder();
         } catch (IllegalCharsetNameException e) {
