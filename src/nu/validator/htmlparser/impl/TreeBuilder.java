@@ -2124,6 +2124,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         + "\u201D.");
                                 pop();
                             } else {
+                                err("Stray end tag \u201C" + name
+                                        + "\u201D.");
                                 return;
                             }
                         }
