@@ -1486,7 +1486,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         appendVoidElementToCurrentMayFoster(name, attributes);
                         return;
                     } else if ("meta" == name) {
-                        // XXX do charset stuff
+                        warnIfInconsistentCharset(attributes);
                         appendVoidElementToCurrentMayFoster(name, attributes);
                         return;
                     } else if ("style" == name) {
@@ -1735,7 +1735,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         return;
                     } else if ("meta" == name) {
                         err("\u201Cmeta\u201D element outside \u201Chead\u201D.");
-                        // XXX do chaset stuff
+                        warnIfInconsistentCharset(attributes);
                         if (!nonConformingAndStreaming) {
                             pushHeadPointerOntoStack();
                         }
@@ -1793,6 +1793,51 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
     }
 
+    private boolean equalsIgnoreAsciiCase(CharSequence one, CharSequence other) {
+        if (other == null || one == null) {
+            return false;
+        }
+        if (one.length() != other.length()) {
+            return false;
+        }
+        for (int i = 0; i < other.length(); i++) {
+            char c0 = one.charAt(i);
+            if (c0 >= 'A' && c0 <= 'Z') {
+                c0 += 0x20;
+            }
+            char c1 = other.charAt(i);
+            if (c1 >= 'A' && c1 <= 'Z') {
+                c1 += 0x20;
+            }
+            if (c0 != c1) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    private void warnIfInconsistentCharset(Attributes attributes) throws SAXException {
+        String content = attributes.getValue("", "content");
+        String internalCharset = null;
+        if (content != null) {
+            internalCharset = MetaSniffer.extractCharsetFromContent(content);
+            if (internalCharset != null) {
+                if (!equalsIgnoreAsciiCase("content-type", attributes.getValue("", "http-equiv"))) {
+                    warn("Attribute \u201Ccontent\u201D would be sniffed as an internal character encoding declaration but there was no matching \u201Chttp-equiv='Content-Type'\u201D attribute.");
+                }
+            }
+        }
+        if (internalCharset == null) {
+            internalCharset = attributes.getValue("", "charset");
+        }
+        String externalCharset = tokenizer.getExternalCharset();
+        if (externalCharset != null) {
+            if (!equalsIgnoreAsciiCase(externalCharset, internalCharset)) {
+                warn("The internally declared character encoding \u201C" + internalCharset + "\u201D does not match the external declaration \u201C" + externalCharset + "\u201D. The external declaration takes precedence.");
+            }
+        }
+    }
+    
     public final void endTag(String name, Attributes attributes)
             throws SAXException {
         needToDropLF = false;

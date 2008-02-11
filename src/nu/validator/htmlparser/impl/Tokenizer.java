@@ -390,6 +390,8 @@ public final class Tokenizer implements Locator {
 
     private XmlViolationPolicy bogusXmlnsPolicy;
 
+    private String externalCharset;
+
     // start public API
 
     /**
@@ -596,7 +598,8 @@ public final class Tokenizer implements Locator {
         this.systemId = is.getSystemId();
         this.publicId = is.getPublicId();
         this.reader = is.getCharacterStream();
-        CharsetDecoder decoder = decoderFromExternalDeclaration(is.getEncoding());
+        this.externalCharset = is.getEncoding();
+        CharsetDecoder decoder = decoderFromExternalDeclaration(this.externalCharset);
         if (this.reader == null) {
             InputStream inputStream = is.getByteStream();
             if (inputStream == null) {
@@ -651,6 +654,7 @@ public final class Tokenizer implements Locator {
             doctypeName = null;
             tagName = null;
             attributeName = null;
+            externalCharset = null;
             tokenHandler.eof();
             for (int i = 0; i < characterHandlers.length; i++) {
                 CharacterHandler ch = characterHandlers[i];
@@ -4230,5 +4234,14 @@ public final class Tokenizer implements Locator {
      */
     public void setMappingLangToXmlLang(boolean mappingLangToXmlLang) {
         this.mappingLangToXmlLang = mappingLangToXmlLang;
+    }
+
+    /**
+     * Returns the externalCharset.
+     * 
+     * @return the externalCharset
+     */
+    String getExternalCharset() {
+        return externalCharset;
     }
 }
