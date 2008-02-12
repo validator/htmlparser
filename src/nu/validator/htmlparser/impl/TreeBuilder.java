@@ -1794,6 +1794,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     private boolean equalsIgnoreAsciiCase(CharSequence one, CharSequence other) {
+        if (other == null && one == null) {
+            return true;
+        }
         if (other == null || one == null) {
             return false;
         }
@@ -1831,9 +1834,13 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             internalCharset = attributes.getValue("", "charset");
         }
         String externalCharset = tokenizer.getExternalCharset();
-        if (externalCharset != null) {
+        if (internalCharset != null && externalCharset != null) {
             if (!equalsIgnoreAsciiCase(externalCharset, internalCharset)) {
-                err("The internally declared character encoding \u201C" + internalCharset + "\u201D does not match the external declaration \u201C" + externalCharset + "\u201D. The external declaration takes precedence.");
+                err("The internally declared character encoding \u201C"
+                        + internalCharset
+                        + "\u201D does not match the external declaration \u201C"
+                        + externalCharset
+                        + "\u201D. The external declaration takes precedence.");
             }
         }
     }
