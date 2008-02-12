@@ -1486,7 +1486,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         appendVoidElementToCurrentMayFoster(name, attributes);
                         return;
                     } else if ("meta" == name) {
-                        warnIfInconsistentCharset(attributes);
+                        errIfInconsistentCharset(attributes);
                         appendVoidElementToCurrentMayFoster(name, attributes);
                         return;
                     } else if ("style" == name) {
@@ -1735,7 +1735,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         return;
                     } else if ("meta" == name) {
                         err("\u201Cmeta\u201D element outside \u201Chead\u201D.");
-                        warnIfInconsistentCharset(attributes);
+                        errIfInconsistentCharset(attributes);
                         if (!nonConformingAndStreaming) {
                             pushHeadPointerOntoStack();
                         }
@@ -1816,7 +1816,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         return true;
     }
     
-    private void warnIfInconsistentCharset(Attributes attributes) throws SAXException {
+    private void errIfInconsistentCharset(Attributes attributes) throws SAXException {
         String content = attributes.getValue("", "content");
         String internalCharset = null;
         if (content != null) {
@@ -1833,7 +1833,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         String externalCharset = tokenizer.getExternalCharset();
         if (externalCharset != null) {
             if (!equalsIgnoreAsciiCase(externalCharset, internalCharset)) {
-                warn("The internally declared character encoding \u201C" + internalCharset + "\u201D does not match the external declaration \u201C" + externalCharset + "\u201D. The external declaration takes precedence.");
+                err("The internally declared character encoding \u201C" + internalCharset + "\u201D does not match the external declaration \u201C" + externalCharset + "\u201D. The external declaration takes precedence.");
             }
         }
     }
