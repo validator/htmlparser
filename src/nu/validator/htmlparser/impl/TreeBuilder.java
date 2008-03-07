@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
  * Copyright (c) 2007-2008 Mozilla Foundation
- * Portions of comments Copyright 2004-2007 Apple Computer, Inc., Mozilla 
+ * Portions of comments Copyright 2004-2008 Apple Computer, Inc., Mozilla 
  * Foundation, and Opera Software ASA.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
@@ -2911,7 +2911,14 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 detachFromParentAndAppendToNewParent(lastNode.node, node.node);
                 lastNode = node;
             }
-            detachFromParentAndAppendToNewParent(lastNode.node, commonAncestor.node);
+            if (commonAncestor.fosterParenting) {
+                if (conformingAndStreaming) {
+                    fatal();
+                }
+                insertIntoFosterParent(lastNode.node);
+            } else {
+                detachFromParentAndAppendToNewParent(lastNode.node, commonAncestor.node);
+            }
             T clone = shallowClone(formattingElt.node);
             StackNode<T> formattingClone = new StackNode<T>(formattingElt.name, clone, formattingElt.scoping, formattingElt.special, formattingElt.fosterParenting);
             appendChildrenToNewParent(furthestBlock.node, clone);
