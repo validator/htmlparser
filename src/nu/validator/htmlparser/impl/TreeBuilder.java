@@ -1163,6 +1163,14 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         }
                         resetTheInsertionMode();
                         continue;
+                    } else if (("script" == name || "style" == name) && !isTainted()) {
+                        // XXX need to manage much more stuff here if supporting
+                        // document.write()
+                        appendToCurrentNodeAndPushElement(name, attributes);
+                        cdataOrRcdataTimesToPop = 1;
+                        tokenizer.setContentModelFlag(ContentModelFlag.CDATA,
+                                name);
+                        return;
                     } else if ("input" == name && !isTainted() && equalsIgnoreAsciiCase("hidden", attributes.getValue("", "type"))) {
                         appendVoidElementToCurrent(name, attributes, formPointer);
                         return;
@@ -1454,26 +1462,28 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     } else if ("meta" == name || "link" == name) {
                         // Fall through to IN_HEAD_NOSCRIPT
                     } else if ("title" == name) {
-                        appendToCurrentNodeAndPushElement(name, attributes);
+                        appendToCurrentNodeAndPushElementMayFoster(name,
+                                attributes);
                         cdataOrRcdataTimesToPop = 1;
                         tokenizer.setContentModelFlag(ContentModelFlag.RCDATA,
                                 name);
                         return;
-                    } else if ("style" == name
-                            || ("noscript" == name && scriptingEnabled)) {
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        cdataOrRcdataTimesToPop = 1;
-                        tokenizer.setContentModelFlag(ContentModelFlag.CDATA,
-                                name);
+                    } else if ("noscript" == name) {
+                        if (scriptingEnabled) {
+                            appendToCurrentNodeAndPushElement(name, attributes);
+                            cdataOrRcdataTimesToPop = 1;
+                            tokenizer.setContentModelFlag(
+                                    ContentModelFlag.CDATA, name);
+                        } else {
+                            appendToCurrentNodeAndPushElementMayFoster(name,
+                                    attributes);
+                            mode = InsertionMode.IN_HEAD_NOSCRIPT;
+                        }
                         return;
-                    } else if ("noscript" == name && !scriptingEnabled) {
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        mode = InsertionMode.IN_HEAD_NOSCRIPT;
-                        return;
-                    } else if ("script" == name) {
+                    } else if ("script" == name || "style" == name) {
                         // XXX need to manage much more stuff here if supporting
                         // document.write()
-                        appendToCurrentNodeAndPushElement(name, attributes);
+                        appendToCurrentNodeAndPushElementMayFoster(name, attributes);
                         cdataOrRcdataTimesToPop = 1;
                         tokenizer.setContentModelFlag(ContentModelFlag.CDATA,
                                 name);
