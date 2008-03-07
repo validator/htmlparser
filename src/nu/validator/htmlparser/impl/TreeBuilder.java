@@ -1955,10 +1955,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             err("Stray end tag \u201Ctable\u201D.");
                             return;
                         }
-                        generateImpliedEndTags();
-                        if (currentPtr != eltPos) {
-                            err("There were unclosed elements.");
-                        }
                         while (currentPtr >= eltPos) {
                             pop();
                         }
@@ -2587,7 +2583,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private void clearStackBackTo(int eltPos) throws SAXException {
         if (eltPos != currentPtr) {
-            err("Unclosed elements.");
             while(currentPtr > eltPos) { // > not >= intentional
                 pop();
             }
