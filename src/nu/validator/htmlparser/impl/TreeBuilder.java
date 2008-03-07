@@ -1214,19 +1214,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         addAttributesToElement(stack[0].node, attributes);
                         return;
                     } else if ("base" == name || "link" == name || "meta" == name
-                            || "style" == name || "script" == name) {
+                            || "style" == name || "script" == name || "title" == name) {
                         // Fall through to IN_HEAD
-                    } else if ("title" == name) {
-                        err("\u201Ctitle\u201D element found inside \u201Cbody\u201D.");
-                        if (!nonConformingAndStreaming) {
-                            pushHeadPointerOntoStack();
-                        }
-                        appendToCurrentNodeAndPushElementMayFoster(name, attributes);
-                        cdataOrRcdataTimesToPop = nonConformingAndStreaming ? 1
-                                : 2; // pops head
-                        tokenizer.setContentModelFlag(ContentModelFlag.RCDATA,
-                                name);
-                        return;
                     } else if ("body" == name) {
                         err("\u201Cbody\u201D start tag found but the \u201Cbody\u201D element is already open.");
                         addAttributesToBody(attributes);
