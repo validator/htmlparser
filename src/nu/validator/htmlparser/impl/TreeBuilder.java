@@ -599,6 +599,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     switch (mode) {
                         case INITIAL:
                         case BEFORE_HTML:
+                        case BEFORE_HEAD:
                             /*
                              * Ignore the token.
                              */
@@ -616,7 +617,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                 start = i + 1;
                             }
                             continue;
-                        case BEFORE_HEAD:
                         case IN_HEAD:
                         case IN_HEAD_NOSCRIPT:
                         case AFTER_HEAD:
