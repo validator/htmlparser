@@ -64,6 +64,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
         final boolean fosterParenting;
         
+        boolean tainted = false;
+        
         /**
          * @param name
          * @param node
@@ -602,14 +604,23 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                              */
                             start = i + 1;
                             continue;
+                        case IN_TABLE:
+                        case IN_TABLE_BODY:
+                        case IN_ROW:
+                            if (isTainted()) {
+                                if (start < i) {
+                                    accumulateCharacters(buf, start, i - start);
+                                }
+                                reconstructTheActiveFormattingElements();
+                                appendCharMayFoster(buf, i);
+                                start = i + 1;
+                            }
+                            continue;
                         case BEFORE_HEAD:
                         case IN_HEAD:
                         case IN_HEAD_NOSCRIPT:
                         case AFTER_HEAD:
-                        case IN_TABLE:
                         case IN_COLUMN_GROUP:
-                        case IN_TABLE_BODY:
-                        case IN_ROW:
                         case IN_FRAMESET:
                         case AFTER_FRAMESET:
                             /*
@@ -3010,7 +3021,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private void insertIntoFosterParent(T child) throws SAXException {
         int eltPos = findLastOrRoot("table");
-        T elt = stack[eltPos].node;
+        StackNode<T> node = stack[eltPos];
+        node.tainted = true;
+        T elt = node.node;
         if (eltPos == 0) {
             detachFromParentAndAppendToNewParent(child, elt);
             return;
@@ -3049,7 +3062,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 return;
             } else {
                 int eltPos = findLastOrRoot("table");
-                T elt = stack[eltPos].node;
+                StackNode<T> node = stack[eltPos];
+                node.tainted = true;
+                T elt = node.node;
                 if (eltPos == 0) {
                     appendCharacters(elt, buf, i, 1);
                     return;
@@ -3064,6 +3079,12 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         } else {
             accumulateCharacters(buf, i, 1);
         }
+    }
+    
+    private boolean isTainted() {
+        int eltPos = findLastOrRoot("table");
+        StackNode<T> node = stack[eltPos];
+        return node.tainted;
     }
 
     private void appendHtmlElementToDocumentAndPush(Attributes attributes) throws SAXException {
