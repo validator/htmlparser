@@ -1163,6 +1163,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         }
                         resetTheInsertionMode();
                         continue;
+                    } else if ("input" == name && !isTainted() && equalsIgnoreAsciiCase("hidden", attributes.getValue("", "type"))) {
+                        appendVoidElementToCurrent(name, attributes, formPointer);
+                        return;
                     } else {
                         err("Start tag \u201C" + name
                                 + "\u201D seen in \u201Ctable\u201D.");
@@ -3236,6 +3239,19 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             elementPopped(name, null);
         }
     }
+       
+    private void appendVoidElementToCurrent(String name,
+            Attributes attributes, T form) throws SAXException {
+        flushCharacters();
+        T elt = createElement(name, attributes, formPointer);
+        StackNode<T> current = stack[currentPtr];
+        detachFromParentAndAppendToNewParent(elt, current.node);
+        if (conformingAndStreaming || nonConformingAndStreaming) {
+            elementPushed(name, (T) attributes);
+            elementPopped(name, null);
+        }
+    }
+
     
     private void accumulateCharacters(char[] buf, int start, int length) throws SAXException {
         if (coalescingText) {
