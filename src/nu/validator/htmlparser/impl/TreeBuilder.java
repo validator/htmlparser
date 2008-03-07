@@ -2092,27 +2092,32 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             || "dir" == name || "listing" == name
                             || "menu" == name) {
                         int eltPos = findLastInScope(name);
-                        if (eltPos != NOT_FOUND_ON_STACK) {
+                        if (eltPos == NOT_FOUND_ON_STACK) {
+                            err("Stray end tag \u201C" + name + "\u201D.");                            
+                        } else {
                             generateImpliedEndTags();
-                        }
-                        if (!isCurrent(name)) {
-                            err("End tag \u201C" + name + "\u201D seen but there were unclosed elements.");
-                        }
-                        while (currentPtr >= eltPos) {
-                            pop();
+                            if (!isCurrent(name)) {
+                                err("End tag \u201C" + name + "\u201D seen but there were unclosed elements.");
+                            }
+                            while (currentPtr >= eltPos) {
+                                pop();
+                            }                            
                         }
                         return;
                     } else if ("form" == name) {
-                        int eltPos = findLastInScope(name);
-                        if (eltPos != NOT_FOUND_ON_STACK) {
-                            generateImpliedEndTags();
-                        }
-                        if (!isCurrent(name)) {
-                            err("End tag \u201Cform\u201D seen but there were unclosed elements.");
-                        } else {
-                            pop();
-                        }
                         formPointer = null;
+                        int eltPos = findLastInScope(name);
+                        if (eltPos == NOT_FOUND_ON_STACK) {
+                            err("Stray end tag \u201C" + name + "\u201D.");                            
+                        } else {
+                            generateImpliedEndTags();
+                            if (!isCurrent(name)) {
+                                err("End tag \u201C" + name + "\u201D seen but there were unclosed elements.");
+                            }
+                            while (currentPtr >= eltPos) {
+                                pop();
+                            }                            
+                        }
                         return;
                     } else if ("p" == name) {
                         if (!isCurrent(name)) {
@@ -2129,27 +2134,35 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         return;
                     } else if ("dd" == name || "dt" == name || "li" == name) {
                         int eltPos = findLastInScope(name);
-                        if (eltPos != NOT_FOUND_ON_STACK) {
+                        if (eltPos == NOT_FOUND_ON_STACK) {
+                            err("Stray end tag \u201C" + name + "\u201D.");                                                        
+                        } else {
                             generateImpliedEndTagsExceptFor(name);
-                        }
-                        if (!isCurrent(name)) {
-                            err("End tag \u201C" + name + "\u201D seen but there were unclosed elements.");
-                        }
-                        while (currentPtr >= eltPos) {
-                            pop();
+                            if (!isCurrent(name)) {
+                                err("End tag \u201C"
+                                        + name
+                                        + "\u201D seen but there were unclosed elements.");
+                            }
+                            while (currentPtr >= eltPos) {
+                                pop();
+                            }
                         }
                         return;
                     } else if ("h1" == name || "h2" == name || "h3" == name
                             || "h4" == name || "h5" == name || "h6" == name) {
                         int eltPos = findLastInScopeHn();
-                        if (eltPos != NOT_FOUND_ON_STACK) {
+                        if (eltPos == NOT_FOUND_ON_STACK) {
+                            err("Stray end tag \u201C" + name + "\u201D.");                            
+                        } else {
                             generateImpliedEndTags();
-                        }
-                        if (!isCurrent(name)) {
-                            err("End tag \u201C" + name + "\u201D seen but there were unclosed elements.");
-                        }
-                        while (currentPtr >= eltPos) {
-                            pop();
+                            if (!isCurrent(name)) {
+                                err("End tag \u201C"
+                                        + name
+                                        + "\u201D seen but there were unclosed elements.");
+                            }
+                            while (currentPtr >= eltPos) {
+                                pop();
+                            }
                         }
                         return;
                     } else if ("a" == name || "b" == name || "big" == name || "em" == name || "font" == name || "i" == name || "nobr" == name || "s" == name || "small" == name || "strike" == name || "strong" == name || "tt" == name || "u" == name) {
@@ -2157,16 +2170,20 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         return;
                     } else if ("button" == name || "marquee" == name || "object" == name) {
                         int eltPos = findLastInScope(name);
-                        if (eltPos != NOT_FOUND_ON_STACK) {
+                        if (eltPos == NOT_FOUND_ON_STACK) {
+                            err("Stray end tag \u201C" + name + "\u201D.");                            
+                        } else {
                             generateImpliedEndTags();
+                            if (!isCurrent(name)) {
+                                err("End tag \u201C"
+                                        + name
+                                        + "\u201D seen but there were unclosed elements.");
+                            }
+                            while (currentPtr >= eltPos) {
+                                pop();
+                            }
+                            clearTheListOfActiveFormattingElementsUpToTheLastMarker();
                         }
-                        if (!isCurrent(name)) {
-                            err("End tag \u201C" + name + "\u201D seen but there were unclosed elements.");
-                        }
-                        while (currentPtr >= eltPos) {
-                            pop();
-                        }
-                        clearTheListOfActiveFormattingElementsUpToTheLastMarker();
                         return;
                     } else if ("br" == name) {
                         err("End tag \u201Cbr\u201D.");
