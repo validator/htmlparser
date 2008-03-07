@@ -1227,11 +1227,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             || "ul" == name || "dl" == name
                             || "fieldset" == name || "address" == name
                             || "menu" == name || "center" == name
-                            || "dir" == name || "listing" == name) {
+                            || "dir" == name) {
                         implicitlyCloseP();
                         appendToCurrentNodeAndPushElementMayFoster(name, attributes);
                         return;
-                    } else if ("pre" == name) {
+                    } else if ("pre" == name || "listing" == name) {
                         implicitlyCloseP();
                         appendToCurrentNodeAndPushElementMayFoster(name, attributes);
                         needToDropLF = true;
