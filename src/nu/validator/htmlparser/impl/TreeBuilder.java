@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
- * Copyright (c) 2007 Mozilla Foundation
+ * Copyright (c) 2007-2008 Mozilla Foundation
  * Portions of comments Copyright 2004-2007 Apple Computer, Inc., Mozilla 
  * Foundation, and Opera Software ASA.
  *
@@ -49,8 +49,8 @@ import org.xml.sax.SAXParseException;
 
 public abstract class TreeBuilder<T> implements TokenHandler {
 
-    private enum Phase {
-        INITIAL, ROOT_ELEMENT, BEFORE_HEAD, IN_HEAD, IN_HEAD_NOSCRIPT, AFTER_HEAD, IN_BODY, IN_TABLE, IN_CAPTION, IN_COLUMN_GROUP, IN_TABLE_BODY, IN_ROW, IN_CELL, IN_SELECT, AFTER_BODY, IN_FRAMESET, AFTER_FRAMESET, TRAILING_END
+    private enum InsertionMode {
+        INITIAL, BEFORE_HTML, BEFORE_HEAD, IN_HEAD, IN_HEAD_NOSCRIPT, AFTER_HEAD, IN_BODY, IN_TABLE, IN_CAPTION, IN_COLUMN_GROUP, IN_TABLE_BODY, IN_ROW, IN_CELL, IN_SELECT, IN_SELECT_IN_TABLE, AFTER_BODY, IN_FRAMESET, AFTER_FRAMESET, AFTER_AFTER_BODY, AFTER_AFTER_FRAMESET
     }
 
     private class StackNode<S> {
@@ -181,7 +181,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     
     private final boolean coalescingText;   
     
-    private Phase phase = Phase.INITIAL;
+    private InsertionMode mode = InsertionMode.INITIAL;
 
     protected Tokenizer tokenizer;
 
@@ -200,8 +200,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     private boolean wantingComments;
 
     private String context;
-    
-    private Phase previousPhaseBeforeTrailingEnd;
     
     private StackNode<T>[] stack;
     
@@ -293,7 +291,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         wantingComments = wantsComments();
         start(context != null);
         if (context == null) {
-            phase = Phase.INITIAL;
+            mode = InsertionMode.INITIAL;
         } else {
             T elt = createHtmlElementSetAsRoot(tokenizer.newAttributes());
             StackNode<T> node = new StackNode<T>("html", elt);
@@ -315,7 +313,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     public final void doctype(String name, String publicIdentifier,
             String systemIdentifier, boolean correct) throws SAXException {
         needToDropLF = false;
-        switch (phase) {
+        switch (mode) {
             case INITIAL:
                 /*
                  * A DOCTYPE token If the DOCTYPE token's name does not
@@ -489,12 +487,12 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
                 /*
                  * 
-                 * Then, switch to the root element phase of the tree
+                 * Then, switch to the root element mode of the tree
                  * construction stage.
                  * 
                  * 
                  */
-                phase = Phase.ROOT_ELEMENT;
+                mode = InsertionMode.BEFORE_HTML;
                 return;
             default:
                 /*
@@ -519,10 +517,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     public final void comment(char[] buf, int length) throws SAXException {
         needToDropLF = false;
         if (wantingComments) {
-            switch (phase) {
+            switch (mode) {
                 case INITIAL:
-                case ROOT_ELEMENT:
-                case TRAILING_END:
+                case BEFORE_HTML:
+                case AFTER_AFTER_BODY:
+                case AFTER_AFTER_FRAMESET:
                     /*
                      * A comment token Append a Comment node to the Document
                      * object with the data attribute set to the data given in
@@ -575,8 +574,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
 
         // optimize the most common case
-        if (phase == Phase.IN_BODY || phase == Phase.IN_CELL
-                || phase == Phase.IN_CAPTION) {
+        if (mode == InsertionMode.IN_BODY || mode == InsertionMode.IN_CELL
+                || mode == InsertionMode.IN_CAPTION) {
             reconstructTheActiveFormattingElements();
             accumulateCharacters(buf, start, length);
             return;
@@ -595,9 +594,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                      * TABULATION, U+000A LINE FEED (LF), U+000B LINE
                      * TABULATION, U+000C FORM FEED (FF), or U+0020 SPACE
                      */
-                    switch (phase) {
+                    switch (mode) {
                         case INITIAL:
-                        case ROOT_ELEMENT:
+                        case BEFORE_HTML:
                             /*
                              * Ignore the token.
                              */
@@ -650,30 +649,26 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             reconstructTheActiveFormattingElements();
                             /* Append the token's character to the current node. */
                             continue;
-                        case TRAILING_END:
+                        case AFTER_AFTER_BODY:
+                        case AFTER_AFTER_FRAMESET:
                             if (conformingAndStreaming) {
+                                // XXX why? is this a bug?
                                 return;
                             }
-                            if (previousPhaseBeforeTrailingEnd == Phase.AFTER_FRAMESET) {
-                                continue;
-                            } else {
-                                if (start < i) {
-                                    accumulateCharacters(buf, start, i
-                                            - start);
-                                    start = i;
-                                }
-                                /*
-                                 * Reconstruct the active formatting elements,
-                                 * if any.
-                                 */
-                                // XXX bug?
-                                reconstructTheActiveFormattingElements();
-                                /*
-                                 * Append the token's character to the current
-                                 * node.
-                                 */
-                                continue;
+                            if (start < i) {
+                                accumulateCharacters(buf, start, i - start);
+                                start = i;
                             }
+                            /*
+                             * Reconstruct the active formatting elements, if
+                             * any.
+                             */
+                            // XXX bug?
+                            reconstructTheActiveFormattingElements();
+                            /*
+                             * Append the token's character to the current node.
+                             */
+                            continue;
                     }
                 default:
                     /*
@@ -681,7 +676,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                      * CHARACTER TABULATION, U+000A LINE FEED (LF), U+000B LINE
                      * TABULATION, U+000C FORM FEED (FF), or U+0020 SPACE
                      */
-                    switch (phase) {
+                    switch (mode) {
                         case INITIAL:
                             /*
                              * Parse error.
@@ -696,10 +691,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             documentModeInternal(DocumentMode.QUIRKS_MODE, null, null,
                                     false);
                             /*
-                             * Then, switch to the root element phase of the
+                             * Then, switch to the root element mode of the
                              * tree construction stage
                              */
-                            phase = Phase.ROOT_ELEMENT;
+                            mode = InsertionMode.BEFORE_HTML;
                             /*
                              * and reprocess the current token.
                              * 
@@ -707,15 +702,15 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                              */
                             i--;
                             continue;
-                        case ROOT_ELEMENT:
+                        case BEFORE_HTML:
                             /*
                              * Create an HTMLElement node with the tag name
                              * html, in the HTML namespace. Append it to the
                              * Document object.
                              */
                             appendHtmlElementToDocumentAndPush();
-                            /* Switch to the main phase */
-                            phase = Phase.BEFORE_HEAD;
+                            /* Switch to the main mode */
+                            mode = InsertionMode.BEFORE_HEAD;
                             /*
                              * reprocess the current token.
                              * 
@@ -733,7 +728,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                              * "head" and no attributes had been seen,
                              */
                             appendToCurrentNodeAndPushHeadElement(EmptyAttributes.EMPTY_ATTRIBUTES);
-                            phase = Phase.IN_HEAD;
+                            mode = InsertionMode.IN_HEAD;
                             /*
                              * then reprocess the current token.
                              * 
@@ -754,7 +749,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                              * "head" had been seen,
                              */
                             pop();
-                            phase = Phase.AFTER_HEAD;
+                            mode = InsertionMode.AFTER_HEAD;
                             /*
                              * and reprocess the current token.
                              */
@@ -772,7 +767,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                              */
                             err("Non-space character inside \u201Cnoscript\u201D inside \u201Chead\u201D.");
                             pop();
-                            phase = Phase.IN_HEAD;
+                            mode = InsertionMode.IN_HEAD;
                             /*
                              * and reprocess the current token.
                              */
@@ -789,7 +784,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                              * "body" and no attributes had been seen,
                              */
                             appendToCurrentNodeAndPushBodyElement();
-                            phase = Phase.IN_BODY;
+                            mode = InsertionMode.IN_BODY;
                             /*
                              * and then reprocess the current token.
                              */
@@ -832,7 +827,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                 continue;
                             }
                             pop();
-                            phase = Phase.IN_TABLE;
+                            mode = InsertionMode.IN_TABLE;
                             i--;
                             continue;
                         case IN_SELECT:
@@ -842,7 +837,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             if (conformingAndStreaming) {
                                 fatal();
                             }
-                            phase = Phase.IN_BODY;
+                            mode = InsertionMode.IN_BODY;
                             i--;
                             continue;
                         case IN_FRAMESET:
@@ -875,7 +870,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                              */
                             start = i + 1;
                             continue;
-                        case TRAILING_END:
+                        case AFTER_AFTER_BODY:
                             /*
                              * Parse error.
                              */
@@ -884,10 +879,25 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                 fatal();
                             }
                             /*
-                             * Switch back to the main phase and reprocess the
+                             * Switch back to the main mode and reprocess the
                              * token.
                              */
-                            phase = previousPhaseBeforeTrailingEnd;
+                            mode = InsertionMode.IN_BODY;
+                            i--;
+                            continue;
+                        case AFTER_AFTER_FRAMESET:
+                            /*
+                             * Parse error.
+                             */
+                            err("Non-space character in page trailer.");
+                            if (conformingAndStreaming) {
+                                fatal();
+                            }
+                            /*
+                             * Switch back to the main mode and reprocess the
+                             * token.
+                             */
+                            mode = InsertionMode.IN_FRAMESET;
                             i--;
                             continue;
                     }
@@ -902,7 +912,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         try {
             flushCharacters();
             eofloop: for (;;) {
-                switch (phase) {
+                switch (mode) {
                     case INITIAL:
                         /*
                          * Parse error.
@@ -917,29 +927,29 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         documentModeInternal(DocumentMode.QUIRKS_MODE, null, null,
                                 false);
                         /*
-                         * Then, switch to the root element phase of the tree
+                         * Then, switch to the root element mode of the tree
                          * construction stage
                          */
-                        phase = Phase.ROOT_ELEMENT;
+                        mode = InsertionMode.BEFORE_HTML;
                         /*
                          * and reprocess the current token.
                          */
                         continue;
-                    case ROOT_ELEMENT:
+                    case BEFORE_HTML:
                         /*
                          * Create an HTMLElement node with the tag name html, in
                          * the HTML namespace. Append it to the Document object.
                          */
                         appendHtmlElementToDocumentAndPush();
-                        /* Switch to the main phase */
-                        phase = Phase.BEFORE_HEAD;
+                        /* Switch to the main mode */
+                        mode = InsertionMode.BEFORE_HEAD;
                         /*
                          * reprocess the current token.
                          */
                         continue;
                     case BEFORE_HEAD:
                         appendToCurrentNodeAndPushHeadElement(EmptyAttributes.EMPTY_ATTRIBUTES);
-                        phase = Phase.IN_HEAD;
+                        mode = InsertionMode.IN_HEAD;
                         continue;
                     case IN_HEAD:
                         if (currentPtr > 1) {
@@ -948,18 +958,18 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         while (currentPtr > 0) {
                             pop();
                         }
-                        phase = Phase.AFTER_HEAD;
+                        mode = InsertionMode.AFTER_HEAD;
                         continue;
                     case IN_HEAD_NOSCRIPT:
                         err("End of file seen and there were open elements.");
                         while (currentPtr > 1) {
                             pop();
                         }
-                        phase = Phase.IN_HEAD;
+                        mode = InsertionMode.IN_HEAD;
                         continue;
                     case AFTER_HEAD:
                         appendToCurrentNodeAndPushBodyElement();
-                        phase = Phase.IN_BODY;
+                        mode = InsertionMode.IN_BODY;
                         continue;
                     case IN_BODY:
                     case IN_TABLE:
@@ -1005,7 +1015,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         if (context == null) {
                             bodyClosed(stack[1].node);
                         }
-                        phase = Phase.AFTER_BODY;
+                        mode = InsertionMode.AFTER_BODY;
                         continue;
                     /*
                      * This fails because it doesn't imply HEAD and BODY tags.
@@ -1023,7 +1033,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         if (context == null) {
                             htmlClosed(stack[0].node);
                         }
-                    case TRAILING_END:
+                    case AFTER_AFTER_BODY:
+                    case AFTER_AFTER_FRAMESET:
                         break eofloop;                        
                 }
             }
@@ -1040,19 +1051,19 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             throws SAXException {
         needToDropLF = false;
         for (;;) {
-            switch (phase) {
+            switch (mode) {
                 case IN_TABLE_BODY:
                     if ("tr" == name) {
                         clearStackBackTo(findLastInTableScopeOrRootTbodyTheadTfoot());
                         appendToCurrentNodeAndPushElement(name, attributes);
-                        phase = Phase.IN_ROW;
+                        mode = InsertionMode.IN_ROW;
                         return;
                     } else if ("td" == name || "th" == name) {
                         err("\u201C" + name + "\u201D start tag in table body.");
                         clearStackBackTo(findLastInTableScopeOrRootTbodyTheadTfoot());
                         appendToCurrentNodeAndPushElement("tr",
                                 EmptyAttributes.EMPTY_ATTRIBUTES);
-                        phase = Phase.IN_ROW;
+                        mode = InsertionMode.IN_ROW;
                         continue;
                     } else if ("caption" == name || "col" == name
                             || "colgroup" == name || "tbody" == name
@@ -1064,7 +1075,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         } else {
                             clearStackBackTo(eltPos);
                             pop();
-                            phase = Phase.IN_TABLE;
+                            mode = InsertionMode.IN_TABLE;
                             continue;
                         }
                     } else {
@@ -1074,7 +1085,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     if ("td" == name || "th" == name) {
                         clearStackBackTo(findLastOrRoot("tr"));
                         appendToCurrentNodeAndPushElement(name, attributes);
-                        phase = Phase.IN_CELL;
+                        mode = InsertionMode.IN_CELL;
                         insertMarker();
                         return;
                     } else if ("caption" == name || "col" == name
@@ -1089,7 +1100,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         }
                         clearStackBackTo(eltPos);
                         pop();
-                        phase = Phase.IN_TABLE_BODY;
+                        mode = InsertionMode.IN_TABLE_BODY;
                         continue;
                     } else {
                         // fall through to IN_TABLE
@@ -1099,30 +1110,30 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         clearStackBackTo(findLastOrRoot("table"));
                         insertMarker();
                         appendToCurrentNodeAndPushElement(name, attributes);
-                        phase = Phase.IN_CAPTION;
+                        mode = InsertionMode.IN_CAPTION;
                         return;
                     } else if ("colgroup" == name) {
                         clearStackBackTo(findLastOrRoot("table"));
                         appendToCurrentNodeAndPushElement(name, attributes);
-                        phase = Phase.IN_COLUMN_GROUP;
+                        mode = InsertionMode.IN_COLUMN_GROUP;
                         return;
                     } else if ("col" == name) {
                         clearStackBackTo(findLastOrRoot("table"));
                         appendToCurrentNodeAndPushElement("colgroup",
                                 EmptyAttributes.EMPTY_ATTRIBUTES);
-                        phase = Phase.IN_COLUMN_GROUP;
+                        mode = InsertionMode.IN_COLUMN_GROUP;
                         continue;
                     } else if ("tbody" == name || "tfoot" == name
                             || "thead" == name) {
                         clearStackBackTo(findLastOrRoot("table"));
                         appendToCurrentNodeAndPushElement(name, attributes);
-                        phase = Phase.IN_TABLE_BODY;
+                        mode = InsertionMode.IN_TABLE_BODY;
                         return;
                     } else if ("td" == name || "tr" == name || "th" == name) {
                         clearStackBackTo(findLastOrRoot("table"));
                         appendToCurrentNodeAndPushElement("tbody",
                                 EmptyAttributes.EMPTY_ATTRIBUTES);
-                        phase = Phase.IN_TABLE_BODY;
+                        mode = InsertionMode.IN_TABLE_BODY;
                         continue;
                     } else if ("table" == name) {
                         err("Start tag for \u201Ctable\u201D seen but the previous \u201Ctable\u201D is still open.");
@@ -1165,7 +1176,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             pop();
                         }
                         clearTheListOfActiveFormattingElementsUpToTheLastMarker();
-                        phase = Phase.IN_TABLE;
+                        mode = InsertionMode.IN_TABLE;
                         continue;
                     } else {
                         // fall through to IN_BODY
@@ -1310,8 +1321,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             continue;
                         } else {
                             reconstructTheActiveFormattingElements();
-                            // XXX form
-                            appendToCurrentNodeAndPushElementMayFoster(name, attributes);
+                            appendToCurrentNodeAndPushElementMayFoster(name, attributes, formPointer);
                             insertMarker();
                             return;
                         }
@@ -1330,7 +1340,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     } else if ("table" == name) {
                         implicitlyCloseP();
                         appendToCurrentNodeAndPushElementMayFoster(name, attributes);
-                        phase = Phase.IN_TABLE;
+                        mode = InsertionMode.IN_TABLE;
                         return;
                     } else if ("br" == name || "img" == name || "embed" == name
                             || "param" == name || "area" == name
@@ -1413,9 +1423,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         return;
                     } else if ("select" == name) {
                         reconstructTheActiveFormattingElements();
-                        // XXX form pointer
-                        appendToCurrentNodeAndPushElementMayFoster(name, attributes);
-                        phase = Phase.IN_SELECT;
+                        appendToCurrentNodeAndPushElementMayFoster(name, attributes, formPointer);
+                        mode = InsertionMode.IN_SELECT;
                         return;
                     } else if ("caption" == name || "col" == name
                             || "colgroup" == name || "frame" == name
@@ -1456,7 +1465,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         return;
                     } else if ("noscript" == name && !scriptingEnabled) {
                         appendToCurrentNodeAndPushElement(name, attributes);
-                        phase = Phase.IN_HEAD_NOSCRIPT;
+                        mode = InsertionMode.IN_HEAD_NOSCRIPT;
                         return;
                     } else if ("script" == name) {
                         // XXX need to manage much more stuff here if supporting
@@ -1473,7 +1482,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         return;
                     } else {
                         pop();
-                        phase = Phase.AFTER_HEAD;
+                        mode = InsertionMode.AFTER_HEAD;
                         continue;
                     }
                 case IN_HEAD_NOSCRIPT:
@@ -1504,7 +1513,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     } else {
                         err("Bad start tag in \u201Cnoscript\u201D in \u201Chead\u201D.");
                         pop();
-                        phase = Phase.IN_HEAD;
+                        mode = InsertionMode.IN_HEAD;
                         continue;
                     }
                 case IN_COLUMN_GROUP:
@@ -1522,7 +1531,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             return;
                         }
                         pop();
-                        phase = Phase.IN_TABLE;
+                        mode = InsertionMode.IN_TABLE;
                         continue;
                     }
                 case IN_SELECT:
@@ -1573,7 +1582,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         if (conformingAndStreaming) {
                             fatal();
                         }
-                        phase = Phase.IN_BODY;
+                        mode = InsertionMode.IN_BODY;
                         continue;
                     }
                 case IN_FRAMESET:
@@ -1614,15 +1623,15 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                      */
                     documentModeInternal(DocumentMode.QUIRKS_MODE, null, null, false);
                     /*
-                     * Then, switch to the root element phase of the tree
+                     * Then, switch to the root element mode of the tree
                      * construction stage
                      */
-                    phase = Phase.ROOT_ELEMENT;
+                    mode = InsertionMode.BEFORE_HTML;
                     /*
                      * and reprocess the current token.
                      */
                     continue;
-                case ROOT_ELEMENT:
+                case BEFORE_HTML:
                     // optimize error check and streaming SAX by hoisting
                     // "html" handling here.
                     if ("html" == name) {
@@ -1633,7 +1642,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         } else {
                             appendHtmlElementToDocumentAndPush(attributes);
                         }
-                        phase = Phase.BEFORE_HEAD;
+                        // XXX application cache should fire here
+                        mode = InsertionMode.BEFORE_HEAD;
                         return;
                     } else {
                         /*
@@ -1641,8 +1651,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                          * the HTML namespace. Append it to the Document object.
                          */
                         appendHtmlElementToDocumentAndPush();
-                        /* Switch to the main phase */
-                        phase = Phase.BEFORE_HEAD;
+                        /* Switch to the main mode */
+                        mode = InsertionMode.BEFORE_HEAD;
                         /*
                          * reprocess the current token.
                          * 
@@ -1672,7 +1682,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                          * Change the insertion mode to "in head".
                          * 
                          */
-                        phase = Phase.IN_HEAD;
+                        mode = InsertionMode.IN_HEAD;
                         return;
                     }
 
@@ -1685,7 +1695,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                      * no attributes had been seen,
                      */
                     appendToCurrentNodeAndPushHeadElement(EmptyAttributes.EMPTY_ATTRIBUTES);
-                    phase = Phase.IN_HEAD;
+                    mode = InsertionMode.IN_HEAD;
                     /*
                      * then reprocess the current token.
                      * 
@@ -1707,11 +1717,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         } else {
                             appendToCurrentNodeAndPushBodyElement(attributes);
                         }
-                        phase = Phase.IN_BODY;
+                        mode = InsertionMode.IN_BODY;
                         return;
                     } else if ("frameset" == name) {
                         appendToCurrentNodeAndPushElement(name, attributes);
-                        phase = Phase.IN_FRAMESET;
+                        mode = InsertionMode.IN_FRAMESET;
                         return;
                     } else if ("base" == name) {
                         err("\u201Cbase\u201D element outside \u201Chead\u201D.");
@@ -1779,15 +1789,22 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         return;
                     } else {
                         appendToCurrentNodeAndPushBodyElement();
-                        phase = Phase.IN_BODY;
+                        mode = InsertionMode.IN_BODY;
                         continue;
                     }
-                case TRAILING_END:
+                case AFTER_AFTER_BODY:
                     err("Stray \u201C" + name + "\u201D start tag.");
                     if (conformingAndStreaming) {
                         fatal();
                     }
-                    phase = previousPhaseBeforeTrailingEnd;
+                    mode = InsertionMode.IN_BODY;
+                    continue;
+                case AFTER_AFTER_FRAMESET:
+                    err("Stray \u201C" + name + "\u201D start tag.");
+                    if (conformingAndStreaming) {
+                        fatal();
+                    }
+                    mode = InsertionMode.IN_FRAMESET;
                     continue;
             }
         }
@@ -1857,7 +1874,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
 
         for (;;) {
-            switch (phase) {
+            switch (mode) {
                 case IN_ROW:
                     if ("tr" == name) {
                         int eltPos = findLastOrRoot("tr");
@@ -1868,7 +1885,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         }
                         clearStackBackTo(eltPos);
                         pop();
-                        phase = Phase.IN_TABLE_BODY;
+                        mode = InsertionMode.IN_TABLE_BODY;
                         return;
                     } else if ("table" == name) {
                         int eltPos = findLastOrRoot("tr");
@@ -1879,7 +1896,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         }
                         clearStackBackTo(eltPos);
                         pop();
-                        phase = Phase.IN_TABLE_BODY;
+                        mode = InsertionMode.IN_TABLE_BODY;
                         continue;
                     } else if ("tbody" == name || "thead" == name || "tfoot" == name) {
                         if (findLastInTableScope(name) == NOT_FOUND_ON_STACK) {
@@ -1894,7 +1911,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         }
                         clearStackBackTo(eltPos);
                         pop();
-                        phase = Phase.IN_TABLE_BODY;
+                        mode = InsertionMode.IN_TABLE_BODY;
                         continue;
                     } else if ("body" == name || "caption" == name || "col" == name || "colgroup" == name || "html" == name || "td" == name || "th" == name) {
                         err("Stray end tag \u201C" + name + "\u201D.");                            
@@ -1911,7 +1928,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         }
                         clearStackBackTo(eltPos);
                         pop();
-                        phase = Phase.IN_TABLE;
+                        mode = InsertionMode.IN_TABLE;
                         return;
                     } else if ("table" == name) {
                             int eltPos = findLastInTableScopeOrRootTbodyTheadTfoot();
@@ -1922,7 +1939,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         }
                         clearStackBackTo(eltPos);
                         pop();
-                        phase = Phase.IN_TABLE;
+                        mode = InsertionMode.IN_TABLE;
                         continue;
                     } else if ("body" == name || "caption" == name || "col" == name || "colgroup" == name || "html" == name || "td" == name || "th" == name || "tr" == name) {
                         err("Stray end tag \u201C" + name + "\u201D.");
@@ -1968,7 +1985,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             pop();
                         }
                         clearTheListOfActiveFormattingElementsUpToTheLastMarker();
-                        phase = Phase.IN_TABLE;
+                        mode = InsertionMode.IN_TABLE;
                         return;
                     } else if ("table" == name) {
                         err("\u201Ctable\u201D closed but \u201Ccaption\u201D was still open.");
@@ -1984,7 +2001,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             pop();
                         }
                         clearTheListOfActiveFormattingElementsUpToTheLastMarker();
-                        phase = Phase.IN_TABLE;
+                        mode = InsertionMode.IN_TABLE;
                         continue;
                     } else if ("body" == name || "col" == name || "colgroup" == name || "html" == name || "tbody" == name || "td" == name || "tfoot" == name || "th" == name || "thead" == name || "tr" == name) {
                         err("Stray end tag \u201C" + name + "\u201D.");
@@ -2007,7 +2024,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             pop();
                         }
                         clearTheListOfActiveFormattingElementsUpToTheLastMarker();
-                        phase = Phase.IN_ROW;
+                        mode = InsertionMode.IN_ROW;
                         return;
                     } else if ("table" == name || "tbody" == name || "tfoot" == name || "thead" == name || "tr" == name) {
                         if (findLastInTableScope(name) == NOT_FOUND_ON_STACK) {
@@ -2046,7 +2063,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         if (context == null) {
                             bodyClosed(stack[1].node);
                         }
-                        phase = Phase.AFTER_BODY;
+                        mode = InsertionMode.AFTER_BODY;
                         return;
                     } else if ("html" == name) {
                         if (!isSecondOnStackBody()) {
@@ -2066,7 +2083,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         if (context == null) {
                             bodyClosed(stack[1].node);
                         }
-                        phase = Phase.AFTER_BODY;
+                        mode = InsertionMode.AFTER_BODY;
                         continue;
                     } else if ("div" == name || "blockquote" == name
                             || "ul" == name || "ol" == name || "pre" == name
@@ -2190,7 +2207,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             return;
                         }
                         pop();
-                        phase = Phase.IN_TABLE;
+                        mode = InsertionMode.IN_TABLE;
                         return;                    
                     } else if ("col" == name) {
                         err("Stray end tag \u201Ccol\u201D.");                        
@@ -2202,7 +2219,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             return;
                         }
                         pop();
-                        phase = Phase.IN_TABLE;
+                        mode = InsertionMode.IN_TABLE;
                         continue;                   
                     }
                 case IN_SELECT:
@@ -2246,11 +2263,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             err("Stray end tag \u201Chtml\u201D");
                             return;                            
                         } else {
-                            previousPhaseBeforeTrailingEnd = Phase.AFTER_BODY;
                             if (context == null) {
                                 htmlClosed(stack[0].node);
                             }
-                            phase = Phase.TRAILING_END;
+                            mode = InsertionMode.AFTER_AFTER_BODY;
                             return;
                         }
                     } else {
@@ -2258,7 +2274,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         if (conformingAndStreaming) {
                             fatal();
                         }
-                        phase = Phase.IN_BODY;
+                        mode = InsertionMode.IN_BODY;
                         continue;
                     }
                 case IN_FRAMESET:
@@ -2270,7 +2286,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         }
                         pop();
                         if ((context == null) && !isCurrent("frameset")) {
-                            phase = Phase.AFTER_FRAMESET;                            
+                            mode = InsertionMode.AFTER_FRAMESET;                            
                         }
                         return;
                     } else {
@@ -2279,11 +2295,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     }
                 case AFTER_FRAMESET:
                     if ("html" == name) {
-                        previousPhaseBeforeTrailingEnd = Phase.AFTER_FRAMESET;
                         if (context == null) {
                             htmlClosed(stack[0].node);
                         }
-                        phase = Phase.TRAILING_END;
+                        mode = InsertionMode.AFTER_AFTER_FRAMESET;
                         return;
                     } else {
                         err("Stray end tag \u201C" + name + "\u201D");
@@ -2302,22 +2317,22 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                      */
                     documentModeInternal(DocumentMode.QUIRKS_MODE, null, null, false);
                     /*
-                     * Then, switch to the root element phase of the tree
+                     * Then, switch to the root element mode of the tree
                      * construction stage
                      */
-                    phase = Phase.ROOT_ELEMENT;
+                    mode = InsertionMode.BEFORE_HTML;
                     /*
                      * and reprocess the current token.
                      */
                     continue;
-                case ROOT_ELEMENT:
+                case BEFORE_HTML:
                     /*
                      * Create an HTMLElement node with the tag name html, in the
                      * HTML namespace. Append it to the Document object.
                      */
                     appendHtmlElementToDocumentAndPush();
-                    /* Switch to the main phase */
-                    phase = Phase.BEFORE_HEAD;
+                    /* Switch to the main mode */
+                    mode = InsertionMode.BEFORE_HEAD;
                     /*
                      * reprocess the current token.
                      * 
@@ -2326,7 +2341,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 case BEFORE_HEAD:
                     if ("head" == name || "body" == name || "html" == name || "p" == name || "br" == name) {
                         appendToCurrentNodeAndPushHeadElement(EmptyAttributes.EMPTY_ATTRIBUTES);
-                        phase = Phase.IN_HEAD;
+                        mode = InsertionMode.IN_HEAD;
                         continue;
                     } else {
                         err("Stray end tag \u201C" + name + "\u201D.");
@@ -2335,11 +2350,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 case IN_HEAD:
                     if ("head" == name) {
                         pop();
-                        phase = Phase.AFTER_HEAD;
+                        mode = InsertionMode.AFTER_HEAD;
                         return;
                     } else if ("body" == name || "html" == name || "p" == name || "br" == name) {
                         pop();
-                        phase = Phase.AFTER_HEAD;
+                        mode = InsertionMode.AFTER_HEAD;
                         continue;
                     } else {
                         err("Stray end tag \u201C" + name + "\u201D.");
@@ -2348,12 +2363,12 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 case IN_HEAD_NOSCRIPT:
                     if ("noscript" == name) {
                         pop();
-                        phase = Phase.IN_HEAD;
+                        mode = InsertionMode.IN_HEAD;
                         return;
                     } else if ("p" == name || "br" == name) {
                         err("Stray end tag \u201C" + name + "\u201D.");
                         pop();
-                        phase = Phase.IN_HEAD;
+                        mode = InsertionMode.IN_HEAD;
                         continue;
                     } else {
                         err("Stray end tag \u201C" + name + "\u201D.");
@@ -2361,14 +2376,21 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     }
                 case AFTER_HEAD:
                     appendToCurrentNodeAndPushBodyElement();
-                    phase = Phase.IN_BODY;
+                    mode = InsertionMode.IN_BODY;
                     continue;
-                case TRAILING_END:
+                case AFTER_AFTER_BODY:
                     err("Stray \u201C" + name + "\u201D end tag.");
                     if (conformingAndStreaming) {
                         fatal();
                     }
-                    phase = previousPhaseBeforeTrailingEnd;
+                    mode = InsertionMode.IN_BODY;
+                    continue;
+                case AFTER_AFTER_FRAMESET:
+                    err("Stray \u201C" + name + "\u201D end tag.");
+                    if (conformingAndStreaming) {
+                        fatal();
+                    }
+                    mode = InsertionMode.IN_FRAMESET;
                     continue;
             }
         }
@@ -2530,7 +2552,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             pop();
         }
         clearTheListOfActiveFormattingElementsUpToTheLastMarker();
-        phase = Phase.IN_ROW;
+        mode = InsertionMode.IN_ROW;
         return;
     }
 
@@ -2565,44 +2587,44 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 }
             }
             if ("select" == name) {
-                phase = Phase.IN_SELECT;
+                mode = InsertionMode.IN_SELECT;
                 return;
             } else if ("td" == name || "th" == name) {
-                phase = Phase.IN_CELL;
+                mode = InsertionMode.IN_CELL;
                 return;
             } else if ("tr" == name) {
-                phase = Phase.IN_ROW;
+                mode = InsertionMode.IN_ROW;
                 return;
             } else if ("tbody" == name || "thead" == name || "tfoot" == name) {
-                phase = Phase.IN_TABLE_BODY;
+                mode = InsertionMode.IN_TABLE_BODY;
                 return;
             } else if ("caption" == name) {
-                phase = Phase.IN_CAPTION;
+                mode = InsertionMode.IN_CAPTION;
                 return;
             } else if ("colgroup" == name) {
-                phase = Phase.IN_COLUMN_GROUP;
+                mode = InsertionMode.IN_COLUMN_GROUP;
                 return;
             } else if ("table" == name) {
-                phase = Phase.IN_TABLE;
+                mode = InsertionMode.IN_TABLE;
                 return;
             } else if ("head" == name) {
-                phase = Phase.IN_BODY; // really
+                mode = InsertionMode.IN_BODY; // really
                 return;
             } else if ("body" == name) {
-                phase = Phase.IN_BODY;
+                mode = InsertionMode.IN_BODY;
                 return;
             } else if ("frameset" == name) {
-                phase = Phase.IN_FRAMESET;
+                mode = InsertionMode.IN_FRAMESET;
                 return;
             } else if ("html" == name) {
                 if (headPointer == null) {
-                    phase = Phase.BEFORE_HEAD;                    
+                    mode = InsertionMode.BEFORE_HEAD;                    
                 } else {
-                    phase = Phase.AFTER_HEAD;
+                    mode = InsertionMode.AFTER_HEAD;
                 }
                 return;
             } else if (i == 0) {
-                phase = Phase.IN_BODY;
+                mode = InsertionMode.IN_BODY;
                 return;
             } 
         }
