@@ -645,6 +645,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             /* Append the token's character to the current node. */
                             break loop;
                         case IN_SELECT:
+                        case IN_SELECT_IN_TABLE:
                             break loop;
                         case AFTER_BODY:
                             if (start < i) {
@@ -842,6 +843,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             i--;
                             continue;
                         case IN_SELECT:
+                        case IN_SELECT_IN_TABLE:
                             break loop;
                         case AFTER_BODY:
                             err("Non-space character after body.");
@@ -990,6 +992,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     case IN_ROW:
                     case IN_CELL:
                     case IN_SELECT:
+                    case IN_SELECT_IN_TABLE:
                         /*
                          * Generate implied end tags.
                          */
@@ -1434,8 +1437,21 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         return;
                     } else if ("select" == name) {
                         reconstructTheActiveFormattingElements();
-                        appendToCurrentNodeAndPushElementMayFoster(name, attributes, formPointer);
-                        mode = InsertionMode.IN_SELECT;
+                        appendToCurrentNodeAndPushElementMayFoster(name,
+                                attributes, formPointer);
+                        switch (mode) {
+                            case IN_TABLE:
+                            case IN_CAPTION:
+                            case IN_COLUMN_GROUP:
+                            case IN_TABLE_BODY:
+                            case IN_ROW:
+                            case IN_CELL:
+                                mode = InsertionMode.IN_SELECT_IN_TABLE;
+                                break;
+                            default:
+                                mode = InsertionMode.IN_SELECT;
+                                break;
+                        }
                         return;
                     } else if ("caption" == name || "col" == name
                             || "colgroup" == name || "frame" == name
@@ -1546,6 +1562,16 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         pop();
                         mode = InsertionMode.IN_TABLE;
                         continue;
+                    }
+                case IN_SELECT_IN_TABLE:
+                    if ("caption" == name || "table" == name || "tbody" == name
+                            || "tfoot" == name || "thead" == name
+                            || "tr" == name || "td" == name || "th" == name) {
+                        err("\u201C" + name + "\u201D start tag with \u201Cselect\u201D open.");
+                        endSelect();
+                        continue;
+                    } else {
+                        // fall through to IN_SELECT
                     }
                 case IN_SELECT:
                     if ("html" == name) {
@@ -2248,6 +2274,20 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         mode = InsertionMode.IN_TABLE;
                         continue;                   
                     }
+                case IN_SELECT_IN_TABLE:
+                    if ("caption" == name || "table" == name || "tbody" == name
+                            || "tfoot" == name || "thead" == name
+                            || "tr" == name || "td" == name || "th" == name) {
+                        err("\u201C" + name + "\u201D end tag with \u201Cselect\u201D open.");
+                        if (findLastInTableScope(name) != NOT_FOUND_ON_STACK) {
+                            endSelect();
+                            continue;                            
+                        } else {
+                            return;
+                        }
+                    } else {
+                        // fall through to IN_SELECT
+                    }
                 case IN_SELECT:
                     if ("option" == name) {
                         if (isCurrent("option")) {
@@ -2268,16 +2308,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         }
                         return;                            
                     } else if ("select" == name) {
-                        int eltPos = findLastInTableScope("select");
-                        if (eltPos == NOT_FOUND_ON_STACK) {
-                            assert context != null;
-                            err("Stray end tag \u201Cselect\u201D");
-                            return;                                                        
-                        }
-                        while (currentPtr >= eltPos) {
-                            pop();
-                        }
-                        resetTheInsertionMode();
+                        endSelect();
                         return;
                     } else {
                         err("Stray end tag \u201C" + name + "\u201D");
@@ -2420,6 +2451,22 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     continue;
             }
         }
+    }
+
+    /**
+     * @throws SAXException
+     */
+    private void endSelect() throws SAXException {
+        int eltPos = findLastInTableScope("select");
+        if (eltPos == NOT_FOUND_ON_STACK) {
+            assert context != null;
+            err("Stray end tag \u201Cselect\u201D");
+            return;                                                        
+        }
+        while (currentPtr >= eltPos) {
+            pop();
+        }
+        resetTheInsertionMode();
     }
 
     private int findLastInTableScopeOrRootTbodyTheadTfoot() {
