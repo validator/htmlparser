@@ -87,7 +87,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         StackNode(final String name, final S node) {
             this.name = name;
             this.node = node;
-            this.scoping = ("table" == name || "caption" == name || "td" == name || "th" == name || "button" == name || "marquee" == name || "object" == name);
+            this.scoping = ("table" == name || "caption" == name || "td" == name || "th" == name || "button" == name || "marquee" == name || "object" == name || "applet" == name);
             this.special = ("address" == name || "area" == name || "base" == name || "basefont" == name || "bgsound" == name || "blockquote" == name || "body" == name || "br" == name || "center" == name || "col" == name || "colgroup" == name || "dd" == name || "dir" == name || "div" == name || "dl" == name || "dt" == name || "embed" == name || "fieldset" == name || "form" == name || "frame" == name || "frameset" == name || "h1" == name || "h2" == name || "h3" == name || "h4" == name || "h5" == name || "h6" == name || "head" == name || "hr" == name || "iframe" == name || "image" == name || "img" == name || "input" == name || "isindex" == name || "li" == name || "link" == name || "listing" == name || "menu" == name || "meta" == name || "noembed" == name || "noframes" == name || "noscript" == name || "ol" == name || "optgroup" == name || "option" == name || "p" == name || "param" == name || "plaintext" == name || "pre" == name || "script" == name || "select" == name || "spacer" == name || "style" == name || "tbody" == name || "textarea" == name || "tfoot" == name || "thead" == name || "title" == name || "tr" == name || "ul" == name ||  "wbr" == name);
             this.fosterParenting = ("table" == name || "tbody" == name || "tfoot" == name || "thead" == name || "tr" == name);
         }
@@ -1339,7 +1339,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             insertMarker();
                             return;
                         }
-                    } else if ("object" == name || "marquee" == name) {
+                    } else if ("object" == name || "marquee" == name || "applet" == name) {
                         reconstructTheActiveFormattingElements();
                         appendToCurrentNodeAndPushElementMayFoster(name, attributes);
                         insertMarker();
@@ -2203,7 +2203,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     } else if ("a" == name || "b" == name || "big" == name || "em" == name || "font" == name || "i" == name || "nobr" == name || "s" == name || "small" == name || "strike" == name || "strong" == name || "tt" == name || "u" == name) {
                         adoptionAgencyEndTag(name);
                         return;
-                    } else if ("button" == name || "marquee" == name || "object" == name) {
+                    } else if ("button" == name || "marquee" == name || "object" == name || "applet" == name) {
                         int eltPos = findLastInScope(name);
                         if (eltPos == NOT_FOUND_ON_STACK) {
                             err("Stray end tag \u201C" + name + "\u201D.");                            
