@@ -183,6 +183,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     
     private final boolean coalescingText;   
     
+    private boolean bodyCloseReported = false;
+    
+    private boolean htmlCloseReported = false;
+    
     private InsertionMode mode = InsertionMode.INITIAL;
 
     protected Tokenizer tokenizer;
@@ -954,6 +958,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                          * the HTML namespace. Append it to the Document object.
                          */
                         appendHtmlElementToDocumentAndPush();
+                        // XXX application cache manifest
                         /* Switch to the main mode */
                         mode = InsertionMode.BEFORE_HEAD;
                         /*
@@ -984,77 +989,60 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         appendToCurrentNodeAndPushBodyElement();
                         mode = InsertionMode.IN_BODY;
                         continue;
-                    case IN_BODY:
-                    case IN_TABLE:
-                    case IN_CAPTION:
                     case IN_COLUMN_GROUP:
-                    case IN_TABLE_BODY:
-                    case IN_ROW:
-                    case IN_CELL:
-                    case IN_SELECT:
-                    case IN_SELECT_IN_TABLE:
-                        /*
-                         * Generate implied end tags.
-                         */
-                        generateImpliedEndTags();
-                        /*
-                         * If there are more than two nodes on the stack of open
-                         * elements,
-                         */
-                        if (currentPtr > 1) {
-                            err("End of file seen and there were open elements.");
-                        } else if (currentPtr == 1 && stack[1].name != "body") {
-                            /*
-                             * or if there are two nodes but the second node is
-                             * not a body node, this is a parse error.
-                             */
-                            err("End of file seen and there were open elements.");
+                        if (currentPtr == 0) {
+                            assert context != null;
+                            break eofloop;
+                        } else {
+                            pop();
+                            mode = InsertionMode.IN_TABLE;
+                            continue;
                         }
-                        if (context != null) {
-                            if (currentPtr > 0 && stack[1].name != "body") {
-                                /*
-                                 * Otherwise, if the parser was originally
-                                 * created as part of the HTML fragment parsing
-                                 * algorithm, and there's more than one element
-                                 * in the stack of open elements, and the second
-                                 * node on the stack of open elements is not a
-                                 * body node, then this is a parse error.
-                                 * (fragment case)
-                                 */
+                    case IN_CAPTION:
+                    case IN_CELL:
+                    case IN_BODY:
+                        for (int i = currentPtr; i >= 0; i--) {
+                            String name = stack[i].name;
+                            if (!("dd" == name || "dt" == name || "li" == name || "p" == name || "tbody" == name || "td" == name || "tfoot" == name || "th" == name || "thead" == name || "body" == name || "html" == name)) {
                                 err("End of file seen and there were open elements.");
+                                break;
                             }
                         }
-
-                        /* Stop parsing. */
-                        if (context == null) {
-                            bodyClosed(stack[1].node);
-                        }
-                        mode = InsertionMode.AFTER_BODY;
-                        continue;
-                    /*
-                     * This fails because it doesn't imply HEAD and BODY tags.
-                     * We should probably expand out the insertion modes and
-                     * merge them with phases and then put the three things here
-                     * into each insertion mode instead of trying to factor them
-                     * out so carefully.
-                     * 
-                     */
+                        break eofloop;
+                    case IN_TABLE_BODY:
+                    case IN_ROW:
+                    case IN_TABLE:
+                    case IN_SELECT:
+                    case IN_SELECT_IN_TABLE:
                     case IN_FRAMESET:
-                        err("End of file seen and there were open elements.");
+                        if (currentPtr > 0) {
+                            err("End of file seen and there were open elements.");
+                        }
                         break eofloop;                        
                     case AFTER_BODY:
                     case AFTER_FRAMESET:
-                        if (context == null) {
-                            htmlClosed(stack[0].node);
-                        }
                     case AFTER_AFTER_BODY:
                     case AFTER_AFTER_FRAMESET:
                         break eofloop;                        
                 }
             }
-        } finally {
-            // XXX close elts for SAX
+            while (currentPtr > 1) {
+                pop();
+            }
+            if (currentPtr == 1) {
+                if (stack[1].name == "body") {
+                    if (!bodyCloseReported) {
+                        bodyClosed(stack[1].node);
+                    }
+                } else {
+                    pop();
+                }
+            }
+            if (context != null && !htmlCloseReported) {
+                bodyClosed(stack[0].node);
+            }
             /* Stop parsing. */
+        } finally {
             stack = null;
             listOfActiveFormattingElements = null;
             end();
@@ -2096,6 +2084,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             }
                         }
                         if (context == null) {
+                            bodyCloseReported = true;
                             bodyClosed(stack[1].node);
                         }
                         mode = InsertionMode.AFTER_BODY;
@@ -2116,6 +2105,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             }
                         }
                         if (context == null) {
+                            bodyCloseReported = true;
                             bodyClosed(stack[1].node);
                         }
                         mode = InsertionMode.AFTER_BODY;
@@ -2321,6 +2311,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             return;                            
                         } else {
                             if (context == null) {
+                                htmlCloseReported = true;
                                 htmlClosed(stack[0].node);
                             }
                             mode = InsertionMode.AFTER_AFTER_BODY;
@@ -2353,6 +2344,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 case AFTER_FRAMESET:
                     if ("html" == name) {
                         if (context == null) {
+                            htmlCloseReported = true;
                             htmlClosed(stack[0].node);
                         }
                         mode = InsertionMode.AFTER_AFTER_FRAMESET;
