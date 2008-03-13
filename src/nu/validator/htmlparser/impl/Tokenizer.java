@@ -1279,9 +1279,9 @@ public final class Tokenizer implements Locator {
                             && !escapeFlag)) {
                 /*
                  * U+0026 AMPERSAND (&) When the content model flag is set to
-                 * one of the PCDATA or RCDATA states: switch to the entity data
-                 * state. Otherwise: treat it as per the "anything else" entry
-                 * below.
+                 * one of the PCDATA or RCDATA states and the escape flag is
+                 * false: switch to the entity data state. Otherwise: treat it
+                 * as per the "anything else" entry below.
                  */
                 flushChars();
                 entityDataState();
@@ -1379,9 +1379,9 @@ public final class Tokenizer implements Locator {
          * (This cannot happen if the content model flag is set to the CDATA
          * state.)
          * 
-         * Attempt to consume an entity.
+         * Attempt to consume an entity, with no additional allowed character.
          */
-        consumeEntity(false);
+        consumeEntity(false, '\u0000');
         /*
          * If nothing is returned, emit a U+0026 AMPERSAND character token.
          * 
@@ -1896,6 +1896,18 @@ public final class Tokenizer implements Locator {
                      */
                     unread(c);
                     return false;
+                case '\"':
+                case '\'':
+                case '=':
+                    /*
+                     * U+0022 QUOTATION MARK (") U+0027 APOSTROPHE (') U+003D
+                     * EQUALS SIGN (=) Parse error.
+                     */
+                    err("Saw \u201C" + c
+                            + "\u201D when expecting an attribute name.");
+                    /*
+                     * Treat it as per the "anything else" entry below.
+                     */
                 default:
                     /*
                      * Anything else Start a new attribute in the current tag
@@ -2066,6 +2078,16 @@ public final class Tokenizer implements Locator {
                     /* Reconsume the EOF character in the data state. */
                     unread(c);
                     return false;
+                case '\"':
+                case '\'':
+                    /*
+                     * U+0022 QUOTATION MARK (") U+0027 APOSTROPHE (') Parse
+                     * error.
+                     */
+                    err("Quote \u201C" + c + "\u201D in attribute name.");
+                    /*
+                     * Treat it as per the "anything else" entry below.
+                     */
                 default:
                     if (c >= 'A' && c <= 'Z') {
                         /*
@@ -2370,6 +2392,14 @@ public final class Tokenizer implements Locator {
                      */
                     unread(c);
                     return false;
+                case '=':
+                    /*
+                     * U+003D EQUALS SIGN (=) Parse error.
+                     */
+                    err("\u201C=\u201D in an unquoted attribute value.");
+                    /*
+                     * Treat it as per the "anything else" entry below.
+                     */
                 default:
                     if (html4
                             && !((c >= 'a' && c <= 'z')
@@ -2408,18 +2438,18 @@ public final class Tokenizer implements Locator {
             switch (c) {
                 case '"':
                     /*
-                     * U+0022 QUOTATION MARK (") Switch to the before attribute
-                     * name state.
+                     * U+0022 QUOTATION MARK (") Switch to the after attribute value (quoted) state.
                      */
                     addAttributeWithValue();
                     inContent = false;
-                    return true;
+                    return afterAttributeValueQuotedState();
                 case '&':
                     /*
                      * U+0026 AMPERSAND (&) Switch to the entity in attribute
-                     * value state.
+                     * value state, with the additional allowed character being
+                     * U+0022 QUOTATION MARK (").
                      */
-                    entityInAttributeValueState();
+                    entityInAttributeValueState('\"');
                     continue;
                 case '\u0000':
                     /* EOF Parse error. */
@@ -2446,7 +2476,7 @@ public final class Tokenizer implements Locator {
             }
         }
     }
-
+    
     /**
      * Attribute value (single-quoted) state
      * 
@@ -2464,18 +2494,19 @@ public final class Tokenizer implements Locator {
             switch (c) {
                 case '\'':
                     /*
-                     * U+0027 APOSTROPHE (') Switch to the before attribute name
-                     * state.
+                     * U+0027 APOSTROPHE (') Switch to the after attribute value
+                     * (quoted) state.
                      */
                     addAttributeWithValue();
                     inContent = false;
-                    return true;
+                    return afterAttributeValueQuotedState();
                 case '&':
                     /*
                      * U+0026 AMPERSAND (&) Switch to the entity in attribute
-                     * value state.
+                     * value state, with the + additional allowed character
+                     * being U+0027 APOSTROPHE (').
                      */
-                    entityInAttributeValueState();
+                    entityInAttributeValueState('\'');
                     continue;
                 case '\u0000':
                     /* EOF Parse error. */
@@ -2534,9 +2565,9 @@ public final class Tokenizer implements Locator {
                 case '&':
                     /*
                      * U+0026 AMPERSAND (&) Switch to the entity in attribute
-                     * value state.
+                     * value state, with no + additional allowed character.
                      */
-                    entityInAttributeValueState();
+                    entityInAttributeValueState('\u0000');
                     continue;
                 case '>':
                     /* U+003E GREATER-THAN SIGN (>) Emit the current tag token. */
@@ -2562,7 +2593,22 @@ public final class Tokenizer implements Locator {
                     inContent = false;
                     return false;
                 case '<':
-                    warn("\u201C<\u201D in an unquoted attribute value. This does not end the tag.");
+                case '\"':
+                case '\'':
+                case '=':
+                    if (c == '<') {
+                        warn("\u201C<\u201D in an unquoted attribute value. This does not end the tag.");
+                    } else {
+                        /*
+                         * U+0022 QUOTATION MARK (") U+0027 APOSTROPHE (')
+                         * U+003D EQUALS SIGN (=) Parse error.
+                         */
+                        err("\u201C" + c
+                                + "\u201D in an unquoted attribute value.");
+                        /*
+                         * Treat it as per the "anything else" entry below.
+                         */
+                    }
                     // fall through
                 default:
                     if (html4
@@ -2587,15 +2633,16 @@ public final class Tokenizer implements Locator {
 
     /**
      * Entity in attribute value state
+     * @param c 
      * 
      * @throws IOException
      * @throws SAXException
      */
-    private void entityInAttributeValueState() throws SAXException, IOException {
+    private void entityInAttributeValueState(char additional) throws SAXException, IOException {
         /*
          * Attempt to consume an entity.
          */
-        consumeEntity(true);
+        consumeEntity(true, additional);
         /*
          * If nothing is returned, append a U+0026 AMPERSAND character to the
          * current attribute's value.
@@ -2611,6 +2658,63 @@ public final class Tokenizer implements Locator {
         return;
     }
 
+    /**
+     * After attribute value (quoted) state
+     * 
+     * @throws IOException
+     * @throws SAXException
+     */
+    private boolean afterAttributeValueQuotedState() throws SAXException,
+            IOException {
+        for (;;) {
+            /*
+             * Consume the next input character:
+             */
+            char c = read();
+            switch (c) {
+                case ' ':
+                case '\t':
+                case '\n':
+                case '\u000B':
+                case '\u000C':
+                    /*
+                     * U+0009 CHARACTER TABULATION U+000A LINE FEED (LF) U+000B
+                     * LINE TABULATION U+000C FORM FEED (FF) U+0020 SPACE Switch
+                     * to the before attribute name state.
+                     */
+                    return true;
+                case '>':
+                    /* U+003E GREATER-THAN SIGN (>) Emit the current tag token. */
+                    emitCurrentTagToken();
+                    /*
+                     * Switch to the data state.
+                     */
+                    return false;
+                case '/':
+                    /*
+                     * U+002F SOLIDUS (/) Parse error unless this is a permitted
+                     * slash.
+                     */
+                    parseErrorUnlessPermittedSlash();
+                    /*
+                     * Switch to the before attribute name state.
+                     */
+                    return true;
+                default:
+                    /*
+                     * Anything else Parse error.
+                     */
+                    err("No space between attributes.");
+                    /*
+                     * Reconsume the character in the before attribute name
+                     * state.
+                     */
+                    unread(c);
+                    return true;
+            }
+        }
+    }
+    
     /**
      * Bogus comment state
      * 
@@ -3042,10 +3146,11 @@ public final class Tokenizer implements Locator {
                      */
                     err("Nameless doctype.");
                     /*
-                     * Create a new DOCTYPE token. Set its correctness flag to
-                     * incorrect. Emit the token.
+                     * Create a new DOCTYPE token. Set its force-quirks flag to
+                     * on. Emit the token.
                      */
-                    tokenHandler.doctype("", null, null, false);
+                    tokenHandler.doctype("", null,
+                    null, true);
                     /*
                      * Switch to the data state.
                      */
@@ -3054,10 +3159,11 @@ public final class Tokenizer implements Locator {
                     /* EOF Parse error. */
                     err("End of file inside doctype.");
                     /*
-                     * Create a new DOCTYPE token. Set its correctness flag to
-                     * incorrect. Emit the token.
+                     * Create a new DOCTYPE token. Set its force-quirks flag to
+                     * on. Emit the token.
                      */
-                    tokenHandler.doctype("", null, null, false);
+                    tokenHandler.doctype("", null,
+                    null, true);
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -3110,7 +3216,8 @@ public final class Tokenizer implements Locator {
                      * U+003E GREATER-THAN SIGN (>) Emit the current DOCTYPE
                      * token.
                      */
-                    tokenHandler.doctype(strBufToString(), null, null, true);
+                    tokenHandler.doctype(strBufToString(), null,
+                    null, false);
                     /*
                      * Switch to the data state.
                      */
@@ -3119,10 +3226,11 @@ public final class Tokenizer implements Locator {
                     /* EOF Parse error. */
                     err("End of file inside doctype.");
                     /*
-                     * Set the DOCTYPE token's correctness flag to incorrect.
+                     * Set the DOCTYPE token's force-quirks flag to on.
                      * Emit that DOCTYPE token.
                      */
-                    tokenHandler.doctype(strBufToString(), null, null, false);
+                    tokenHandler.doctype(strBufToString(), null,
+                    null, true);
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -3171,7 +3279,8 @@ public final class Tokenizer implements Locator {
                      * U+003E GREATER-THAN SIGN (>) Emit the current DOCTYPE
                      * token.
                      */
-                    tokenHandler.doctype(doctypeName, null, null, true);
+                    tokenHandler.doctype(doctypeName, null,
+                    null, false);
                     /*
                      * Switch to the data state.
                      */
@@ -3180,10 +3289,11 @@ public final class Tokenizer implements Locator {
                     /* EOF Parse error. */
                     err("End of file inside doctype.");
                     /*
-                     * Set the DOCTYPE token's correctness flag to incorrect.
+                     * Set the DOCTYPE token's force-quirks flag to on.
                      * Emit that DOCTYPE token.
                      */
-                    tokenHandler.doctype(doctypeName, null, null, false);
+                    tokenHandler.doctype(doctypeName, null,
+                    null, true);
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -3205,7 +3315,7 @@ public final class Tokenizer implements Locator {
                         if (folded != UBLIC[i]) {
                             err("Bogus doctype.");
                             unread(c);
-                            bogusDoctypeState();
+                            bogusDoctypeState(true);
                             return;
                         }
                     }
@@ -3228,7 +3338,7 @@ public final class Tokenizer implements Locator {
                         if (folded != YSTEM[i]) {
                             err("Bogus doctype.");
                             unread(c);
-                            bogusDoctypeState();
+                            bogusDoctypeState(true);
                             return;
                         }
                     }
@@ -3236,13 +3346,14 @@ public final class Tokenizer implements Locator {
                     return;
                 default:
                     /*
-                     * Otherwise, this is the parse error.
+                     * Otherwise, this is the parse error. Set the DOCTYPE
+                     * token's force-quirks flag to on.
                      */
                     err("Bogus doctype.");
                     /*
                      * Switch to the bogus DOCTYPE state.
                      */
-                    bogusDoctypeState();
+                    bogusDoctypeState(true);
                     return;
             }
         }
@@ -3301,10 +3412,11 @@ public final class Tokenizer implements Locator {
                     /* U+003E GREATER-THAN SIGN (>) Parse error. */
                     err("Expected a public identifier but the doctype ended.");
                     /*
-                     * Set the DOCTYPE token's correctness flag to incorrect.
+                     * Set the DOCTYPE token's force-quirks flag to on.
                      * Emit that DOCTYPE token.
                      */
-                    tokenHandler.doctype(doctypeName, null, null, false);
+                    tokenHandler.doctype(doctypeName, null,
+                    null, true);
                     /*
                      * Switch to the data state.
                      */
@@ -3313,22 +3425,26 @@ public final class Tokenizer implements Locator {
                     /* EOF Parse error. */
                     err("End of file inside a doctype.");
                     /*
-                     * Set the DOCTYPE token's correctness flag to incorrect.
+                     * Set the DOCTYPE token's force-quirks flag to on.
                      * Emit that DOCTYPE token.
                      */
-                    tokenHandler.doctype(doctypeName, null, null, false);
+                    tokenHandler.doctype(doctypeName, null,
+                    null, true);
                     /*
                      * Reconsume the EOF character in the data state.
                      */
                     unread(c);
                     return;
                 default:
-                    /* Anything else Parse error. */
+                    /*
+                     * Anything else Parse error. Set the DOCTYPE token's
+                     * force-quirks flag to on.
+                     */
                     err("Bogus doctype.");
                     /*
                      * Switch to the bogus DOCTYPE state.
                      */
-                    bogusDoctypeState();
+                    bogusDoctypeState(true);
                     return;
             }
         }
@@ -3356,15 +3472,32 @@ public final class Tokenizer implements Locator {
                     publicIdentifier = longStrBufToString();
                     afterDoctypePublicIdentifierState();
                     return;
+                case '>':
+                    /*
+                     * U+003E GREATER-THAN SIGN (>) Parse error.
+                     */
+                    err("\u201C>\u201D in public identifier.");
+                    /*
+                     * Set the DOCTYPE token's force-quirks flag to on. Emit
+                     * that DOCTYPE token.
+                     */
+                    tokenHandler.doctype(doctypeName, longStrBufToString(),
+                    null, true);
+
+                    /*
+                     * Switch to the data state.
+                     * 
+                     */
+                    return;
                 case '\u0000':
                     /* EOF Parse error. */
                     err("End of file inside public identifier.");
                     /*
-                     * Set the DOCTYPE token's correctness flag to incorrect.
-                     * Emit that DOCTYPE token.
+                     * Set the DOCTYPE token's force-quirks flag to on. Emit
+                     * that DOCTYPE token.
                      */
                     tokenHandler.doctype(doctypeName, longStrBufToString(),
-                            null, false);
+                    null, true);
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -3407,15 +3540,32 @@ public final class Tokenizer implements Locator {
                     publicIdentifier = longStrBufToString();
                     afterDoctypePublicIdentifierState();
                     return;
+                case '>':
+                    /*
+                     * U+003E GREATER-THAN SIGN (>) Parse error.
+                     */
+                    err("\u201C>\u201D in public identifier.");
+                    /*
+                     * Set the DOCTYPE token's force-quirks flag to on. Emit
+                     * that DOCTYPE token.
+                     */
+                    tokenHandler.doctype(doctypeName, longStrBufToString(),
+                    null, true);
+
+                    /*
+                     * Switch to the data state.
+                     * 
+                     */
+                    return;
                 case '\u0000':
                     /* EOF Parse error. */
                     err("End of file inside public identifier.");
                     /*
-                     * Set the DOCTYPE token's correctness flag to incorrect.
+                     * Set the DOCTYPE token's force-quirks flag to on.
                      * Emit that DOCTYPE token.
                      */
                     tokenHandler.doctype(doctypeName, longStrBufToString(),
-                            null, false);
+                    null, true);
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -3491,8 +3641,8 @@ public final class Tokenizer implements Locator {
                      * U+003E GREATER-THAN SIGN (>) Emit the current DOCTYPE
                      * token.
                      */
-                    tokenHandler.doctype(doctypeName, publicIdentifier, null,
-                            true);
+                    tokenHandler.doctype(doctypeName, publicIdentifier,
+                    null, false);
                     /*
                      * Switch to the data state.
                      */
@@ -3501,11 +3651,11 @@ public final class Tokenizer implements Locator {
                     /* EOF Parse error. */
                     err("End of file inside doctype.");
                     /*
-                     * Set the DOCTYPE token's correctness flag to incorrect.
+                     * Set the DOCTYPE token's force-quirks flag to on.
                      * Emit that DOCTYPE token.
                      */
-                    tokenHandler.doctype(doctypeName, publicIdentifier, null,
-                            false);
+                    tokenHandler.doctype(doctypeName, publicIdentifier,
+                    null, true);
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -3515,9 +3665,10 @@ public final class Tokenizer implements Locator {
                     /* Anything else Parse error. */
                     err("Bogus doctype.");
                     /*
-                     * Switch to the bogus DOCTYPE state.
+                     * Set the DOCTYPE token's force-quirks flag to on. Switch
+                     * to the bogus DOCTYPE state.
                      */
-                    bogusDoctypeState();
+                    bogusDoctypeState(true);
                     return;
             }
         }
@@ -3576,10 +3727,11 @@ public final class Tokenizer implements Locator {
                     /* U+003E GREATER-THAN SIGN (>) Parse error. */
                     err("Expected a system identifier but the doctype ended.");
                     /*
-                     * Set the DOCTYPE token's correctness flag to incorrect.
+                     * Set the DOCTYPE token's force-quirks flag to on.
                      * Emit that DOCTYPE token.
                      */
-                    tokenHandler.doctype(doctypeName, null, null, false);
+                    tokenHandler.doctype(doctypeName, null,
+                    null, true);
                     /*
                      * Switch to the data state.
                      */
@@ -3588,10 +3740,11 @@ public final class Tokenizer implements Locator {
                     /* EOF Parse error. */
                     err("End of file inside a doctype.");
                     /*
-                     * Set the DOCTYPE token's correctness flag to incorrect.
+                     * Set the DOCTYPE token's force-quirks flag to on.
                      * Emit that DOCTYPE token.
                      */
-                    tokenHandler.doctype(doctypeName, null, null, false);
+                    tokenHandler.doctype(doctypeName, null,
+                    null, true);
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -3601,9 +3754,10 @@ public final class Tokenizer implements Locator {
                     /* Anything else Parse error. */
                     err("Bogus doctype.");
                     /*
-                     * Switch to the bogus DOCTYPE state.
+                     * Set the DOCTYPE token's force-quirks flag to on. Switch
+                     * to the bogus DOCTYPE state.
                      */
-                    bogusDoctypeState();
+                    bogusDoctypeState(true);
                     return;
             }
         }
@@ -3631,15 +3785,32 @@ public final class Tokenizer implements Locator {
                     systemIdentifier = longStrBufToString();
                     afterDoctypeSystemIdentifierState();
                     return;
+                case '>':
+                    /*
+                     * U+003E GREATER-THAN SIGN (>) Parse error.
+                     */
+                    err("\u201C>\u201D in system identifier.");
+                    /*
+                     * Set the DOCTYPE token's force-quirks flag to on. Emit
+                     * that DOCTYPE token.
+                     */
+                    tokenHandler.doctype(doctypeName, publicIdentifier,
+                    longStrBufToString(), true);
+
+                    /*
+                     * Switch to the data state.
+                     * 
+                     */
+                    return;
                 case '\u0000':
                     /* EOF Parse error. */
                     err("End of file inside system identifier.");
                     /*
-                     * Set the DOCTYPE token's correctness flag to incorrect.
+                     * Set the DOCTYPE token's force-quirks flag to on.
                      * Emit that DOCTYPE token.
                      */
                     tokenHandler.doctype(doctypeName, publicIdentifier,
-                            longStrBufToString(), false);
+                    longStrBufToString(), true);
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -3682,15 +3853,31 @@ public final class Tokenizer implements Locator {
                     systemIdentifier = longStrBufToString();
                     afterDoctypeSystemIdentifierState();
                     return;
+                case '>':
+                    /*
+                     * U+003E GREATER-THAN SIGN (>) Parse error.
+                     */
+                    err("\u201C>\u201D in system identifier.");
+                    /*
+                     * Set the DOCTYPE token's force-quirks flag to on. Emit
+                     * that DOCTYPE token.
+                     */
+                    tokenHandler.doctype(doctypeName, publicIdentifier,
+                            longStrBufToString(), true);
+                    /*
+                     * Switch to the data state.
+                     * 
+                     */
+                    return;
                 case '\u0000':
                     /* EOF Parse error. */
                     err("End of file inside system identifier.");
                     /*
-                     * Set the DOCTYPE token's correctness flag to incorrect.
+                     * Set the DOCTYPE token's force-quirks flag to on.
                      * Emit that DOCTYPE token.
                      */
                     tokenHandler.doctype(doctypeName, publicIdentifier,
-                            longStrBufToString(), false);
+                    longStrBufToString(), true);
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -3742,7 +3929,7 @@ public final class Tokenizer implements Locator {
                      * token.
                      */
                     tokenHandler.doctype(doctypeName, publicIdentifier,
-                            systemIdentifier, true);
+                    systemIdentifier, false);
                     /*
                      * Switch to the data state.
                      */
@@ -3751,11 +3938,11 @@ public final class Tokenizer implements Locator {
                     /* EOF Parse error. */
                     err("End of file inside doctype.");
                     /*
-                     * Set the DOCTYPE token's correctness flag to incorrect.
+                     * Set the DOCTYPE token's force-quirks flag to on.
                      * Emit that DOCTYPE token.
                      */
                     tokenHandler.doctype(doctypeName, publicIdentifier,
-                            systemIdentifier, false);
+                    systemIdentifier, true);
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -3765,9 +3952,10 @@ public final class Tokenizer implements Locator {
                     /* Anything else Parse error. */
                     err("Bogus doctype.");
                     /*
-                     * Switch to the bogus DOCTYPE state.
+                     * Switch to the bogus DOCTYPE state. (This does not set the
+                     * DOCTYPE token's force-quirks flag to on.)
                      */
-                    bogusDoctypeState();
+                    bogusDoctypeState(false);
                     return;
             }
         }
@@ -3775,11 +3963,12 @@ public final class Tokenizer implements Locator {
 
     /**
      * Bogus DOCTYPE state
+     * @param forceQuirks TODO
      * 
      * @throws IOException
      * @throws SAXException
      */
-    private void bogusDoctypeState() throws SAXException, IOException {
+    private void bogusDoctypeState(boolean forceQuirks) throws SAXException, IOException {
         for (;;) {
             /*
              * Consume the next input character:
@@ -3788,11 +3977,10 @@ public final class Tokenizer implements Locator {
             switch (c) {
                 case '>':
                     /*
-                     * U+003E GREATER-THAN SIGN (>) Set the DOCTYPE token's
-                     * correctness flag to incorrect. Emit that DOCTYPE token.
+                     * U+003E GREATER-THAN SIGN (>) Emit that DOCTYPE token.
                      */
                     tokenHandler.doctype(doctypeName, publicIdentifier,
-                            systemIdentifier, false);
+                    systemIdentifier, forceQuirks);
                     /*
                      * Switch to the data state.
                      */
@@ -3801,11 +3989,10 @@ public final class Tokenizer implements Locator {
                     /* EOF Parse error. */
                     err("End of file inside doctype.");
                     /*
-                     * Set the DOCTYPE token's correctness flag to incorrect.
                      * Emit that DOCTYPE token.
                      */
                     tokenHandler.doctype(doctypeName, publicIdentifier,
-                            systemIdentifier, false);
+                    systemIdentifier, forceQuirks);
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -3827,11 +4014,12 @@ public final class Tokenizer implements Locator {
      * and never requires the caller to backtrack. This method takes care of
      * emitting characters or appending to the current attribute value. It also
      * takes care of that in the case when consuming the entity fails.
+     * @param additional TODO
      * 
      * @throws IOException
      * @throws SAXException
      */
-    private void consumeEntity(boolean inAttribute) throws SAXException,
+    private void consumeEntity(boolean inAttribute, char additional) throws SAXException,
             IOException {
         clearStrBuf();
         appendStrBuf('&');
@@ -3855,10 +4043,12 @@ public final class Tokenizer implements Locator {
                 /*
                  * U+0009 CHARACTER TABULATION U+000A LINE FEED (LF) U+000B LINE
                  * TABULATION U+000C FORM FEED (FF) U+0020 SPACE U+003C
-                 * LESS-THAN SIGN U+0026 AMPERSAND EOF Not an entity. No
-                 * characters are consumed, and nothing is returned. (This is
-                 * not an error, either.)
+                 * LESS-THAN SIGN U+0026 AMPERSAND EOF The additional allowed
+                 * character, if there is one Not an entity. No characters are
+                 * consumed, and nothing is returned. (This is not an error,
+                 * either.)
                  */
+                // additional handled under default
                 if (inAttribute) {
                     appendStrBufToLongStrBuf();
                 } else {
@@ -3874,6 +4064,15 @@ public final class Tokenizer implements Locator {
                 consumeNCR(inAttribute);
                 return;
             default:
+                if (c == additional) {
+                    if (inAttribute) {
+                        appendStrBufToLongStrBuf();
+                    } else {
+                        emitStrBuf();
+                    }
+                    unread(c);
+                    return;            
+                }
                 unread(c);
                 int entCol = -1;
                 int lo = 0;
@@ -4004,7 +4203,6 @@ public final class Tokenizer implements Locator {
                      * be parsed as "notin;", resulting in I'm ∉ I tell you.
                      */
                 }
-
         }
     }
 

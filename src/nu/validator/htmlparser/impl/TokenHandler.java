@@ -60,10 +60,10 @@ public interface TokenHandler {
      * @param name the name
      * @param publicIdentifier the public id
      * @param systemIdentifier the system id
-     * @param correct whether the token is correct
+     * @param forceQuirks whether the token is correct
      * @throws SAXException if something went wrong
      */
-    public void doctype(String name, String publicIdentifier, String systemIdentifier, boolean correct) throws SAXException;
+    public void doctype(String name, String publicIdentifier, String systemIdentifier, boolean forceQuirks) throws SAXException;
 
     /**
      * Receive a start tag token.

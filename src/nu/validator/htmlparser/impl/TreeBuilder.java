@@ -317,7 +317,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     public final void doctype(String name, String publicIdentifier,
-            String systemIdentifier, boolean correct) throws SAXException {
+            String systemIdentifier, boolean forceQuirks) throws SAXException {
         needToDropLF = false;
         switch (mode) {
             case INITIAL:
@@ -372,7 +372,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 switch (doctypeExpectation) {
                     case HTML:
                         if (isQuirky(name, publicIdentifierLC,
-                                systemIdentifierLC, correct)) {
+                                systemIdentifierLC, forceQuirks)) {
                             err("Quirky doctype.");
                             documentModeInternal(DocumentMode.QUIRKS_MODE,
                                     publicIdentifier, systemIdentifier, false);
@@ -392,7 +392,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     case HTML401_STRICT:
                         tokenizer.turnOnAdditionalHtml4Errors();
                         if (isQuirky(name, publicIdentifierLC,
-                                systemIdentifierLC, correct)) {
+                                systemIdentifierLC, forceQuirks)) {
                             err("Quirky doctype.");
                             documentModeInternal(DocumentMode.QUIRKS_MODE,
                                     publicIdentifier, systemIdentifier, true);
@@ -416,7 +416,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     case HTML401_TRANSITIONAL:
                         tokenizer.turnOnAdditionalHtml4Errors();
                         if (isQuirky(name, publicIdentifierLC,
-                                systemIdentifierLC, correct)) {
+                                systemIdentifierLC, forceQuirks)) {
                             err("Quirky doctype.");
                             documentModeInternal(DocumentMode.QUIRKS_MODE,
                                     publicIdentifier, systemIdentifier, true);
@@ -444,7 +444,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             tokenizer.turnOnAdditionalHtml4Errors();
                         }
                         if (isQuirky(name, publicIdentifierLC,
-                                systemIdentifierLC, correct)) {
+                                systemIdentifierLC, forceQuirks)) {
                             err("Quirky doctype.");
                             documentModeInternal(DocumentMode.QUIRKS_MODE,
                                     publicIdentifier, systemIdentifier, html4);
@@ -477,7 +477,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         break;
                     case NO_DOCTYPE_ERRORS:
                         if (isQuirky(name, publicIdentifierLC,
-                                systemIdentifierLC, correct)) {
+                                systemIdentifierLC, forceQuirks)) {
                             documentModeInternal(DocumentMode.QUIRKS_MODE,
                                     publicIdentifier, systemIdentifier, false);
                         } else if (isAlmostStandards(publicIdentifierLC,
@@ -2570,8 +2570,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     private boolean isQuirky(String name, String publicIdentifierLC,
-            String systemIdentifierLC, boolean correct) {
-        if (!correct) {
+            String systemIdentifierLC, boolean forceQuirks) {
+        if (forceQuirks) {
             return true;
         }
         if (!"HTML".equalsIgnoreCase(name)) {

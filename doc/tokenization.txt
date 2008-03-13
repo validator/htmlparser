@@ -1,48 +1,46 @@
+   #8.2 Parsing HTML documents Table of contents 8.2.4 Tree construction
 
-   #8.2. Parsing HTML documents Table of contents 8.2.4. Tree
-   construction
-
-   WHATWG 
+   WHATWG
 
 HTML 5
 
-Working Draft — 23 June 2007
+Working Draft — 9 March 2008
 
-   < 8.2. Parsing HTML documents – Table of contents – 8.2.4. Tree
+   < 8.2 Parsing HTML documents – Table of contents – 8.2.4 Tree
    construction >
 
-    8.2.3. Tokenisation
+    8.2.3 Tokenisation
 
-   Implementations must act as if they used the following state machine
-   to tokenise HTML. The state machine must start in the data state. Most
-   states consume a single character, which may have various
-   side-effects, and either switches the state machine to a new state to
-   reconsume the same character, or switches it to a new state (to
-   consume the next character), or repeats the same state (to consume the
-   next character). Some states have more complicated behaviour and can
-   consume several characters before switching to another state.
+   Implementations must act as if they used the following state machine to
+   tokenise HTML. The state machine must start in the data state. Most
+   states consume a single character, which may have various side-effects,
+   and either switches the state machine to a new state to reconsume the
+   same character, or switches it to a new state (to consume the next
+   character), or repeats the same state (to consume the next character).
+   Some states have more complicated behaviour and can consume several
+   characters before switching to another state.
 
    The exact behaviour of certain states depends on a content model flag
    that is set after certain tokens are emitted. The flag has several
    states: PCDATA, RCDATA, CDATA, and PLAINTEXT. Initially it must be in
-   the PCDATA state. In the RCDATA and CDATA states, a further escape
-   flag is used to control the behaviour of the tokeniser. It is either
-   true or false, and initially must be set to the false state.
+   the PCDATA state. In the RCDATA and CDATA states, a further escape flag
+   is used to control the behaviour of the tokeniser. It is either true or
+   false, and initially must be set to the false state.
 
    The output of the tokenisation step is a series of zero or more of the
    following tokens: DOCTYPE, start tag, end tag, comment, character,
    end-of-file. DOCTYPE tokens have a name, a public identifier, a system
-   identifier, and a correctness flag. When a DOCTYPE token is created,
+   identifier, and a force-quirks flag. When a DOCTYPE token is created,
    its name, public identifier, and system identifier must be marked as
-   missing, and the correctness flag must be set to correct (its other
-   state is incorrect). Start and end tag tokens have a tag name and a
-   list of attributes, each of which has a name and a value. Comment and
-   character tokens have data.
+   missing (which is a distinct state from the empty string), and the
+   force-quirks flag must be set to off (its other state is on). Start and
+   end tag tokens have a tag name and a list of attributes, each of which
+   has a name and a value. Comment and character tokens have data.
 
    When a token is emitted, it must immediately be handled by the tree
-   construction stage. The tree construction stage can affect the state
-   of the content model flag, and can insert additional characters into
-   the stream. (For example, the script element can result in scripts
+   construction stage. The tree construction stage can affect the state of
+   the content model flag, and can insert additional characters into the
+   stream. (For example, the script element can result in scripts
    executing and using the dynamic markup insertion APIs to insert
    characters into the stream being tokenised.)
 
@@ -54,15 +52,14 @@ Working Draft — 23 June 2007
 
    A permitted slash is a U+002F SOLIDUS character that is immediately
    followed by a U+003E GREATER-THAN SIGN, if, and only if, the current
-   token being processed is a start tag token whose tag name is one of
-   the following: base, link, meta, hr, br, img, embed, param, area, col,
-   input
+   token being processed is a start tag token whose tag name is the same
+   as the tag name of one of void elements.
 
    Before each step of the tokeniser, the user agent may check to see if
    either one of the scripts in the list of scripts that will execute as
    soon as possible or the first script in the list of scripts that will
-   execute asynchronously, has completed loading. If one has, then it
-   must be executed and removed from its list.
+   execute asynchronously, has completed loading. If one has, then it must
+   be executed and removed from its list.
 
    The tokeniser state machine is as follows:
 
@@ -70,16 +67,17 @@ Working Draft — 23 June 2007
           Consume the next input character:
 
         U+0026 AMPERSAND (&)
-                When the content model flag is set to one of the PCDATA
-                or RCDATA states: switch to the entity data state.
+                When the content model flag is set to one of the PCDATA or
+                RCDATA states and the escape flag is false: switch to the
+                entity data state.
                 Otherwise: treat it as per the "anything else" entry
                 below.
 
         U+002D HYPHEN-MINUS (-)
                 If the content model flag is set to either the RCDATA
                 state or the CDATA state, and the escape flag is false,
-                and there are at least three characters before this one
-                in the input stream, and the last four characters in the
+                and there are at least three characters before this one in
+                the input stream, and the last four characters in the
                 input stream, including this one, are U+003C LESS-THAN
                 SIGN, U+0021 EXCLAMATION MARK, U+002D HYPHEN-MINUS, and
                 U+002D HYPHEN-MINUS ("<!--"), then set the escape flag to
@@ -99,11 +97,11 @@ Working Draft — 23 June 2007
 
         U+003E GREATER-THAN SIGN (>)
                 If the content model flag is set to either the RCDATA
-                state or the CDATA state, and the escape flag is true,
-                and the last three characters in the input stream
-                including this one are U+002D HYPHEN-MINUS, U+002D
-                HYPHEN-MINUS, U+003E GREATER-THAN SIGN ("-->"), set the
-                escape flag to false.
+                state or the CDATA state, and the escape flag is true, and
+                the last three characters in the input stream including
+                this one are U+002D HYPHEN-MINUS, U+002D HYPHEN-MINUS,
+                U+003E GREATER-THAN SIGN ("-->"), set the escape flag to
+                false.
 
                 In any case, emit the input character as a character
                 token. Stay in the data state.
@@ -112,17 +110,17 @@ Working Draft — 23 June 2007
                 Emit an end-of-file token.
 
         Anything else
-                Emit the input character as a character token. Stay in
-                the data state.
+                Emit the input character as a character token. Stay in the
+                data state.
 
    Entity data state
           (This cannot happen if the content model flag is set to the
           CDATA state.)
 
-          Attempt to consume an entity.
+          Attempt to consume an entity, with no additional allowed
+          character.
 
-          If nothing is returned, emit a U+0026 AMPERSAND character
-          token.
+          If nothing is returned, emit a U+0026 AMPERSAND character token.
 
           Otherwise, emit the character token that was returned.
 
@@ -133,10 +131,10 @@ Working Draft — 23 June 2007
 
         If the content model flag is set to the RCDATA or CDATA states
                 Consume the next input character. If it is a U+002F
-                SOLIDUS (/) character, switch to the close tag open
-                state. Otherwise, emit a U+003C LESS-THAN SIGN character
-                token and reconsume the current input character in the
-                data state.
+                SOLIDUS (/) character, switch to the close tag open state.
+                Otherwise, emit a U+003C LESS-THAN SIGN character token
+                and reconsume the current input character in the data
+                state.
 
         If the content model flag is set to the PCDATA state
                 Consume the next input character:
@@ -178,12 +176,12 @@ Working Draft — 23 June 2007
 
    Close tag open state
           If the content model flag is set to the RCDATA or CDATA states
-          but no start tag token has ever been emitted by this instance
-          of the tokeniser (fragment case), or, if the content model flag
-          is set to the RCDATA or CDATA states and the next few
-          characters do not match the tag name of the last start tag
-          token emitted (case insensitively), or if they do but they are
-          not immediately followed by one of the following characters:
+          but no start tag token has ever been emitted by this instance of
+          the tokeniser (fragment case), or, if the content model flag is
+          set to the RCDATA or CDATA states and the next few characters do
+          not match the tag name of the last start tag token emitted (case
+          insensitively), or if they do but they are not immediately
+          followed by one of the following characters:
 
           + U+0009 CHARACTER TABULATION
           + U+000A LINE FEED (LF)
@@ -195,12 +193,12 @@ Working Draft — 23 June 2007
           + EOF
 
           ...then emit a U+003C LESS-THAN SIGN character token, a U+002F
-          SOLIDUS character token, and switch to the data state to
-          process the next input character.
+          SOLIDUS character token, and switch to the data state to process
+          the next input character.
 
-          Otherwise, if the content model flag is set to the PCDATA
-          state, or if the next few characters do match that tag name,
-          consume the next input character:
+          Otherwise, if the content model flag is set to the PCDATA state,
+          or if the next few characters do match that tag name, consume
+          the next input character:
 
         U+0041 LATIN CAPITAL LETTER A through to U+005A LATIN CAPITAL
                 LETTER Z
@@ -210,12 +208,11 @@ Working Draft — 23 June 2007
                 state. (Don't emit the token yet; further details will be
                 filled in before it is emitted.)
 
-        U+0061 LATIN SMALL LETTER A through to U+007A LATIN SMALL LETTER
-                Z
+        U+0061 LATIN SMALL LETTER A through to U+007A LATIN SMALL LETTER Z
                 Create a new end tag token, set its tag name to the input
                 character, then switch to the tag name state. (Don't emit
-                the token yet; further details will be filled in before
-                it is emitted.)
+                the token yet; further details will be filled in before it
+                is emitted.)
 
         U+003E GREATER-THAN SIGN (>)
                 Parse error. Switch to the data state.
@@ -249,8 +246,8 @@ Working Draft — 23 June 2007
                 state.
 
         EOF
-                Parse error. Emit the current tag token. Reconsume the
-                EOF character in the data state.
+                Parse error. Emit the current tag token. Reconsume the EOF
+                character in the data state.
 
         U+002F SOLIDUS (/)
                 Parse error unless this is a permitted slash. Switch to
@@ -285,9 +282,15 @@ Working Draft — 23 June 2007
                 Parse error unless this is a permitted slash. Stay in the
                 before attribute name state.
 
+        U+0022 QUOTATION MARK (")
+        U+0027 APOSTROPHE (')
+        U+003D EQUALS SIGN (=)
+                Parse error. Treat it as per the "anything else" entry
+                below.
+
         EOF
-                Parse error. Emit the current tag token. Reconsume the
-                EOF character in the data state.
+                Parse error. Emit the current tag token. Reconsume the EOF
+                character in the data state.
 
         Anything else
                 Start a new attribute in the current tag token. Set that
@@ -322,9 +325,14 @@ Working Draft — 23 June 2007
                 Parse error unless this is a permitted slash. Switch to
                 the before attribute name state.
 
+        U+0022 QUOTATION MARK (")
+        U+0027 APOSTROPHE (')
+                Parse error. Treat it as per the "anything else" entry
+                below.
+
         EOF
-                Parse error. Emit the current tag token. Reconsume the
-                EOF character in the data state.
+                Parse error. Emit the current tag token. Reconsume the EOF
+                character in the data state.
 
         Anything else
                 Append the current input character to the current
@@ -332,10 +340,10 @@ Working Draft — 23 June 2007
 
           When the user agent leaves the attribute name state (and before
           emitting the tag token, if appropriate), the complete
-          attribute's name must be compared to the other attributes on
-          the same token; if there is already an attribute on the token
-          with the exact same name, then this is a parse error and the
-          new attribute must be dropped, along with the value that gets
+          attribute's name must be compared to the other attributes on the
+          same token; if there is already an attribute on the token with
+          the exact same name, then this is a parse error and the new
+          attribute must be dropped, along with the value that gets
           associated with it (if any).
 
    After attribute name state
@@ -367,8 +375,8 @@ Working Draft — 23 June 2007
                 the before attribute name state.
 
         EOF
-                Parse error. Emit the current tag token. Reconsume the
-                EOF character in the data state.
+                Parse error. Emit the current tag token. Reconsume the EOF
+                character in the data state.
 
         Anything else
                 Start a new attribute in the current tag token. Set that
@@ -399,6 +407,10 @@ Working Draft — 23 June 2007
         U+003E GREATER-THAN SIGN (>)
                 Emit the current tag token. Switch to the data state.
 
+        U+003D EQUALS SIGN (=)
+                Parse error. Treat it as per the "anything else" entry
+                below.
+
         EOF
                 Parse error. Emit the current tag token. Reconsume the
                 character in the data state.
@@ -412,10 +424,12 @@ Working Draft — 23 June 2007
           Consume the next input character:
 
         U+0022 QUOTATION MARK (")
-                Switch to the before attribute name state.
+                Switch to the after attribute value (quoted) state.
 
         U+0026 AMPERSAND (&)
-                Switch to the entity in attribute value state.
+                Switch to the entity in attribute value state, with the
+                additional allowed character being U+0022 QUOTATION MARK
+                (").
 
         EOF
                 Parse error. Emit the current tag token. Reconsume the
@@ -430,10 +444,11 @@ Working Draft — 23 June 2007
           Consume the next input character:
 
         U+0027 APOSTROPHE (')
-                Switch to the before attribute name state.
+                Switch to the after attribute value (quoted) state.
 
         U+0026 AMPERSAND (&)
-                Switch to the entity in attribute value state.
+                Switch to the entity in attribute value state, with the
+                additional allowed character being U+0027 APOSTROPHE (').
 
         EOF
                 Parse error. Emit the current tag token. Reconsume the
@@ -455,10 +470,17 @@ Working Draft — 23 June 2007
                 Switch to the before attribute name state.
 
         U+0026 AMPERSAND (&)
-                Switch to the entity in attribute value state.
+                Switch to the entity in attribute value state, with no
+                additional allowed character.
 
         U+003E GREATER-THAN SIGN (>)
                 Emit the current tag token. Switch to the data state.
+
+        U+0022 QUOTATION MARK (")
+        U+0027 APOSTROPHE (')
+        U+003D EQUALS SIGN (=)
+                Parse error. Treat it as per the "anything else" entry
+                below.
 
         EOF
                 Parse error. Emit the current tag token. Reconsume the
@@ -481,41 +503,61 @@ Working Draft — 23 June 2007
           Finally, switch back to the attribute value state that you were
           in when were switched into this state.
 
+   After attribute value (quoted) state
+          Consume the next input character:
+
+        U+0009 CHARACTER TABULATION
+        U+000A LINE FEED (LF)
+        U+000B LINE TABULATION
+        U+000C FORM FEED (FF)
+        U+0020 SPACE
+                Switch to the before attribute name state.
+
+        U+003E GREATER-THAN SIGN (>)
+                Emit the current tag token. Switch to the data state.
+
+        U+002F SOLIDUS (/)
+                Parse error unless this is a permitted slash. Switch to
+                the before attribute name state.
+
+        Anything else
+                Parse error. Reconsume the character in the before
+                attribute name state.
+
    Bogus comment state
           (This can only happen if the content model flag is set to the
           PCDATA state.)
 
-          Consume every character up to the first U+003E GREATER-THAN
-          SIGN character (>) or the end of the file (EOF), whichever
-          comes first. Emit a comment token whose data is the
-          concatenation of all the characters starting from and including
-          the character that caused the state machine to switch into the
-          bogus comment state, up to and including the last consumed
-          character before the U+003E character, if any, or up to the end
-          of the file otherwise. (If the comment was started by the end
-          of the file (EOF), the token is empty.)
+          Consume every character up to the first U+003E GREATER-THAN SIGN
+          character (>) or the end of the file (EOF), whichever comes
+          first. Emit a comment token whose data is the concatenation of
+          all the characters starting from and including the character
+          that caused the state machine to switch into the bogus comment
+          state, up to and including the last consumed character before
+          the U+003E character, if any, or up to the end of the file
+          otherwise. (If the comment was started by the end of the file
+          (EOF), the token is empty.)
 
           Switch to the data state.
 
-          If the end of the file was reached, reconsume the EOF
-          character.
+          If the end of the file was reached, reconsume the EOF character.
 
    Markup declaration open state
           (This can only happen if the content model flag is set to the
           PCDATA state.)
 
           If the next two characters are both U+002D HYPHEN-MINUS (-)
-          characters, consume those two characters, create a comment
-          token whose data is the empty string, and switch to the comment
-          start state.
+          characters, consume those two characters, create a comment token
+          whose data is the empty string, and switch to the comment start
+          state.
 
           Otherwise if the next seven characters are a case-insensitive
           match for the word "DOCTYPE", then consume those characters and
           switch to the DOCTYPE state.
 
-          Otherwise, is is a parse error. Switch to the bogus comment
-          state. The next character that is consumed, if any, is the
-          first character that will be in the comment.
+          Otherwise, this is a parse error. Switch to the bogus comment
+          state. The next character that is consumed, if any, is the first
+          character that will be in the comment.
 
    Comment start state
           Consume the next input character:
@@ -590,18 +632,17 @@ Working Draft — 23 June 2007
                 Emit the comment token. Switch to the data state.
 
         U+002D HYPHEN-MINUS (-)
-                Parse error. Append a U+002D HYPHEN-MINUS (-) character
-                to the comment token's data. Stay in the comment end
-                state.
+                Parse error. Append a U+002D HYPHEN-MINUS (-) character to
+                the comment token's data. Stay in the comment end state.
 
         EOF
                 Parse error. Emit the comment token. Reconsume the EOF
                 character in the data state.
 
         Anything else
-                Parse error. Append two U+002D HYPHEN-MINUS (-)
-                characters and the input character to the comment token's
-                data. Switch to the comment state.
+                Parse error. Append two U+002D HYPHEN-MINUS (-) characters
+                and the input character to the comment token's data.
+                Switch to the comment state.
 
    DOCTYPE state
           Consume the next input character:
@@ -614,8 +655,8 @@ Working Draft — 23 June 2007
                 Switch to the before DOCTYPE name state.
 
         Anything else
-                Parse error. Reconsume the current character in the
-                before DOCTYPE name state.
+                Parse error. Reconsume the current character in the before
+                DOCTYPE name state.
 
    Before DOCTYPE name state
           Consume the next input character:
@@ -629,18 +670,17 @@ Working Draft — 23 June 2007
 
         U+003E GREATER-THAN SIGN (>)
                 Parse error. Create a new DOCTYPE token. Set its
-                correctness flag to incorrect. Emit the token. Switch to
-                the data state.
+                force-quirks flag to on. Emit the token. Switch to the
+                data state.
 
         EOF
                 Parse error. Create a new DOCTYPE token. Set its
-                correctness flag to incorrect. Emit the token. Reconsume
-                the EOF character in the data state.
+                force-quirks flag to on. Emit the token. Reconsume the EOF
+                character in the data state.
 
         Anything else
-                Create a new DOCTYPE token. Set the token's name name to
-                the current input character. Switch to the DOCTYPE name
-                state.
+                Create a new DOCTYPE token. Set the token's name to the
+                current input character. Switch to the DOCTYPE name state.
 
    DOCTYPE name state
           First, consume the next input character:
@@ -656,9 +696,9 @@ Working Draft — 23 June 2007
                 Emit the current DOCTYPE token. Switch to the data state.
 
         EOF
-                Parse error. Set the DOCTYPE token's correctness flag to
-                incorrect. Emit that DOCTYPE token. Reconsume the EOF
-                character in the data state.
+                Parse error. Set the DOCTYPE token's force-quirks flag to
+                on. Emit that DOCTYPE token. Reconsume the EOF character
+                in the data state.
 
         Anything else
                 Append the current input character to the current DOCTYPE
@@ -678,9 +718,9 @@ Working Draft — 23 June 2007
                 Emit the current DOCTYPE token. Switch to the data state.
 
         EOF
-                Parse error. Set the DOCTYPE token's correctness flag to
-                incorrect. Emit that DOCTYPE token. Reconsume the EOF
-                character in the data state.
+                Parse error. Set the DOCTYPE token's force-quirks flag to
+                on. Emit that DOCTYPE token. Reconsume the EOF character
+                in the data state.
 
         Anything else
                 If the next six characters are a case-insensitive match
@@ -688,11 +728,12 @@ Working Draft — 23 June 2007
                 switch to the before DOCTYPE public identifier state.
 
                 Otherwise, if the next six characters are a
-                case-insensitive match for the word "SYSTEM", then
-                consume those characters and switch to the before DOCTYPE
-                system identifier state.
+                case-insensitive match for the word "SYSTEM", then consume
+                those characters and switch to the before DOCTYPE system
+                identifier state.
 
-                Otherwise, this is the parse error. Switch to the bogus
+                Otherwise, this is the parse error. Set the DOCTYPE
+                token's force-quirks flag to on. Switch to the bogus
                 DOCTYPE state.
 
    Before DOCTYPE public identifier state
@@ -716,17 +757,17 @@ Working Draft — 23 June 2007
                 (single-quoted) state.
 
         U+003E GREATER-THAN SIGN (>)
-                Parse error. Set the DOCTYPE token's correctness flag to
-                incorrect. Emit that DOCTYPE token. Switch to the data
-                state.
+                Parse error. Set the DOCTYPE token's force-quirks flag to
+                on. Emit that DOCTYPE token. Switch to the data state.
 
         EOF
-                Parse error. Set the DOCTYPE token's correctness flag to
-                incorrect. Emit that DOCTYPE token. Reconsume the EOF
-                character in the data state.
+                Parse error. Set the DOCTYPE token's force-quirks flag to
+                on. Emit that DOCTYPE token. Reconsume the EOF character
+                in the data state.
 
         Anything else
-                Parse error. Switch to the bogus DOCTYPE state.
+                Parse error. Set the DOCTYPE token's force-quirks flag to
+                on. Switch to the bogus DOCTYPE state.
 
    DOCTYPE public identifier (double-quoted) state
           Consume the next input character:
@@ -734,10 +775,14 @@ Working Draft — 23 June 2007
         U+0022 QUOTATION MARK (")
                 Switch to the after DOCTYPE public identifier state.
 
+        U+003E GREATER-THAN SIGN (>)
+                Parse error. Set the DOCTYPE token's force-quirks flag to
+                on. Emit that DOCTYPE token. Switch to the data state.
+
         EOF
-                Parse error. Set the DOCTYPE token's correctness flag to
-                incorrect. Emit that DOCTYPE token. Reconsume the EOF
-                character in the data state.
+                Parse error. Set the DOCTYPE token's force-quirks flag to
+                on. Emit that DOCTYPE token. Reconsume the EOF character
+                in the data state.
 
         Anything else
                 Append the current input character to the current DOCTYPE
@@ -750,10 +795,14 @@ Working Draft — 23 June 2007
         U+0027 APOSTROPHE (')
                 Switch to the after DOCTYPE public identifier state.
 
+        U+003E GREATER-THAN SIGN (>)
+                Parse error. Set the DOCTYPE token's force-quirks flag to
+                on. Emit that DOCTYPE token. Switch to the data state.
+
         EOF
-                Parse error. Set the DOCTYPE token's correctness flag to
-                incorrect. Emit that DOCTYPE token. Reconsume the EOF
-                character in the data state.
+                Parse error. Set the DOCTYPE token's force-quirks flag to
+                on. Emit that DOCTYPE token. Reconsume the EOF character
+                in the data state.
 
         Anything else
                 Append the current input character to the current DOCTYPE
@@ -784,12 +833,13 @@ Working Draft — 23 June 2007
                 Emit the current DOCTYPE token. Switch to the data state.
 
         EOF
-                Parse error. Set the DOCTYPE token's correctness flag to
-                incorrect. Emit that DOCTYPE token. Reconsume the EOF
-                character in the data state.
+                Parse error. Set the DOCTYPE token's force-quirks flag to
+                on. Emit that DOCTYPE token. Reconsume the EOF character
+                in the data state.
 
         Anything else
-                Parse error. Switch to the bogus DOCTYPE state.
+                Parse error. Set the DOCTYPE token's force-quirks flag to
+                on. Switch to the bogus DOCTYPE state.
 
    Before DOCTYPE system identifier state
           Consume the next input character:
@@ -812,17 +862,17 @@ Working Draft — 23 June 2007
                 (single-quoted) state.
 
         U+003E GREATER-THAN SIGN (>)
-                Parse error. Set the DOCTYPE token's correctness flag to
-                incorrect. Emit that DOCTYPE token. Switch to the data
-                state.
+                Parse error. Set the DOCTYPE token's force-quirks flag to
+                on. Emit that DOCTYPE token. Switch to the data state.
 
         EOF
-                Parse error. Set the DOCTYPE token's correctness flag to
-                incorrect. Emit that DOCTYPE token. Reconsume the EOF
-                character in the data state.
+                Parse error. Set the DOCTYPE token's force-quirks flag to
+                on. Emit that DOCTYPE token. Reconsume the EOF character
+                in the data state.
 
         Anything else
-                Parse error. Switch to the bogus DOCTYPE state.
+                Parse error. Set the DOCTYPE token's force-quirks flag to
+                on. Switch to the bogus DOCTYPE state.
 
    DOCTYPE system identifier (double-quoted) state
           Consume the next input character:
@@ -830,10 +880,14 @@ Working Draft — 23 June 2007
         U+0022 QUOTATION MARK (")
                 Switch to the after DOCTYPE system identifier state.
 
+        U+003E GREATER-THAN SIGN (>)
+                Parse error. Set the DOCTYPE token's force-quirks flag to
+                on. Emit that DOCTYPE token. Switch to the data state.
+
         EOF
-                Parse error. Set the DOCTYPE token's correctness flag to
-                incorrect. Emit that DOCTYPE token. Reconsume the EOF
-                character in the data state.
+                Parse error. Set the DOCTYPE token's force-quirks flag to
+                on. Emit that DOCTYPE token. Reconsume the EOF character
+                in the data state.
 
         Anything else
                 Append the current input character to the current DOCTYPE
@@ -846,10 +900,14 @@ Working Draft — 23 June 2007
         U+0027 APOSTROPHE (')
                 Switch to the after DOCTYPE system identifier state.
 
+        U+003E GREATER-THAN SIGN (>)
+                Parse error. Set the DOCTYPE token's force-quirks flag to
+                on. Emit that DOCTYPE token. Switch to the data state.
+
         EOF
-                Parse error. Set the DOCTYPE token's correctness flag to
-                incorrect. Emit that DOCTYPE token. Reconsume the EOF
-                character in the data state.
+                Parse error. Set the DOCTYPE token's force-quirks flag to
+                on. Emit that DOCTYPE token. Reconsume the EOF character
+                in the data state.
 
         Anything else
                 Append the current input character to the current DOCTYPE
@@ -870,23 +928,22 @@ Working Draft — 23 June 2007
                 Emit the current DOCTYPE token. Switch to the data state.
 
         EOF
-                Parse error. Set the DOCTYPE token's correctness flag to
-                incorrect. Emit that DOCTYPE token. Reconsume the EOF
-                character in the data state.
+                Parse error. Set the DOCTYPE token's force-quirks flag to
+                on. Emit that DOCTYPE token. Reconsume the EOF character
+                in the data state.
 
         Anything else
-                Parse error. Switch to the bogus DOCTYPE state.
+                Parse error. Switch to the bogus DOCTYPE state. (This does
+                not set the DOCTYPE token's force-quirks flag to on.)
 
    Bogus DOCTYPE state
           Consume the next input character:
 
         U+003E GREATER-THAN SIGN (>)
-                Set the DOCTYPE token's correctness flag to incorrect.
-                Emit that DOCTYPE token. Switch to the data state.
+                Emit the DOCTYPE token. Switch to the data state.
 
         EOF
-                Parse error. Set the DOCTYPE token's correctness flag to
-                incorrect. Emit that DOCTYPE token. Reconsume the EOF
+                Parse error. Emit the DOCTYPE token. Reconsume the EOF
                 character in the data state.
 
         Anything else
@@ -908,6 +965,7 @@ Working Draft — 23 June 2007
    U+003C LESS-THAN SIGN
    U+0026 AMPERSAND
    EOF
+   The additional allowed character, if there is one
           Not an entity. No characters are consumed, and nothing is
           returned. (This is not an error, either.)
 
@@ -943,8 +1001,8 @@ Working Draft — 23 June 2007
 
           If no characters match the range, then don't consume any
           characters (and unconsume the U+0023 NUMBER SIGN character and,
-          if appropriate, the X character). This is a parse error;
-          nothing is returned.
+          if appropriate, the X character). This is a parse error; nothing
+          is returned.
 
           Otherwise, if the next character is a U+003B SEMICOLON, consume
           that too. If it isn't, there is a parse error.
@@ -995,10 +1053,10 @@ Working Draft — 23 June 2007
           0x9F   U+0178 LATIN CAPITAL LETTER Y WITH DIAERESIS ('Ÿ')
 
           Otherwise, if the number is zero, if the number is higher than
-          0x10FFFF, or if it's one of the surrogate characters
-          (characters in the range 0xD800 to 0xDFFF), then this is a
-          parse error; return a character token for the U+FFFD
-          REPLACEMENT CHARACTER character instead.
+          0x10FFFF, or if it's one of the surrogate characters (characters
+          in the range 0xD800 to 0xDFFF), then this is a parse error;
+          return a character token for the U+FFFD REPLACEMENT CHARACTER
+          character instead.
 
           Otherwise, return a character token for the Unicode character
           whose code point is that number.
@@ -1014,14 +1072,14 @@ Working Draft — 23 June 2007
           If the last character matched is not a U+003B SEMICOLON (;),
           there is a parse error.
 
-          If the entity is being consumed as part of an attribute, and
-          the last character matched is not a U+003B SEMICOLON (;), and
-          the next character is in the range U+0030 DIGIT ZERO to U+0039
-          DIGIT NINE, U+0041 LATIN CAPITAL LETTER A to U+005A LATIN
-          CAPITAL LETTER Z, or U+0061 LATIN SMALL LETTER A to U+007A
-          LATIN SMALL LETTER Z, then, for historical reasons, all the
-          characters that were matched after the U+0026 AMPERSAND (&)
-          must be unconsumed, and nothing is returned.
+          If the entity is being consumed as part of an attribute, and the
+          last character matched is not a U+003B SEMICOLON (;), and the
+          next character is in the range U+0030 DIGIT ZERO to U+0039 DIGIT
+          NINE, U+0041 LATIN CAPITAL LETTER A to U+005A LATIN CAPITAL
+          LETTER Z, or U+0061 LATIN SMALL LETTER A to U+007A LATIN SMALL
+          LETTER Z, then, for historical reasons, all the characters that
+          were matched after the U+0026 AMPERSAND (&) must be unconsumed,
+          and nothing is returned.
 
           Otherwise, return a character token for the character
           corresponding to the entity name (as given by the second column

@@ -87,14 +87,14 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
         array.getValue().add(token);
     }
 
-    public void doctype(String name, String publicIdentifier, String systemIdentifier, boolean correct) throws SAXException {
+    public void doctype(String name, String publicIdentifier, String systemIdentifier, boolean forceQuirks) throws SAXException {
         flushCharacters();
         JSONArray token = new JSONArray();
         token.getValue().add(DOCTYPE);
         token.getValue().add(new JSONString(name));
         token.getValue().add(publicIdentifier == null ? JSONNull.NULL : new JSONString(publicIdentifier));
         token.getValue().add(systemIdentifier == null ? JSONNull.NULL : new JSONString(systemIdentifier));
-        token.getValue().add(new JSONBoolean(correct));
+        token.getValue().add(new JSONBoolean(!forceQuirks));
         array.getValue().add(token);
     }
 
