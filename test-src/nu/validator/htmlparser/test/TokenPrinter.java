@@ -75,12 +75,12 @@ public class TokenPrinter implements TokenHandler, ErrorHandler {
         }
     }
 
-    public void doctype(String name, String publicIdentifier, String systemIdentifier, boolean correct) throws SAXException {
+    public void doctype(String name, String publicIdentifier, String systemIdentifier, boolean forceQuirks) throws SAXException {
         try {
             writer.write('D');
             writer.write(name);
             writer.write(' ');
-            writer.write("" + correct);
+            writer.write("" + forceQuirks);
             writer.write('\n');
         } catch (IOException e) {
             throw new SAXException(e);
