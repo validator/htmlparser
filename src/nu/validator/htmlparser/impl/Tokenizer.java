@@ -1016,12 +1016,12 @@ public final class Tokenizer implements Locator {
                 case '\u000C':
                     if (inContent) {
                         if (contentNonXmlCharPolicy == XmlViolationPolicy.FATAL) {
-                            fatal("This document is not mappable to XML 1.0 without data loss due to a character that is not a legal XML 1.0 character.");
+                            fatal("This document is not mappable to XML 1.0 without data loss due to " + toUPlusString(c) + " which is not a legal XML 1.0 character.");
                         } else {
                             if (contentNonXmlCharPolicy == XmlViolationPolicy.ALTER_INFOSET) {
                                 c = buf[pos] = ' ';
                             }
-                            warn("This document is not mappable to XML 1.0 without data loss due to a character that is not a legal XML 1.0 character.");
+                            warn("This document is not mappable to XML 1.0 without data loss due to " + toUPlusString(c) + " which is not a legal XML 1.0 character.");
                         }
                     }
                     break;
@@ -1031,7 +1031,7 @@ public final class Tokenizer implements Locator {
                         if ((prev & 0xFC00) == 0xD800) {
                             int intVal = (prev << 10) + c + SURROGATE_OFFSET;
                             if (isNonCharacter(intVal)) {
-                                warn("Astral non-character.");
+                                err("Astral non-character.");
                             }
                             if (isAstralPrivateUse(intVal)) {
                                 warnAboutPrivateUseChar();
@@ -1042,16 +1042,26 @@ public final class Tokenizer implements Locator {
                             err("Found low surrogate without high surrogate.");
                             c = buf[pos] = '\uFFFD';
                         }
-                    } else if (inContent && (c < ' ' || isNonCharacter(c))
-                            && (c != '\t')) {
-                        if (contentNonXmlCharPolicy == XmlViolationPolicy.FATAL) {
-                            fatal("This document is not mappable to XML 1.0 without data loss due to a character that is not a legal XML 1.0 character.");
-                        } else {
-                            if (contentNonXmlCharPolicy == XmlViolationPolicy.ALTER_INFOSET) {
-                                c = buf[pos] = '\uFFFD';
+                    } else if ((c < ' ' || isNonCharacter(c)) && (c != '\t')) {
+                        if (inContent) {
+                            if (contentNonXmlCharPolicy == XmlViolationPolicy.FATAL) {
+                                fatal("Forbidden code point " + toUPlusString(c)
+                                        + ".");
+                            } else {
+                                if (contentNonXmlCharPolicy == XmlViolationPolicy.ALTER_INFOSET) {
+                                    c = buf[pos] = '\uFFFD';
+                                }
+                                err("Forbidden code point " + toUPlusString(c)
+                                        + ".");
                             }
-                            warn("This document is not mappable to XML 1.0 without data loss due to a character that is not a legal XML 1.0 character.");
+                        } else {
+                            err("Forbidden code point " + toUPlusString(c)
+                                    + ".");
                         }
+                    } else if ((c >= '\u007F') && (c <= '\u009F')
+                            || (c >= '\uFDD0') && (c <= '\uFDDF')) {
+                        err("Forbidden code point " + toUPlusString(c)
+                                + ".");
                     } else if (isPrivateUse(c)) {
                         warnAboutPrivateUseChar();
                     }
@@ -1063,6 +1073,22 @@ public final class Tokenizer implements Locator {
                 prevFour[prevFourPtr] = c;
             }
             return c;
+        }
+    }
+
+    private String toUPlusString(char c) {
+        String hexString = Integer.toHexString(c);
+        switch (hexString.length()) {
+            case 1:
+                return "U+000" + hexString;
+            case 2:
+                return "U+00" + hexString;
+            case 3:
+                return "U+0" + hexString;
+            case 4:
+                return "U+" + hexString;
+            default:
+                throw new RuntimeException("Unreachable.");
         }
     }
 
