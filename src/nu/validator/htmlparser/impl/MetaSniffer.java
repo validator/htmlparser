@@ -109,14 +109,14 @@ public final class MetaSniffer implements Locator {
             switch (b) {
                 case -1: // end
                     throw new StopSniffingException();
-                case 0x0A: // LF
+                case '\n':
                     if (!prevWasCR) {
                         line++;
                         col = 0;
                     }
                     prevWasCR = false;
                     break;
-                case 0x0D: // CR
+                case '\r':
                     line++;
                     col = 0;
                     prevWasCR = true;
@@ -150,7 +150,7 @@ public final class MetaSniffer implements Locator {
     public CharsetDecoder sniff() throws SAXException, IOException {
         try {
             for (;;) {
-                if (read() == 0x3C) { // <
+                if (read() == '<') {
                     markup();
                 }
             }
@@ -168,17 +168,16 @@ public final class MetaSniffer implements Locator {
      */
     private void markup() throws SAXException, StopSniffingException, IOException {
         int b = read();
-        if (b == 0x21) { // !
+        if (b == '!') {
             markupDecl();
-        } else if (b == 0x2F) { // /
+        } else if (b == '/') {
             endTag();
-        } else if (b == 0x3F) { // ?
+        } else if (b == '?') {
             consumeUntilAndIncludingGt();
-        } else if (b == 0x4D || b == 0x6D) { // m or M
+        } else if (b == 'm' || b == 'M') {
             metaState = MetaState.M;
             tag();
-        } else if ((b >= 0x41 && b <= 0x5A) || (b >= 0x61 && b <= 0x7A)) { // ASCII
-                                                                            // letter
+        } else if ((b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z')) {
             metaState = MetaState.NO;
             tag();
         }
@@ -196,33 +195,33 @@ public final class MetaSniffer implements Locator {
         loop: for (;;) {
             b = read();
             switch (b) {
-                case 0x09: // tab
-                case 0x0A: // LF
+                case '\t':
+                case '\n':
                 case 0x0B: // VT
                 case 0x0C: // FF
-                case 0x0D: // CR
-                case 0x20: // space
-                case 0x3E: // >
-                case 0x3C: // <
+                case '\r':
+                case ' ':
+                case '>':
+                case '<':
                     break loop;
-                case 0x45: // E
-                case 0x65: // e
+                case 'E':
+                case 'e':
                     if (metaState == MetaState.M) {
                         metaState = MetaState.E;
                     } else {
                         metaState = MetaState.NO;
                     }
                     continue loop;
-                case 0x54: // T
-                case 0x74: // t
+                case 'T':
+                case 't':
                     if (metaState == MetaState.E) {
                         metaState = MetaState.T;
                     } else {
                         metaState = MetaState.NO;
                     }
                     continue loop;
-                case 0x41: // A
-                case 0x61: // a
+                case 'A':
+                case 'a':
                     if (metaState == MetaState.T) {
                         metaState = MetaState.A;
                     } else {
@@ -235,7 +234,7 @@ public final class MetaSniffer implements Locator {
             }
         }
         unread(b);
-        if (b != 0x3C) {
+        if (b != '<') {
             while (attribute())
                 ;
         }
@@ -254,23 +253,23 @@ public final class MetaSniffer implements Locator {
         loop: for (;;) {
             b = read();
             switch (b) {
-                case 0x09: // tab
-                case 0x0A: // LF
+                case '\t':
+                case '\n':
                 case 0x0B: // VT
                 case 0x0C: // FF
-                case 0x0D: // CR
-                case 0x20: // space
-                case 0x2F: // /
+                case '\r':
+                case ' ':
+                case '/':
                     continue loop;
                 default:
                     break loop;
             }
         }
-        if (b == 0x3C) { // <
+        if (b == '<') {
             unread(b);
             return false;
         }
-        if (b == 0x3E) { // >
+        if (b == '>') {
             return false;
         }
         attributeName.setLength(0);
@@ -279,35 +278,35 @@ public final class MetaSniffer implements Locator {
         name: for (;;) {
             b = read();
             switch (b) {
-                case 0x3D: // =
+                case '=': // =
                     // not actually advancing here yet
                     break name;
-                case 0x09: // tab
-                case 0x0A: // LF
+                case '\t':
+                case '\n':
                 case 0x0B: // VT
                 case 0x0C: // FF
-                case 0x0D: // CR
-                case 0x20: // space
+                case '\r':
+                case ' ':
                     spaces: for (;;) {
                         b = read();
                         switch (b) {
-                            case 0x09: // tab
-                            case 0x0A: // LF
+                            case '\t':
+                            case '\n':
                             case 0x0B: // VT
                             case 0x0C: // FF
-                            case 0x0D: // CR
-                            case 0x20: // space
+                            case '\r':
+                            case ' ':
                                 continue spaces;
                             default:
                                 break name;
                         }
                     }
-                case 0x2f: // /
+                case '/':
                     return true;
-                case 0x3C: // <
+                case '<':
                     unread(b);
                     return false;
-                case 0x3E: // >
+                case '>':
                     return false;
                 default:
                     if (metaState == MetaState.A) {
@@ -322,7 +321,7 @@ public final class MetaSniffer implements Locator {
                     continue name;
             }
         }
-        if (b != 0x3D) {
+        if (b != '=') {
             // "If the byte at position is not 0x3D (ASCII '='), stop looking
             // for
             // an attribute. Move position back to the previous byte."
@@ -332,28 +331,28 @@ public final class MetaSniffer implements Locator {
         value: for (;;) {
             b = read();
             switch (b) {
-                case 0x09: // tab
-                case 0x0A: // LF
+                case '\t':
+                case '\n':
                 case 0x0B: // VT
                 case 0x0C: // FF
-                case 0x0D: // CR
-                case 0x20: // space
+                case '\r':
+                case ' ':
                     continue value;
                 default:
                     break value;
             }
         }
         switch (b) {
-            case 0x22: // "
+            case '\"':
                 quotedAttribute(0x22);
                 return true;
-            case 0x27: // '
+            case '\'':
                 quotedAttribute(0x27);
                 return true;
-            case 0x3C: // <
+            case '<':
                 unread(b);
                 return false;
-            case 0x3E: // >
+            case '>':
                 return false;
             default:
                 unread(b);
@@ -366,18 +365,18 @@ public final class MetaSniffer implements Locator {
         for (;;) {
             b = read();
             switch (b) {
-                case 0x09: // tab
-                case 0x0A: // LF
+                case '\t':
+                case '\n':
                 case 0x0B: // VT
                 case 0x0C: // FF
-                case 0x0D: // CR
-                case 0x20: // space
+                case '\r':
+                case ' ':
                     checkAttribute();
                     return true;
-                case 0x3E: // >
+                case '>':
                     checkAttribute();
                     return false;
-                case 0x3C: // <
+                case '<':
                     checkAttribute();
                     unread(b);
                     return false;
@@ -539,13 +538,13 @@ public final class MetaSniffer implements Locator {
      * @throws StopSniffingException 
      */
     private void comment() throws IOException, StopSniffingException {
-        if (read() == 0x2D) { // -
+        if (read() == '-') {
             int hyphensSeen = 2;
             for (;;) {
                 int b = read();
-                if (b == 0x2D) { // -
+                if (b == '-') {
                     hyphensSeen++;
-                } else if (b == 0x3E) { // >
+                } else if (b == '>') {
                     if (hyphensSeen >= 2) {
                         return;
                     } else {
