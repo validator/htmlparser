@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
+ * Copyright (c) 2008 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -71,7 +72,7 @@ public final class MetaSniffer implements Locator {
     
     private final ErrorHandler errorHandler;
     
-    private CharsetDecoder charsetDecoder = null;
+    private Encoding characterEncoding = null;
     
     private StringBuilder attributeName = new StringBuilder();
 
@@ -147,7 +148,7 @@ public final class MetaSniffer implements Locator {
      * @throws IOException
      * @throws
      */
-    public CharsetDecoder sniff() throws SAXException, IOException {
+    public Encoding sniff() throws SAXException, IOException {
         try {
             for (;;) {
                 if (read() == '<') {
@@ -155,7 +156,7 @@ public final class MetaSniffer implements Locator {
                 }
             }
         } catch (StopSniffingException e) {
-            return charsetDecoder;
+            return characterEncoding;
         }
     }
 
@@ -202,7 +203,6 @@ public final class MetaSniffer implements Locator {
                 case '\r':
                 case ' ':
                 case '>':
-                case '<':
                     break loop;
                 case 'E':
                 case 'e':
@@ -228,13 +228,20 @@ public final class MetaSniffer implements Locator {
                         metaState = MetaState.NO;
                     }
                     continue loop;
+                case '/':
+                    if (metaState == MetaState.A) {
+                        break loop;
+                    } else {
+                        metaState = MetaState.NO;
+                        continue loop;                        
+                    }
                 default:
                     metaState = MetaState.NO;
                     continue loop;
             }
         }
         unread(b);
-        if (b != '<') {
+        if (b != '>') {
             while (attribute())
                 ;
         }
@@ -264,10 +271,6 @@ public final class MetaSniffer implements Locator {
                 default:
                     break loop;
             }
-        }
-        if (b == '<') {
-            unread(b);
-            return false;
         }
         if (b == '>') {
             return false;
@@ -303,16 +306,13 @@ public final class MetaSniffer implements Locator {
                     }
                 case '/':
                     return true;
-                case '<':
-                    unread(b);
-                    return false;
                 case '>':
                     return false;
                 default:
                     if (metaState == MetaState.A) {
                         // could use a highly-efficient state machine
                         // here instead of a buffer...
-                        if (b >= 0x41 && b <= 0x5A) {
+                        if (b >= 'A' && b <= 'Z') {
                             attributeName.append((char) (b + 0x20));
                         } else {
                             attributeName.append((char) b);
@@ -349,9 +349,6 @@ public final class MetaSniffer implements Locator {
             case '\'':
                 quotedAttribute(0x27);
                 return true;
-            case '<':
-                unread(b);
-                return false;
             case '>':
                 return false;
             default:
@@ -406,51 +403,53 @@ public final class MetaSniffer implements Locator {
     }
 
     private void tryCharset(String encoding) throws SAXException, StopSniffingException {
-        encoding = encoding.toUpperCase();
+        encoding = Encoding.toAsciiLowerCase(encoding);
         try {
-            // XXX deviating from the spec as per mjs on IRC.
-            if ("UTF-16".equals(encoding) || "UTF-16BE".equals(encoding) || "UTF-16LE".equals(encoding) || "UTF-32".equals(encoding) || "UTF-32BE".equals(encoding) || "UTF-32LE".equals(encoding)) {
-                this.charsetDecoder = Charset.forName("UTF-8").newDecoder();
+            // XXX spec says only UTF-16
+            if ("utf-16".equals(encoding) || "utf-16be".equals(encoding) || "utf-16le".equals(encoding) || "utf-32".equals(encoding) || "utf-32be".equals(encoding) || "utf-32le".equals(encoding)) {
+                this.characterEncoding = Encoding.forName("utf-8");
                 err("The internal character encoding declaration specified \u201C" + encoding + "\u201D which is not a rough superset of ASCII. Using \u201CUTF-8\u201D instead.");
                 throw new StopSniffingException();
             } else {
-                Charset cs = Charset.forName(encoding);
-                String canonName = cs.name();
-                if (EncodingInfo.isBanned(canonName)) {
-                    throw new UnsupportedCharsetException(canonName);
-                }
-                if (!EncodingInfo.isAsciiSuperset(canonName)) {
+                Encoding cs = Encoding.forName(encoding);
+                String canonName = cs.getCanonName();
+                if (!cs.isAsciiSuperset()) {
                     err("The encoding \u201C"
                                 + encoding
                                 + "\u201D is not an ASCII superset and, therefore, cannot be used in an internal encoding declaration. Continuing the sniffing algorithm.");
                     return;
                 }
-                if (canonName.startsWith("X-") || canonName.startsWith("x-")
-                        || canonName.startsWith("Mac")) {
-                    if (encoding.startsWith("X-")) {
-                        err("The encoding \u201C" + encoding
-                                + "\u201D is not an IANA-registered encoding. (Charmod C022)");
+                if (!cs.isRegistered()) {
+                    if (encoding.startsWith("x-")) {
+                        err("The encoding \u201C"
+                                + encoding
+                                + "\u201D is not an IANA-registered encoding. (Charmod C022)");                    
                     } else {
-                        err("The encoding \u201C" + encoding
-                                + "\u201D is not an IANA-registered encoding and did\u2019t start with \u201CX-\u201D. (Charmod C023)");
+                        err("The encoding \u201C"
+                                + encoding
+                                + "\u201D is not an IANA-registered encoding and did not use the \u201Cx-\u201D prefix. (Charmod C023)");
                     }
-                } else if (!canonName.equalsIgnoreCase(encoding)) {
+                } else if (!cs.getCanonName().equals(encoding)) {
                     err("The encoding \u201C" + encoding
                             + "\u201D is not the preferred name of the character encoding in use. The preferred name is \u201C"
                             + canonName + "\u201D. (Charmod C024)");
                 }
-                if (EncodingInfo.isShouldNot(canonName)) {
+                if (cs.isShouldNot()) {
                     warn("Authors should not use the character encoding \u201C"
                             + encoding
                             + "\u201D. It is recommended to use \u201CUTF-8\u201D.");                
-                } else if (EncodingInfo.isObscure(canonName)) {
+                } else if (cs.isObscure()) {
                     warn("The character encoding \u201C" + encoding + "\u201D is not widely supported. Better interoperability may be achieved by using \u201CUTF-8\u201D.");
                 }
-                this.charsetDecoder = cs.newDecoder();
+                Encoding actual = cs.getActualHtmlEncoding();
+                if (actual == null) {
+                    this.characterEncoding = cs;
+                } else {
+                    warn("Using \u201C" + actual.getCanonName() + "\u201D instead of the declared encoding \u201C" + encoding + "\u201D.");
+                    this.characterEncoding = actual;
+                }
                 throw new StopSniffingException();
             }
-        } catch (IllegalCharsetNameException e) {
-            err("Illegal character encoding name: \u201C" + encoding + "\u201D. Will continue sniffing.");
         } catch (UnsupportedCharsetException e) {
             err("Unsupported character encoding name: \u201C" + encoding + "\u201D. Will continue sniffing.");
         }

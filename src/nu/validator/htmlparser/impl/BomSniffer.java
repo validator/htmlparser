@@ -43,7 +43,7 @@ public final class BomSniffer {
         this.source = source;
     }
     
-    CharsetDecoder sniff() throws IOException {
+    Encoding sniff() throws IOException {
         int b = source.readByte();
         if (b == 0xEF) { // UTF-8
             b = source.readByte();
@@ -51,7 +51,7 @@ public final class BomSniffer {
                 b = source.readByte();
                 if (b == 0xBF) {
 //                    return new CharsetProviderICU().charsetForName("UTF-8").newDecoder();
-                    return Charset.forName("UTF-8").newDecoder();
+                    return Encoding.forName("utf-8");
                 } else {
                     return null;
                 }
@@ -61,14 +61,14 @@ public final class BomSniffer {
         } else if (b == 0xFF) { // little-endian
             b = source.readByte();
             if (b == 0xFE) {
-                return Charset.forName("UTF-16LE").newDecoder();
+                return Encoding.forName("utf-16le");
             } else {
                 return null;
             }
         } else if (b == 0xFE) { // big-endian UTF-16
             b = source.readByte();
             if (b == 0xFF) {
-                return Charset.forName("UTF-16BE").newDecoder();        
+                return Encoding.forName("utf-16be");
             } else {
                 return null;
             }
