@@ -33,6 +33,8 @@ import java.nio.charset.CoderResult;
 import java.nio.charset.CodingErrorAction;
 
 
+import nu.validator.htmlparser.common.Heuristics;
+
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
@@ -103,7 +105,7 @@ public final class HtmlInputStreamReader extends Reader implements
      * @throws SAXException
      */
     public HtmlInputStreamReader(InputStream inputStream,
-            ErrorHandler errorHandler, Locator locator, Tokenizer tokenizer)
+            ErrorHandler errorHandler, Locator locator, Tokenizer tokenizer, Heuristics heuristics)
             throws SAXException, IOException {
         this.inputStream = inputStream;
         this.errorHandler = errorHandler;
@@ -114,8 +116,14 @@ public final class HtmlInputStreamReader extends Reader implements
         if (encoding == null) {
             position = 0;
             encoding = (new MetaSniffer(this, errorHandler, this)).sniff();
+            if (encoding == null && (heuristics == Heuristics.CHARDET || heuristics == Heuristics.ALL)) {
+               encoding = (new ChardetSniffer(byteArray, limit)).sniff();
+            }
+            if (encoding == null && (heuristics == Heuristics.ICU || heuristics == Heuristics.ALL)) {
+                position = 0;
+                encoding = (new IcuDetectorSniffer(this)).sniff();
+            }
             sniffing = false;
-            // TODO chardet
             if (encoding == null) {
                 encoding = Encoding.WINDOWS1252;
             }

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
+ * Copyright (c) 2008 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -27,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 
+import nu.validator.htmlparser.common.Heuristics;
 import nu.validator.htmlparser.impl.HtmlInputStreamReader;
 
 import org.xml.sax.SAXException;
@@ -56,7 +58,7 @@ public class EncodingTester {
         }
         UntilHashInputStream stream = new UntilHashInputStream(aggregateStream);
         HtmlInputStreamReader reader = new HtmlInputStreamReader(stream, null,
-                null, null);
+                null, null, Heuristics.NONE);
         Charset charset = reader.getCharset();
         stream.close();
         if (skipLabel()) {

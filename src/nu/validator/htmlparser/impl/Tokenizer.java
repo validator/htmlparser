@@ -46,6 +46,7 @@ import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import nu.validator.htmlparser.common.Heuristics;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
 import nu.validator.htmlparser.rewindable.RewindableInputStream;
 
@@ -400,6 +401,8 @@ public final class Tokenizer implements Locator {
     
     private boolean allowRewinding = true;
 
+    private Heuristics heuristics = Heuristics.NONE;
+
     // start public API
 
     /**
@@ -638,7 +641,7 @@ public final class Tokenizer implements Locator {
                             inputStream);
                 }
                 this.reader = new HtmlInputStreamReader(inputStream,
-                        errorHandler, this, this);
+                        errorHandler, this, this, heuristics);
             } else {
                 becomeConfident();
                 this.reader = new HtmlInputStreamReader(inputStream,
@@ -1312,7 +1315,7 @@ public final class Tokenizer implements Locator {
             }
             return whineAboutEncodingAndReturnActual(encoding, cs);
         } catch (UnsupportedCharsetException e) {
-            err("Unsupported character encodingcoding name: \u201C"
+            err("Unsupported character encoding name: \u201C"
                     + encoding + "\u201D. Will sniff.");
             swallowBom = true;
         }
@@ -4581,15 +4584,16 @@ public final class Tokenizer implements Locator {
                         + "\u201D disagrees with the actual encoding of the document (\u201C"
                         + characterEncoding.getCanonName() + "\u201D).");
             } else {
-                errTreeBuilder("Changing character encoding in mid-parse to \u201C" + internalCharset + "\u201D.");
                 Encoding newEnc = whineAboutEncodingAndReturnActual(
                         internalCharset, cs);
                 if (characterEncoding == Encoding.WINDOWS1252 && canSwitchDecoder && restOfBufferCanSwitchDecoder()) {
+                    errTreeBuilder("Changing character encoding in mid-parse to \u201C" + internalCharset + "\u201D.");
                     canSwitchDecoder = false;
                     characterEncoding = newEnc;
                     ((HtmlInputStreamReader) reader).switchEncoding(newEnc);
                     becomeConfident();
                 } else {
+                    errTreeBuilder("Changing character encoding \u201C" + internalCharset + "\u201D and reparsing.");
                     canSwitchDecoder = false;
                     characterEncoding = newEnc;
                     throw new ReparseException();
@@ -4625,5 +4629,14 @@ public final class Tokenizer implements Locator {
     
     private class ReparseException extends SAXException {
 
+    }
+
+    /**
+     * Sets the encoding sniffing heuristics.
+     * 
+     * @param heuristics the heuristics to set
+     */
+    public void setHeuristics(Heuristics heuristics) {
+        this.heuristics = heuristics;
     }
 }

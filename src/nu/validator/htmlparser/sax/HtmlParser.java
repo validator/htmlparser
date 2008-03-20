@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
- * Copyright (c) 2007 Mozilla Foundation
+ * Copyright (c) 2007-2008 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -31,6 +31,7 @@ import java.util.List;
 
 import nu.validator.htmlparser.common.DoctypeExpectation;
 import nu.validator.htmlparser.common.DocumentModeHandler;
+import nu.validator.htmlparser.common.Heuristics;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
 import nu.validator.htmlparser.impl.CharacterHandler;
 import nu.validator.htmlparser.impl.Tokenizer;
@@ -123,17 +124,19 @@ public class HtmlParser implements XMLReader {
 
     private XmlViolationPolicy streamabilityViolationPolicy = XmlViolationPolicy.ALLOW;
     
-    private boolean html4ModeCompatibleWithXhtml1Schemata;
+    private boolean html4ModeCompatibleWithXhtml1Schemata = false;
 
-    private boolean mappingLangToXmlLang;
+    private boolean mappingLangToXmlLang = false;
 
-    private XmlViolationPolicy xmlnsPolicy;
+    private XmlViolationPolicy xmlnsPolicy = XmlViolationPolicy.FATAL;
 
-    private XmlViolationPolicy bogusXmlnsPolicy;
+    private XmlViolationPolicy bogusXmlnsPolicy = XmlViolationPolicy.FATAL;
     
     private boolean reportingDoctype = true;
 
-    private ErrorHandler treeBuilderErrorHandler;
+    private ErrorHandler treeBuilderErrorHandler = null;
+
+    private Heuristics heuristics = Heuristics.NONE;
 
     /**
      * Instantiates the parser with a fatal XML violation policy.
@@ -176,6 +179,7 @@ public class HtmlParser implements XMLReader {
             this.tokenizer.setHtml4ModeCompatibleWithXhtml1Schemata(html4ModeCompatibleWithXhtml1Schemata);
             this.tokenizer.setMappingLangToXmlLang(mappingLangToXmlLang);
             this.tokenizer.setXmlnsPolicy(xmlnsPolicy);
+            this.tokenizer.setHeuristics(heuristics);
             for (CharacterHandler characterHandler : characterHandlers) {
                 this.tokenizer.addCharacterHandler(characterHandler);
             }
@@ -384,6 +388,8 @@ public class HtmlParser implements XMLReader {
         } else if ("http://validator.nu/properties/xml-policy".equals(name)) {
             throw new SAXNotSupportedException(
                     "Cannot get a convenience setter.");
+        } else if ("http://validator.nu/properties/heuristics".equals(name)) {
+            return getHeuristics();
         } else {
             throw new SAXNotRecognizedException();
         }
@@ -650,6 +656,8 @@ public class HtmlParser implements XMLReader {
             setDoctypeExpectation((DoctypeExpectation) value);
         } else if ("http://validator.nu/properties/xml-policy".equals(name)) {
             setXmlPolicy((XmlViolationPolicy) value);
+        } else if ("http://validator.nu/properties/heuristics".equals(name)) {
+            setHeuristics((Heuristics) value);
         } else {
             throw new SAXNotRecognizedException();
         }
@@ -941,6 +949,23 @@ public class HtmlParser implements XMLReader {
         if (tokenizer != null) {
             tokenizer.setNamePolicy(namePolicy);
         }
+    }
+    
+    /**
+     * Sets the encoding sniffing heuristics.
+     * 
+     * @param heuristics the heuristics to set
+     * @see nu.validator.htmlparser.impl.Tokenizer#setHeuristics(nu.validator.htmlparser.common.Heuristics)
+     */
+    public void setHeuristics(Heuristics heuristics) {
+        this.heuristics = heuristics;
+        if (tokenizer != null) {
+            tokenizer.setHeuristics(heuristics);
+        }
+    }
+    
+    public Heuristics getHeuristics() {
+        return this.heuristics;
     }
 
     /**
