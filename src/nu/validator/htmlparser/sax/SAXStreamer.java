@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
+ * Copyright (c) 2008 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -22,20 +23,19 @@
 
 package nu.validator.htmlparser.sax;
 
+import nu.validator.htmlparser.common.XmlViolationPolicy;
+import nu.validator.htmlparser.impl.TreeBuilder;
+
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.ext.LexicalHandler;
 
-import nu.validator.htmlparser.common.XmlViolationPolicy;
-import nu.validator.htmlparser.impl.AttributesImpl;
-import nu.validator.htmlparser.impl.TreeBuilder;
-
 class SAXStreamer extends TreeBuilder<Attributes>{
 
-    private ContentHandler contentHandler;
-    private LexicalHandler lexicalHandler;
-    private int depth;
+    private ContentHandler contentHandler = null;
+    private LexicalHandler lexicalHandler = null;
+    private int depth = -1;
     
     SAXStreamer() {
         super(XmlViolationPolicy.FATAL, false);
@@ -180,6 +180,7 @@ class SAXStreamer extends TreeBuilder<Attributes>{
      */
     @Override
     protected void end() throws SAXException {
+        depth = -1;
         contentHandler.endDocument();
     }
 
@@ -198,6 +199,10 @@ class SAXStreamer extends TreeBuilder<Attributes>{
      */
     @Override
     protected void start(boolean fragment) throws SAXException {
+        if (depth > -1) {
+            depth = -1;
+            fatal();
+        }
         contentHandler.setDocumentLocator(tokenizer);
         if (fragment) {
             depth = 1;

@@ -30,6 +30,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CodingErrorAction;
 
+import nu.validator.htmlparser.impl.Encoding;
 import nu.validator.htmlparser.impl.HtmlInputStreamReader;
 
 import org.xml.sax.ErrorHandler;
@@ -42,7 +43,7 @@ public class DecoderLoopTester {
     private static final int NUMBER_OR_ASTRAL_CHARS = 24500;
     
     private void runTest(int padding) throws SAXException, IOException {
-       Charset utf8 = Charset.forName("UTF-8");
+       Encoding utf8 = Encoding.forName("UTF-8");
        char[] charArr = new char[1 + padding + 2 * NUMBER_OR_ASTRAL_CHARS];
        byte[] byteArr;
        int i = 0;
@@ -68,7 +69,7 @@ public class DecoderLoopTester {
        
        ErrorHandler eh = new SystemErrErrorHandler();
        compare(new HtmlInputStreamReader(new ByteArrayInputStream(byteArr), eh, null, null), padding, charArr, byteArr);
-       compare(new HtmlInputStreamReader(new ByteArrayInputStream(byteArr), eh, null, null, utf8.newDecoder()), padding, charArr, byteArr);
+       compare(new HtmlInputStreamReader(new ByteArrayInputStream(byteArr), eh, null, null, utf8), padding, charArr, byteArr);
     }
 
     /**

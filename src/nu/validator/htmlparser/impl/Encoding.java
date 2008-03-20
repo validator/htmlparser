@@ -1,0 +1,366 @@
+/*
+ * Copyright (c) 2006 Henri Sivonen
+ * Copyright (c) 2008 Mozilla Foundation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a 
+ * copy of this software and associated documentation files (the "Software"), 
+ * to deal in the Software without restriction, including without limitation 
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense, 
+ * and/or sell copies of the Software, and to permit persons to whom the 
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in 
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL 
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * DEALINGS IN THE SOFTWARE.
+ */
+
+package nu.validator.htmlparser.impl;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.UnsupportedCharsetException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeSet;
+
+public class Encoding {
+
+    private static String[] SHOULD_NOT = { "jis_x0212-1990",
+        "utf-32",
+        "utf-32be",
+        "utf-32le",
+        "x-jis0208" };
+    
+    private static String[] BANNED = { "bocu-1", "cesu-8", "compound_text",
+            "macarabic", "maccentraleurroman", "maccroatian", "maccyrillic",
+            "macdevanagari", "macfarsi", "macgreek", "macgujarati",
+            "macgurmukhi", "machebrew", "macicelandic", "macroman",
+            "macromanian", "macthai", "macturkish", "macukranian",
+            "scsu", "utf-7", "x-imap-mailbox-name", "x-jisautodetect",
+            "x-utf-16be-bom", "x-utf-16le-bom", "x-utf-32be-bom",
+            "x-utf-32le-bom", "x-utf16_oppositeendian",
+            "x-utf16_platformendian", "x-utf32_oppositeendian",
+            "x-utf32_platformendian" };
+    
+    private static String[] NOT_OBSCURE = {"big5",
+        "big5-hkscs",
+        "euc-jp",
+        "euc-kr",
+        "gb18030",
+        "gbk",
+        "iso-2022-jp",
+        "iso-2022-kr",
+        "iso-8859-1",
+        "iso-8859-13",
+        "iso-8859-15",
+        "iso-8859-2",
+        "iso-8859-3",
+        "iso-8859-4",
+        "iso-8859-5",
+        "iso-8859-6",
+        "iso-8859-7",
+        "iso-8859-8",
+        "iso-8859-9",
+        "koi8-r",
+        "shift_jis",
+        "tis-620",
+        "us-ascii",
+        "utf-16",
+        "utf-16be",
+        "utf-16le",
+        "utf-8",
+        "windows-1250",
+        "windows-1251",
+        "windows-1252",
+        "windows-1253",
+        "windows-1254",
+        "windows-1255",
+        "windows-1256",
+        "windows-1257",
+        "windows-1258"};
+    
+    private static Map<String, Encoding> encodingByLowerCaseName = new HashMap<String, Encoding>();
+
+    private final String canonName;
+    
+    private final Charset charset;
+    
+    private final boolean asciiSuperset;
+    
+    private final boolean obscure;
+    
+    private final boolean shouldNot;
+    
+    private final boolean likelyEbcdic;
+    
+    private Encoding actualHtmlEncoding = null;
+    
+    
+    static {
+        byte[] testBuf = new byte[0x7F];
+        for (int i = 0; i < 0x7F; i++) {
+            if (isAsciiSupersetnessSensitive(i)) {
+                testBuf[i] = (byte) i;                
+            } else {
+                testBuf[i] = (byte) 0x20;                                
+            }
+        }
+
+        Set<Encoding> encodings = new HashSet<Encoding>();
+        
+        SortedMap<String, Charset> charsets = Charset.availableCharsets();
+        for (Map.Entry<String, Charset> entry : charsets.entrySet()) {
+            Charset cs = entry.getValue();
+            String name = toAsciiLowerCase(cs.name());
+            if (!isBanned(name)) {
+                name = name.intern();
+                boolean asciiSuperset = asciiMapsToBasicLatin(testBuf, cs);
+                Encoding enc = new Encoding(name, cs, asciiSuperset, isObscure(name), isShouldNot(name), isLikelyEbcdic(name, asciiSuperset));
+                encodings.add(enc);
+                Set<String> aliases = cs.aliases();
+                for (String alias : aliases) {
+                    encodingByLowerCaseName.put(toAsciiLowerCase(alias).intern(), enc);
+                }
+            }
+        }
+        // Overwrite possible overlapping aliases with the real things--just in case
+        for (Encoding encoding : encodings) {
+            encodingByLowerCaseName.put(encoding.getCanonName(), encoding);
+        }
+        
+        try {
+            forName("iso-8859-1").actualHtmlEncoding = forName("windows-1252");            
+        } catch(UnsupportedCharsetException e) {
+        }
+        try {
+            forName("iso-8859-11").actualHtmlEncoding = forName("windows-874");            
+        } catch(UnsupportedCharsetException e) {
+        }
+        try {
+            forName("x-iso-8859-11").actualHtmlEncoding = forName("windows-874");            
+        } catch(UnsupportedCharsetException e) {
+        }
+        try {
+            forName("tis-620").actualHtmlEncoding = forName("windows-874");            
+        } catch(UnsupportedCharsetException e) {
+        }
+        try {
+            forName("gb_2312-80").actualHtmlEncoding = forName("gbk");            
+        } catch(UnsupportedCharsetException e) {
+        }        
+        try {
+            forName("gb2312").actualHtmlEncoding = forName("gbk");            
+        } catch(UnsupportedCharsetException e) {
+        }
+        try {
+            encodingByLowerCaseName.put("x-x-big5", forName("big5"));
+        } catch(UnsupportedCharsetException e) {
+        }        
+    }
+
+    private static boolean isAsciiSupersetnessSensitive(int c) {
+        return (c >= 0x09 && c <= 0x0D) || (c >= 0x20 && c <= 0x22)
+                || (c >= 0x26 && c <= 0x27) || (c >= 0x2C && c <= 0x3F)
+                || (c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A);
+    }
+    
+    private static boolean isObscure(String lowerCasePreferredIanaName) {
+        return !(Arrays.binarySearch(NOT_OBSCURE, lowerCasePreferredIanaName) > -1);
+    }
+
+    private static boolean isBanned(String lowerCasePreferredIanaName) {
+        return (Arrays.binarySearch(BANNED, lowerCasePreferredIanaName) > -1);
+    }
+
+    private static boolean isShouldNot(String lowerCasePreferredIanaName) {
+        return (Arrays.binarySearch(SHOULD_NOT, lowerCasePreferredIanaName) > -1);
+    }
+    
+    /**
+     * @param testBuf
+     * @param cs
+     */
+    private static boolean asciiMapsToBasicLatin(byte[] testBuf, Charset cs) {
+        CharsetDecoder dec = cs.newDecoder();
+        dec.onMalformedInput(CodingErrorAction.REPORT);
+        dec.onUnmappableCharacter(CodingErrorAction.REPORT);
+        Reader r = new InputStreamReader(new ByteArrayInputStream(testBuf), dec);
+        try {
+            for (int i = 0; i < 0x7F; i++) {
+                if (isAsciiSupersetnessSensitive(i)) {
+                    if (r.read() != i) {
+                        return false;
+                    }
+                } else {
+                    if (r.read() != 0x20) {
+                        return false;
+                    }
+                }
+            }
+        } catch (IOException e) {
+            return false;
+        } catch (Exception e) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private static boolean isLikelyEbcdic(String canonName, boolean asciiSuperset) {
+        if (!asciiSuperset) {
+            return (canonName.startsWith("cp") || canonName.startsWith("ibm") || canonName.startsWith("x-ibm"));
+        } else {
+            return false;
+        }
+    }
+    
+    public static Encoding forName(String name) {
+        Encoding rv = encodingByLowerCaseName.get(toAsciiLowerCase(name));
+        if (rv == null) {
+            throw new UnsupportedCharsetException(name);            
+        } else {
+            return rv;
+        }
+    }
+    
+    public static String toAsciiLowerCase(String str) {
+        if (str == null) {
+            return null;
+        }
+        char[] buf = new char[str.length()];
+        for (int i = 0; i < str.length(); i++) {
+            char c = str.charAt(i);
+            if (c >= 'A' && c <= 'Z') {
+                c += 0x20;
+            }
+            buf[i] = c;
+        }
+        return new String(buf);
+    }
+
+    /**
+     * @param canonName
+     * @param charset
+     * @param asciiSuperset
+     * @param obscure
+     * @param shouldNot
+     * @param likelyEbcdic
+     */
+    private Encoding(final String canonName, final Charset charset, final boolean asciiSuperset, final boolean obscure, final boolean shouldNot, final boolean likelyEbcdic) {
+        this.canonName = canonName;
+        this.charset = charset;
+        this.asciiSuperset = asciiSuperset;
+        this.obscure = obscure;
+        this.shouldNot = shouldNot;
+        this.likelyEbcdic = likelyEbcdic;
+    }
+
+    /**
+     * Returns the asciiSuperset.
+     * 
+     * @return the asciiSuperset
+     */
+    public boolean isAsciiSuperset() {
+        return asciiSuperset;
+    }
+
+    /**
+     * Returns the canonName.
+     * 
+     * @return the canonName
+     */
+    public String getCanonName() {
+        return canonName;
+    }
+
+    /**
+     * Returns the likelyEbcdic.
+     * 
+     * @return the likelyEbcdic
+     */
+    public boolean isLikelyEbcdic() {
+        return likelyEbcdic;
+    }
+
+    /**
+     * Returns the obscure.
+     * 
+     * @return the obscure
+     */
+    public boolean isObscure() {
+        return obscure;
+    }
+
+    /**
+     * Returns the shouldNot.
+     * 
+     * @return the shouldNot
+     */
+    public boolean isShouldNot() {
+        return shouldNot;
+    }
+    
+    public boolean isRegistered() {
+        return !canonName.startsWith("x-");
+    }
+
+    /**
+     * @return
+     * @see java.nio.charset.Charset#canEncode()
+     */
+    public boolean canEncode() {
+        return charset.canEncode();
+    }
+
+    /**
+     * @return
+     * @see java.nio.charset.Charset#newDecoder()
+     */
+    public CharsetDecoder newDecoder() {
+        return charset.newDecoder();
+    }
+
+    /**
+     * @return
+     * @see java.nio.charset.Charset#newEncoder()
+     */
+    public CharsetEncoder newEncoder() {
+        return charset.newEncoder();
+    }
+
+    /**
+     * Returns the actualHtmlEncoding.
+     * 
+     * @return the actualHtmlEncoding
+     */
+    public Encoding getActualHtmlEncoding() {
+        return actualHtmlEncoding;
+    }
+    
+    public static void main(String[] args) {
+        for (Map.Entry<String, Encoding> entry : encodingByLowerCaseName.entrySet()) {
+            String name = entry.getKey();
+            Encoding enc = entry.getValue();
+            System.out.printf("%21s: canon %21s, obs %5s, reg %5s, asc %5s, ebc %5s\n", name, enc.getCanonName(), enc.isObscure(), enc.isRegistered(), enc.isAsciiSuperset(), enc.isLikelyEbcdic());
+        }
+    }
+    
+}

@@ -1521,7 +1521,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         appendVoidElementToCurrentMayFoster(name, attributes);
                         return;
                     } else if ("meta" == name) {
-                        errIfInconsistentCharset(attributes);
+                        checkMetaCharset(attributes);
                         appendVoidElementToCurrentMayFoster(name, attributes);
                         return;
                     } else if ("style" == name) {
@@ -1781,7 +1781,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         return;
                     } else if ("meta" == name) {
                         err("\u201Cmeta\u201D element outside \u201Chead\u201D.");
-                        errIfInconsistentCharset(attributes);
+                        checkMetaCharset(attributes);
                         if (!nonConformingAndStreaming) {
                             pushHeadPointerOntoStack();
                         }
@@ -1872,7 +1872,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         return true;
     }
     
-    private void errIfInconsistentCharset(Attributes attributes) throws SAXException {
+    private void checkMetaCharset(Attributes attributes) throws SAXException {
         String content = attributes.getValue("", "content");
         String internalCharset = null;
         if (content != null) {
@@ -1886,15 +1886,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (internalCharset == null) {
             internalCharset = attributes.getValue("", "charset");
         }
-        String externalCharset = tokenizer.getExternalCharset();
-        if (internalCharset != null && externalCharset != null) {
-            if (!equalsIgnoreAsciiCase(externalCharset, internalCharset)) {
-                err("The internally declared character encoding \u201C"
-                        + internalCharset
-                        + "\u201D does not match the external declaration \u201C"
-                        + externalCharset
-                        + "\u201D. The external declaration takes precedence.");
-            }
+        if (internalCharset != null) {
+            tokenizer.internalEncodingDeclaration(internalCharset);
         }
     }
     
@@ -3432,6 +3425,15 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         this.errorHandler = errorHandler;
     }
     
+    /**
+     * Returns the errorHandler.
+     * 
+     * @return the errorHandler
+     */
+    ErrorHandler getErrorHandler() {
+        return errorHandler;
+    }
+
     public final void setFragmentContext(String context) {
         this.context = context == null ? null : context.intern();
     }

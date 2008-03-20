@@ -1,33 +1,3 @@
-This is for the HTML parser as a whole except the rewindable input stream. 
-For the copyright notices for individual files, please see individual files.
-
-/*
- * Copyright (c) 2005, 2006, 2007 Henri Sivonen
- * Copyright (c) 2007-2008 Mozilla Foundation
- * Portions of comments Copyright 2004-2007 Apple Computer, Inc., Mozilla 
- * Foundation, and Opera Software ASA.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a 
- * copy of this software and associated documentation files (the "Software"), 
- * to deal in the Software without restriction, including without limitation 
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, 
- * and/or sell copies of the Software, and to permit persons to whom the 
- * Software is furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in 
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL 
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
- * DEALINGS IN THE SOFTWARE.
- */
- 
-The following license is for the rewindable input stream.
-
 /*
  * Copyright (c) 2001-2003 Thai Open Source Software Center Ltd
  * All rights reserved.
@@ -60,3 +30,11 @@ The following license is for the rewindable input stream.
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+package nu.validator.htmlparser.io;
+
+public interface Rewindable {
+  void willNotRewind();
+  void rewind();
+  boolean canRewind();
+}

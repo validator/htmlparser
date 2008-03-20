@@ -110,21 +110,29 @@ public final class HtmlInputStreamReader extends Reader implements
         this.locator = locator;
         this.tokenizer = tokenizer;
         this.sniffing = true;
-        this.decoder = (new BomSniffer(this)).sniff();
-        if (this.decoder == null) {
+        Encoding encoding = (new BomSniffer(this)).sniff();
+        if (encoding == null) {
             position = 0;
-            this.decoder = (new MetaSniffer(this, errorHandler, this)).sniff();
+            encoding = (new MetaSniffer(this, errorHandler, this)).sniff();
             sniffing = false;
             // TODO chardet
-            if (this.decoder == null) {
+            if (encoding == null) {
                 if (tokenizer != null) {
                     tokenizer.noEncodingDeclared();
                 } else {
                     err("Could not determine the character encoding of the document. Using \u201CWindows-1252\u201D.");
                 }
-                this.decoder = Charset.forName("Windows-1252").newDecoder();
+                encoding = Encoding.forName("windows-1252");
             }
+            if (tokenizer != null) {
+                tokenizer.setEncoding(encoding, Confidence.TENTATIVE);           
+            }            
+        } else {
+            if (tokenizer != null) {
+                tokenizer.setEncoding(encoding, Confidence.CERTAIN);           
+            }            
         }
+        this.decoder = encoding.newDecoder();
         sniffing = false;
         position = 0;
         bytesRead = 0;
@@ -137,21 +145,18 @@ public final class HtmlInputStreamReader extends Reader implements
      * 
      */
     private void initDecoder() {
-        if ("ISO-8859-1".equalsIgnoreCase(this.decoder.charset().name())) {
-            this.decoder = Charset.forName("Windows-1252").newDecoder();
-        }
         this.decoder.onMalformedInput(CodingErrorAction.REPORT);
         this.decoder.onUnmappableCharacter(CodingErrorAction.REPORT);
     }
 
     public HtmlInputStreamReader(InputStream inputStream,
             ErrorHandler errorHandler, Locator locator, Tokenizer tokenizer,
-            CharsetDecoder decoder) throws SAXException, IOException {
+            Encoding encoding) throws SAXException, IOException {
         this.inputStream = inputStream;
         this.errorHandler = errorHandler;
         this.locator = locator;
         this.tokenizer = tokenizer;
-        this.decoder = decoder;
+        this.decoder = encoding.newDecoder();
         this.sniffing = false;
         position = 0;
         bytesRead = 0;
