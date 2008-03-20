@@ -47,6 +47,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import nu.validator.htmlparser.common.XmlViolationPolicy;
+import nu.validator.htmlparser.io.RewindableInputStream;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.ErrorHandler;
@@ -152,6 +153,12 @@ public final class Tokenizer implements Locator {
      * object is an instance of <code>HtmlInputStreamReader</code>.
      */
     private Reader reader;
+    
+    /**
+     * The reference to the rewindable byte stream. <code>null</code> if p
+     * rohibited or no longer needed.
+     */
+    private RewindableInputStream rewindableInputStream;
 
     /**
      * The main input buffer that the tokenizer reads from. Filled from
@@ -336,6 +343,8 @@ public final class Tokenizer implements Locator {
      * Used together with <code>nonAsciiProhibited</code>.
      */
     private boolean alreadyComplainedAboutNonAscii;
+    
+    private boolean canSwitchDecoder;
 
     /**
      * Whether the stream is past the first 512 bytes.
@@ -393,6 +402,8 @@ public final class Tokenizer implements Locator {
     private Encoding characterEncoding;
 
     private Confidence confidence;
+    
+    private boolean allowRewinding = true;
 
     // start public API
 
@@ -404,6 +415,24 @@ public final class Tokenizer implements Locator {
      */
     public Tokenizer(TokenHandler tokenHandler) {
         this.tokenHandler = tokenHandler;
+    }
+
+    /**
+     * Returns the allowRewinding.
+     * 
+     * @return the allowRewinding
+     */
+    public boolean isAllowRewinding() {
+        return allowRewinding;
+    }
+
+    /**
+     * Sets the allowRewinding.
+     * 
+     * @param allowRewinding the allowRewinding to set
+     */
+    public void setAllowRewinding(boolean allowRewinding) {
+        this.allowRewinding = allowRewinding;
     }
 
     /**
@@ -597,7 +626,9 @@ public final class Tokenizer implements Locator {
         confidence = Confidence.TENTATIVE;
         nonAsciiProhibited = false;
         alreadyComplainedAboutNonAscii = false;
+        canSwitchDecoder = true;
         swallowBom = true;
+        rewindableInputStream = null;
         this.systemId = is.getSystemId();
         this.publicId = is.getPublicId();
         this.reader = is.getCharacterStream();
@@ -608,6 +639,10 @@ public final class Tokenizer implements Locator {
                 throw new SAXException("Both streams in InputSource were null.");
             }
             if (this.characterEncoding == null) {
+                if (allowRewinding) {
+                    inputStream = rewindableInputStream = new RewindableInputStream(
+                            inputStream);
+                }
                 this.reader = new HtmlInputStreamReader(inputStream,
                         errorHandler, this, this);
             } else {
@@ -657,9 +692,15 @@ public final class Tokenizer implements Locator {
                     }
                     break;
                 } catch (ReparseException e) {
-                    throw e;
-//                    becomeConfident();
-//                    continue;
+                    if (rewindableInputStream == null) {
+                        fatal("Changing encoding at this point would need non-streamable behavior.");
+                    } else {
+                        rewindableInputStream.rewind();
+                        becomeConfident();
+                        this.reader = new HtmlInputStreamReader(rewindableInputStream,
+                                errorHandler, this, this, this.characterEncoding);
+                    }
+                    continue;
                 }
             }
         } finally {
@@ -675,6 +716,8 @@ public final class Tokenizer implements Locator {
                 ch.end();
             }
             reader.close();
+            reader = null;
+            rewindableInputStream = null;
         }
     }
 
@@ -982,6 +1025,11 @@ public final class Tokenizer implements Locator {
                     && c > '\u007F') {
                 err("The character characterEncoding of the document was not explicit but the document contains non-ASCII.");
                 alreadyComplainedAboutNonAscii = true;
+            }
+            if (canSwitchDecoder && !((c >= 0x09 && c <= 0x0D) || (c >= 0x20 && c <= 0x22)
+                    || (c >= 0x26 && c <= 0x27) || (c >= 0x2C && c <= 0x3F)
+                    || (c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A))) {
+                canSwitchDecoder = false;
             }
             switch (c) {
                 case '\n':
@@ -4515,7 +4563,7 @@ public final class Tokenizer implements Locator {
             internalCharset = Encoding.toAsciiLowerCase(internalCharset);
             Encoding cs;
             if ("utf-16".equals(internalCharset) || "utf-16be".equals(internalCharset) || "utf-16le".equals(internalCharset) || "utf-32".equals(internalCharset) || "utf-32be".equals(internalCharset) || "utf-32le".equals(internalCharset)) {
-                cs = Encoding.forName("utf-8");
+                cs = Encoding.UTF8;
                 errTreeBuilder("Internal encoding declaration specified \u201C"
                         + internalCharset
                         + "\u201D which is not an ASCII superset. Continuing as if the encoding had been \u201Cutf-8\u201D.");
@@ -4543,9 +4591,19 @@ public final class Tokenizer implements Locator {
                         + "\u201D disagrees with the actual encoding of the document (\u201C"
                         + characterEncoding.getCanonName() + "\u201D).");
             } else {
-                characterEncoding = whineAboutEncodingAndReturnActual(
+                errTreeBuilder("Changing character encoding in mid-parse to \u201C" + internalCharset + "\u201D.");
+                Encoding newEnc = whineAboutEncodingAndReturnActual(
                         internalCharset, cs);
-                throw new ReparseException();
+                if (characterEncoding == Encoding.WINDOWS1252 && canSwitchDecoder && restOfBufferCanSwitchDecoder()) {
+                    canSwitchDecoder = false;
+                    characterEncoding = newEnc;
+                    ((HtmlInputStreamReader) reader).switchEncoding(newEnc);
+                    becomeConfident();
+                } else {
+                    canSwitchDecoder = false;
+                    characterEncoding = newEnc;
+                    throw new ReparseException();
+                }
             }
         } catch (UnsupportedCharsetException e) {
             errTreeBuilder("Internal encoding declaration named an unsupported chararacter encoding \u201C"
@@ -4553,10 +4611,25 @@ public final class Tokenizer implements Locator {
         }
     }
 
+    private boolean restOfBufferCanSwitchDecoder() {
+        for (int i = pos; i < bufLen; i++) {
+            char c = buf[i];
+            if (!((c >= 0x09 && c <= 0x0D) || (c >= 0x20 && c <= 0x22)
+                    || (c >= 0x26 && c <= 0x27) || (c >= 0x2C && c <= 0x3F)
+                    || (c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     /**
      * 
      */
     private void becomeConfident() {
+        if (rewindableInputStream != null) {
+            rewindableInputStream.willNotRewind();
+        }
         confidence = Confidence.CERTAIN;
     }
     

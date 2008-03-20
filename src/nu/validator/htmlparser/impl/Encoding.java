@@ -42,6 +42,12 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 public class Encoding {
+    
+    public static final Encoding UTF8;
+    public static final Encoding UTF16;
+    public static final Encoding UTF16LE;
+    public static final Encoding UTF16BE;
+    public static final Encoding WINDOWS1252;
 
     private static String[] SHOULD_NOT = { "jis_x0212-1990",
         "utf-32",
@@ -145,7 +151,11 @@ public class Encoding {
         for (Encoding encoding : encodings) {
             encodingByLowerCaseName.put(encoding.getCanonName(), encoding);
         }
-        
+        UTF8 = forName("utf-8");
+        UTF16 = forName("utf-16");
+        UTF16BE = forName("utf-16be");
+        UTF16LE = forName("utf-16le");
+        WINDOWS1252 = forName("windows-1252");
         try {
             forName("iso-8859-1").actualHtmlEncoding = forName("windows-1252");            
         } catch(UnsupportedCharsetException e) {

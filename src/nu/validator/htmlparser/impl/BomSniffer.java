@@ -50,8 +50,7 @@ public final class BomSniffer {
             if (b == 0xBB) {
                 b = source.readByte();
                 if (b == 0xBF) {
-//                    return new CharsetProviderICU().charsetForName("UTF-8").newDecoder();
-                    return Encoding.forName("utf-8");
+                    return Encoding.UTF8;
                 } else {
                     return null;
                 }
@@ -61,14 +60,14 @@ public final class BomSniffer {
         } else if (b == 0xFF) { // little-endian
             b = source.readByte();
             if (b == 0xFE) {
-                return Encoding.forName("utf-16le");
+                return Encoding.UTF16LE;
             } else {
                 return null;
             }
         } else if (b == 0xFE) { // big-endian UTF-16
             b = source.readByte();
             if (b == 0xFF) {
-                return Encoding.forName("utf-16be");
+                return Encoding.UTF16BE;
             } else {
                 return null;
             }
