@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-package nu.validator.htmlparser.io;
+package nu.validator.htmlparser.rewindable;
 
 import java.io.IOException;
 import java.io.InputStream;
