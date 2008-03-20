@@ -335,11 +335,6 @@ public final class Tokenizer implements Locator {
     private boolean html4;
 
     /**
-     * Whether non-ASCII causes an error.
-     */
-    private boolean nonAsciiProhibited;
-
-    /**
      * Used together with <code>nonAsciiProhibited</code>.
      */
     private boolean alreadyComplainedAboutNonAscii;
@@ -624,7 +619,6 @@ public final class Tokenizer implements Locator {
             throw new IllegalArgumentException("InputSource was null.");
         }
         confidence = Confidence.TENTATIVE;
-        nonAsciiProhibited = false;
         alreadyComplainedAboutNonAscii = false;
         canSwitchDecoder = true;
         swallowBom = true;
@@ -687,8 +681,8 @@ public final class Tokenizer implements Locator {
                         }
                     }
                     dataState();
-                    if (nonAsciiProhibited && !alreadyComplainedAboutNonAscii) {
-                        warnWithoutLocation("The character characterEncoding of the document was not declared.");
+                    if (confidence == Confidence.TENTATIVE && !alreadyComplainedAboutNonAscii) {
+                        warnWithoutLocation("The character encoding of the document was not declared.");
                     }
                     break;
                 } catch (ReparseException e) {
@@ -788,10 +782,6 @@ public final class Tokenizer implements Locator {
 
     void dontSwallowBom() {
         swallowBom = false;
-    }
-
-    void noEncodingDeclared() {
-        nonAsciiProhibited = true;
     }
 
     AttributesImpl newAttributes() {
@@ -1021,9 +1011,9 @@ public final class Tokenizer implements Locator {
                 pos = 0;
             }
             char c = buf[pos];
-            if (nonAsciiProhibited && !alreadyComplainedAboutNonAscii
+            if (confidence == Confidence.TENTATIVE && !alreadyComplainedAboutNonAscii
                     && c > '\u007F') {
-                err("The character characterEncoding of the document was not explicit but the document contains non-ASCII.");
+                err("The character encoding of the document was not explicit (assumed \u201C" + characterEncoding.getCanonName() + "\u201D) but the document contains non-ASCII.");
                 alreadyComplainedAboutNonAscii = true;
             }
             if (canSwitchDecoder && !((c >= 0x09 && c <= 0x0D) || (c >= 0x20 && c <= 0x22)
@@ -1322,7 +1312,7 @@ public final class Tokenizer implements Locator {
             }
             return whineAboutEncodingAndReturnActual(encoding, cs);
         } catch (UnsupportedCharsetException e) {
-            err("Unsupported character characterEncoding name: \u201C"
+            err("Unsupported character encodingcoding name: \u201C"
                     + encoding + "\u201D. Will sniff.");
             swallowBom = true;
         }
@@ -1340,28 +1330,28 @@ public final class Tokenizer implements Locator {
         String canonName = cs.getCanonName();
         if (!cs.isRegistered()) {
             if (encoding.startsWith("x-")) {
-                err("The characterEncoding \u201C"
+                err("The encoding \u201C"
                         + encoding
-                        + "\u201D is not an IANA-registered characterEncoding. (Charmod C022)");
+                        + "\u201D is not an IANA-registered encoding. (Charmod C022)");
             } else {
-                err("The characterEncoding \u201C"
+                err("The encoding \u201C"
                         + encoding
-                        + "\u201D is not an IANA-registered characterEncoding and did not use the \u201Cx-\u201D prefix. (Charmod C023)");
+                        + "\u201D is not an IANA-registered encoding and did not use the \u201Cx-\u201D prefix. (Charmod C023)");
             }
         } else if (!canonName.equals(encoding)) {
-            err("The characterEncoding \u201C"
+            err("The encoding \u201C"
                     + encoding
-                    + "\u201D is not the preferred name of the character characterEncoding in use. The preferred name is \u201C"
+                    + "\u201D is not the preferred name of the character encoding in use. The preferred name is \u201C"
                     + canonName + "\u201D. (Charmod C024)");
         }
         if (cs.isShouldNot()) {
-            warn("Authors should not use the character characterEncoding \u201C"
+            warn("Authors should not use the character encoding \u201C"
                     + encoding
                     + "\u201D. It is recommended to use \u201CUTF-8\u201D.");
         } else if (cs.isLikelyEbcdic()) {
             warn("Authors should not use EBCDIC-based encodings. It is recommended to use \u201CUTF-8\u201D.");
         } else if (cs.isObscure()) {
-            warn("The character characterEncoding \u201C"
+            warn("The character encoding \u201C"
                     + encoding
                     + "\u201D is not widely supported. Better interoperability may be achieved by using \u201CUTF-8\u201D.");
         }
