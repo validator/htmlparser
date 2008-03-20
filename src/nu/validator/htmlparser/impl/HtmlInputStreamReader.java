@@ -117,20 +117,21 @@ public final class HtmlInputStreamReader extends Reader implements
             sniffing = false;
             // TODO chardet
             if (encoding == null) {
-                if (tokenizer != null) {
-                    tokenizer.noEncodingDeclared();
-                } else {
-                    err("Could not determine the character encoding of the document. Using \u201CWindows-1252\u201D.");
-                }
                 encoding = Encoding.WINDOWS1252;
             }
             if (tokenizer != null) {
                 tokenizer.setEncoding(encoding, Confidence.TENTATIVE);           
             }            
         } else {
-            if (tokenizer != null) {
-                tokenizer.setEncoding(encoding, Confidence.CERTAIN);           
-            }            
+            if (encoding == Encoding.UTF8) {
+                if (tokenizer != null) {
+                    tokenizer.setEncoding(Encoding.UTF8, Confidence.CERTAIN);           
+                }                            
+            } else {
+                if (tokenizer != null) {
+                    tokenizer.setEncoding(Encoding.UTF16, Confidence.CERTAIN);           
+                }                                            
+            }
         }
         this.decoder = encoding.newDecoder();
         sniffing = false;
