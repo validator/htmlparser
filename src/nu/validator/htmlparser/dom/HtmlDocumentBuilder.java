@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
- * Copyright (c) 2007 Mozilla Foundation
+ * Copyright (c) 2007-2008 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -33,6 +33,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import nu.validator.htmlparser.common.DoctypeExpectation;
 import nu.validator.htmlparser.common.DocumentModeHandler;
+import nu.validator.htmlparser.common.Heuristics;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
 import nu.validator.htmlparser.impl.Tokenizer;
 
@@ -382,6 +383,16 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
      */
     public void setBogusXmlnsPolicy(XmlViolationPolicy bogusXmlnsPolicy) {
         tokenizer.setBogusXmlnsPolicy(bogusXmlnsPolicy);
+    }
+
+    /**
+     * Sets the encoding sniffing heuristics.
+     * 
+     * @param heuristics the heuristics to set
+     * @see nu.validator.htmlparser.impl.Tokenizer#setHeuristics(nu.validator.htmlparser.common.Heuristics)
+     */
+    public void setHeuristics(Heuristics heuristics) {
+        tokenizer.setHeuristics(heuristics);
     }
     
 }

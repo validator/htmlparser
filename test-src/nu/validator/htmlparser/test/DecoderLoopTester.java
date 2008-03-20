@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
+ * Copyright (c) 2008 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -30,6 +31,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CodingErrorAction;
 
+import nu.validator.htmlparser.common.Heuristics;
 import nu.validator.htmlparser.impl.Encoding;
 import nu.validator.htmlparser.impl.HtmlInputStreamReader;
 
@@ -68,7 +70,7 @@ public class DecoderLoopTester {
        byteBuffer.get(byteArr);
        
        ErrorHandler eh = new SystemErrErrorHandler();
-       compare(new HtmlInputStreamReader(new ByteArrayInputStream(byteArr), eh, null, null), padding, charArr, byteArr);
+       compare(new HtmlInputStreamReader(new ByteArrayInputStream(byteArr), eh, null, null, Heuristics.NONE), padding, charArr, byteArr);
        compare(new HtmlInputStreamReader(new ByteArrayInputStream(byteArr), eh, null, null, utf8), padding, charArr, byteArr);
     }
 
