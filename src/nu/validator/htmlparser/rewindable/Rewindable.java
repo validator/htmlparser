@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-package nu.validator.htmlparser.io;
+package nu.validator.htmlparser.rewindable;
 
 public interface Rewindable {
     void willNotRewind();
