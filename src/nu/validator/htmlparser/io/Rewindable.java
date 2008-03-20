@@ -34,7 +34,9 @@
 package nu.validator.htmlparser.io;
 
 public interface Rewindable {
-  void willNotRewind();
-  void rewind();
-  boolean canRewind();
+    void willNotRewind();
+
+    void rewind();
+
+    boolean canRewind();
 }

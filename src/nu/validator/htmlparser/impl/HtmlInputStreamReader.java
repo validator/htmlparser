@@ -122,7 +122,7 @@ public final class HtmlInputStreamReader extends Reader implements
                 } else {
                     err("Could not determine the character encoding of the document. Using \u201CWindows-1252\u201D.");
                 }
-                encoding = Encoding.forName("windows-1252");
+                encoding = Encoding.WINDOWS1252;
             }
             if (tokenizer != null) {
                 tokenizer.setEncoding(encoding, Confidence.TENTATIVE);           
@@ -459,4 +459,8 @@ public final class HtmlInputStreamReader extends Reader implements
         throw new UnsupportedOperationException();
     }
 
+    public void switchEncoding(Encoding newEnc) {
+        this.decoder = newEnc.newDecoder();
+        initDecoder();
+    }
 }

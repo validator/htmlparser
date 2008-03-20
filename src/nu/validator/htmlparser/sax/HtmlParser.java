@@ -188,6 +188,7 @@ public class HtmlParser implements XMLReader {
                 saxStreamer.setContentHandler(contentHandler == null ? new DefaultHandler()
                         : contentHandler);
                 saxStreamer.setLexicalHandler(lexicalHandler);
+                tokenizer.setAllowRewinding(false);
             }
         }
     }
