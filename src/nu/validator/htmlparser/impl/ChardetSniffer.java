@@ -76,7 +76,7 @@ class ChardetSniffer implements nsICharsetDetectionObserver {
             }
             returnValue = enc;
         } catch (UnsupportedCharsetException e) {
-            
+            returnValue = null;
         }
     }
 }
