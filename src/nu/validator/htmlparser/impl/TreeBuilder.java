@@ -1610,6 +1610,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             resetTheInsertionMode();
                             return;
                         }
+                    } else if ("input" == name) {
+                        err("\u201Cinput\u201D start tag seen in \u201Cselect\2201D.");
+                        endSelect();
+                        continue;
                     } else {
                         err("Stray \u201C" + name + "\u201D start tag.");
                         return;
