@@ -87,7 +87,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         StackNode(final String name, final S node) {
             this.name = name;
             this.node = node;
-            this.scoping = ("table" == name || "caption" == name || "td" == name || "th" == name || "button" == name || "marquee" == name || "object" == name || "applet" == name);
+            this.scoping = ("table" == name || "caption" == name || "html" == name || "td" == name || "th" == name || "button" == name || "marquee" == name || "object" == name || "applet" == name);
             this.special = ("address" == name || "area" == name || "base" == name || "basefont" == name || "bgsound" == name || "blockquote" == name || "body" == name || "br" == name || "center" == name || "col" == name || "colgroup" == name || "dd" == name || "dir" == name || "div" == name || "dl" == name || "dt" == name || "embed" == name || "fieldset" == name || "form" == name || "frame" == name || "frameset" == name || "h1" == name || "h2" == name || "h3" == name || "h4" == name || "h5" == name || "h6" == name || "head" == name || "hr" == name || "iframe" == name || "image" == name || "img" == name || "input" == name || "isindex" == name || "li" == name || "link" == name || "listing" == name || "menu" == name || "meta" == name || "noembed" == name || "noframes" == name || "noscript" == name || "ol" == name || "optgroup" == name || "option" == name || "p" == name || "param" == name || "plaintext" == name || "pre" == name || "script" == name || "select" == name || "spacer" == name || "style" == name || "tbody" == name || "textarea" == name || "tfoot" == name || "thead" == name || "title" == name || "tr" == name || "ul" == name ||  "wbr" == name);
             this.fosterParenting = ("table" == name || "tbody" == name || "tfoot" == name || "thead" == name || "tr" == name);
         }
@@ -842,6 +842,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             start = i + 1;
                             continue;
                         case IN_COLUMN_GROUP:
+                            if (start < i) {
+                                accumulateCharacters(buf, start, i
+                                        - start);
+                                start = i;
+                            }
                             /*
                              * Act as if an end tag with the tag name "colgroup"
                              * had been seen, and then, if that token wasn't
@@ -849,6 +854,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                              */
                             if (currentPtr == 0) {
                                 err("Non-space in \u201Ccolgroup\u201D when parsing fragment.");
+                                start = i + 1;
                                 continue;
                             }
                             pop();
@@ -1047,8 +1053,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     pop();
                 }
             }
-            if (context != null && !htmlCloseReported) {
-                bodyClosed(stack[0].node);
+            if (context == null && !htmlCloseReported) {
+                htmlClosed(stack[0].node);
             }
             /* Stop parsing. */
         } finally {
@@ -2650,6 +2656,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             if (i == 0) {
                 if (!(context == "td" || context == "th")) {
                     name = context;
+                } else {
+                    mode = InsertionMode.IN_BODY; // XXX from Hixie's email
+                    return;                    
                 }
             }
             if ("select" == name) {
