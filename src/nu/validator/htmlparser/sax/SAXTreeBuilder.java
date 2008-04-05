@@ -33,12 +33,9 @@ import nu.validator.saxtree.DocumentFragment;
 import nu.validator.saxtree.Element;
 import nu.validator.saxtree.NodeType;
 import nu.validator.saxtree.ParentNode;
-import nu.validator.saxtree.TreeParser;
 
 import org.xml.sax.Attributes;
-import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
-import org.xml.sax.ext.LexicalHandler;
 
 class SAXTreeBuilder extends TreeBuilder<Element> {
     
