@@ -1,6 +1,0 @@
-nu.validator.htmlparser.common
-nu.validator.htmlparser.dom
-nu.validator.htmlparser.impl
-nu.validator.htmlparser.sax
-nu.validator.htmlparser.xom
-nu.validator.saxtree
