@@ -184,10 +184,7 @@ public final class HtmlInputStreamReader extends Reader implements
     @Override
     public int read(char[] charArray) throws IOException {
         lineColPos = 0;
-        if (sniffing) {
-            throw new IllegalStateException(
-                    "read() called when in the sniffing state.");
-        }
+        assert !sniffing;
         assert charArray.length >= 2;
         if (needToNotifyTokenizer) {
             if (tokenizer != null) {
@@ -204,7 +201,7 @@ public final class HtmlInputStreamReader extends Reader implements
             int cPos = charBuffer.position();
             return cPos == 0 ? -1 : cPos;
         }
-        outer: for (;;) {
+        for (;;) {
             if (shouldReadBytes) {
                 int oldLimit = byteBuffer.limit();
                 int readLen;
@@ -237,6 +234,7 @@ public final class HtmlInputStreamReader extends Reader implements
                     if (!charsetBoundaryPassed) {
                         if (bytesRead + remaining >= SNIFFING_LIMIT) {
                             needToNotifyTokenizer = true;
+                            charsetBoundaryPassed = true;
                         }
                     }
 
