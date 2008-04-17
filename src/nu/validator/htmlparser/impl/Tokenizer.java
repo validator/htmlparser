@@ -2309,7 +2309,7 @@ public final class Tokenizer implements Locator {
     }
 
     private void attributeNameComplete() throws SAXException {
-        attributeName = strBufToString();
+        attributeName = strBufToString().intern();
         if (attributes == null) {
             attributes = newAttributes();
         }
