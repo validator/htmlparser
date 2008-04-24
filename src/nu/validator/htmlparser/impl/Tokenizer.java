@@ -1444,6 +1444,247 @@ public final class Tokenizer implements Locator {
         return Arrays.binarySearch(VOID_ELEMENTS, tagName) > -1;
     }
 
+    private boolean lastHyphHyph() {
+        return prevFour[(prevFourPtr - 1 + 4) % 4] == '-'
+                && prevFour[(prevFourPtr - 2 + 4) % 4] == '-';
+    }
+
+    private boolean lastLtExclHyph() {
+        return prevFour[(prevFourPtr - 1 + 4) % 4] == '-'
+                && prevFour[(prevFourPtr - 2 + 4) % 4] == '!'
+                && prevFour[(prevFourPtr - 3 + 4) % 4] == '<';
+    }
+
+    /**
+     * 
+     */
+    private void resetAttributes() {
+        attributes = null; // XXX figure out reuse
+    }
+    
+
+    private void parseErrorUnlessPermittedSlash() throws SAXException,
+            IOException {
+        /*
+         * A permitted slash is a U+002F SOLIDUS character that is immediately
+         * followed by a U+003E GREATER-THAN SIGN, if, and only if, the current
+         * token being processed is a start tag token whose tag name is one of
+         * the following: base, link, meta, hr, br, img, embed, param, area,
+         * col, input
+         */
+        if (endTag) {
+            err("Stray \u201C/\u201D in an end tag.");
+            return;
+        }
+        char c = read();
+        int saveLine = line;
+        int saveCol = col;
+        line = linePrev;
+        col = colPrev;
+        if (c == '>') {
+            if (!currentIsVoid() && !html4) {
+                if (html4) {
+                    err("Stray \u201C/\u201D in tag. The \u201C/>\u201D syntax is not permitted in HTML4.");
+                } else {
+                    err("Stray \u201C/\u201D in tag. The \u201C/>\u201D syntax is only permitted on void elements.");
+                }
+            } else if (html4) {
+                err("Stray \u201C/\u201D in tag. The \u201C/>\u201D syntax is not permitted in HTML4. (HTML4-only error)");
+            }
+        } else {
+            err("Stray \u201C/\u201D in tag.");
+        }
+        line = saveLine;
+        col = saveCol;
+        unread(c);
+    }
+
+    private String strBufToElementNameString() {
+        int magic = bufToElementMagic(strBuf, strBufLen);
+        int index = Arrays.binarySearch(elementMagic, magic);
+        if (index < 0) {
+            return strBufToString(); // intern?
+        } else {
+            String rv = elements[index];
+            if (rv.length() != strBufLen) {
+                return strBufToString(); // intern?
+            }
+            for (int i = 0; i < strBufLen; i++) {
+                if (rv.charAt(i) != strBuf[i]) {
+                    return strBufToString(); // intern?                    
+                }
+            }
+            return rv;
+        }
+    }
+    
+    private void emitCurrentTagToken() throws SAXException {
+        if (namePolicy != XmlViolationPolicy.ALLOW) {
+            if (!isNcname(tagName)) {
+                if (namePolicy == XmlViolationPolicy.FATAL) {
+                    fatal((endTag ? "End" : "Start") + " tag \u201C" + tagName
+                            + "\u201D has a non-NCName name.");
+                } else {
+                    warn((endTag ? "End" : "Start") + " tag \u201C" + tagName
+                            + "\u201D has a non-NCName name. Ignoring token.");
+                    return;
+                }
+            }
+        }
+        Attributes attrs = (attributes == null ? EmptyAttributes.EMPTY_ATTRIBUTES
+                : attributes);
+        if (endTag) {
+            /*
+             * When an end tag token is emitted, the content model flag must be
+             * switched to the PCDATA state.
+             */
+            escapeFlag = false;
+            contentModelFlag = ContentModelFlag.PCDATA;
+            if (attrs.getLength() != 0) {
+                /*
+                 * When an end tag token is emitted with attributes, that is a
+                 * parse error.
+                 */
+                err("End tag had attributes.");
+            }
+            tokenHandler.endTag(tagName, attrs);
+        } else {
+            tokenHandler.startTag(tagName, attrs);
+        }
+    }
+    
+
+    private void attributeNameComplete() throws SAXException {
+        attributeName = strBufToString().intern();
+        if (attributes == null) {
+            attributes = newAttributes();
+        }
+        /*
+         * When the user agent leaves the attribute name state (and before
+         * emitting the tag token, if appropriate), the complete attribute's
+         * name must be compared to the other attributes on the same token; if
+         * there is already an attribute on the token with the exact same name,
+         * then this is a parse error and the new attribute must be dropped,
+         * along with the value that gets associated with it (if any).
+         */
+        if (attributes.getIndex(attributeName) == -1) {
+            if (namePolicy == XmlViolationPolicy.ALLOW) {
+                shouldAddAttributes = true;
+            } else {
+                if (isNcname(attributeName)) {
+                    shouldAddAttributes = true;
+                } else {
+                    if (namePolicy == XmlViolationPolicy.FATAL) {
+                        fatal("Attribute name \u201C" + attributeName
+                                + "\u201D is not an NCName.");
+                    } else {
+                        shouldAddAttributes = false;
+                        warn("Attribute name \u201C"
+                                + attributeName
+                                + "\u201D is not an NCName. Ignoring the attribute.");
+                    }
+                }
+            }
+        } else {
+            shouldAddAttributes = false;
+            err("Duplicate attribute \u201C" + attributeName + "\u201D.");
+        }
+    }
+
+    private void addAttributeWithoutValue() throws SAXException {
+        if (metaBoundaryPassed && "charset".equals(attributeName)
+                && "meta".equals(tagName)) {
+            err("A \u201Ccharset\u201D attribute on a \u201Cmeta\u201D element found after the first 512 bytes.");
+        }
+        if (shouldAddAttributes) {
+            if (html4) {
+                if (AttributeInfo.isBoolean(attributeName)) {
+                    if (html4ModeCompatibleWithXhtml1Schemata) {
+                        attributes.addAttribute(attributeName, attributeName);
+                    } else {
+                        attributes.addAttribute(attributeName, "");
+                    }
+                } else {
+                    err("Attribute value omitted for a non-boolean attribute. (HTML4-only error.)");
+                    attributes.addAttribute(attributeName, "");
+                }
+            } else {
+                if ("src".equals(attributeName) || "href".equals(attributeName)) {
+                    warn("Attribute \u201C"
+                            + attributeName
+                            + "\u201D without an explicit value seen. The attribute may be dropped by IE7.");
+                }
+                attributes.addAttribute(attributeName, "");
+            }
+        }
+    }
+
+    private void addAttributeWithValue() throws SAXException {
+        if (metaBoundaryPassed && "meta" == tagName
+                && "charset".equals(attributeName)) {
+            err("A \u201Ccharset\u201D attribute on a \u201Cmeta\u201D element found after the first 512 bytes.");
+        }
+        if (shouldAddAttributes) {
+            String value = longStrBufToString();
+            if (!endTag) {
+                if ("xmlns".equals(attributeName)) {
+                    if ("html" == tagName
+                            && "http://www.w3.org/1999/xhtml".equals(value)) {
+                        if (xmlnsPolicy == XmlViolationPolicy.ALTER_INFOSET) {
+                            return;
+                        }
+                    } else {
+                        if (bogusXmlnsPolicy == XmlViolationPolicy.FATAL) {
+                            fatal("Forbidden attribute \u201C"
+                                    + attributeName
+                                    + "\u201D is not mappable to namespace-aware XML 1.0.");
+                        } else {
+                            warn("Forbidden attribute \u201C"
+                                    + attributeName
+                                    + "\u201D is not mappable to namespace-aware XML 1.0.");
+                            if (bogusXmlnsPolicy == XmlViolationPolicy.ALTER_INFOSET) {
+                                return;
+                            }
+                        }
+                    }
+                } else if (attributeName.startsWith("xmlns:")) {
+                    if (bogusXmlnsPolicy == XmlViolationPolicy.FATAL) {
+                        fatal("Forbidden attribute \u201C"
+                                + attributeName
+                                + "\u201D is not mappable to namespace-aware XML 1.0.");
+                    } else {
+                        warn("Forbidden attribute \u201C"
+                                + attributeName
+                                + "\u201D is not mappable to namespace-aware XML 1.0.");
+                        if (bogusXmlnsPolicy == XmlViolationPolicy.ALTER_INFOSET) {
+                            return;
+                        }
+                    }
+                } else if (html4 && html4ModeCompatibleWithXhtml1Schemata
+                        && AttributeInfo.isCaseFolded(attributeName)) {
+                    value = toAsciiLowerCase(value);
+                }
+            }
+            attributes.addAttribute(attributeName, value);
+        }
+    }
+
+    private String toAsciiLowerCase(String str) {
+        if (str == null) {
+            return null;
+        }
+        char[] b = new char[str.length()];
+        for (int i = 0; i < str.length(); i++) {
+            char c = str.charAt(i);
+            if (c >= 'A' && c <= 'Z') {
+                c += 0x20;
+            }
+            b[i] = c;
+        }
+        return new String(b);
+    }
+
+    
     /**
      * Data state
      * 
@@ -1535,17 +1776,6 @@ public final class Tokenizer implements Locator {
                 continue;
             }
         }
-    }
-
-    private boolean lastHyphHyph() {
-        return prevFour[(prevFourPtr - 1 + 4) % 4] == '-'
-                && prevFour[(prevFourPtr - 2 + 4) % 4] == '-';
-    }
-
-    private boolean lastLtExclHyph() {
-        return prevFour[(prevFourPtr - 1 + 4) % 4] == '-'
-                && prevFour[(prevFourPtr - 2 + 4) % 4] == '!'
-                && prevFour[(prevFourPtr - 3 + 4) % 4] == '<';
     }
 
     /**
@@ -1996,25 +2226,6 @@ public final class Tokenizer implements Locator {
         }
     }
 
-    private String strBufToElementNameString() {
-        int magic = bufToElementMagic(strBuf, strBufLen);
-        int index = Arrays.binarySearch(elementMagic, magic);
-        if (index < 0) {
-            return strBufToString(); // intern?
-        } else {
-            String rv = elements[index];
-            if (rv.length() != strBufLen) {
-                return strBufToString(); // intern?
-            }
-            for (int i = 0; i < strBufLen; i++) {
-                if (rv.charAt(i) != strBuf[i]) {
-                    return strBufToString(); // intern?                    
-                }
-            }
-            return rv;
-        }
-    }
-
     /**
      * This method implements a wrapper loop for the attribute-related states to
      * avoid recursion to an arbitrary depth.
@@ -2026,13 +2237,6 @@ public final class Tokenizer implements Locator {
         while (beforeAttributeNameStateImpl()) {
             // Spin.
         }
-    }
-
-    /**
-     * 
-     */
-    private void resetAttributes() {
-        attributes = null; // XXX figure out reuse
     }
 
     /**
@@ -2137,77 +2341,6 @@ public final class Tokenizer implements Locator {
         }
     }
 
-    private void parseErrorUnlessPermittedSlash() throws SAXException,
-            IOException {
-        /*
-         * A permitted slash is a U+002F SOLIDUS character that is immediately
-         * followed by a U+003E GREATER-THAN SIGN, if, and only if, the current
-         * token being processed is a start tag token whose tag name is one of
-         * the following: base, link, meta, hr, br, img, embed, param, area,
-         * col, input
-         */
-        if (endTag) {
-            err("Stray \u201C/\u201D in an end tag.");
-            return;
-        }
-        char c = read();
-        int saveLine = line;
-        int saveCol = col;
-        line = linePrev;
-        col = colPrev;
-        if (c == '>') {
-            if (!currentIsVoid() && !html4) {
-                if (html4) {
-                    err("Stray \u201C/\u201D in tag. The \u201C/>\u201D syntax is not permitted in HTML4.");
-                } else {
-                    err("Stray \u201C/\u201D in tag. The \u201C/>\u201D syntax is only permitted on void elements.");
-                }
-            } else if (html4) {
-                err("Stray \u201C/\u201D in tag. The \u201C/>\u201D syntax is not permitted in HTML4. (HTML4-only error)");
-            }
-        } else {
-            err("Stray \u201C/\u201D in tag.");
-        }
-        line = saveLine;
-        col = saveCol;
-        unread(c);
-    }
-
-    private void emitCurrentTagToken() throws SAXException {
-        if (namePolicy != XmlViolationPolicy.ALLOW) {
-            if (!isNcname(tagName)) {
-                if (namePolicy == XmlViolationPolicy.FATAL) {
-                    fatal((endTag ? "End" : "Start") + " tag \u201C" + tagName
-                            + "\u201D has a non-NCName name.");
-                } else {
-                    warn((endTag ? "End" : "Start") + " tag \u201C" + tagName
-                            + "\u201D has a non-NCName name. Ignoring token.");
-                    return;
-                }
-            }
-        }
-        Attributes attrs = (attributes == null ? EmptyAttributes.EMPTY_ATTRIBUTES
-                : attributes);
-        if (endTag) {
-            /*
-             * When an end tag token is emitted, the content model flag must be
-             * switched to the PCDATA state.
-             */
-            escapeFlag = false;
-            contentModelFlag = ContentModelFlag.PCDATA;
-            if (attrs.getLength() != 0) {
-                /*
-                 * When an end tag token is emitted with attributes, that is a
-                 * parse error.
-                 */
-                err("End tag had attributes.");
-            }
-            tokenHandler.endTag(tagName, attrs);
-        } else {
-            tokenHandler.startTag(tagName, attrs);
-        }
-    }
-
     /**
      * Attribute name state
      * 
@@ -2306,136 +2439,6 @@ public final class Tokenizer implements Locator {
              */
             continue;
         }
-    }
-
-    private void attributeNameComplete() throws SAXException {
-        attributeName = strBufToString().intern();
-        if (attributes == null) {
-            attributes = newAttributes();
-        }
-        /*
-         * When the user agent leaves the attribute name state (and before
-         * emitting the tag token, if appropriate), the complete attribute's
-         * name must be compared to the other attributes on the same token; if
-         * there is already an attribute on the token with the exact same name,
-         * then this is a parse error and the new attribute must be dropped,
-         * along with the value that gets associated with it (if any).
-         */
-        if (attributes.getIndex(attributeName) == -1) {
-            if (namePolicy == XmlViolationPolicy.ALLOW) {
-                shouldAddAttributes = true;
-            } else {
-                if (isNcname(attributeName)) {
-                    shouldAddAttributes = true;
-                } else {
-                    if (namePolicy == XmlViolationPolicy.FATAL) {
-                        fatal("Attribute name \u201C" + attributeName
-                                + "\u201D is not an NCName.");
-                    } else {
-                        shouldAddAttributes = false;
-                        warn("Attribute name \u201C"
-                                + attributeName
-                                + "\u201D is not an NCName. Ignoring the attribute.");
-                    }
-                }
-            }
-        } else {
-            shouldAddAttributes = false;
-            err("Duplicate attribute \u201C" + attributeName + "\u201D.");
-        }
-    }
-
-    private void addAttributeWithoutValue() throws SAXException {
-        if (metaBoundaryPassed && "charset".equals(attributeName)
-                && "meta".equals(tagName)) {
-            err("A \u201Ccharset\u201D attribute on a \u201Cmeta\u201D element found after the first 512 bytes.");
-        }
-        if (shouldAddAttributes) {
-            if (html4) {
-                if (AttributeInfo.isBoolean(attributeName)) {
-                    if (html4ModeCompatibleWithXhtml1Schemata) {
-                        attributes.addAttribute(attributeName, attributeName);
-                    } else {
-                        attributes.addAttribute(attributeName, "");
-                    }
-                } else {
-                    err("Attribute value omitted for a non-boolean attribute. (HTML4-only error.)");
-                    attributes.addAttribute(attributeName, "");
-                }
-            } else {
-                if ("src".equals(attributeName) || "href".equals(attributeName)) {
-                    warn("Attribute \u201C"
-                            + attributeName
-                            + "\u201D without an explicit value seen. The attribute may be dropped by IE7.");
-                }
-                attributes.addAttribute(attributeName, "");
-            }
-        }
-    }
-
-    private void addAttributeWithValue() throws SAXException {
-        if (metaBoundaryPassed && "meta" == tagName
-                && "charset".equals(attributeName)) {
-            err("A \u201Ccharset\u201D attribute on a \u201Cmeta\u201D element found after the first 512 bytes.");
-        }
-        if (shouldAddAttributes) {
-            String value = longStrBufToString();
-            if (!endTag) {
-                if ("xmlns".equals(attributeName)) {
-                    if ("html" == tagName
-                            && "http://www.w3.org/1999/xhtml".equals(value)) {
-                        if (xmlnsPolicy == XmlViolationPolicy.ALTER_INFOSET) {
-                            return;
-                        }
-                    } else {
-                        if (bogusXmlnsPolicy == XmlViolationPolicy.FATAL) {
-                            fatal("Forbidden attribute \u201C"
-                                    + attributeName
-                                    + "\u201D is not mappable to namespace-aware XML 1.0.");
-                        } else {
-                            warn("Forbidden attribute \u201C"
-                                    + attributeName
-                                    + "\u201D is not mappable to namespace-aware XML 1.0.");
-                            if (bogusXmlnsPolicy == XmlViolationPolicy.ALTER_INFOSET) {
-                                return;
-                            }
-                        }
-                    }
-                } else if (attributeName.startsWith("xmlns:")) {
-                    if (bogusXmlnsPolicy == XmlViolationPolicy.FATAL) {
-                        fatal("Forbidden attribute \u201C"
-                                + attributeName
-                                + "\u201D is not mappable to namespace-aware XML 1.0.");
-                    } else {
-                        warn("Forbidden attribute \u201C"
-                                + attributeName
-                                + "\u201D is not mappable to namespace-aware XML 1.0.");
-                        if (bogusXmlnsPolicy == XmlViolationPolicy.ALTER_INFOSET) {
-                            return;
-                        }
-                    }
-                } else if (html4 && html4ModeCompatibleWithXhtml1Schemata
-                        && AttributeInfo.isCaseFolded(attributeName)) {
-                    value = toAsciiLowerCase(value);
-                }
-            }
-            attributes.addAttribute(attributeName, value);
-        }
-    }
-
-    private String toAsciiLowerCase(String str) {
-        if (str == null) {
-            return null;
-        }
-        char[] b = new char[str.length()];
-        for (int i = 0; i < str.length(); i++) {
-            char c = str.charAt(i);
-            if (c >= 'A' && c <= 'Z') {
-                c += 0x20;
-            }
-            b[i] = c;
-        }
-        return new String(b);
     }
 
     /**
