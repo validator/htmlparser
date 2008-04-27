@@ -57,7 +57,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 /**
- * An implementatition of
+ * An implementation of
  * http://www.whatwg.org/specs/web-apps/current-work/multipage/section-tokenisation.html
  * 
  * This class implements the <code>Locator</code> interface. This is not an
@@ -74,7 +74,7 @@ import org.xml.sax.SAXParseException;
 public final class Tokenizer implements Locator {
 
     private enum State {
-        DATA, TAG_OPEN, CLOSE_TAG_OPEN_PCDATA, TAG_NAME, BEFORE_ATTRIBUTE_NAME, ATTRIBUTE_NAME, AFTER_ATTRIBUTE_NAME, BEFORE_ATTRIBUTE_VALUE, ATTRIBUTE_VALUE_DOUBLE_QUOTED, ATTRIBUTE_VALUE_SINGLE_QUOTED, ATTRIBUTE_VALUE_UNQUOTED, AFTER_ATTRIBUTE_VALUE_QUOTED, BOGUS_COMMENT, MARKUP_DECLARATION_OPEN, DOCTYPE, BEFORE_DOCTYPE_NAME, DOCTYPE_NAME, AFTER_DOCTYPE_NAME, BEFORE_DOCTYPE_PUBLIC_IDENTIFIER, DOCTYPE_PUBLIC_IDENTIFIER_DOUBLE_QUOTED, DOCTYPE_PUBLIC_IDENTIFIER_SINGLE_QUOTED, AFTER_DOCTYPE_PUBLIC_IDENTIFIER, BEFORE_DOCTYPE_SYSTEM_IDENTIFIER, DOCTYPE_SYSTEM_IDENTIFIER_DOUBLE_QUOTED, DOCTYPE_SYSTEM_IDENTIFIER_SINGLE_QUOTED, AFTER_DOCTYPE_SYSTEM_IDENTIFIER, BOGUS_DOCTYPE, COMMENT_START, COMMENT_START_DASH, COMMENT, COMMENT_END_DASH, COMMENT_END, CLOSE_TAG_OPEN_NOT_PCDATA, MARKUP_DECLARATION_HYPHEN, MARKUP_DECLARATION_OCTYPE, DOCTYPE_UBLIC, DOCTYPE_YSTEM, CONSUME_ENTITY, CONSUME_NCR, ENTITY_LOOP, AFTER_ENTITY_LOOP, HEX_NCR_LOOP, DECIMAL_NRC_LOOP, HANDLE_NCR_VALUE
+        DATA, TAG_OPEN, CLOSE_TAG_OPEN_PCDATA, TAG_NAME, BEFORE_ATTRIBUTE_NAME, ATTRIBUTE_NAME, AFTER_ATTRIBUTE_NAME, BEFORE_ATTRIBUTE_VALUE, ATTRIBUTE_VALUE_DOUBLE_QUOTED, ATTRIBUTE_VALUE_SINGLE_QUOTED, ATTRIBUTE_VALUE_UNQUOTED, AFTER_ATTRIBUTE_VALUE_QUOTED, BOGUS_COMMENT, MARKUP_DECLARATION_OPEN, DOCTYPE, BEFORE_DOCTYPE_NAME, DOCTYPE_NAME, AFTER_DOCTYPE_NAME, BEFORE_DOCTYPE_PUBLIC_IDENTIFIER, DOCTYPE_PUBLIC_IDENTIFIER_DOUBLE_QUOTED, DOCTYPE_PUBLIC_IDENTIFIER_SINGLE_QUOTED, AFTER_DOCTYPE_PUBLIC_IDENTIFIER, BEFORE_DOCTYPE_SYSTEM_IDENTIFIER, DOCTYPE_SYSTEM_IDENTIFIER_DOUBLE_QUOTED, DOCTYPE_SYSTEM_IDENTIFIER_SINGLE_QUOTED, AFTER_DOCTYPE_SYSTEM_IDENTIFIER, BOGUS_DOCTYPE, COMMENT_START, COMMENT_START_DASH, COMMENT, COMMENT_END_DASH, COMMENT_END, CLOSE_TAG_OPEN_NOT_PCDATA, MARKUP_DECLARATION_HYPHEN, MARKUP_DECLARATION_OCTYPE, DOCTYPE_UBLIC, DOCTYPE_YSTEM, CONSUME_ENTITY, CONSUME_NCR, ENTITY_LOOP, AFTER_ENTITY_LOOP, HEX_NCR_LOOP, DECIMAL_NRC_LOOP, HANDLE_NCR_VALUE, SELF_CLOSING_START_TAG
     }
 
     // String interning
@@ -217,25 +217,7 @@ public final class Tokenizer implements Locator {
      * The main input buffer that the tokenizer reads from. Filled from
      * <code>reader</code>.
      */
-    private char[] buf = new char[2048];
-
-    /**
-     * The index of the last <code>char</code> read from <code>buf</code>.
-     */
-    private int pos;
-
-    /**
-     * The index of the first <code>char</code> in <code>buf</code> that is
-     * part of a coalesced run of character tokens or <code>-1</code> if there
-     * is not a current run being coalesced.
-     */
-    private int cstart;
-
-    /**
-     * The number of <code>char</code>s in <code>buf</code> that have
-     * meaning. (The rest of the array is garbage and should not be examined.)
-     */
-    private int bufLen;
+    private char[] buffer = new char[2048];
 
     /**
      * The previous <code>char</code> read from the buffer with infoset
@@ -278,6 +260,22 @@ public final class Tokenizer implements Locator {
     private int colPrev;
 
     private boolean nextCharOnNewLine;
+    
+    private State returnState = State.DATA;
+    private State state = State.DATA;
+    private int index = 0;
+    private boolean forceQuirks = false;
+    private char additional = '\u0000';
+    private int entCol = -1;
+    private int lo = 0;
+    private int hi = (Entities.NAMES.length - 1);
+    private int candidate = -1;
+    private int strBufMark = 0;
+    private int prevValue = -1;
+    private int value = 0;
+    private boolean inForeign = false; // XXX
+    private boolean seenDigits = false;
+    private boolean charDataContinuation = false;
 
     /**
      * The SAX public id for the resource being tokenized. (Only passed to back
@@ -710,13 +708,10 @@ public final class Tokenizer implements Locator {
                     contentModelFlag = ContentModelFlag.PCDATA;
                     escapeFlag = false;
                     inContent = true;
-                    pos = -1;
-                    cstart = -1;
                     line = linePrev = 0;
                     col = colPrev = 1;
                     nextCharOnNewLine = true;
                     prev = '\u0000';
-                    bufLen = 0;
                     html4 = false;
                     alreadyWarnedAboutPrivateUseCharacters = false;
                     metaBoundaryPassed = false;
@@ -726,17 +721,6 @@ public final class Tokenizer implements Locator {
                         ch.start();
                     }
                     wantsComments = tokenHandler.wantsComments();
-                    if (swallowBom) {
-                        // Swallow the BOM
-                        char c = read();
-                        if (c == '\uFEFF') {
-                            line = linePrev = 0;
-                            col = colPrev = 1;
-                            nextCharOnNewLine = true;
-                        } else {
-                            unread(c);
-                        }
-                    }
                     runStates();
                     if (confidence == Confidence.TENTATIVE
                             && !alreadyComplainedAboutNonAscii) {
@@ -1032,190 +1016,6 @@ public final class Tokenizer implements Locator {
         tokenHandler.comment(longStrBuf, longStrBufLen);
     }
 
-    /**
-     * Unreads a code unit so that it is returned the next time
-     * <code>read()</code> is called.
-     * 
-     * @param c
-     *            the code unit to unread
-     */
-    private void unread(char c) {
-        unreadBuffer = c;
-    }
-
-    /**
-     * Reads the next UTF-16 code unit.
-     * 
-     * @return the next code unit
-     * @throws SAXException
-     * @throws IOException
-     */
-    private char read() throws SAXException, IOException {
-        for (;;) { // the loop is here for the CRLF case
-            if (unreadBuffer != -1) {
-                char c = (char) unreadBuffer;
-                unreadBuffer = -1;
-                return c;
-            }
-            assert (bufLen > -1);
-            pos++;
-            assert pos <= bufLen;
-            linePrev = line;
-            colPrev = col;
-            if (nextCharOnNewLine) {
-                line++;
-                col = 1;
-                nextCharOnNewLine = false;
-            } else {
-                col++;
-            }
-            if (pos == bufLen) {
-                boolean charDataContinuation = false;
-                if (cstart > -1) {
-                    flushChars();
-                    charDataContinuation = true;
-                }
-                bufLen = reader.read(buf);
-                assert bufLen != 0;
-                assert bufLen <= buf.length;
-                if (bufLen == -1) {
-                    return '\u0000';
-                } else {
-                    for (int i = 0; i < characterHandlers.length; i++) {
-                        CharacterHandler ch = characterHandlers[i];
-                        ch.characters(buf, 0, bufLen);
-                    }
-                }
-                if (charDataContinuation) {
-                    cstart = 0;
-                }
-                pos = 0;
-            }
-            char c = buf[pos];
-            if (confidence == Confidence.TENTATIVE
-                    && !alreadyComplainedAboutNonAscii && c > '\u007F') {
-                err("The character encoding of the document was not explicit (assumed \u201C"
-                        + characterEncoding.getCanonName()
-                        + "\u201D) but the document contains non-ASCII.");
-                alreadyComplainedAboutNonAscii = true;
-            }
-            if (canSwitchDecoder
-                    && !((c >= 0x09 && c <= 0x0D) || (c >= 0x20 && c <= 0x22)
-                            || (c >= 0x26 && c <= 0x27)
-                            || (c >= 0x2C && c <= 0x3F)
-                            || (c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A))) {
-                canSwitchDecoder = false;
-            }
-            switch (c) {
-                case '\n':
-                    /*
-                     * U+000D CARRIAGE RETURN (CR) characters, and U+000A LINE
-                     * FEED (LF) characters, are treated specially. Any CR
-                     * characters that are followed by LF characters must be
-                     * removed, and any CR characters not followed by LF
-                     * characters must be converted to LF characters.
-                     */
-                    if (prev == '\r') {
-                        // swallow the LF
-                        if (cstart != -1) {
-                            flushChars();
-                            cstart = pos + 1;
-                        }
-                        col = colPrev;
-                        line = linePrev;
-                        nextCharOnNewLine = true;
-                        prev = c;
-                        continue;
-                    } else {
-                        nextCharOnNewLine = true;
-                    }
-                    break;
-                case '\r':
-                    c = buf[pos] = '\n';
-                    nextCharOnNewLine = true;
-                    prev = '\r';
-                    if (contentModelFlag != ContentModelFlag.PCDATA) {
-                        prevFourPtr++;
-                        prevFourPtr %= 4;
-                        prevFour[prevFourPtr] = c;
-                    }
-                    return c;
-                case '\u0000':
-                    /*
-                     * All U+0000 NULL characters in the input must be replaced
-                     * by U+FFFD REPLACEMENT CHARACTERs. Any occurrences of such
-                     * characters is a parse error.
-                     */
-                    err("Found U+0000 in the character stream.");
-                    c = buf[pos] = '\uFFFD';
-                    break;
-                case '\u000B':
-                case '\u000C':
-                    if (inContent) {
-                        if (contentNonXmlCharPolicy == XmlViolationPolicy.FATAL) {
-                            fatal("This document is not mappable to XML 1.0 without data loss due to "
-                                    + toUPlusString(c)
-                                    + " which is not a legal XML 1.0 character.");
-                        } else {
-                            if (contentNonXmlCharPolicy == XmlViolationPolicy.ALTER_INFOSET) {
-                                c = buf[pos] = ' ';
-                            }
-                            warn("This document is not mappable to XML 1.0 without data loss due to "
-                                    + toUPlusString(c)
-                                    + " which is not a legal XML 1.0 character.");
-                        }
-                    }
-                    break;
-                default:
-                    if ((c & 0xFC00) == 0xDC00) {
-                        // Got a low surrogate. See if prev was high surrogate
-                        if ((prev & 0xFC00) == 0xD800) {
-                            int intVal = (prev << 10) + c + SURROGATE_OFFSET;
-                            if (isNonCharacter(intVal)) {
-                                err("Astral non-character.");
-                            }
-                            if (isAstralPrivateUse(intVal)) {
-                                warnAboutPrivateUseChar();
-                            }
-                        } else {
-                            // XXX figure out what to do about lone high
-                            // surrogates
-                            err("Found low surrogate without high surrogate.");
-                            c = buf[pos] = '\uFFFD';
-                        }
-                    } else if ((c < ' ' || isNonCharacter(c)) && (c != '\t')) {
-                        if (inContent) {
-                            if (contentNonXmlCharPolicy == XmlViolationPolicy.FATAL) {
-                                fatal("Forbidden code point "
-                                        + toUPlusString(c) + ".");
-                            } else {
-                                if (contentNonXmlCharPolicy == XmlViolationPolicy.ALTER_INFOSET) {
-                                    c = buf[pos] = '\uFFFD';
-                                }
-                                err("Forbidden code point " + toUPlusString(c)
-                                        + ".");
-                            }
-                        } else {
-                            err("Forbidden code point " + toUPlusString(c)
-                                    + ".");
-                        }
-                    } else if ((c >= '\u007F') && (c <= '\u009F')
-                            || (c >= '\uFDD0') && (c <= '\uFDDF')) {
-                        err("Forbidden code point " + toUPlusString(c) + ".");
-                    } else if (isPrivateUse(c)) {
-                        warnAboutPrivateUseChar();
-                    }
-            }
-            prev = c;
-            if (contentModelFlag != ContentModelFlag.PCDATA) {
-                prevFourPtr++;
-                prevFourPtr %= 4;
-                prevFour[prevFourPtr] = c;
-            }
-            return c;
-        }
-    }
-
     private String toUPlusString(char c) {
         String hexString = Integer.toHexString(c);
         switch (hexString.length()) {
@@ -1284,22 +1084,20 @@ public final class Tokenizer implements Locator {
      * 
      * @throws SAXException
      */
-    private void flushChars() throws SAXException, IOException {
-        if (cstart != -1) {
-            if (pos > cstart) {
-                int currLine = line;
-                int currCol = col;
-                line = linePrev;
-                col = colPrev;
-                try {
-                    tokenHandler.characters(buf, cstart, pos - cstart);
-                } finally {
-                    line = currLine;
-                    col = currCol;
-                }
+    private void flushChars(char[] buf, int pos, int cstart)
+            throws SAXException, IOException {
+        if (pos > cstart) {
+            int currLine = line;
+            int currCol = col;
+            line = linePrev;
+            col = colPrev;
+            try {
+                tokenHandler.characters(buf, cstart, pos - cstart);
+            } finally {
+                line = currLine;
+                col = currCol;
             }
         }
-        cstart = -1;
     }
 
     /**
@@ -1474,42 +1272,6 @@ public final class Tokenizer implements Locator {
         attributes = null; // XXX figure out reuse
     }
 
-    private void parseErrorUnlessPermittedSlash() throws SAXException,
-            IOException {
-        /*
-         * A permitted slash is a U+002F SOLIDUS character that is immediately
-         * followed by a U+003E GREATER-THAN SIGN, if, and only if, the current
-         * token being processed is a start tag token whose tag name is one of
-         * the following: base, link, meta, hr, br, img, embed, param, area,
-         * col, input
-         */
-        if (endTag) {
-            err("Stray \u201C/\u201D in an end tag.");
-            return;
-        }
-        char c = read();
-        int saveLine = line;
-        int saveCol = col;
-        line = linePrev;
-        col = colPrev;
-        if (c == '>') {
-            if (!currentIsVoid() && !html4) {
-                if (html4) {
-                    err("Stray \u201C/\u201D in tag. The \u201C/>\u201D syntax is not permitted in HTML4.");
-                } else {
-                    err("Stray \u201C/\u201D in tag. The \u201C/>\u201D syntax is only permitted on void elements.");
-                }
-            } else if (html4) {
-                err("Stray \u201C/\u201D in tag. The \u201C/>\u201D syntax is not permitted in HTML4. (HTML4-only error)");
-            }
-        } else {
-            err("Stray \u201C/\u201D in tag.");
-        }
-        line = saveLine;
-        col = saveCol;
-        unread(c);
-    }
-
     private String strBufToElementNameString() {
         int magic = bufToElementMagic(strBuf, strBufLen);
         int index = Arrays.binarySearch(elementMagic, magic);
@@ -1529,7 +1291,10 @@ public final class Tokenizer implements Locator {
         }
     }
 
-    private void emitCurrentTagToken() throws SAXException {
+    private void emitCurrentTagToken(boolean selfClosing) throws SAXException {
+        if (selfClosing && endTag) {
+            err("Stray \u201C/\u201D in an end tag.");
+        }
         if (namePolicy != XmlViolationPolicy.ALLOW) {
             if (!isNcname(tagName)) {
                 if (namePolicy == XmlViolationPolicy.FATAL) {
@@ -1695,22 +1460,220 @@ public final class Tokenizer implements Locator {
     }
 
     private void runStates() throws SAXException, IOException {
-        State returnState = State.DATA;
-        State state = State.DATA;
-        int index = 0;
-        boolean forceQuirks = false;
-        char additional = '\u0000';
+        returnState = State.DATA;
+        state = State.DATA;
+        index = 0;
+        forceQuirks = false;
+        additional = '\u0000';
+        entCol = -1;
+        lo = 0;
+        hi = (Entities.NAMES.length - 1);
+        candidate = -1;
+        strBufMark = 0;
+        prevValue = -1;
+        value = 0;
+        inForeign = false; // XXX
+        seenDigits = false;
+        charDataContinuation = false;
+
+        int len = -1;
+        while ((len = reader.read(buffer)) != -1) {
+            assert len > 0;
+            int offset = 0;
+            int length = len;
+            if (swallowBom) {
+                swallowBom = false;
+                if (buffer[0] == '\uFEFF') {
+                    offset = 1;
+                    length--;
+                }
+            }
+            for (int i = 0; i < characterHandlers.length; i++) {
+                CharacterHandler ch = characterHandlers[i];
+                ch.characters(buffer, offset, length);
+            }
+            tokenizeBuffer(buffer, offset, length);
+        }
+        tokenizeBuffer(null, 0, 0);
+    }
+        
+    private void tokenizeBuffer(char[] buf, int offset, int length)  throws SAXException, IOException {
         char c = '\u0000';
-        int entCol = -1;
-        int lo = 0;
-        int hi = (Entities.NAMES.length - 1);
-        int candidate = -1;
-        int strBufMark = 0;
-        int prevValue = -1;
-        int value = 0;
-        boolean seenDigits = false;
+        /**
+         * The index of the last <code>char</code> read from <code>buf</code>.
+         */
+        int pos = offset - 1;
+
+        /**
+         * The index of the first <code>char</code> in <code>buf</code> that is
+         * part of a coalesced run of character tokens or <code>-1</code> if there
+         * is not a current run being coalesced.
+         */
+        int cstart;
+        if (charDataContinuation) {
+            cstart = offset;
+        } else {
+            cstart = -1;
+        }
+
+        /**
+         * The number of <code>char</code>s in <code>buf</code> that have
+         * meaning. (The rest of the array is garbage and should not be examined.)
+         */
+        int end = offset + length;
         consume: for (;;) {
-            c = read();
+            // START READ
+            read : for (;;) { // the loop is here for the CRLF case
+                if (buf == null) {
+                    // EOF
+                    c = '\u0000';
+                    break read;
+                }
+                pos++;
+                if (pos == end) {
+                    if (cstart > -1) {
+                        flushChars(buf, pos, cstart);
+                        cstart = -1;
+                        charDataContinuation = true;
+                    } else {
+                        charDataContinuation = false;                        
+                    }
+                    return;
+                }
+                linePrev = line;
+                colPrev = col;
+                if (nextCharOnNewLine) {
+                    line++;
+                    col = 1;
+                    nextCharOnNewLine = false;
+                } else {
+                    col++;
+                }
+
+                c = buf[pos];
+                if (confidence == Confidence.TENTATIVE
+                        && !alreadyComplainedAboutNonAscii && c > '\u007F') {
+                    err("The character encoding of the document was not explicit (assumed \u201C"
+                            + characterEncoding.getCanonName()
+                            + "\u201D) but the document contains non-ASCII.");
+                    alreadyComplainedAboutNonAscii = true;
+                }
+                if (canSwitchDecoder
+                        && !((c >= 0x09 && c <= 0x0D) || (c >= 0x20 && c <= 0x22)
+                                || (c >= 0x26 && c <= 0x27)
+                                || (c >= 0x2C && c <= 0x3F)
+                                || (c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A))) {
+                    canSwitchDecoder = false;
+                }
+                switch (c) {
+                    case '\n':
+                        /*
+                         * U+000D CARRIAGE RETURN (CR) characters, and U+000A LINE
+                         * FEED (LF) characters, are treated specially. Any CR
+                         * characters that are followed by LF characters must be
+                         * removed, and any CR characters not followed by LF
+                         * characters must be converted to LF characters.
+                         */
+                        if (prev == '\r') {
+                            // swallow the LF
+                            if (cstart > -1) {
+                                flushChars(buf, pos, cstart);
+                                cstart = pos + 1;
+                            }
+                            col = colPrev;
+                            line = linePrev;
+                            nextCharOnNewLine = true;
+                            prev = c;
+                            continue read;
+                        } else {
+                            nextCharOnNewLine = true;
+                        }
+                        break;
+                    case '\r':
+                        c = buf[pos] = '\n';
+                        nextCharOnNewLine = true;
+                        prev = '\r';
+                        if (contentModelFlag != ContentModelFlag.PCDATA) {
+                            prevFourPtr++;
+                            prevFourPtr %= 4;
+                            prevFour[prevFourPtr] = c;
+                        }
+                        break read;
+                    case '\u0000':
+                        /*
+                         * All U+0000 NULL characters in the input must be replaced
+                         * by U+FFFD REPLACEMENT CHARACTERs. Any occurrences of such
+                         * characters is a parse error.
+                         */
+                        err("Found U+0000 in the character stream.");
+                        c = buf[pos] = '\uFFFD';
+                        break;
+                    case '\u000B':
+                    case '\u000C':
+                        if (inContent) {
+                            if (contentNonXmlCharPolicy == XmlViolationPolicy.FATAL) {
+                                fatal("This document is not mappable to XML 1.0 without data loss due to "
+                                        + toUPlusString(c)
+                                        + " which is not a legal XML 1.0 character.");
+                            } else {
+                                if (contentNonXmlCharPolicy == XmlViolationPolicy.ALTER_INFOSET) {
+                                    c = buf[pos] = ' ';
+                                }
+                                warn("This document is not mappable to XML 1.0 without data loss due to "
+                                        + toUPlusString(c)
+                                        + " which is not a legal XML 1.0 character.");
+                            }
+                        }
+                        break;
+                    default:
+                        if ((c & 0xFC00) == 0xDC00) {
+                            // Got a low surrogate. See if prev was high surrogate
+                            if ((prev & 0xFC00) == 0xD800) {
+                                int intVal = (prev << 10) + c + SURROGATE_OFFSET;
+                                if (isNonCharacter(intVal)) {
+                                    err("Astral non-character.");
+                                }
+                                if (isAstralPrivateUse(intVal)) {
+                                    warnAboutPrivateUseChar();
+                                }
+                            } else {
+                                // XXX figure out what to do about lone high
+                                // surrogates
+                                err("Found low surrogate without high surrogate.");
+                                c = buf[pos] = '\uFFFD';
+                            }
+                        } else if ((c < ' ' || isNonCharacter(c)) && (c != '\t')) {
+                            if (inContent) {
+                                if (contentNonXmlCharPolicy == XmlViolationPolicy.FATAL) {
+                                    fatal("Forbidden code point "
+                                            + toUPlusString(c) + ".");
+                                } else {
+                                    if (contentNonXmlCharPolicy == XmlViolationPolicy.ALTER_INFOSET) {
+                                        c = buf[pos] = '\uFFFD';
+                                    }
+                                    err("Forbidden code point " + toUPlusString(c)
+                                            + ".");
+                                }
+                            } else {
+                                err("Forbidden code point " + toUPlusString(c)
+                                        + ".");
+                            }
+                        } else if ((c >= '\u007F') && (c <= '\u009F')
+                                || (c >= '\uFDD0') && (c <= '\uFDDF')) {
+                            err("Forbidden code point " + toUPlusString(c) + ".");
+                        } else if (isPrivateUse(c)) {
+                            warnAboutPrivateUseChar();
+                        }
+                }
+                prev = c;
+                if (contentModelFlag != ContentModelFlag.PCDATA) {
+                    prevFourPtr++;
+                    prevFourPtr %= 4;
+                    prevFour[prevFourPtr] = c;
+                }
+                break read;
+            }
+            // END READ
             reconsume: for (;;) {
                 switch (state) {
                     case DATA:
@@ -1725,7 +1688,10 @@ public final class Tokenizer implements Locator {
                              * data state. Otherwise: treat it as per the
                              * "anything else" entry below.
                              */
-                            flushChars();
+                            if (cstart > -1) {
+                                flushChars(buf, pos, cstart);
+                                cstart = -1;
+                            }
                             additional = '\u0000';
                             returnState = state;
                             state = State.CONSUME_ENTITY;
@@ -1741,7 +1707,10 @@ public final class Tokenizer implements Locator {
                              * open state. Otherwise: treat it as per the
                              * "anything else" entry below.
                              */
-                            flushChars();
+                            if (cstart > -1) {
+                                flushChars(buf, pos, cstart);
+                                cstart = -1;
+                            }
                             resetAttributes();
                             inContent = false;
                             state = State.TAG_OPEN;
@@ -1750,7 +1719,10 @@ public final class Tokenizer implements Locator {
                             /*
                              * EOF Emit an end-of-file token.
                              */
-                            flushChars();
+                            if (cstart > -1) {
+                                flushChars(buf, pos, cstart);
+                                cstart = -1;
+                            }
                             return; // eof() called in parent finally block
                         } else {
                             if (c == '-'
@@ -1804,7 +1776,7 @@ public final class Tokenizer implements Locator {
                         }
                     case TAG_OPEN:
                         /*
-                         * The behaviour of this state depends on the content
+                         * The behavior of this state depends on the content
                          * model flag.
                          */
                         // this can't happen in PLAINTEXT, so using not PCDATA
@@ -2024,7 +1996,7 @@ public final class Tokenizer implements Locator {
                                      * U+003E GREATER-THAN SIGN (>) Emit the
                                      * current tag token.
                                      */
-                                    emitCurrentTagToken();
+                                    emitCurrentTagToken(false);
                                     /*
                                      * Switch to the data state.
                                      */
@@ -2038,7 +2010,7 @@ public final class Tokenizer implements Locator {
                                     /*
                                      * Emit the current tag token.
                                      */
-                                    emitCurrentTagToken();
+                                    emitCurrentTagToken(false);
                                     /*
                                      * Reconsume the character in the data
                                      * state.
@@ -2181,7 +2153,7 @@ public final class Tokenizer implements Locator {
                                  * tag token.
                                  */
                                 tagName = strBufToElementNameString();
-                                emitCurrentTagToken();
+                                emitCurrentTagToken(false);
                                 /*
                                  * Switch to the data state.
                                  */
@@ -2196,7 +2168,7 @@ public final class Tokenizer implements Locator {
                                  * Emit the current tag token.
                                  */
                                 tagName = strBufToElementNameString();
-                                emitCurrentTagToken();
+                                emitCurrentTagToken(false);
                                 /*
                                  * Reconsume the EOF character in the data
                                  * state.
@@ -2205,15 +2177,11 @@ public final class Tokenizer implements Locator {
                                 continue reconsume;
                             case '/':
                                 /*
-                                 * U+002F SOLIDUS (/) Parse error unless this is
-                                 * a permitted slash.
+                                 * U+002F SOLIDUS (/) Switch to the self-closing
+                                 * start tag state.
                                  */
                                 tagName = strBufToElementNameString();
-                                parseErrorUnlessPermittedSlash();
-                                /*
-                                 * Switch to the before attribute name state.
-                                 */
-                                state = State.BEFORE_ATTRIBUTE_NAME;
+                                state = State.SELF_CLOSING_START_TAG;
                                 continue consume;
                             default:
                                 if (c >= 'A' && c <= 'Z') {
@@ -2261,7 +2229,7 @@ public final class Tokenizer implements Locator {
                                  * U+003E GREATER-THAN SIGN (>) Emit the current
                                  * tag token.
                                  */
-                                emitCurrentTagToken();
+                                emitCurrentTagToken(false);
                                 /*
                                  * Switch to the data state.
                                  */
@@ -2269,13 +2237,10 @@ public final class Tokenizer implements Locator {
                                 continue consume;
                             case '/':
                                 /*
-                                 * U+002F SOLIDUS (/) Parse error unless this is
-                                 * a permitted slash.
+                                 * U+002F SOLIDUS (/) Switch to the self-closing
+                                 * start tag state.
                                  */
-                                parseErrorUnlessPermittedSlash();
-                                /*
-                                 * Stay in the before attribute name state.
-                                 */
+                                state = State.SELF_CLOSING_START_TAG;
                                 continue consume;
                             case '\u0000':
                                 /* EOF Parse error. */
@@ -2283,7 +2248,7 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * Emit the current tag token.
                                  */
-                                emitCurrentTagToken();
+                                emitCurrentTagToken(false);
                                 /*
                                  * Reconsume the EOF character in the data
                                  * state.
@@ -2372,7 +2337,7 @@ public final class Tokenizer implements Locator {
                                  */
                                 attributeNameComplete();
                                 addAttributeWithoutValue();
-                                emitCurrentTagToken();
+                                emitCurrentTagToken(false);
                                 /*
                                  * Switch to the data state.
                                  */
@@ -2380,14 +2345,12 @@ public final class Tokenizer implements Locator {
                                 continue consume;
                             case '/':
                                 /*
-                                 * U+002F SOLIDUS (/) Parse error unless this is
-                                 * a permitted slash.
+                                 * U+002F SOLIDUS (/) Switch to the self-closing
+                                 * start tag state.
                                  */
-                                parseErrorUnlessPermittedSlash();
-                                /* Switch to the before attribute name state. */
                                 attributeNameComplete();
                                 addAttributeWithoutValue();
-                                state = State.BEFORE_ATTRIBUTE_NAME;
+                                state = State.SELF_CLOSING_START_TAG;
                                 continue consume;
                             case '\u0000':
                                 /*
@@ -2399,7 +2362,7 @@ public final class Tokenizer implements Locator {
                                  */
                                 attributeNameComplete();
                                 addAttributeWithoutValue();
-                                emitCurrentTagToken();
+                                emitCurrentTagToken(false);
                                 /*
                                  * Reconsume the EOF character in the data
                                  * state.
@@ -2473,7 +2436,7 @@ public final class Tokenizer implements Locator {
                                  * tag token.
                                  */
                                 addAttributeWithoutValue();
-                                emitCurrentTagToken();
+                                emitCurrentTagToken(false);
                                 /*
                                  * Switch to the data state.
                                  */
@@ -2481,13 +2444,11 @@ public final class Tokenizer implements Locator {
                                 continue consume;
                             case '/':
                                 /*
-                                 * U+002F SOLIDUS (/) Parse error unless this is
-                                 * a permitted slash.
+                                 * U+002F SOLIDUS (/) Switch to the self-closing
+                                 * start tag state.
                                  */
                                 addAttributeWithoutValue();
-                                parseErrorUnlessPermittedSlash();
-                                /* Switch to the before attribute name state. */
-                                state = State.BEFORE_ATTRIBUTE_NAME;
+                                state = State.SELF_CLOSING_START_TAG;
                                 continue consume;
                             case '\u0000':
                                 /* EOF Parse error. */
@@ -2496,7 +2457,7 @@ public final class Tokenizer implements Locator {
                                  * Emit the current tag token.
                                  */
                                 addAttributeWithoutValue();
-                                emitCurrentTagToken();
+                                emitCurrentTagToken(false);
                                 /*
                                  * Reconsume the character in the data state.
                                  */
@@ -2583,7 +2544,7 @@ public final class Tokenizer implements Locator {
                                  * tag token.
                                  */
                                 addAttributeWithoutValue();
-                                emitCurrentTagToken();
+                                emitCurrentTagToken(false);
                                 /*
                                  * Switch to the data state.
                                  */
@@ -2596,7 +2557,7 @@ public final class Tokenizer implements Locator {
                                  * Emit the current tag token.
                                  */
                                 addAttributeWithoutValue();
-                                emitCurrentTagToken();
+                                emitCurrentTagToken(false);
                                 /*
                                  * Reconsume the character in the data state.
                                  */
@@ -2663,7 +2624,7 @@ public final class Tokenizer implements Locator {
                                 err("End of file reached when inside a quoted attribute value.");
                                 /* Emit the current tag token. */
                                 addAttributeWithValue();
-                                emitCurrentTagToken();
+                                emitCurrentTagToken(false);
                                 /*
                                  * Reconsume the character in the data state.
                                  */
@@ -2713,7 +2674,7 @@ public final class Tokenizer implements Locator {
                                 err("End of file reached when inside a quoted attribute value.");
                                 /* Emit the current tag token. */
                                 addAttributeWithValue();
-                                emitCurrentTagToken();
+                                emitCurrentTagToken(false);
                                 /*
                                  * Reconsume the character in the data state.
                                  */
@@ -2769,7 +2730,7 @@ public final class Tokenizer implements Locator {
                                  * tag token.
                                  */
                                 addAttributeWithValue();
-                                emitCurrentTagToken();
+                                emitCurrentTagToken(false);
                                 /*
                                  * Switch to the data state.
                                  */
@@ -2783,7 +2744,7 @@ public final class Tokenizer implements Locator {
                                  * Emit the current tag token.
                                  */
                                 addAttributeWithValue();
-                                emitCurrentTagToken();
+                                emitCurrentTagToken(false);
                                 /*
                                  * Reconsume the character in the data state.
                                  */
@@ -2853,7 +2814,7 @@ public final class Tokenizer implements Locator {
                                  * U+003E GREATER-THAN SIGN (>) Emit the current
                                  * tag token.
                                  */
-                                emitCurrentTagToken();
+                                emitCurrentTagToken(false);
                                 /*
                                  * Switch to the data state.
                                  */
@@ -2861,20 +2822,43 @@ public final class Tokenizer implements Locator {
                                 continue consume;
                             case '/':
                                 /*
-                                 * U+002F SOLIDUS (/) Parse error unless this is
-                                 * a permitted slash.
+                                 * U+002F SOLIDUS (/) Switch to the self-closing
+                                 * start tag state.
                                  */
-                                parseErrorUnlessPermittedSlash();
-                                /*
-                                 * Switch to the before attribute name state.
-                                 */
-                                state = State.BEFORE_ATTRIBUTE_NAME;
+                                state = State.SELF_CLOSING_START_TAG;
                                 continue consume;
                             default:
                                 /*
                                  * Anything else Parse error.
                                  */
                                 err("No space between attributes.");
+                                /*
+                                 * Reconsume the character in the before
+                                 * attribute name state.
+                                 */
+                                state = State.BEFORE_ATTRIBUTE_NAME;
+                                continue reconsume;
+                        }
+                    case SELF_CLOSING_START_TAG:
+                        /*
+                         * Consume the next input character:
+                         */
+                        switch (c) {
+                            case '>':
+                                /*
+                                 * U+003E GREATER-THAN SIGN (>) Set the
+                                 * self-closing flag of the current tag token.
+                                 * Emit the current tag token.
+                                 */
+                                emitCurrentTagToken(true);
+                                /*
+                                 * Switch to the data state.
+                                 */
+                                state = State.DATA;
+                                continue consume;
+                            default:
+                                /* Anything else Parse error. */
+                                err("A slash was not immediate followed by \u201C>\u201D.");
                                 /*
                                  * Reconsume the character in the before
                                  * attribute name state.
@@ -2929,10 +2913,20 @@ public final class Tokenizer implements Locator {
                          * characters, create a comment token whose data is the
                          * empty string, and switch to the comment start state.
                          * 
-                         * Otherwise if the next seven characters are a
+                         * Otherwise, if the next seven characters are a
                          * case-insensitive match for the word "DOCTYPE", then
                          * consume those characters and switch to the DOCTYPE
                          * state.
+                         * 
+                         * Otherwise, if the insertion mode is "in foreign
+                         * content" and the current node is not an element in
+                         * the HTML namespace and the next seven characters are
+                         * a case-sensitive match for the string "[CDATA[" (the
+                         * five uppercase letters "CDATA" with a U+005B LEFT
+                         * SQUARE BRACKET character before and after), then
+                         * consume those characters and switch to the CDATA
+                         * block state (which is unrelated to the content model
+                         * flag's CDATA state).
                          * 
                          * Otherwise, is is a parse error. Switch to the bogus
                          * comment state. The next character that is consumed,
@@ -2949,6 +2943,12 @@ public final class Tokenizer implements Locator {
                                 index = 0;
                                 state = State.MARKUP_DECLARATION_OCTYPE;
                                 continue consume;
+                            case '[':
+                                if (inForeign) {
+                                    // TODO!!!
+                                } else {
+                                    // fall through
+                                }
                             default:
                                 err("Bogus comment.");
                                 state = State.BOGUS_COMMENT;
@@ -4100,7 +4100,7 @@ public final class Tokenizer implements Locator {
                          * definition is used when parsing entities in text and
                          * in attributes.
                          * 
-                         * The behaviour depends on the identity of the next
+                         * The behavior depends on the identity of the next
                          * character (the one immediately after the U+0026
                          * AMPERSAND character):
                          */
@@ -4159,11 +4159,10 @@ public final class Tokenizer implements Locator {
                     case ENTITY_LOOP:
                         entCol++;
                         /*
-                         * Anything else Consume the maximum number
-                         * of characters possible, with the consumed
-                         * characters case-sensitively matching one
-                         * of the identifiers in the first column of
-                         * the entities table.
+                         * Anything else Consume the maximum number of
+                         * characters possible, with the consumed characters
+                         * case-sensitively matching one of the identifiers in
+                         * the first column of the entities table.
                          */
                         hiloop: for (;;) {
                             if (hi == -1) {
@@ -4207,17 +4206,18 @@ public final class Tokenizer implements Locator {
                         appendStrBuf(c);
                         continue consume;
                     case AFTER_ENTITY_LOOP:
-                        // ASSERT c hold the *next* character. we always come here with reconsume
+                        // ASSERT c hold the *next* character. we always come
+                        // here with reconsume
                         // TODO warn about apos (IE) and TRADE (Opera)
                         if (candidate == -1) {
                             /*
-                             * If no match can be made, then this is a
-                             * parse error.
+                             * If no match can be made, then this is a parse
+                             * error.
                              */
                             err("Text after \u201C&\u201D did not match an entity name.");
                             /*
-                             * No characters are consumed, and nothing
-                             * is returned.
+                             * No characters are consumed, and nothing is
+                             * returned.
                              */
                             if (returnState != State.DATA) {
                                 appendStrBufToLongStrBuf();
@@ -4229,17 +4229,15 @@ public final class Tokenizer implements Locator {
                         } else {
                             if (!Entities.NAMES[candidate].endsWith(";")) {
                                 /*
-                                 * If the last character matched is not
-                                 * a U+003B SEMICOLON (;), there is a
-                                 * parse error.
+                                 * If the last character matched is not a U+003B
+                                 * SEMICOLON (;), there is a parse error.
                                  */
                                 err("Entity reference was not terminated by a semicolon.");
                                 if (returnState != State.DATA) {
                                     /*
-                                     * If the entity is being consumed
-                                     * as part of an attribute, and the
-                                     * last character matched is not a
-                                     * U+003B SEMICOLON (;),
+                                     * If the entity is being consumed as part
+                                     * of an attribute, and the last character
+                                     * matched is not a U+003B SEMICOLON (;),
                                      */
                                     char ch;
                                     if (strBufMark == strBufLen) {
@@ -4251,19 +4249,17 @@ public final class Tokenizer implements Locator {
                                             || (ch >= 'A' && ch <= 'Z')
                                             || (ch >= 'a' && ch <= 'z')) {
                                         /*
-                                         * and the next character is in
-                                         * the range U+0030 DIGIT ZERO
-                                         * to U+0039 DIGIT NINE, U+0041
-                                         * LATIN CAPITAL LETTER A to
-                                         * U+005A LATIN CAPITAL LETTER
-                                         * Z, or U+0061 LATIN SMALL
-                                         * LETTER A to U+007A LATIN
-                                         * SMALL LETTER Z, then, for
-                                         * historical reasons, all the
-                                         * characters that were matched
-                                         * after the U+0026 AMPERSAND
-                                         * (&) must be unconsumed, and
-                                         * nothing is returned.
+                                         * and the next character is in the
+                                         * range U+0030 DIGIT ZERO to U+0039
+                                         * DIGIT NINE, U+0041 LATIN CAPITAL
+                                         * LETTER A to U+005A LATIN CAPITAL
+                                         * LETTER Z, or U+0061 LATIN SMALL
+                                         * LETTER A to U+007A LATIN SMALL LETTER
+                                         * Z, then, for historical reasons, all
+                                         * the characters that were matched
+                                         * after the U+0026 AMPERSAND (&) must
+                                         * be unconsumed, and nothing is
+                                         * returned.
                                          */
                                         appendStrBufToLongStrBuf();
                                         state = returnState;
@@ -4273,10 +4269,10 @@ public final class Tokenizer implements Locator {
                             }
 
                             /*
-                             * Otherwise, return a character token for
-                             * the character corresponding to the entity
-                             * name (as given by the second column of
-                             * the entities table).
+                             * Otherwise, return a character token for the
+                             * character corresponding to the entity name (as
+                             * given by the second column of the entities
+                             * table).
                              */
                             char[] val = Entities.VALUES[candidate];
                             emitOrAppend(val, returnState != State.DATA);
@@ -4294,11 +4290,10 @@ public final class Tokenizer implements Locator {
                             state = returnState;
                             continue reconsume;
                             /*
-                             * If the markup contains I'm &notit; I tell
-                             * you, the entity is parsed as "not", as
-                             * in, I'm ¬it; I tell you. But if the
-                             * markup was I'm &notin; I tell you, the
-                             * entity would be parsed as "notin;",
+                             * If the markup contains I'm &notit; I tell you,
+                             * the entity is parsed as "not", as in, I'm ¬it; I
+                             * tell you. But if the markup was I'm &notin; I
+                             * tell you, the entity would be parsed as "notin;",
                              * resulting in I'm ∉ I tell you.
                              */
                         }
@@ -4307,37 +4302,40 @@ public final class Tokenizer implements Locator {
                         value = 0;
                         seenDigits = false;
                         /*
-                         * The behaviour further depends on the character after the U+0023
-                         * NUMBER SIGN:
+                         * The behavior further depends on the character after
+                         * the U+0023 NUMBER SIGN:
                          */
                         switch (c) {
                             case 'x':
                             case 'X':
 
                                 /*
-                                 * U+0078 LATIN SMALL LETTER X U+0058 LATIN CAPITAL LETTER X Consume
-                                 * the X.
+                                 * U+0078 LATIN SMALL LETTER X U+0058 LATIN
+                                 * CAPITAL LETTER X Consume the X.
                                  * 
-                                 * Follow the steps below, but using the range of characters U+0030
-                                 * DIGIT ZERO through to U+0039 DIGIT NINE, U+0061 LATIN SMALL
-                                 * LETTER A through to U+0066 LATIN SMALL LETTER F, and U+0041 LATIN
-                                 * CAPITAL LETTER A, through to U+0046 LATIN CAPITAL LETTER F (in
-                                 * other words, 0-9, A-F, a-f).
+                                 * Follow the steps below, but using the range
+                                 * of characters U+0030 DIGIT ZERO through to
+                                 * U+0039 DIGIT NINE, U+0061 LATIN SMALL LETTER
+                                 * A through to U+0066 LATIN SMALL LETTER F, and
+                                 * U+0041 LATIN CAPITAL LETTER A, through to
+                                 * U+0046 LATIN CAPITAL LETTER F (in other
+                                 * words, 0-9, A-F, a-f).
                                  * 
-                                 * When it comes to interpreting the number, interpret it as a
-                                 * hexadecimal number.
+                                 * When it comes to interpreting the number,
+                                 * interpret it as a hexadecimal number.
                                  */
                                 appendStrBuf(c);
                                 state = State.HEX_NCR_LOOP;
                                 continue consume;
                             default:
                                 /*
-                                 * Anything else Follow the steps below, but using the range of
-                                 * characters U+0030 DIGIT ZERO through to U+0039 DIGIT NINE (i.e.
-                                 * just 0-9).
+                                 * Anything else Follow the steps below, but
+                                 * using the range of characters U+0030 DIGIT
+                                 * ZERO through to U+0039 DIGIT NINE (i.e. just
+                                 * 0-9).
                                  * 
-                                 * When it comes to interpreting the number, interpret it as a
-                                 * decimal number.
+                                 * When it comes to interpreting the number,
+                                 * interpret it as a decimal number.
                                  */
                                 state = State.DECIMAL_NRC_LOOP;
                                 continue reconsume;
@@ -4345,13 +4343,14 @@ public final class Tokenizer implements Locator {
                     case HEX_NCR_LOOP:
                         // Deal with overflow gracefully
                         if (value < prevValue) {
-                            value = 0x110000; // Value above Unicode range but within int
+                            value = 0x110000; // Value above Unicode range but
+                                                // within int
                             // range
                         }
                         prevValue = value;
                         /*
-                         * Consume as many characters as match the range of characters given
-                         * above.
+                         * Consume as many characters as match the range of
+                         * characters given above.
                          */
                         if (c >= '0' && c <= '9') {
                             seenDigits = true;
@@ -4386,13 +4385,15 @@ public final class Tokenizer implements Locator {
                             }
                         } else {
                             /*
-                             * If no characters match the range, then don't consume any
-                             * characters (and unconsume the U+0023 NUMBER SIGN character
-                             * and, if appropriate, the X character). This is a parse error;
-                             * nothing is returned.
+                             * If no characters match the range, then don't
+                             * consume any characters (and unconsume the U+0023
+                             * NUMBER SIGN character and, if appropriate, the X
+                             * character). This is a parse error; nothing is
+                             * returned.
                              * 
-                             * Otherwise, if the next character is a U+003B SEMICOLON,
-                             * consume that too. If it isn't, there is a parse error.
+                             * Otherwise, if the next character is a U+003B
+                             * SEMICOLON, consume that too. If it isn't, there
+                             * is a parse error.
                              */
                             if (seenDigits) {
                                 err("Character reference was not terminated by a semicolon.");
@@ -4413,13 +4414,14 @@ public final class Tokenizer implements Locator {
                     case DECIMAL_NRC_LOOP:
                         // Deal with overflow gracefully
                         if (value < prevValue) {
-                            value = 0x110000; // Value above Unicode range but within int
+                            value = 0x110000; // Value above Unicode range but
+                                                // within int
                             // range
                         }
                         prevValue = value;
                         /*
-                         * Consume as many characters as match the range of characters given
-                         * above.
+                         * Consume as many characters as match the range of
+                         * characters given above.
                          */
                         if (c >= '0' && c <= '9') {
                             seenDigits = true;
@@ -4444,13 +4446,15 @@ public final class Tokenizer implements Locator {
                             }
                         } else {
                             /*
-                             * If no characters match the range, then don't consume any
-                             * characters (and unconsume the U+0023 NUMBER SIGN character
-                             * and, if appropriate, the X character). This is a parse error;
-                             * nothing is returned.
+                             * If no characters match the range, then don't
+                             * consume any characters (and unconsume the U+0023
+                             * NUMBER SIGN character and, if appropriate, the X
+                             * character). This is a parse error; nothing is
+                             * returned.
                              * 
-                             * Otherwise, if the next character is a U+003B SEMICOLON,
-                             * consume that too. If it isn't, there is a parse error.
+                             * Otherwise, if the next character is a U+003B
+                             * SEMICOLON, consume that too. If it isn't, there
+                             * is a parse error.
                              */
                             if (seenDigits) {
                                 err("Character reference was not terminated by a semicolon.");
@@ -4469,23 +4473,27 @@ public final class Tokenizer implements Locator {
                             }
                         }
                     case HANDLE_NCR_VALUE:
-                        // WARNING c is now the *next* char! leave with reconsume!
+                        // WARNING c is now the *next* char! leave with
+                        // reconsume!
 
                         /*
-                         * If one or more characters match the range, then take them all and
-                         * interpret the string of characters as a number (either hexadecimal or
-                         * decimal as appropriate).
+                         * If one or more characters match the range, then take
+                         * them all and interpret the string of characters as a
+                         * number (either hexadecimal or decimal as
+                         * appropriate).
                          */
                         if (value >= 0x80 && value <= 0x9f) {
                             /*
-                             * If that number is one of the numbers in the first column of the
-                             * following table, then this is a parse error.
+                             * If that number is one of the numbers in the first
+                             * column of the following table, then this is a
+                             * parse error.
                              */
                             err("A numeric character reference expanded to the C1 controls range.");
                             /*
-                             * Find the row with that number in the first column, and return a
-                             * character token for the Unicode character given in the second
-                             * column of that row.
+                             * Find the row with that number in the first
+                             * column, and return a character token for the
+                             * Unicode character given in the second column of
+                             * that row.
                              */
                             char[] val = Entities.WINDOWS_1252[value - 0x80];
                             emitOrAppend(val, returnState != State.DATA);
@@ -4498,14 +4506,16 @@ public final class Tokenizer implements Locator {
                             continue reconsume;
                         } else if (value == 0) {
                             /*
-                             * Otherwise, if the number is zero, if the number is higher than
-                             * 0x10FFFF, or if it's one of the surrogate characters (characters
-                             * in the range 0xD800 to 0xDFFF), then this is a parse error;
-                             * return a character token for the U+FFFD REPLACEMENT CHARACTER
-                             * character instead.
+                             * Otherwise, if the number is zero, if the number
+                             * is higher than 0x10FFFF, or if it's one of the
+                             * surrogate characters (characters in the range
+                             * 0xD800 to 0xDFFF), then this is a parse error;
+                             * return a character token for the U+FFFD
+                             * REPLACEMENT CHARACTER character instead.
                              */
                             err("Character reference expands to U+0000.");
-                            emitOrAppend(REPLACEMENT_CHARACTER, returnState != State.DATA);
+                            emitOrAppend(REPLACEMENT_CHARACTER,
+                                    returnState != State.DATA);
                             state = returnState;
                             continue reconsume;
                         } else if ((contentSpacePolicy != XmlViolationPolicy.ALLOW)
@@ -4519,16 +4529,19 @@ public final class Tokenizer implements Locator {
                             continue reconsume;
                         } else if ((value & 0xF800) == 0xD800) {
                             err("Character reference expands to a surrogate.");
-                            emitOrAppend(REPLACEMENT_CHARACTER, returnState != State.DATA);
+                            emitOrAppend(REPLACEMENT_CHARACTER,
+                                    returnState != State.DATA);
                             state = returnState;
                             continue reconsume;
                         } else if (value <= 0xFFFF) {
                             /*
-                             * Otherwise, return a character token for the Unicode character
-                             * whose code point is that number.
+                             * Otherwise, return a character token for the
+                             * Unicode character whose code point is that
+                             * number.
                              */
                             char ch = (char) value;
-                            if (ch < '\t' || (ch > '\r' && ch < ' ') || isNonCharacter(ch)) {
+                            if (ch < '\t' || (ch > '\r' && ch < ' ')
+                                    || isNonCharacter(ch)) {
                                 if (contentNonXmlCharPolicy != XmlViolationPolicy.FATAL) {
                                     if (contentNonXmlCharPolicy == XmlViolationPolicy.ALTER_INFOSET) {
                                         ch = '\uFFFD';
@@ -4559,7 +4572,8 @@ public final class Tokenizer implements Locator {
                             continue reconsume;
                         } else {
                             err("Character reference outside the permissible Unicode range.");
-                            emitOrAppend(REPLACEMENT_CHARACTER, returnState != State.DATA);
+                            emitOrAppend(REPLACEMENT_CHARACTER,
+                                    returnState != State.DATA);
                             state = returnState;
                             continue reconsume;
                         }
@@ -4672,15 +4686,16 @@ public final class Tokenizer implements Locator {
     }
 
     private boolean restOfBufferCanSwitchDecoder() {
-        for (int i = pos; i < bufLen; i++) {
-            char c = buf[i];
-            if (!((c >= 0x09 && c <= 0x0D) || (c >= 0x20 && c <= 0x22)
-                    || (c >= 0x26 && c <= 0x27) || (c >= 0x2C && c <= 0x3F)
-                    || (c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A))) {
-                return false;
-            }
-        }
-        return true;
+//        for (int i = pos; i < bufLen; i++) {
+//            char c = buf[i];
+//            if (!((c >= 0x09 && c <= 0x0D) || (c >= 0x20 && c <= 0x22)
+//                    || (c >= 0x26 && c <= 0x27) || (c >= 0x2C && c <= 0x3F)
+//                    || (c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A))) {
+//                return false;
+//            }
+//        }
+//        return true;
+        return false;
     }
 
     /**
