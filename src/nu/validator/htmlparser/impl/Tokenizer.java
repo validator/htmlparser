@@ -73,9 +73,93 @@ import org.xml.sax.SAXParseException;
  */
 public final class Tokenizer implements Locator {
 
-    private enum State {
-        DATA, TAG_OPEN, CLOSE_TAG_OPEN_PCDATA, TAG_NAME, BEFORE_ATTRIBUTE_NAME, ATTRIBUTE_NAME, AFTER_ATTRIBUTE_NAME, BEFORE_ATTRIBUTE_VALUE, ATTRIBUTE_VALUE_DOUBLE_QUOTED, ATTRIBUTE_VALUE_SINGLE_QUOTED, ATTRIBUTE_VALUE_UNQUOTED, AFTER_ATTRIBUTE_VALUE_QUOTED, BOGUS_COMMENT, MARKUP_DECLARATION_OPEN, DOCTYPE, BEFORE_DOCTYPE_NAME, DOCTYPE_NAME, AFTER_DOCTYPE_NAME, BEFORE_DOCTYPE_PUBLIC_IDENTIFIER, DOCTYPE_PUBLIC_IDENTIFIER_DOUBLE_QUOTED, DOCTYPE_PUBLIC_IDENTIFIER_SINGLE_QUOTED, AFTER_DOCTYPE_PUBLIC_IDENTIFIER, BEFORE_DOCTYPE_SYSTEM_IDENTIFIER, DOCTYPE_SYSTEM_IDENTIFIER_DOUBLE_QUOTED, DOCTYPE_SYSTEM_IDENTIFIER_SINGLE_QUOTED, AFTER_DOCTYPE_SYSTEM_IDENTIFIER, BOGUS_DOCTYPE, COMMENT_START, COMMENT_START_DASH, COMMENT, COMMENT_END_DASH, COMMENT_END, CLOSE_TAG_OPEN_NOT_PCDATA, MARKUP_DECLARATION_HYPHEN, MARKUP_DECLARATION_OCTYPE, DOCTYPE_UBLIC, DOCTYPE_YSTEM, CONSUME_ENTITY, CONSUME_NCR, ENTITY_LOOP, AFTER_ENTITY_LOOP, HEX_NCR_LOOP, DECIMAL_NRC_LOOP, HANDLE_NCR_VALUE, SELF_CLOSING_START_TAG
-    }
+    private static final int DATA = 0;
+
+    private static final int TAG_OPEN = 1;
+
+    private static final int CLOSE_TAG_OPEN_PCDATA = 2;
+
+    private static final int TAG_NAME = 3;
+
+    private static final int BEFORE_ATTRIBUTE_NAME = 4;
+
+    private static final int ATTRIBUTE_NAME = 5;
+
+    private static final int AFTER_ATTRIBUTE_NAME = 6;
+
+    private static final int BEFORE_ATTRIBUTE_VALUE = 7;
+
+    private static final int ATTRIBUTE_VALUE_DOUBLE_QUOTED = 8;
+
+    private static final int ATTRIBUTE_VALUE_SINGLE_QUOTED = 9;
+
+    private static final int ATTRIBUTE_VALUE_UNQUOTED = 10;
+
+    private static final int AFTER_ATTRIBUTE_VALUE_QUOTED = 11;
+
+    private static final int BOGUS_COMMENT = 12;
+
+    private static final int MARKUP_DECLARATION_OPEN = 13;
+
+    private static final int DOCTYPE = 14;
+
+    private static final int BEFORE_DOCTYPE_NAME = 15;
+
+    private static final int DOCTYPE_NAME = 16;
+
+    private static final int AFTER_DOCTYPE_NAME = 17;
+
+    private static final int BEFORE_DOCTYPE_PUBLIC_IDENTIFIER = 18;
+
+    private static final int DOCTYPE_PUBLIC_IDENTIFIER_DOUBLE_QUOTED = 19;
+
+    private static final int DOCTYPE_PUBLIC_IDENTIFIER_SINGLE_QUOTED = 20;
+
+    private static final int AFTER_DOCTYPE_PUBLIC_IDENTIFIER = 21;
+
+    private static final int BEFORE_DOCTYPE_SYSTEM_IDENTIFIER = 22;
+
+    private static final int DOCTYPE_SYSTEM_IDENTIFIER_DOUBLE_QUOTED = 23;
+
+    private static final int DOCTYPE_SYSTEM_IDENTIFIER_SINGLE_QUOTED = 24;
+
+    private static final int AFTER_DOCTYPE_SYSTEM_IDENTIFIER = 25;
+
+    private static final int BOGUS_DOCTYPE = 26;
+
+    private static final int COMMENT_START = 27;
+
+    private static final int COMMENT_START_DASH = 28;
+
+    private static final int COMMENT = 29;
+
+    private static final int COMMENT_END_DASH = 30;
+
+    private static final int COMMENT_END = 31;
+
+    private static final int CLOSE_TAG_OPEN_NOT_PCDATA = 32;
+
+    private static final int MARKUP_DECLARATION_HYPHEN = 33;
+
+    private static final int MARKUP_DECLARATION_OCTYPE = 34;
+
+    private static final int DOCTYPE_UBLIC = 35;
+
+    private static final int DOCTYPE_YSTEM = 36;
+
+    private static final int CONSUME_ENTITY = 37;
+
+    private static final int CONSUME_NCR = 38;
+
+    private static final int ENTITY_LOOP = 39;
+
+    private static final int HEX_NCR_LOOP = 41;
+
+    private static final int DECIMAL_NRC_LOOP = 42;
+
+    private static final int HANDLE_NCR_VALUE = 43;
+
+    private static final int SELF_CLOSING_START_TAG = 44;
 
     // String interning
 
@@ -237,13 +321,6 @@ public final class Tokenizer implements Locator {
     private int prevFourPtr = 0;
 
     /**
-     * Single code unit buffer for reconsuming an input character. If
-     * <code>-1</code> the next <code>read()</code> returns from the real
-     * buffer, otherwise from here.
-     */
-    private int unreadBuffer = -1;
-
-    /**
      * The current line number in the current resource being parsed. (First line
      * is 1.) Passed on as locator data.
      */
@@ -260,22 +337,40 @@ public final class Tokenizer implements Locator {
     private int colPrev;
 
     private boolean nextCharOnNewLine;
-    
-    private State returnState = State.DATA;
-    private State state = State.DATA;
+
+    private int stateSave;
+
+    private int returnStateSave;
+
     private int index = 0;
+
     private boolean forceQuirks = false;
+
     private char additional = '\u0000';
+
     private int entCol = -1;
+
     private int lo = 0;
+
     private int hi = (Entities.NAMES.length - 1);
+
     private int candidate = -1;
+
     private int strBufMark = 0;
+
     private int prevValue = -1;
+
     private int value = 0;
+
     private boolean inForeign = false; // XXX
+
     private boolean seenDigits = false;
+
     private boolean charDataContinuation = false;
+
+    private int pos = 0;
+
+    private int cstart = 0;
 
     /**
      * The SAX public id for the resource being tokenized. (Only passed to back
@@ -389,8 +484,6 @@ public final class Tokenizer implements Locator {
      * Used together with <code>nonAsciiProhibited</code>.
      */
     private boolean alreadyComplainedAboutNonAscii;
-
-    private boolean canSwitchDecoder;
 
     /**
      * Whether the stream is past the first 512 bytes.
@@ -674,7 +767,6 @@ public final class Tokenizer implements Locator {
         }
         confidence = Confidence.TENTATIVE;
         alreadyComplainedAboutNonAscii = false;
-        canSwitchDecoder = true;
         swallowBom = true;
         rewindableInputStream = null;
         this.systemId = is.getSystemId();
@@ -1082,10 +1174,12 @@ public final class Tokenizer implements Locator {
     /**
      * Flushes coalesced character tokens.
      * 
+     * @param buf
+     *            TODO
+     * 
      * @throws SAXException
      */
-    private void flushChars(char[] buf, int pos, int cstart)
-            throws SAXException, IOException {
+    private void flushChars(char[] buf) throws SAXException {
         if (pos > cstart) {
             int currLine = line;
             int currCol = col;
@@ -1460,8 +1554,7 @@ public final class Tokenizer implements Locator {
     }
 
     private void runStates() throws SAXException, IOException {
-        returnState = State.DATA;
-        state = State.DATA;
+        stateSave = DATA;
         index = 0;
         forceQuirks = false;
         additional = '\u0000';
@@ -1494,22 +1587,27 @@ public final class Tokenizer implements Locator {
             }
             tokenizeBuffer(buffer, offset, length);
         }
-        tokenizeBuffer(null, 0, 0);
+        eof();
     }
-        
-    private void tokenizeBuffer(char[] buf, int offset, int length)  throws SAXException, IOException {
+
+    // WARNING When editing this, makes sure the bytecode length shown by javap
+    // stays under 8000 bytes!
+    private void tokenizeBuffer(char[] buf, int offset, int length)
+            throws SAXException, IOException {
+        int state = stateSave;
+        int returnState = returnStateSave;
+
         char c = '\u0000';
         /**
          * The index of the last <code>char</code> read from <code>buf</code>.
          */
-        int pos = offset - 1;
+        pos = offset - 1;
 
         /**
-         * The index of the first <code>char</code> in <code>buf</code> that is
-         * part of a coalesced run of character tokens or <code>-1</code> if there
-         * is not a current run being coalesced.
+         * The index of the first <code>char</code> in <code>buf</code> that
+         * is part of a coalesced run of character tokens or <code>-1</code>
+         * if there is not a current run being coalesced.
          */
-        int cstart;
         if (charDataContinuation) {
             cstart = offset;
         } else {
@@ -1518,166 +1616,24 @@ public final class Tokenizer implements Locator {
 
         /**
          * The number of <code>char</code>s in <code>buf</code> that have
-         * meaning. (The rest of the array is garbage and should not be examined.)
+         * meaning. (The rest of the array is garbage and should not be
+         * examined.)
          */
         int end = offset + length;
-        consume: for (;;) {
-            // START READ
-            read : for (;;) { // the loop is here for the CRLF case
-                if (buf == null) {
-                    // EOF
-                    c = '\u0000';
-                    break read;
-                }
-                pos++;
-                if (pos == end) {
-                    if (cstart > -1) {
-                        flushChars(buf, pos, cstart);
-                        cstart = -1;
-                        charDataContinuation = true;
-                    } else {
-                        charDataContinuation = false;                        
-                    }
-                    return;
-                }
-                linePrev = line;
-                colPrev = col;
-                if (nextCharOnNewLine) {
-                    line++;
-                    col = 1;
-                    nextCharOnNewLine = false;
-                } else {
-                    col++;
-                }
 
-                c = buf[pos];
-                if (confidence == Confidence.TENTATIVE
-                        && !alreadyComplainedAboutNonAscii && c > '\u007F') {
-                    err("The character encoding of the document was not explicit (assumed \u201C"
-                            + characterEncoding.getCanonName()
-                            + "\u201D) but the document contains non-ASCII.");
-                    alreadyComplainedAboutNonAscii = true;
-                }
-                if (canSwitchDecoder
-                        && !((c >= 0x09 && c <= 0x0D) || (c >= 0x20 && c <= 0x22)
-                                || (c >= 0x26 && c <= 0x27)
-                                || (c >= 0x2C && c <= 0x3F)
-                                || (c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A))) {
-                    canSwitchDecoder = false;
-                }
-                switch (c) {
-                    case '\n':
-                        /*
-                         * U+000D CARRIAGE RETURN (CR) characters, and U+000A LINE
-                         * FEED (LF) characters, are treated specially. Any CR
-                         * characters that are followed by LF characters must be
-                         * removed, and any CR characters not followed by LF
-                         * characters must be converted to LF characters.
-                         */
-                        if (prev == '\r') {
-                            // swallow the LF
-                            if (cstart > -1) {
-                                flushChars(buf, pos, cstart);
-                                cstart = pos + 1;
-                            }
-                            col = colPrev;
-                            line = linePrev;
-                            nextCharOnNewLine = true;
-                            prev = c;
-                            continue read;
-                        } else {
-                            nextCharOnNewLine = true;
+        boolean reconsume = false;
+
+        stateloop: for (;;) {
+            switch (state) {
+                case DATA:
+                    for (;;) {
+                        if (!reconsume) {
+                            c = read(buf, end);
                         }
-                        break;
-                    case '\r':
-                        c = buf[pos] = '\n';
-                        nextCharOnNewLine = true;
-                        prev = '\r';
-                        if (contentModelFlag != ContentModelFlag.PCDATA) {
-                            prevFourPtr++;
-                            prevFourPtr %= 4;
-                            prevFour[prevFourPtr] = c;
+                        reconsume = false;
+                        if (c == '\u0000') {
+                            break stateloop;
                         }
-                        break read;
-                    case '\u0000':
-                        /*
-                         * All U+0000 NULL characters in the input must be replaced
-                         * by U+FFFD REPLACEMENT CHARACTERs. Any occurrences of such
-                         * characters is a parse error.
-                         */
-                        err("Found U+0000 in the character stream.");
-                        c = buf[pos] = '\uFFFD';
-                        break;
-                    case '\u000B':
-                    case '\u000C':
-                        if (inContent) {
-                            if (contentNonXmlCharPolicy == XmlViolationPolicy.FATAL) {
-                                fatal("This document is not mappable to XML 1.0 without data loss due to "
-                                        + toUPlusString(c)
-                                        + " which is not a legal XML 1.0 character.");
-                            } else {
-                                if (contentNonXmlCharPolicy == XmlViolationPolicy.ALTER_INFOSET) {
-                                    c = buf[pos] = ' ';
-                                }
-                                warn("This document is not mappable to XML 1.0 without data loss due to "
-                                        + toUPlusString(c)
-                                        + " which is not a legal XML 1.0 character.");
-                            }
-                        }
-                        break;
-                    default:
-                        if ((c & 0xFC00) == 0xDC00) {
-                            // Got a low surrogate. See if prev was high surrogate
-                            if ((prev & 0xFC00) == 0xD800) {
-                                int intVal = (prev << 10) + c + SURROGATE_OFFSET;
-                                if (isNonCharacter(intVal)) {
-                                    err("Astral non-character.");
-                                }
-                                if (isAstralPrivateUse(intVal)) {
-                                    warnAboutPrivateUseChar();
-                                }
-                            } else {
-                                // XXX figure out what to do about lone high
-                                // surrogates
-                                err("Found low surrogate without high surrogate.");
-                                c = buf[pos] = '\uFFFD';
-                            }
-                        } else if ((c < ' ' || isNonCharacter(c)) && (c != '\t')) {
-                            if (inContent) {
-                                if (contentNonXmlCharPolicy == XmlViolationPolicy.FATAL) {
-                                    fatal("Forbidden code point "
-                                            + toUPlusString(c) + ".");
-                                } else {
-                                    if (contentNonXmlCharPolicy == XmlViolationPolicy.ALTER_INFOSET) {
-                                        c = buf[pos] = '\uFFFD';
-                                    }
-                                    err("Forbidden code point " + toUPlusString(c)
-                                            + ".");
-                                }
-                            } else {
-                                err("Forbidden code point " + toUPlusString(c)
-                                        + ".");
-                            }
-                        } else if ((c >= '\u007F') && (c <= '\u009F')
-                                || (c >= '\uFDD0') && (c <= '\uFDDF')) {
-                            err("Forbidden code point " + toUPlusString(c) + ".");
-                        } else if (isPrivateUse(c)) {
-                            warnAboutPrivateUseChar();
-                        }
-                }
-                prev = c;
-                if (contentModelFlag != ContentModelFlag.PCDATA) {
-                    prevFourPtr++;
-                    prevFourPtr %= 4;
-                    prevFour[prevFourPtr] = c;
-                }
-                break read;
-            }
-            // END READ
-            reconsume: for (;;) {
-                switch (state) {
-                    case DATA:
-                        inContent = true;
                         if (c == '&'
                                 && (contentModelFlag == ContentModelFlag.PCDATA || (contentModelFlag == ContentModelFlag.RCDATA)
                                         && !escapeFlag)) {
@@ -1689,13 +1645,13 @@ public final class Tokenizer implements Locator {
                              * "anything else" entry below.
                              */
                             if (cstart > -1) {
-                                flushChars(buf, pos, cstart);
+                                flushChars(buf);
                                 cstart = -1;
                             }
                             additional = '\u0000';
                             returnState = state;
-                            state = State.CONSUME_ENTITY;
-                            continue consume;
+                            state = CONSUME_ENTITY;
+                            continue stateloop;
                         } else if (c == '<'
                                 && ((contentModelFlag == ContentModelFlag.PCDATA) || (escapeFlag == false && (contentModelFlag == ContentModelFlag.CDATA || contentModelFlag == ContentModelFlag.RCDATA)))) {
                             /*
@@ -1708,22 +1664,13 @@ public final class Tokenizer implements Locator {
                              * "anything else" entry below.
                              */
                             if (cstart > -1) {
-                                flushChars(buf, pos, cstart);
+                                flushChars(buf);
                                 cstart = -1;
                             }
                             resetAttributes();
                             inContent = false;
-                            state = State.TAG_OPEN;
-                            continue consume;
-                        } else if (c == '\u0000') {
-                            /*
-                             * EOF Emit an end-of-file token.
-                             */
-                            if (cstart > -1) {
-                                flushChars(buf, pos, cstart);
-                                cstart = -1;
-                            }
-                            return; // eof() called in parent finally block
+                            state = TAG_OPEN;
+                            continue stateloop;
                         } else {
                             if (c == '-'
                                     && (escapeFlag == false)
@@ -1772,147 +1719,161 @@ public final class Tokenizer implements Locator {
                             /*
                              * Stay in the data state.
                              */
-                            continue consume;
+                            continue;
                         }
-                    case TAG_OPEN:
+                    }
+                case TAG_OPEN:
+                    c = read(buf, end);
+                    if (c == '\u0000') {
+                        break stateloop;
+                    }
+                    /*
+                     * The behavior of this state depends on the content model
+                     * flag.
+                     */
+                    // this can't happen in PLAINTEXT, so using not PCDATA
+                    // as the condition
+                    if (contentModelFlag != ContentModelFlag.PCDATA) {
                         /*
-                         * The behavior of this state depends on the content
-                         * model flag.
+                         * If the content model flag is set to the RCDATA or
+                         * CDATA states Consume the next input character.
                          */
-                        // this can't happen in PLAINTEXT, so using not PCDATA
-                        // as the condition
-                        if (contentModelFlag != ContentModelFlag.PCDATA) {
+                        if (c == '/' && contentModelElement != null) {
                             /*
-                             * If the content model flag is set to the RCDATA or
-                             * CDATA states Consume the next input character.
+                             * If it is a U+002F SOLIDUS (/) character, switch
+                             * to the close tag open state.
                              */
-                            if (c == '/' && contentModelElement != null) {
-                                /*
-                                 * If it is a U+002F SOLIDUS (/) character,
-                                 * switch to the close tag open state.
-                                 */
-                                index = 0;
-                                clearStrBuf();
-                                state = State.CLOSE_TAG_OPEN_NOT_PCDATA;
-                                continue consume;
-                            } else {
-                                /*
-                                 * Otherwise, emit a U+003C LESS-THAN SIGN
-                                 * character token
-                                 */
-                                tokenHandler.characters(LT_GT, 0, 1);
-                                /*
-                                 * and reconsume the current input character in
-                                 * the data state.
-                                 */
-                                state = State.DATA;
-                                continue reconsume;
-                            }
+                            index = 0;
+                            clearStrBuf();
+                            state = CLOSE_TAG_OPEN_NOT_PCDATA;
+                            continue stateloop;
                         } else {
                             /*
-                             * If the content model flag is set to the PCDATA
-                             * state Consume the next input character:
+                             * Otherwise, emit a U+003C LESS-THAN SIGN character
+                             * token
                              */
-                            if (c == '!') {
-                                /*
-                                 * U+0021 EXCLAMATION MARK (!) Switch to the
-                                 * markup declaration open state.
-                                 */
-                                clearLongStrBuf();
-                                state = State.MARKUP_DECLARATION_OPEN;
-                                continue consume;
-                            } else if (c == '/') {
-                                /*
-                                 * U+002F SOLIDUS (/) Switch to the close tag
-                                 * open state.
-                                 */
-                                state = State.CLOSE_TAG_OPEN_PCDATA;
-                                continue consume;
-                            } else if (c >= 'A' && c <= 'Z') {
-                                /*
-                                 * U+0041 LATIN CAPITAL LETTER A through to
-                                 * U+005A LATIN CAPITAL LETTER Z Create a new
-                                 * start tag token,
-                                 */
-                                endTag = false;
-                                /*
-                                 * set its tag name to the lowercase version of
-                                 * the input character (add 0x0020 to the
-                                 * character's code point),
-                                 */
-                                clearStrBuf();
-                                appendStrBuf((char) (c + 0x20));
-                                /* then switch to the tag name state. */
-                                state = State.TAG_NAME;
-                                /*
-                                 * (Don't emit the token yet; further details
-                                 * will be filled in before it is emitted.)
-                                 */
-                                continue consume;
-                            } else if (c >= 'a' && c <= 'z') {
-                                /*
-                                 * U+0061 LATIN SMALL LETTER A through to U+007A
-                                 * LATIN SMALL LETTER Z Create a new start tag
-                                 * token,
-                                 */
-                                endTag = false;
-                                /*
-                                 * set its tag name to the input character,
-                                 */
-                                clearStrBuf();
-                                appendStrBuf(c);
-                                /* then switch to the tag name state. */
-                                state = State.TAG_NAME;
-                                /*
-                                 * (Don't emit the token yet; further details
-                                 * will be filled in before it is emitted.)
-                                 */
-                                continue consume;
-                            } else if (c == '>') {
-                                /*
-                                 * U+003E GREATER-THAN SIGN (>) Parse error.
-                                 */
-                                err("Bad character \u201C>\u201D in the tag open state.");
-                                /*
-                                 * Emit a U+003C LESS-THAN SIGN character token
-                                 * and a U+003E GREATER-THAN SIGN character
-                                 * token.
-                                 */
-                                tokenHandler.characters(LT_GT, 0, 2);
-                                /* Switch to the data state. */
-                                state = State.DATA;
-                                continue consume;
-                            } else if (c == '?') {
-                                /*
-                                 * U+003F QUESTION MARK (?) Parse error.
-                                 */
-                                err("Bad character \u201C?\u201D in the tag open state.");
-                                /*
-                                 * Switch to the bogus comment state.
-                                 */
-                                clearLongStrBuf();
-                                appendLongStrBuf(c);
-                                state = State.BOGUS_COMMENT;
-                                continue consume;
-                            } else {
-                                /*
-                                 * Anything else Parse error.
-                                 */
-                                err("Bad character \u201C" + c
-                                        + "\u201D in the tag open state.");
-                                /*
-                                 * Emit a U+003C LESS-THAN SIGN character token
-                                 */
-                                tokenHandler.characters(LT_GT, 0, 1);
-                                /*
-                                 * and reconsume the current input character in
-                                 * the data state.
-                                 */
-                                state = State.DATA;
-                                continue reconsume;
-                            }
+                            tokenHandler.characters(LT_GT, 0, 1);
+                            /*
+                             * and reconsume the current input character in the
+                             * data state.
+                             */
+                            inContent = true;
+                            state = DATA;
+                            reconsume = true;
+                            continue stateloop;
                         }
-                    case CLOSE_TAG_OPEN_NOT_PCDATA:
+                    } else {
+                        /*
+                         * If the content model flag is set to the PCDATA state
+                         * Consume the next input character:
+                         */
+                        if (c == '!') {
+                            /*
+                             * U+0021 EXCLAMATION MARK (!) Switch to the markup
+                             * declaration open state.
+                             */
+                            clearLongStrBuf();
+                            state = MARKUP_DECLARATION_OPEN;
+                            continue stateloop;
+                        } else if (c == '/') {
+                            /*
+                             * U+002F SOLIDUS (/) Switch to the close tag open
+                             * state.
+                             */
+                            state = CLOSE_TAG_OPEN_PCDATA;
+                            continue stateloop;
+                        } else if (c >= 'A' && c <= 'Z') {
+                            /*
+                             * U+0041 LATIN CAPITAL LETTER A through to U+005A
+                             * LATIN CAPITAL LETTER Z Create a new start tag
+                             * token,
+                             */
+                            endTag = false;
+                            /*
+                             * set its tag name to the lowercase version of the
+                             * input character (add 0x0020 to the character's
+                             * code point),
+                             */
+                            clearStrBuf();
+                            appendStrBuf((char) (c + 0x20));
+                            /* then switch to the tag name state. */
+                            state = TAG_NAME;
+                            /*
+                             * (Don't emit the token yet; further details will
+                             * be filled in before it is emitted.)
+                             */
+                            continue stateloop;
+                        } else if (c >= 'a' && c <= 'z') {
+                            /*
+                             * U+0061 LATIN SMALL LETTER A through to U+007A
+                             * LATIN SMALL LETTER Z Create a new start tag
+                             * token,
+                             */
+                            endTag = false;
+                            /*
+                             * set its tag name to the input character,
+                             */
+                            clearStrBuf();
+                            appendStrBuf(c);
+                            /* then switch to the tag name state. */
+                            state = TAG_NAME;
+                            /*
+                             * (Don't emit the token yet; further details will
+                             * be filled in before it is emitted.)
+                             */
+                            continue stateloop;
+                        } else if (c == '>') {
+                            /*
+                             * U+003E GREATER-THAN SIGN (>) Parse error.
+                             */
+                            err("Bad character \u201C>\u201D in the tag open state.");
+                            /*
+                             * Emit a U+003C LESS-THAN SIGN character token and
+                             * a U+003E GREATER-THAN SIGN character token.
+                             */
+                            tokenHandler.characters(LT_GT, 0, 2);
+                            /* Switch to the data state. */
+                            inContent = true;
+                            state = DATA;
+                            continue stateloop;
+                        } else if (c == '?') {
+                            /*
+                             * U+003F QUESTION MARK (?) Parse error.
+                             */
+                            err("Bad character \u201C?\u201D in the tag open state.");
+                            /*
+                             * Switch to the bogus comment state.
+                             */
+                            clearLongStrBuf();
+                            appendLongStrBuf(c);
+                            state = BOGUS_COMMENT;
+                            continue stateloop;
+                        } else {
+                            /*
+                             * Anything else Parse error.
+                             */
+                            err("Bad character \u201C" + c
+                                    + "\u201D in the tag open state.");
+                            /*
+                             * Emit a U+003C LESS-THAN SIGN character token
+                             */
+                            tokenHandler.characters(LT_GT, 0, 1);
+                            /*
+                             * and reconsume the current input character in the
+                             * data state.
+                             */
+                            inContent = true;
+                            state = DATA;
+                            reconsume = true;
+                            continue stateloop;
+                        }
+                    }
+                case CLOSE_TAG_OPEN_NOT_PCDATA:
+                    for (;;) {
+                        c = read(buf, end);
+                        if (c == '\u0000') {
+                            break stateloop;
+                        }
                         // ASSERT! when entering this state, set index to 0 and
                         // call clearStrBuf()
                         assert (contentModelElement != null);
@@ -1968,12 +1929,14 @@ public final class Tokenizer implements Locator {
                                 }
                                 tokenHandler.characters(LT_SOLIDUS, 0, 2);
                                 emitStrBuf();
-                                state = State.DATA;
-                                continue reconsume;
+                                inContent = true;
+                                state = DATA;
+                                reconsume = true;
+                                continue stateloop;
                             }
                             appendStrBuf(c);
                             index++;
-                            continue consume;
+                            continue;
                         } else {
                             endTag = true;
                             tagName = contentModelElement;
@@ -1989,8 +1952,8 @@ public final class Tokenizer implements Locator {
                                      * FORM FEED (FF) U+0020 SPACE Switch to the
                                      * before attribute name state.
                                      */
-                                    state = State.BEFORE_ATTRIBUTE_NAME;
-                                    continue consume;
+                                    state = BEFORE_ATTRIBUTE_NAME;
+                                    continue stateloop;
                                 case '>':
                                     /*
                                      * U+003E GREATER-THAN SIGN (>) Emit the
@@ -2000,8 +1963,9 @@ public final class Tokenizer implements Locator {
                                     /*
                                      * Switch to the data state.
                                      */
-                                    state = State.DATA;
-                                    continue consume;
+                                    inContent = true;
+                                    state = DATA;
+                                    continue stateloop;
                                 case '\u0000':
                                     /*
                                      * EOF Parse error.
@@ -2015,8 +1979,10 @@ public final class Tokenizer implements Locator {
                                      * Reconsume the character in the data
                                      * state.
                                      */
-                                    state = State.DATA;
-                                    continue reconsume;
+                                    inContent = true;
+                                    state = DATA;
+                                    reconsume = true;
+                                    continue stateloop;
                                 case '/':
                                     /*
                                      * U+002F SOLIDUS (/) Parse error unless
@@ -2028,8 +1994,8 @@ public final class Tokenizer implements Locator {
                                      * Switch to the before attribute name
                                      * state.
                                      */
-                                    state = State.BEFORE_ATTRIBUTE_NAME;
-                                    continue consume;
+                                    state = BEFORE_ATTRIBUTE_NAME;
+                                    continue stateloop;
                                 default:
                                     if (html4) {
                                         err((contentModelFlag == ContentModelFlag.CDATA ? "CDATA"
@@ -2047,92 +2013,104 @@ public final class Tokenizer implements Locator {
                                     tokenHandler.characters(LT_SOLIDUS, 0, 2);
                                     emitStrBuf();
                                     cstart = pos; // don't drop the character
-                                    state = State.DATA;
-                                    continue consume;
+                                    inContent = true;
+                                    state = DATA;
+                                    continue stateloop;
                             }
                         }
-                    case CLOSE_TAG_OPEN_PCDATA:
+                    }
+                case CLOSE_TAG_OPEN_PCDATA:
+                    c = read(buf, end);
+                    if (c == '\u0000') {
+                        break stateloop;
+                    }
+                    /*
+                     * Otherwise, if the content model flag is set to the PCDATA
+                     * state, or if the next few characters do match that tag
+                     * name, consume the next input character:
+                     */
+                    if (c >= 'A' && c <= 'Z') {
                         /*
-                         * Otherwise, if the content model flag is set to the
-                         * PCDATA state, or if the next few characters do match
-                         * that tag name, consume the next input character:
+                         * U+0041 LATIN CAPITAL LETTER A through to U+005A LATIN
+                         * CAPITAL LETTER Z Create a new end tag token,
                          */
-                        if (c >= 'A' && c <= 'Z') {
-                            /*
-                             * U+0041 LATIN CAPITAL LETTER A through to U+005A
-                             * LATIN CAPITAL LETTER Z Create a new end tag
-                             * token,
-                             */
-                            endTag = true;
-                            clearStrBuf();
-                            /*
-                             * set its tag name to the lowercase version of the
-                             * input character (add 0x0020 to the character's
-                             * code point),
-                             */
-                            appendStrBuf((char) (c + 0x20));
-                            /*
-                             * then switch to the tag name state. (Don't emit
-                             * the token yet; further details will be filled in
-                             * before it is emitted.)
-                             */
-                            state = State.TAG_NAME;
-                            continue consume;
-                        } else if (c >= 'a' && c <= 'z') {
-                            /*
-                             * U+0061 LATIN SMALL LETTER A through to U+007A
-                             * LATIN SMALL LETTER Z Create a new end tag token,
-                             */
-                            endTag = true;
-                            clearStrBuf();
-                            /*
-                             * set its tag name to the input character,
-                             */
-                            appendStrBuf(c);
-                            /*
-                             * then switch to the tag name state. (Don't emit
-                             * the token yet; further details will be filled in
-                             * before it is emitted.)
-                             */
-                            state = State.TAG_NAME;
-                            continue consume;
-                        } else if (c == '>') {
-                            /* U+003E GREATER-THAN SIGN (>) Parse error. */
-                            err("Saw \u201C</>\u201D.");
-                            /*
-                             * Switch to the data state.
-                             */
-                            state = State.DATA;
-                            continue consume;
-                        } else if (c == '\u0000') {
-                            /* EOF Parse error. */
-                            err("Saw \u201C</\u201D immediately before end of file.");
-                            /*
-                             * Emit a U+003C LESS-THAN SIGN character token and
-                             * a U+002F SOLIDUS character token.
-                             */
-                            tokenHandler.characters(LT_SOLIDUS, 0, 2);
-                            /*
-                             * Reconsume the EOF character in the data state.
-                             */
-                            state = State.DATA;
-                            continue reconsume;
-                        } else {
-                            /* Anything else Parse error. */
-                            err("Garbage after \u201C</\u201D.");
-                            /*
-                             * Switch to the bogus comment state.
-                             */
-                            clearLongStrBuf();
-                            appendToComment(c);
-                            state = State.BOGUS_COMMENT;
-                            continue consume;
-                        }
-                    case TAG_NAME:
+                        endTag = true;
+                        clearStrBuf();
+                        /*
+                         * set its tag name to the lowercase version of the
+                         * input character (add 0x0020 to the character's code
+                         * point),
+                         */
+                        appendStrBuf((char) (c + 0x20));
+                        /*
+                         * then switch to the tag name state. (Don't emit the
+                         * token yet; further details will be filled in before
+                         * it is emitted.)
+                         */
+                        state = TAG_NAME;
+                        continue stateloop;
+                    } else if (c >= 'a' && c <= 'z') {
+                        /*
+                         * U+0061 LATIN SMALL LETTER A through to U+007A LATIN
+                         * SMALL LETTER Z Create a new end tag token,
+                         */
+                        endTag = true;
+                        clearStrBuf();
+                        /*
+                         * set its tag name to the input character,
+                         */
+                        appendStrBuf(c);
+                        /*
+                         * then switch to the tag name state. (Don't emit the
+                         * token yet; further details will be filled in before
+                         * it is emitted.)
+                         */
+                        state = TAG_NAME;
+                        continue stateloop;
+                    } else if (c == '>') {
+                        /* U+003E GREATER-THAN SIGN (>) Parse error. */
+                        err("Saw \u201C</>\u201D.");
+                        /*
+                         * Switch to the data state.
+                         */
+                        inContent = true;
+                        state = DATA;
+                        continue stateloop;
+                    } else if (c == '\u0000') {
+                        /* EOF Parse error. */
+                        err("Saw \u201C</\u201D immediately before end of file.");
+                        /*
+                         * Emit a U+003C LESS-THAN SIGN character token and a
+                         * U+002F SOLIDUS character token.
+                         */
+                        tokenHandler.characters(LT_SOLIDUS, 0, 2);
+                        /*
+                         * Reconsume the EOF character in the data state.
+                         */
+                        inContent = true;
+                        state = DATA;
+                        reconsume = true;
+                        continue stateloop;
+                    } else {
+                        /* Anything else Parse error. */
+                        err("Garbage after \u201C</\u201D.");
+                        /*
+                         * Switch to the bogus comment state.
+                         */
+                        clearLongStrBuf();
+                        appendToComment(c);
+                        state = BOGUS_COMMENT;
+                        continue stateloop;
+                    }
+                case TAG_NAME:
+                    for (;;) {
+                        c = read(buf, end);
                         /*
                          * Consume the next input character:
                          */
                         switch (c) {
+                            case '\u0000':
+                                break stateloop;
                             case ' ':
                             case '\t':
                             case '\n':
@@ -2145,8 +2123,8 @@ public final class Tokenizer implements Locator {
                                  * attribute name state.
                                  */
                                 tagName = strBufToElementNameString();
-                                state = State.BEFORE_ATTRIBUTE_NAME;
-                                continue consume;
+                                state = BEFORE_ATTRIBUTE_NAME;
+                                continue stateloop;
                             case '>':
                                 /*
                                  * U+003E GREATER-THAN SIGN (>) Emit the current
@@ -2157,32 +2135,17 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * Switch to the data state.
                                  */
-                                state = State.DATA;
-                                continue consume;
-                            case '\u0000':
-                                /*
-                                 * EOF Parse error.
-                                 */
-                                err("End of file seen when looking for tag name");
-                                /*
-                                 * Emit the current tag token.
-                                 */
-                                tagName = strBufToElementNameString();
-                                emitCurrentTagToken(false);
-                                /*
-                                 * Reconsume the EOF character in the data
-                                 * state.
-                                 */
-                                state = State.DATA;
-                                continue reconsume;
+                                inContent = true;
+                                state = DATA;
+                                continue stateloop;
                             case '/':
                                 /*
                                  * U+002F SOLIDUS (/) Switch to the self-closing
                                  * start tag state.
                                  */
                                 tagName = strBufToElementNameString();
-                                state = State.SELF_CLOSING_START_TAG;
-                                continue consume;
+                                state = SELF_CLOSING_START_TAG;
+                                continue stateloop;
                             default:
                                 if (c >= 'A' && c <= 'Z') {
                                     /*
@@ -2205,13 +2168,21 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * Stay in the tag name state.
                                  */
-                                continue consume;
+                                continue;
                         }
-                    case BEFORE_ATTRIBUTE_NAME:
+                    }
+                case BEFORE_ATTRIBUTE_NAME:
+                    for (;;) {
+                        if (!reconsume) {
+                            c = read(buf, end);
+                        }
+                        reconsume = false;
                         /*
                          * Consume the next input character:
                          */
                         switch (c) {
+                            case '\u0000':
+                                break stateloop;
                             case ' ':
                             case '\t':
                             case '\n':
@@ -2223,7 +2194,7 @@ public final class Tokenizer implements Locator {
                                  * (FF) U+0020 SPACE Stay in the before
                                  * attribute name state.
                                  */
-                                continue consume;
+                                continue;
                             case '>':
                                 /*
                                  * U+003E GREATER-THAN SIGN (>) Emit the current
@@ -2233,28 +2204,16 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * Switch to the data state.
                                  */
-                                state = State.DATA;
-                                continue consume;
+                                inContent = true;
+                                state = DATA;
+                                continue stateloop;
                             case '/':
                                 /*
                                  * U+002F SOLIDUS (/) Switch to the self-closing
                                  * start tag state.
                                  */
-                                state = State.SELF_CLOSING_START_TAG;
-                                continue consume;
-                            case '\u0000':
-                                /* EOF Parse error. */
-                                err("Saw end of file without the previous tag ending with \u201C>\u201C.");
-                                /*
-                                 * Emit the current tag token.
-                                 */
-                                emitCurrentTagToken(false);
-                                /*
-                                 * Reconsume the EOF character in the data
-                                 * state.
-                                 */
-                                state = State.DATA;
-                                continue reconsume;
+                                state = SELF_CLOSING_START_TAG;
+                                continue stateloop;
                             case '\"':
                             case '\'':
                             case '=':
@@ -2299,14 +2258,19 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * Switch to the attribute name state.
                                  */
-                                state = State.ATTRIBUTE_NAME;
-                                continue consume;
+                                state = ATTRIBUTE_NAME;
+                                continue stateloop;
                         }
-                    case ATTRIBUTE_NAME:
+                    }
+                case ATTRIBUTE_NAME:
+                    for (;;) {
+                        c = read(buf, end);
                         /*
                          * Consume the next input character:
                          */
                         switch (c) {
+                            case '\u0000':
+                                break stateloop;
                             case ' ':
                             case '\t':
                             case '\n':
@@ -2319,8 +2283,8 @@ public final class Tokenizer implements Locator {
                                  * attribute name state.
                                  */
                                 attributeNameComplete();
-                                state = State.AFTER_ATTRIBUTE_NAME;
-                                continue consume;
+                                state = AFTER_ATTRIBUTE_NAME;
+                                continue stateloop;
                             case '=':
                                 /*
                                  * U+003D EQUALS SIGN (=) Switch to the before
@@ -2328,8 +2292,8 @@ public final class Tokenizer implements Locator {
                                  */
                                 attributeNameComplete();
                                 clearLongStrBuf();
-                                state = State.BEFORE_ATTRIBUTE_VALUE;
-                                continue consume;
+                                state = BEFORE_ATTRIBUTE_VALUE;
+                                continue stateloop;
                             case '>':
                                 /*
                                  * U+003E GREATER-THAN SIGN (>) Emit the current
@@ -2341,8 +2305,9 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * Switch to the data state.
                                  */
-                                state = State.DATA;
-                                continue consume;
+                                inContent = true;
+                                state = DATA;
+                                continue stateloop;
                             case '/':
                                 /*
                                  * U+002F SOLIDUS (/) Switch to the self-closing
@@ -2350,25 +2315,8 @@ public final class Tokenizer implements Locator {
                                  */
                                 attributeNameComplete();
                                 addAttributeWithoutValue();
-                                state = State.SELF_CLOSING_START_TAG;
-                                continue consume;
-                            case '\u0000':
-                                /*
-                                 * EOF Parse error.
-                                 */
-                                err("End of file occurred in an attribute name.");
-                                /*
-                                 * Emit the current tag token.
-                                 */
-                                attributeNameComplete();
-                                addAttributeWithoutValue();
-                                emitCurrentTagToken(false);
-                                /*
-                                 * Reconsume the EOF character in the data
-                                 * state.
-                                 */
-                                state = State.DATA;
-                                continue reconsume;
+                                state = SELF_CLOSING_START_TAG;
+                                continue stateloop;
                             case '\"':
                             case '\'':
                                 /*
@@ -2403,13 +2351,18 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * Stay in the attribute name state.
                                  */
-                                continue consume;
+                                continue;
                         }
-                    case AFTER_ATTRIBUTE_NAME:
+                    }
+                case AFTER_ATTRIBUTE_NAME:
+                    for (;;) {
+                        c = read(buf, end);
                         /*
                          * Consume the next input character:
                          */
                         switch (c) {
+                            case '\u0000':
+                                break stateloop;
                             case ' ':
                             case '\t':
                             case '\n':
@@ -2421,15 +2374,15 @@ public final class Tokenizer implements Locator {
                                  * (FF) U+0020 SPACE Stay in the after attribute
                                  * name state.
                                  */
-                                continue consume;
+                                continue;
                             case '=':
                                 /*
                                  * U+003D EQUALS SIGN (=) Switch to the before
                                  * attribute value state.
                                  */
                                 clearLongStrBuf();
-                                state = State.BEFORE_ATTRIBUTE_VALUE;
-                                continue consume;
+                                state = BEFORE_ATTRIBUTE_VALUE;
+                                continue stateloop;
                             case '>':
                                 /*
                                  * U+003E GREATER-THAN SIGN (>) Emit the current
@@ -2440,29 +2393,17 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * Switch to the data state.
                                  */
-                                state = State.DATA;
-                                continue consume;
+                                inContent = true;
+                                state = DATA;
+                                continue stateloop;
                             case '/':
                                 /*
                                  * U+002F SOLIDUS (/) Switch to the self-closing
                                  * start tag state.
                                  */
                                 addAttributeWithoutValue();
-                                state = State.SELF_CLOSING_START_TAG;
-                                continue consume;
-                            case '\u0000':
-                                /* EOF Parse error. */
-                                err("Saw end of file without the previous tag ending with \u201C>\u201C.");
-                                /*
-                                 * Emit the current tag token.
-                                 */
-                                addAttributeWithoutValue();
-                                emitCurrentTagToken(false);
-                                /*
-                                 * Reconsume the character in the data state.
-                                 */
-                                state = State.DATA;
-                                continue reconsume;
+                                state = SELF_CLOSING_START_TAG;
+                                continue stateloop;
                             default:
                                 addAttributeWithoutValue();
                                 /*
@@ -2494,16 +2435,21 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * Switch to the attribute name state.
                                  */
-                                state = State.ATTRIBUTE_NAME;
-                                continue consume;
+                                state = ATTRIBUTE_NAME;
+                                continue stateloop;
                         }
-                    case BEFORE_ATTRIBUTE_VALUE:
+                    }
+                case BEFORE_ATTRIBUTE_VALUE:
+                    for (;;) {
+                        c = read(buf, end);
                         // ASSERT! call clearLongStrBuf() before transitioning
                         // to this state!
                         /*
                          * Consume the next input character:
                          */
                         switch (c) {
+                            case '\u0000':
+                                break stateloop;
                             case ' ':
                             case '\t':
                             case '\n':
@@ -2515,29 +2461,33 @@ public final class Tokenizer implements Locator {
                                  * (FF) U+0020 SPACE Stay in the before
                                  * attribute value state.
                                  */
-                                continue consume;
+                                continue;
                             case '"':
                                 /*
                                  * U+0022 QUOTATION MARK (") Switch to the
                                  * attribute value (double-quoted) state.
                                  */
-                                state = State.ATTRIBUTE_VALUE_DOUBLE_QUOTED;
-                                continue consume;
+                                inContent = true;
+                                state = ATTRIBUTE_VALUE_DOUBLE_QUOTED;
+                                continue stateloop;
                             case '&':
                                 /*
                                  * U+0026 AMPERSAND (&) Switch to the attribute
                                  * value (unquoted) state and reconsume this
                                  * input character.
                                  */
-                                state = State.ATTRIBUTE_VALUE_UNQUOTED;
-                                continue reconsume;
+                                inContent = true;
+                                state = ATTRIBUTE_VALUE_UNQUOTED;
+                                reconsume = true;
+                                continue stateloop;
                             case '\'':
                                 /*
                                  * U+0027 APOSTROPHE (') Switch to the attribute
                                  * value (single-quoted) state.
                                  */
-                                state = State.ATTRIBUTE_VALUE_SINGLE_QUOTED;
-                                continue consume;
+                                inContent = true;
+                                state = ATTRIBUTE_VALUE_SINGLE_QUOTED;
+                                continue stateloop;
                             case '>':
                                 /*
                                  * U+003E GREATER-THAN SIGN (>) Emit the current
@@ -2548,21 +2498,9 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * Switch to the data state.
                                  */
-                                state = State.DATA;
-                                continue consume;
-                            case '\u0000':
-                                /* EOF Parse error. */
-                                err("Saw end of file without the previous tag ending with \u201C>\u201C.");
-                                /*
-                                 * Emit the current tag token.
-                                 */
-                                addAttributeWithoutValue();
-                                emitCurrentTagToken(false);
-                                /*
-                                 * Reconsume the character in the data state.
-                                 */
-                                state = State.DATA;
-                                continue reconsume;
+                                inContent = true;
+                                state = DATA;
+                                continue stateloop;
                             case '=':
                                 /*
                                  * U+003D EQUALS SIGN (=) Parse error.
@@ -2590,15 +2528,23 @@ public final class Tokenizer implements Locator {
                                  * Switch to the attribute value (unquoted)
                                  * state.
                                  */
-                                state = State.ATTRIBUTE_VALUE_UNQUOTED;
-                                continue consume;
+                                inContent = true;
+                                state = ATTRIBUTE_VALUE_UNQUOTED;
+                                continue stateloop;
                         }
-                    case ATTRIBUTE_VALUE_DOUBLE_QUOTED:
-                        inContent = true;
+                    }
+                case ATTRIBUTE_VALUE_DOUBLE_QUOTED:
+                    for (;;) {
+                        if (!reconsume) {
+                            c = read(buf, end);
+                        }
+                        reconsume = false;
                         /*
                          * Consume the next input character:
                          */
                         switch (c) {
+                            case '\u0000':
+                                break stateloop;
                             case '"':
                                 /*
                                  * U+0022 QUOTATION MARK (") Switch to the after
@@ -2606,8 +2552,8 @@ public final class Tokenizer implements Locator {
                                  */
                                 addAttributeWithValue();
                                 inContent = false;
-                                state = State.AFTER_ATTRIBUTE_VALUE_QUOTED;
-                                continue consume;
+                                state = AFTER_ATTRIBUTE_VALUE_QUOTED;
+                                continue stateloop;
                             case '&':
                                 /*
                                  * U+0026 AMPERSAND (&) Switch to the entity in
@@ -2617,20 +2563,8 @@ public final class Tokenizer implements Locator {
                                  */
                                 additional = '\"';
                                 returnState = state;
-                                state = State.CONSUME_ENTITY;
-                                continue consume;
-                            case '\u0000':
-                                /* EOF Parse error. */
-                                err("End of file reached when inside a quoted attribute value.");
-                                /* Emit the current tag token. */
-                                addAttributeWithValue();
-                                emitCurrentTagToken(false);
-                                /*
-                                 * Reconsume the character in the data state.
-                                 */
-                                inContent = false;
-                                state = State.DATA;
-                                continue reconsume;
+                                state = CONSUME_ENTITY;
+                                continue stateloop;
                             default:
                                 /*
                                  * Anything else Append the current input
@@ -2641,14 +2575,21 @@ public final class Tokenizer implements Locator {
                                  * Stay in the attribute value (double-quoted)
                                  * state.
                                  */
-                                continue consume;
+                                continue;
                         }
-                    case ATTRIBUTE_VALUE_SINGLE_QUOTED:
-                        inContent = true;
+                    }
+                case ATTRIBUTE_VALUE_SINGLE_QUOTED:
+                    for (;;) {
+                        if (!reconsume) {
+                            c = read(buf, end);
+                        }
+                        reconsume = false;
                         /*
                          * Consume the next input character:
                          */
                         switch (c) {
+                            case '\u0000':
+                                break stateloop;
                             case '\'':
                                 /*
                                  * U+0027 APOSTROPHE (') Switch to the after
@@ -2656,8 +2597,8 @@ public final class Tokenizer implements Locator {
                                  */
                                 addAttributeWithValue();
                                 inContent = false;
-                                state = State.AFTER_ATTRIBUTE_VALUE_QUOTED;
-                                continue consume;
+                                state = AFTER_ATTRIBUTE_VALUE_QUOTED;
+                                continue stateloop;
                             case '&':
                                 /*
                                  * U+0026 AMPERSAND (&) Switch to the entity in
@@ -2667,20 +2608,8 @@ public final class Tokenizer implements Locator {
                                  */
                                 additional = '\'';
                                 returnState = state;
-                                state = State.CONSUME_ENTITY;
-                                continue consume;
-                            case '\u0000':
-                                /* EOF Parse error. */
-                                err("End of file reached when inside a quoted attribute value.");
-                                /* Emit the current tag token. */
-                                addAttributeWithValue();
-                                emitCurrentTagToken(false);
-                                /*
-                                 * Reconsume the character in the data state.
-                                 */
-                                inContent = false;
-                                state = State.DATA;
-                                continue reconsume;
+                                state = CONSUME_ENTITY;
+                                continue stateloop;
                             default:
                                 /*
                                  * Anything else Append the current input
@@ -2691,14 +2620,21 @@ public final class Tokenizer implements Locator {
                                  * Stay in the attribute value (double-quoted)
                                  * state.
                                  */
-                                continue consume;
+                                continue;
                         }
-                    case ATTRIBUTE_VALUE_UNQUOTED:
-                        inContent = true;
+                    }
+                case ATTRIBUTE_VALUE_UNQUOTED:
+                    for (;;) {
+                        if (!reconsume) {
+                            c = read(buf, end);
+                        }
+                        reconsume = false;
                         /*
                          * Consume the next input character:
                          */
                         switch (c) {
+                            case '\u0000':
+                                break stateloop;
                             case ' ':
                             case '\t':
                             case '\n':
@@ -2712,8 +2648,8 @@ public final class Tokenizer implements Locator {
                                  */
                                 addAttributeWithValue();
                                 inContent = false;
-                                state = State.BEFORE_ATTRIBUTE_NAME;
-                                continue consume;
+                                state = BEFORE_ATTRIBUTE_NAME;
+                                continue stateloop;
                             case '&':
                                 /*
                                  * U+0026 AMPERSAND (&) Switch to the entity in
@@ -2722,8 +2658,8 @@ public final class Tokenizer implements Locator {
                                  */
                                 additional = '\u0000';
                                 returnState = state;
-                                state = State.CONSUME_ENTITY;
-                                continue consume;
+                                state = CONSUME_ENTITY;
+                                continue stateloop;
                             case '>':
                                 /*
                                  * U+003E GREATER-THAN SIGN (>) Emit the current
@@ -2735,22 +2671,9 @@ public final class Tokenizer implements Locator {
                                  * Switch to the data state.
                                  */
                                 inContent = false;
-                                state = State.DATA;
-                                continue consume;
-                            case '\u0000':
-                                /* EOF Parse error. */
-                                err("Saw end of file without the previous tag ending with \u201C>\u201C.");
-                                /*
-                                 * Emit the current tag token.
-                                 */
-                                addAttributeWithValue();
-                                emitCurrentTagToken(false);
-                                /*
-                                 * Reconsume the character in the data state.
-                                 */
-                                inContent = false;
-                                state = State.DATA;
-                                continue reconsume;
+                                inContent = true;
+                                state = DATA;
+                                continue stateloop;
                             case '<':
                             case '\"':
                             case '\'':
@@ -2789,84 +2712,100 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * Stay in the attribute value (unquoted) state.
                                  */
-                                continue consume;
+                                continue;
                         }
-                    case AFTER_ATTRIBUTE_VALUE_QUOTED:
-                        /*
-                         * Consume the next input character:
-                         */
-                        switch (c) {
-                            case ' ':
-                            case '\t':
-                            case '\n':
-                            case '\u000B':
-                            case '\u000C':
-                                /*
-                                 * U+0009 CHARACTER TABULATION U+000A LINE FEED
-                                 * (LF) U+000B LINE TABULATION U+000C FORM FEED
-                                 * (FF) U+0020 SPACE Switch to the before
-                                 * attribute name state.
-                                 */
-                                state = State.BEFORE_ATTRIBUTE_NAME;
-                                continue consume;
-                            case '>':
-                                /*
-                                 * U+003E GREATER-THAN SIGN (>) Emit the current
-                                 * tag token.
-                                 */
-                                emitCurrentTagToken(false);
-                                /*
-                                 * Switch to the data state.
-                                 */
-                                state = State.DATA;
-                                continue consume;
-                            case '/':
-                                /*
-                                 * U+002F SOLIDUS (/) Switch to the self-closing
-                                 * start tag state.
-                                 */
-                                state = State.SELF_CLOSING_START_TAG;
-                                continue consume;
-                            default:
-                                /*
-                                 * Anything else Parse error.
-                                 */
-                                err("No space between attributes.");
-                                /*
-                                 * Reconsume the character in the before
-                                 * attribute name state.
-                                 */
-                                state = State.BEFORE_ATTRIBUTE_NAME;
-                                continue reconsume;
+                    }
+                case AFTER_ATTRIBUTE_VALUE_QUOTED:
+                    c = read(buf, end);
+                    /*
+                     * Consume the next input character:
+                     */
+                    switch (c) {
+                        case '\u0000':
+                            break stateloop;
+                        case ' ':
+                        case '\t':
+                        case '\n':
+                        case '\u000B':
+                        case '\u000C':
+                            /*
+                             * U+0009 CHARACTER TABULATION U+000A LINE FEED (LF)
+                             * U+000B LINE TABULATION U+000C FORM FEED (FF)
+                             * U+0020 SPACE Switch to the before attribute name
+                             * state.
+                             */
+                            state = BEFORE_ATTRIBUTE_NAME;
+                            continue stateloop;
+                        case '>':
+                            /*
+                             * U+003E GREATER-THAN SIGN (>) Emit the current tag
+                             * token.
+                             */
+                            emitCurrentTagToken(false);
+                            /*
+                             * Switch to the data state.
+                             */
+                            inContent = true;
+                            state = DATA;
+                            continue stateloop;
+                        case '/':
+                            /*
+                             * U+002F SOLIDUS (/) Switch to the self-closing
+                             * start tag state.
+                             */
+                            state = SELF_CLOSING_START_TAG;
+                            continue stateloop;
+                        default:
+                            /*
+                             * Anything else Parse error.
+                             */
+                            err("No space between attributes.");
+                            /*
+                             * Reconsume the character in the before attribute
+                             * name state.
+                             */
+                            state = BEFORE_ATTRIBUTE_NAME;
+                            reconsume = true;
+                            continue stateloop;
+                    }
+                case SELF_CLOSING_START_TAG:
+                    c = read(buf, end);
+                    /*
+                     * Consume the next input character:
+                     */
+                    switch (c) {
+                        case '\u0000':
+                            break stateloop;
+                        case '>':
+                            /*
+                             * U+003E GREATER-THAN SIGN (>) Set the self-closing
+                             * flag of the current tag token. Emit the current
+                             * tag token.
+                             */
+                            emitCurrentTagToken(true);
+                            /*
+                             * Switch to the data state.
+                             */
+                            inContent = true;
+                            state = DATA;
+                            continue stateloop;
+                        default:
+                            /* Anything else Parse error. */
+                            err("A slash was not immediate followed by \u201C>\u201D.");
+                            /*
+                             * Reconsume the character in the before attribute
+                             * name state.
+                             */
+                            state = BEFORE_ATTRIBUTE_NAME;
+                            reconsume = true;
+                            continue stateloop;
+                    }
+                case BOGUS_COMMENT:
+                    for (;;) {
+                        if (!reconsume) {
+                            c = read(buf, end);
                         }
-                    case SELF_CLOSING_START_TAG:
-                        /*
-                         * Consume the next input character:
-                         */
-                        switch (c) {
-                            case '>':
-                                /*
-                                 * U+003E GREATER-THAN SIGN (>) Set the
-                                 * self-closing flag of the current tag token.
-                                 * Emit the current tag token.
-                                 */
-                                emitCurrentTagToken(true);
-                                /*
-                                 * Switch to the data state.
-                                 */
-                                state = State.DATA;
-                                continue consume;
-                            default:
-                                /* Anything else Parse error. */
-                                err("A slash was not immediate followed by \u201C>\u201D.");
-                                /*
-                                 * Reconsume the character in the before
-                                 * attribute name state.
-                                 */
-                                state = State.BEFORE_ATTRIBUTE_NAME;
-                                continue reconsume;
-                        }
-                    case BOGUS_COMMENT:
+                        reconsume = false;
                         /*
                          * (This can only happen if the content model flag is
                          * set to the PCDATA state.)
@@ -2889,82 +2828,93 @@ public final class Tokenizer implements Locator {
                          * character.
                          */
                         switch (c) {
+                            case '\u0000':
+                                break stateloop;
                             case '>':
                                 emitComment();
-                                state = State.DATA;
-                                continue consume;
-                            case '\u0000':
-                                emitComment();
-                                state = State.DATA;
-                                continue reconsume;
+                                inContent = true;
+                                state = DATA;
+                                continue stateloop;
                             default:
                                 appendToComment(c);
-                                continue consume;
+                                continue;
                         }
-                    case MARKUP_DECLARATION_OPEN:
-                        // ASSERT! call clearLongStrBuf() before coming here!
+                    }
+                case MARKUP_DECLARATION_OPEN:
+                    c = read(buf, end);
+                    // ASSERT! call clearLongStrBuf() before coming here!
 
-                        /*
-                         * (This can only happen if the content model flag is
-                         * set to the PCDATA state.)
-                         * 
-                         * If the next two characters are both U+002D
-                         * HYPHEN-MINUS (-) characters, consume those two
-                         * characters, create a comment token whose data is the
-                         * empty string, and switch to the comment start state.
-                         * 
-                         * Otherwise, if the next seven characters are a
-                         * case-insensitive match for the word "DOCTYPE", then
-                         * consume those characters and switch to the DOCTYPE
-                         * state.
-                         * 
-                         * Otherwise, if the insertion mode is "in foreign
-                         * content" and the current node is not an element in
-                         * the HTML namespace and the next seven characters are
-                         * a case-sensitive match for the string "[CDATA[" (the
-                         * five uppercase letters "CDATA" with a U+005B LEFT
-                         * SQUARE BRACKET character before and after), then
-                         * consume those characters and switch to the CDATA
-                         * block state (which is unrelated to the content model
-                         * flag's CDATA state).
-                         * 
-                         * Otherwise, is is a parse error. Switch to the bogus
-                         * comment state. The next character that is consumed,
-                         * if any, is the first character that will be in the
-                         * comment.
-                         */
-                        switch (c) {
-                            case '-':
-                                state = State.MARKUP_DECLARATION_HYPHEN;
-                                continue consume;
-                            case 'd':
-                            case 'D':
-                                appendToComment(c);
-                                index = 0;
-                                state = State.MARKUP_DECLARATION_OCTYPE;
-                                continue consume;
-                            case '[':
-                                if (inForeign) {
-                                    // TODO!!!
-                                } else {
-                                    // fall through
-                                }
-                            default:
-                                err("Bogus comment.");
-                                state = State.BOGUS_COMMENT;
-                                continue reconsume;
-                        }
-                    case MARKUP_DECLARATION_HYPHEN:
-                        if (c == '-') {
-                            state = State.COMMENT_START;
-                            continue consume;
-                        } else {
+                    /*
+                     * (This can only happen if the content model flag is set to
+                     * the PCDATA state.)
+                     * 
+                     * If the next two characters are both U+002D HYPHEN-MINUS
+                     * (-) characters, consume those two characters, create a
+                     * comment token whose data is the empty string, and switch
+                     * to the comment start state.
+                     * 
+                     * Otherwise, if the next seven characters are a
+                     * case-insensitive match for the word "DOCTYPE", then
+                     * consume those characters and switch to the DOCTYPE state.
+                     * 
+                     * Otherwise, if the insertion mode is "in foreign content"
+                     * and the current node is not an element in the HTML
+                     * namespace and the next seven characters are a
+                     * case-sensitive match for the string "[CDATA[" (the five
+                     * uppercase letters "CDATA" with a U+005B LEFT SQUARE
+                     * BRACKET character before and after), then consume those
+                     * characters and switch to the CDATA block state (which is
+                     * unrelated to the content model flag's CDATA state).
+                     * 
+                     * Otherwise, is is a parse error. Switch to the bogus
+                     * comment state. The next character that is consumed, if
+                     * any, is the first character that will be in the comment.
+                     */
+                    switch (c) {
+                        case '\u0000':
+                            break stateloop;
+                        case '-':
+                            state = MARKUP_DECLARATION_HYPHEN;
+                            continue stateloop;
+                        case 'd':
+                        case 'D':
+                            appendToComment(c);
+                            index = 0;
+                            state = MARKUP_DECLARATION_OCTYPE;
+                            continue stateloop;
+                        case '[':
+                            if (inForeign) {
+                                // TODO!!!
+                            } else {
+                                // fall through
+                            }
+                        default:
+                            err("Bogus comment.");
+                            state = BOGUS_COMMENT;
+                            reconsume = true;
+                            continue stateloop;
+                    }
+                case MARKUP_DECLARATION_HYPHEN:
+                    c = read(buf, end);
+                    switch (c) {
+                        case '\u0000':
+                            break stateloop;
+                        case '-':
+                            state = COMMENT_START;
+                            continue stateloop;
+                        default:
                             err("Bogus comment.");
                             appendToComment('-');
-                            state = State.BOGUS_COMMENT;
-                            continue reconsume;
+                            state = BOGUS_COMMENT;
+                            reconsume = true;
+                            continue stateloop;
+                    }
+                case MARKUP_DECLARATION_OCTYPE:
+                    for (;;) {
+                        c = read(buf, end);
+                        if (c == '\u0000') {
+                            break stateloop;
                         }
-                    case MARKUP_DECLARATION_OCTYPE:
                         if (index < OCTYPE.length) {
                             char folded = c;
                             if (c >= 'A' && c <= 'Z') {
@@ -2974,145 +2924,121 @@ public final class Tokenizer implements Locator {
                                 appendToComment(c);
                             } else {
                                 err("Bogus comment.");
-                                state = State.BOGUS_COMMENT;
-                                continue reconsume;
+                                state = BOGUS_COMMENT;
+                                reconsume = true;
+                                continue stateloop;
                             }
                             index++;
-                            continue consume;
+                            continue;
                         } else {
-                            state = State.DOCTYPE;
-                            continue reconsume;
+                            state = DOCTYPE;
+                            reconsume = true;
+                            continue stateloop;
                         }
-                    case COMMENT_START:
-                        /*
-                         * Comment start state
-                         * 
-                         * 
-                         * Consume the next input character:
-                         */
-                        switch (c) {
-                            case '-':
-                                /*
-                                 * U+002D HYPHEN-MINUS (-) Switch to the comment
-                                 * start dash state.
-                                 */
-                                state = State.COMMENT_START_DASH;
-                                continue consume;
-                            case '>':
-                                /*
-                                 * U+003E GREATER-THAN SIGN (>) Parse error.
-                                 */
-                                err("Premature end of comment.");
-                                /* Emit the comment token. */
-                                emitComment();
-                                /*
-                                 * Switch to the data state.
-                                 */
-                                state = State.DATA;
-                                continue consume;
-                            case '\u0000':
-                                /*
-                                 * EOF Parse error.
-                                 */
-                                err("End of file inside comment.");
-                                /* Emit the comment token. */
-                                emitComment();
-                                /*
-                                 * Reconsume the EOF character in the data
-                                 * state.
-                                 */
-                                state = State.DATA;
-                                continue reconsume;
-                            default:
-                                /*
-                                 * Anything else Append the input character to
-                                 * the comment token's data.
-                                 */
-                                appendToComment(c);
-                                /*
-                                 * Switch to the comment state.
-                                 */
-                                state = State.COMMENT;
-                                continue consume;
-                        }
-                    case COMMENT_START_DASH:
-                        /*
-                         * Comment start dash state
-                         * 
-                         * Consume the next input character:
-                         */
-                        switch (c) {
-                            case '-':
-                                /*
-                                 * U+002D HYPHEN-MINUS (-) Switch to the comment
-                                 * end state
-                                 */
-                                state = State.COMMENT_END;
-                                continue consume;
-                            case '>':
-                                /*
-                                 * U+003E GREATER-THAN SIGN (>) Parse error.
-                                 */
-                                err("Premature end of comment.");
-                                /* Emit the comment token. */
-                                emitComment();
-                                /*
-                                 * Switch to the data state.
-                                 */
-                                state = State.DATA;
-                                continue consume;
-                            case '\u0000':
-                                /*
-                                 * EOF Parse error.
-                                 */
-                                err("End of file inside comment.");
-                                /* Emit the comment token. */
-                                emitComment();
-                                /*
-                                 * Reconsume the EOF character in the data
-                                 * state.
-                                 */
-                                state = State.DATA;
-                                continue reconsume;
-                            default:
-                                /*
-                                 * Anything else Append a U+002D HYPHEN-MINUS
-                                 * (-) character and the input character to the
-                                 * comment token's data.
-                                 */
-                                appendToComment('-');
-                                appendToComment(c);
-                                /*
-                                 * Switch to the comment state.
-                                 */
-                                state = State.COMMENT;
-                                continue consume;
-                        }
-                    case COMMENT:
+                    }
+                case COMMENT_START:
+                    c = read(buf, end);
+                    /*
+                     * Comment start state
+                     * 
+                     * 
+                     * Consume the next input character:
+                     */
+                    switch (c) {
+                        case '\u0000':
+                            break stateloop;
+                        case '-':
+                            /*
+                             * U+002D HYPHEN-MINUS (-) Switch to the comment
+                             * start dash state.
+                             */
+                            state = COMMENT_START_DASH;
+                            continue stateloop;
+                        case '>':
+                            /*
+                             * U+003E GREATER-THAN SIGN (>) Parse error.
+                             */
+                            err("Premature end of comment.");
+                            /* Emit the comment token. */
+                            emitComment();
+                            /*
+                             * Switch to the data state.
+                             */
+                            inContent = true;
+                            state = DATA;
+                            continue stateloop;
+                        default:
+                            /*
+                             * Anything else Append the input character to the
+                             * comment token's data.
+                             */
+                            appendToComment(c);
+                            /*
+                             * Switch to the comment state.
+                             */
+                            state = COMMENT;
+                            continue stateloop;
+                    }
+                case COMMENT_START_DASH:
+                    c = read(buf, end);
+                    /*
+                     * Comment start dash state
+                     * 
+                     * Consume the next input character:
+                     */
+                    switch (c) {
+                        case '\u0000':
+                            break stateloop;
+                        case '-':
+                            /*
+                             * U+002D HYPHEN-MINUS (-) Switch to the comment end
+                             * state
+                             */
+                            state = COMMENT_END;
+                            continue stateloop;
+                        case '>':
+                            /*
+                             * U+003E GREATER-THAN SIGN (>) Parse error.
+                             */
+                            err("Premature end of comment.");
+                            /* Emit the comment token. */
+                            emitComment();
+                            /*
+                             * Switch to the data state.
+                             */
+                            inContent = true;
+                            state = DATA;
+                            continue stateloop;
+                        default:
+                            /*
+                             * Anything else Append a U+002D HYPHEN-MINUS (-)
+                             * character and the input character to the comment
+                             * token's data.
+                             */
+                            appendToComment('-');
+                            appendToComment(c);
+                            /*
+                             * Switch to the comment state.
+                             */
+                            state = COMMENT;
+                            continue stateloop;
+                    }
+                case COMMENT:
+                    for (;;) {
+                        c = read(buf, end);
                         /*
                          * Comment state Consume the next input character:
                          */
                         switch (c) {
+                            case '\u0000':
+                                break stateloop;
                             case '-':
                                 /*
                                  * U+002D HYPHEN-MINUS (-) Switch to the comment
                                  * end dash state
                                  */
-                                state = State.COMMENT_END_DASH;
-                                continue consume;
-                            case '\u0000':
-                                /*
-                                 * EOF Parse error.
-                                 */
-                                err("End of file inside comment.");
-                                /* Emit the comment token. */
-                                emitComment();
-                                /*
-                                 * Reconsume the EOF character in the data
-                                 * state.
-                                 */
-                                state = State.DATA;
-                                continue reconsume;
+                                state = COMMENT_END_DASH;
+                                continue stateloop;
                             default:
                                 /*
                                  * Anything else Append the input character to
@@ -3122,54 +3048,48 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * Stay in the comment state.
                                  */
-                                continue consume;
+                                continue;
                         }
-                    case COMMENT_END_DASH:
+                    }
+                case COMMENT_END_DASH:
+                    c = read(buf, end);
+                    /*
+                     * Comment end dash state Consume the next input character:
+                     */
+                    switch (c) {
+                        case '\u0000':
+                            break stateloop;
+                        case '-':
+                            /*
+                             * U+002D HYPHEN-MINUS (-) Switch to the comment end
+                             * state
+                             */
+                            state = COMMENT_END;
+                            continue stateloop;
+                        default:
+                            /*
+                             * Anything else Append a U+002D HYPHEN-MINUS (-)
+                             * character and the input character to the comment
+                             * token's data.
+                             */
+                            appendToComment('-');
+                            appendToComment(c);
+                            /*
+                             * Switch to the comment state.
+                             */
+                            state = COMMENT;
+                            continue stateloop;
+                    }
+                case COMMENT_END:
+                    for (;;) {
+                        c = read(buf, end);
                         /*
                          * Comment end dash state Consume the next input
                          * character:
                          */
                         switch (c) {
-                            case '-':
-                                /*
-                                 * U+002D HYPHEN-MINUS (-) Switch to the comment
-                                 * end state
-                                 */
-                                state = State.COMMENT_END;
-                                continue consume;
                             case '\u0000':
-                                /*
-                                 * EOF Parse error.
-                                 */
-                                err("End of file inside comment.");
-                                /* Emit the comment token. */
-                                emitComment();
-                                /*
-                                 * Reconsume the EOF character in the data
-                                 * state.
-                                 */
-                                state = State.DATA;
-                                continue reconsume;
-                            default:
-                                /*
-                                 * Anything else Append a U+002D HYPHEN-MINUS
-                                 * (-) character and the input character to the
-                                 * comment token's data.
-                                 */
-                                appendToComment('-');
-                                appendToComment(c);
-                                /*
-                                 * Switch to the comment state.
-                                 */
-                                state = State.COMMENT;
-                                continue consume;
-                        }
-                    case COMMENT_END:
-                        /*
-                         * Comment end dash state Consume the next input
-                         * character:
-                         */
-                        switch (c) {
+                                break stateloop;
                             case '>':
                                 /*
                                  * U+003E GREATER-THAN SIGN (>) Emit the comment
@@ -3179,8 +3099,9 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * Switch to the data state.
                                  */
-                                state = State.DATA;
-                                continue consume;
+                                inContent = true;
+                                state = DATA;
+                                continue stateloop;
                             case '-':
                                 /* U+002D HYPHEN-MINUS (-) Parse error. */
                                 err("Consecutive hyphens did not terminate a comment.");
@@ -3192,20 +3113,7 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * Stay in the comment end state.
                                  */
-                                continue consume;
-                            case '\u0000':
-                                /*
-                                 * EOF Parse error.
-                                 */
-                                err("End of file inside comment.");
-                                /* Emit the comment token. */
-                                emitComment();
-                                /*
-                                 * Reconsume the EOF character in the data
-                                 * state.
-                                 */
-                                state = State.DATA;
-                                continue reconsume;
+                                continue;
                             default:
                                 /*
                                  * Anything else Parse error.
@@ -3222,47 +3130,62 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * Switch to the comment state.
                                  */
-                                state = State.COMMENT;
-                                continue consume;
+                                state = COMMENT;
+                                continue stateloop;
                         }
-                    case DOCTYPE:
-                        systemIdentifier = null;
-                        publicIdentifier = null;
-                        doctypeName = null;
+                    }
+                case DOCTYPE:
+                    if (!reconsume) {
+                        c = read(buf, end);
+                    }
+                    reconsume = false;
+                    systemIdentifier = null;
+                    publicIdentifier = null;
+                    doctypeName = null;
+                    /*
+                     * Consume the next input character:
+                     */
+                    switch (c) {
+                        case '\u0000':
+                            break stateloop;
+                        case ' ':
+                        case '\t':
+                        case '\n':
+                        case '\u000B':
+                        case '\u000C':
+                            /*
+                             * U+0009 CHARACTER TABULATION U+000A LINE FEED (LF)
+                             * U+000B LINE TABULATION U+000C FORM FEED (FF)
+                             * U+0020 SPACE Switch to the before DOCTYPE name
+                             * state.
+                             */
+                            state = BEFORE_DOCTYPE_NAME;
+                            continue stateloop;
+                        default:
+                            /*
+                             * Anything else Parse error.
+                             */
+                            err("Missing space before doctype name.");
+                            /*
+                             * Reconsume the current character in the before
+                             * DOCTYPE name state.
+                             */
+                            state = BEFORE_DOCTYPE_NAME;
+                            reconsume = true;
+                            continue stateloop;
+                    }
+                case BEFORE_DOCTYPE_NAME:
+                    for (;;) {
+                        if (!reconsume) {
+                            c = read(buf, end);
+                        }
+                        reconsume = false;
                         /*
                          * Consume the next input character:
                          */
                         switch (c) {
-                            case ' ':
-                            case '\t':
-                            case '\n':
-                            case '\u000B':
-                            case '\u000C':
-                                /*
-                                 * U+0009 CHARACTER TABULATION U+000A LINE FEED
-                                 * (LF) U+000B LINE TABULATION U+000C FORM FEED
-                                 * (FF) U+0020 SPACE Switch to the before
-                                 * DOCTYPE name state.
-                                 */
-                                state = State.BEFORE_DOCTYPE_NAME;
-                                continue consume;
-                            default:
-                                /*
-                                 * Anything else Parse error.
-                                 */
-                                err("Missing space before doctype name.");
-                                /*
-                                 * Reconsume the current character in the before
-                                 * DOCTYPE name state.
-                                 */
-                                state = State.BEFORE_DOCTYPE_NAME;
-                                continue reconsume;
-                        }
-                    case BEFORE_DOCTYPE_NAME:
-                        /*
-                         * Consume the next input character:
-                         */
-                        switch (c) {
+                            case '\u0000':
+                                break stateloop;
                             case ' ':
                             case '\t':
                             case '\n':
@@ -3274,7 +3197,7 @@ public final class Tokenizer implements Locator {
                                  * (FF) U+0020 SPACE Stay in the before DOCTYPE
                                  * name state.
                                  */
-                                continue consume;
+                                continue;
                             case '>':
                                 /*
                                  * U+003E GREATER-THAN SIGN (>) Parse error.
@@ -3288,22 +3211,9 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * Switch to the data state.
                                  */
-                                state = State.DATA;
-                                continue consume;
-                            case '\u0000':
-                                /* EOF Parse error. */
-                                err("End of file inside doctype.");
-                                /*
-                                 * Create a new DOCTYPE token. Set its
-                                 * force-quirks flag to on. Emit the token.
-                                 */
-                                tokenHandler.doctype("", null, null, true);
-                                /*
-                                 * Reconsume the EOF character in the data
-                                 * state.
-                                 */
-                                state = State.DATA;
-                                continue reconsume;
+                                inContent = true;
+                                state = DATA;
+                                continue stateloop;
                             default:
                                 /* Anything else Create a new DOCTYPE token. */
                                 clearStrBuf();
@@ -3315,14 +3225,19 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * Switch to the DOCTYPE name state.
                                  */
-                                state = State.DOCTYPE_NAME;
-                                continue consume;
+                                state = DOCTYPE_NAME;
+                                continue stateloop;
                         }
-                    case DOCTYPE_NAME:
+                    }
+                case DOCTYPE_NAME:
+                    for (;;) {
+                        c = read(buf, end);
                         /*
                          * First, consume the next input character:
                          */
                         switch (c) {
+                            case '\u0000':
+                                break stateloop;
                             case ' ':
                             case '\t':
                             case '\n':
@@ -3335,8 +3250,8 @@ public final class Tokenizer implements Locator {
                                  * name state.
                                  */
                                 doctypeName = strBufToString();
-                                state = State.AFTER_DOCTYPE_NAME;
-                                continue consume;
+                                state = AFTER_DOCTYPE_NAME;
+                                continue stateloop;
                             case '>':
                                 /*
                                  * U+003E GREATER-THAN SIGN (>) Emit the current
@@ -3347,23 +3262,9 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * Switch to the data state.
                                  */
-                                state = State.DATA;
-                                continue consume;
-                            case '\u0000':
-                                /* EOF Parse error. */
-                                err("End of file inside doctype.");
-                                /*
-                                 * Set the DOCTYPE token's force-quirks flag to
-                                 * on. Emit that DOCTYPE token.
-                                 */
-                                tokenHandler.doctype(strBufToString(), null,
-                                        null, true);
-                                /*
-                                 * Reconsume the EOF character in the data
-                                 * state.
-                                 */
-                                state = State.DATA;
-                                continue reconsume;
+                                inContent = true;
+                                state = DATA;
+                                continue stateloop;
                             default:
                                 /*
                                  * Anything else Append the current input
@@ -3374,13 +3275,18 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * Stay in the DOCTYPE name state.
                                  */
-                                continue consume;
+                                continue;
                         }
-                    case AFTER_DOCTYPE_NAME:
+                    }
+                case AFTER_DOCTYPE_NAME:
+                    for (;;) {
+                        c = read(buf, end);
                         /*
                          * Consume the next input character:
                          */
                         switch (c) {
+                            case '\u0000':
+                                break stateloop;
                             case ' ':
                             case '\t':
                             case '\n':
@@ -3392,7 +3298,7 @@ public final class Tokenizer implements Locator {
                                  * (FF) U+0020 SPACE Stay in the after DOCTYPE
                                  * name state.
                                  */
-                                continue consume;
+                                continue;
                             case '>':
                                 /*
                                  * U+003E GREATER-THAN SIGN (>) Emit the current
@@ -3403,33 +3309,19 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * Switch to the data state.
                                  */
-                                state = State.DATA;
-                                continue consume;
-                            case '\u0000':
-                                /* EOF Parse error. */
-                                err("End of file inside doctype.");
-                                /*
-                                 * Set the DOCTYPE token's force-quirks flag to
-                                 * on. Emit that DOCTYPE token.
-                                 */
-                                tokenHandler.doctype(doctypeName, null, null,
-                                        true);
-                                /*
-                                 * Reconsume the EOF character in the data
-                                 * state.
-                                 */
-                                state = State.DATA;
-                                continue reconsume;
+                                inContent = true;
+                                state = DATA;
+                                continue stateloop;
                             case 'p':
                             case 'P':
                                 index = 0;
-                                state = State.DOCTYPE_UBLIC;
-                                continue consume;
+                                state = DOCTYPE_UBLIC;
+                                continue stateloop;
                             case 's':
                             case 'S':
                                 index = 0;
-                                state = State.DOCTYPE_YSTEM;
-                                continue consume;
+                                state = DOCTYPE_YSTEM;
+                                continue stateloop;
                             default:
                                 /*
                                  * Otherwise, this is the parse error.
@@ -3444,10 +3336,16 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * Switch to the bogus DOCTYPE state.
                                  */
-                                state = State.BOGUS_DOCTYPE;
-                                continue consume;
+                                state = BOGUS_DOCTYPE;
+                                continue stateloop;
                         }
-                    case DOCTYPE_UBLIC:
+                    }
+                case DOCTYPE_UBLIC:
+                    for (;;) {
+                        c = read(buf, end);
+                        if (c == '\u0000') {
+                            break stateloop;
+                        }
                         /*
                          * If the next six characters are a case-insensitive
                          * match for the word "PUBLIC", then consume those
@@ -3462,44 +3360,60 @@ public final class Tokenizer implements Locator {
                             if (folded != UBLIC[index]) {
                                 err("Bogus doctype.");
                                 forceQuirks = true;
-                                state = State.BOGUS_DOCTYPE;
-                                continue reconsume;
+                                state = BOGUS_DOCTYPE;
+                                reconsume = true;
+                                continue stateloop;
                             }
                             index++;
-                            continue consume;
+                            continue;
                         } else {
-                            state = State.BEFORE_DOCTYPE_PUBLIC_IDENTIFIER;
-                            continue reconsume;
+                            state = BEFORE_DOCTYPE_PUBLIC_IDENTIFIER;
+                            reconsume = true;
+                            continue stateloop;
                         }
-                    case DOCTYPE_YSTEM:
-                        /*
-                         * Otherwise, if the next six characters are a
-                         * case-insensitive match for the word "SYSTEM", then
-                         * consume those characters and switch to the before
-                         * DOCTYPE system identifier state.
-                         */
-                        if (index < YSTEM.length) {
-                            char folded = c;
-                            if (c >= 'A' && c <= 'Z') {
-                                folded += 0x20;
-                            }
-                            if (folded != YSTEM[index]) {
-                                err("Bogus doctype.");
-                                forceQuirks = true;
-                                state = State.BOGUS_DOCTYPE;
-                                continue reconsume;
-                            }
-                            index++;
-                            continue consume;
-                        } else {
-                            state = State.BEFORE_DOCTYPE_SYSTEM_IDENTIFIER;
-                            continue reconsume;
+                    }
+                case DOCTYPE_YSTEM:
+                    c = read(buf, end);
+                    if (c == '\u0000') {
+                        break stateloop;
+                    }
+                    /*
+                     * Otherwise, if the next six characters are a
+                     * case-insensitive match for the word "SYSTEM", then
+                     * consume those characters and switch to the before DOCTYPE
+                     * system identifier state.
+                     */
+                    if (index < YSTEM.length) {
+                        char folded = c;
+                        if (c >= 'A' && c <= 'Z') {
+                            folded += 0x20;
                         }
-                    case BEFORE_DOCTYPE_PUBLIC_IDENTIFIER:
+                        if (folded != YSTEM[index]) {
+                            err("Bogus doctype.");
+                            forceQuirks = true;
+                            state = BOGUS_DOCTYPE;
+                            reconsume = true;
+                            continue stateloop;
+                        }
+                        index++;
+                        continue stateloop;
+                    } else {
+                        state = BEFORE_DOCTYPE_SYSTEM_IDENTIFIER;
+                        reconsume = true;
+                        continue stateloop;
+                    }
+                case BEFORE_DOCTYPE_PUBLIC_IDENTIFIER:
+                    for (;;) {
+                        if (!reconsume) {
+                            c = read(buf, end);
+                        }
+                        reconsume = false;
                         /*
                          * Consume the next input character:
                          */
                         switch (c) {
+                            case '\u0000':
+                                break stateloop;
                             case ' ':
                             case '\t':
                             case '\n':
@@ -3511,7 +3425,7 @@ public final class Tokenizer implements Locator {
                                  * (FF) U+0020 SPACE Stay in the before DOCTYPE
                                  * public identifier state.
                                  */
-                                continue consume;
+                                continue;
                             case '"':
                                 /*
                                  * U+0022 QUOTATION MARK (") Set the DOCTYPE
@@ -3523,8 +3437,8 @@ public final class Tokenizer implements Locator {
                                  * then switch to the DOCTYPE public identifier
                                  * (double-quoted) state.
                                  */
-                                state = State.DOCTYPE_PUBLIC_IDENTIFIER_DOUBLE_QUOTED;
-                                continue consume;
+                                state = DOCTYPE_PUBLIC_IDENTIFIER_DOUBLE_QUOTED;
+                                continue stateloop;
                             case '\'':
                                 /*
                                  * U+0027 APOSTROPHE (') Set the DOCTYPE token's
@@ -3535,8 +3449,8 @@ public final class Tokenizer implements Locator {
                                  * then switch to the DOCTYPE public identifier
                                  * (single-quoted) state.
                                  */
-                                state = State.DOCTYPE_PUBLIC_IDENTIFIER_SINGLE_QUOTED;
-                                continue consume;
+                                state = DOCTYPE_PUBLIC_IDENTIFIER_SINGLE_QUOTED;
+                                continue stateloop;
                             case '>':
                                 /* U+003E GREATER-THAN SIGN (>) Parse error. */
                                 err("Expected a public identifier but the doctype ended.");
@@ -3549,23 +3463,9 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * Switch to the data state.
                                  */
-                                state = State.DATA;
-                                continue consume;
-                            case '\u0000':
-                                /* EOF Parse error. */
-                                err("End of file inside a doctype.");
-                                /*
-                                 * Set the DOCTYPE token's force-quirks flag to
-                                 * on. Emit that DOCTYPE token.
-                                 */
-                                tokenHandler.doctype(doctypeName, null, null,
-                                        true);
-                                /*
-                                 * Reconsume the EOF character in the data
-                                 * state.
-                                 */
-                                state = State.DATA;
-                                continue reconsume;
+                                inContent = true;
+                                state = DATA;
+                                continue stateloop;
                             default:
                                 /*
                                  * Anything else Parse error.
@@ -3579,22 +3479,27 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * Switch to the bogus DOCTYPE state.
                                  */
-                                state = State.BOGUS_DOCTYPE;
-                                continue consume;
+                                state = BOGUS_DOCTYPE;
+                                continue stateloop;
                         }
-                    case DOCTYPE_PUBLIC_IDENTIFIER_DOUBLE_QUOTED:
+                    }
+                case DOCTYPE_PUBLIC_IDENTIFIER_DOUBLE_QUOTED:
+                    for (;;) {
+                        c = read(buf, end);
                         /*
                          * Consume the next input character:
                          */
                         switch (c) {
+                            case '\u0000':
+                                break stateloop;
                             case '"':
                                 /*
                                  * U+0022 QUOTATION MARK (") Switch to the after
                                  * DOCTYPE public identifier state.
                                  */
                                 publicIdentifier = longStrBufToString();
-                                state = State.AFTER_DOCTYPE_PUBLIC_IDENTIFIER;
-                                continue consume;
+                                state = AFTER_DOCTYPE_PUBLIC_IDENTIFIER;
+                                continue stateloop;
                             case '>':
                                 /*
                                  * U+003E GREATER-THAN SIGN (>) Parse error.
@@ -3609,23 +3514,9 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * Switch to the data state.
                                  */
-                                state = State.DATA;
-                                continue consume;
-                            case '\u0000':
-                                /* EOF Parse error. */
-                                err("End of file inside public identifier.");
-                                /*
-                                 * Set the DOCTYPE token's force-quirks flag to
-                                 * on. Emit that DOCTYPE token.
-                                 */
-                                tokenHandler.doctype(doctypeName,
-                                        longStrBufToString(), null, true);
-                                /*
-                                 * Reconsume the EOF character in the data
-                                 * state.
-                                 */
-                                state = State.DATA;
-                                continue reconsume;
+                                inContent = true;
+                                state = DATA;
+                                continue stateloop;
                             default:
                                 /*
                                  * Anything else Append the current input
@@ -3637,21 +3528,26 @@ public final class Tokenizer implements Locator {
                                  * Stay in the DOCTYPE public identifier
                                  * (double-quoted) state.
                                  */
-                                continue consume;
+                                continue;
                         }
-                    case DOCTYPE_PUBLIC_IDENTIFIER_SINGLE_QUOTED:
+                    }
+                case DOCTYPE_PUBLIC_IDENTIFIER_SINGLE_QUOTED:
+                    for (;;) {
+                        c = read(buf, end);
                         /*
                          * Consume the next input character:
                          */
                         switch (c) {
+                            case '\u0000':
+                                break stateloop;
                             case '\'':
                                 /*
                                  * U+0027 APOSTROPHE (') Switch to the after
                                  * DOCTYPE public identifier state.
                                  */
                                 publicIdentifier = longStrBufToString();
-                                state = State.AFTER_DOCTYPE_PUBLIC_IDENTIFIER;
-                                continue consume;
+                                state = AFTER_DOCTYPE_PUBLIC_IDENTIFIER;
+                                continue stateloop;
                             case '>':
                                 /*
                                  * U+003E GREATER-THAN SIGN (>) Parse error.
@@ -3666,23 +3562,9 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * Switch to the data state.
                                  */
-                                state = State.DATA;
-                                continue consume;
-                            case '\u0000':
-                                /* EOF Parse error. */
-                                err("End of file inside public identifier.");
-                                /*
-                                 * Set the DOCTYPE token's force-quirks flag to
-                                 * on. Emit that DOCTYPE token.
-                                 */
-                                tokenHandler.doctype(doctypeName,
-                                        longStrBufToString(), null, true);
-                                /*
-                                 * Reconsume the EOF character in the data
-                                 * state.
-                                 */
-                                state = State.DATA;
-                                continue reconsume;
+                                inContent = true;
+                                state = DATA;
+                                continue stateloop;
                             default:
                                 /*
                                  * Anything else Append the current input
@@ -3694,13 +3576,18 @@ public final class Tokenizer implements Locator {
                                  * Stay in the DOCTYPE public identifier
                                  * (single-quoted) state.
                                  */
-                                continue consume;
+                                continue;
                         }
-                    case AFTER_DOCTYPE_PUBLIC_IDENTIFIER:
+                    }
+                case AFTER_DOCTYPE_PUBLIC_IDENTIFIER:
+                    for (;;) {
+                        c = read(buf, end);
                         /*
                          * Consume the next input character:
                          */
                         switch (c) {
+                            case '\u0000':
+                                break stateloop;
                             case ' ':
                             case '\t':
                             case '\n':
@@ -3712,7 +3599,7 @@ public final class Tokenizer implements Locator {
                                  * (FF) U+0020 SPACE Stay in the after DOCTYPE
                                  * public identifier state.
                                  */
-                                continue consume;
+                                continue;
                             case '"':
                                 /*
                                  * U+0022 QUOTATION MARK (") Set the DOCTYPE
@@ -3724,8 +3611,8 @@ public final class Tokenizer implements Locator {
                                  * then switch to the DOCTYPE system identifier
                                  * (double-quoted) state.
                                  */
-                                state = State.DOCTYPE_SYSTEM_IDENTIFIER_DOUBLE_QUOTED;
-                                continue consume;
+                                state = DOCTYPE_SYSTEM_IDENTIFIER_DOUBLE_QUOTED;
+                                continue stateloop;
                             case '\'':
                                 /*
                                  * U+0027 APOSTROPHE (') Set the DOCTYPE token's
@@ -3736,8 +3623,8 @@ public final class Tokenizer implements Locator {
                                  * then switch to the DOCTYPE system identifier
                                  * (single-quoted) state.
                                  */
-                                state = State.DOCTYPE_SYSTEM_IDENTIFIER_SINGLE_QUOTED;
-                                continue consume;
+                                state = DOCTYPE_SYSTEM_IDENTIFIER_SINGLE_QUOTED;
+                                continue stateloop;
                             case '>':
                                 /*
                                  * U+003E GREATER-THAN SIGN (>) Emit the current
@@ -3748,24 +3635,9 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * Switch to the data state.
                                  */
-                                state = State.DATA;
-                                continue consume;
-                            case '\u0000':
-                                /* EOF Parse error. */
-                                err("End of file inside doctype.");
-                                /*
-                                 * Set the DOCTYPE token's force-quirks flag to
-                                 * on. Emit that DOCTYPE token.
-                                 */
-                                tokenHandler.doctype(doctypeName,
-                                        publicIdentifier, null, true);
-                                /*
-                                 * Reconsume the EOF character in the data
-                                 * state.
-                                 */
-                                state = State.DATA;
-                                continue reconsume;
-
+                                inContent = true;
+                                state = DATA;
+                                continue stateloop;
                             default:
                                 /* Anything else Parse error. */
                                 err("Bogus doctype.");
@@ -3777,14 +3649,22 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * Switch to the bogus DOCTYPE state.
                                  */
-                                state = State.BOGUS_DOCTYPE;
-                                continue consume;
+                                state = BOGUS_DOCTYPE;
+                                continue stateloop;
                         }
-                    case BEFORE_DOCTYPE_SYSTEM_IDENTIFIER:
+                    }
+                case BEFORE_DOCTYPE_SYSTEM_IDENTIFIER:
+                    for (;;) {
+                        if (!reconsume) {
+                            c = read(buf, end);
+                        }
+                        reconsume = false;
                         /*
                          * Consume the next input character:
                          */
                         switch (c) {
+                            case '\u0000':
+                                break stateloop;
                             case ' ':
                             case '\t':
                             case '\n':
@@ -3796,7 +3676,7 @@ public final class Tokenizer implements Locator {
                                  * (FF) U+0020 SPACE Stay in the before DOCTYPE
                                  * system identifier state.
                                  */
-                                continue consume;
+                                continue;
                             case '"':
                                 /*
                                  * U+0022 QUOTATION MARK (") Set the DOCTYPE
@@ -3808,8 +3688,8 @@ public final class Tokenizer implements Locator {
                                  * then switch to the DOCTYPE system identifier
                                  * (double-quoted) state.
                                  */
-                                state = State.DOCTYPE_SYSTEM_IDENTIFIER_DOUBLE_QUOTED;
-                                continue consume;
+                                state = DOCTYPE_SYSTEM_IDENTIFIER_DOUBLE_QUOTED;
+                                continue stateloop;
                             case '\'':
                                 /*
                                  * U+0027 APOSTROPHE (') Set the DOCTYPE token's
@@ -3820,8 +3700,8 @@ public final class Tokenizer implements Locator {
                                  * then switch to the DOCTYPE system identifier
                                  * (single-quoted) state.
                                  */
-                                state = State.DOCTYPE_SYSTEM_IDENTIFIER_SINGLE_QUOTED;
-                                continue consume;
+                                state = DOCTYPE_SYSTEM_IDENTIFIER_SINGLE_QUOTED;
+                                continue stateloop;
                             case '>':
                                 /* U+003E GREATER-THAN SIGN (>) Parse error. */
                                 err("Expected a system identifier but the doctype ended.");
@@ -3834,23 +3714,9 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * Switch to the data state.
                                  */
-                                state = State.DATA;
-                                continue consume;
-                            case '\u0000':
-                                /* EOF Parse error. */
-                                err("End of file inside a doctype.");
-                                /*
-                                 * Set the DOCTYPE token's force-quirks flag to
-                                 * on. Emit that DOCTYPE token.
-                                 */
-                                tokenHandler.doctype(doctypeName, null, null,
-                                        true);
-                                /*
-                                 * Reconsume the EOF character in the data
-                                 * state.
-                                 */
-                                state = State.DATA;
-                                continue reconsume;
+                                inContent = true;
+                                state = DATA;
+                                continue stateloop;
                             default:
                                 /* Anything else Parse error. */
                                 err("Bogus doctype.");
@@ -3862,22 +3728,27 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * Switch to the bogus DOCTYPE state.
                                  */
-                                state = State.BOGUS_DOCTYPE;
-                                continue consume;
+                                state = BOGUS_DOCTYPE;
+                                continue stateloop;
                         }
-                    case DOCTYPE_SYSTEM_IDENTIFIER_DOUBLE_QUOTED:
+                    }
+                case DOCTYPE_SYSTEM_IDENTIFIER_DOUBLE_QUOTED:
+                    for (;;) {
+                        c = read(buf, end);
                         /*
                          * Consume the next input character:
                          */
                         switch (c) {
+                            case '\u0000':
+                                break stateloop;
                             case '"':
                                 /*
                                  * U+0022 QUOTATION MARK (") Switch to the after
                                  * DOCTYPE system identifier state.
                                  */
                                 systemIdentifier = longStrBufToString();
-                                state = State.AFTER_DOCTYPE_SYSTEM_IDENTIFIER;
-                                continue consume;
+                                state = AFTER_DOCTYPE_SYSTEM_IDENTIFIER;
+                                continue stateloop;
                             case '>':
                                 /*
                                  * U+003E GREATER-THAN SIGN (>) Parse error.
@@ -3895,24 +3766,9 @@ public final class Tokenizer implements Locator {
                                  * Switch to the data state.
                                  * 
                                  */
-                                state = State.DATA;
-                                continue consume;
-                            case '\u0000':
-                                /* EOF Parse error. */
-                                err("End of file inside system identifier.");
-                                /*
-                                 * Set the DOCTYPE token's force-quirks flag to
-                                 * on. Emit that DOCTYPE token.
-                                 */
-                                tokenHandler.doctype(doctypeName,
-                                        publicIdentifier, longStrBufToString(),
-                                        true);
-                                /*
-                                 * Reconsume the EOF character in the data
-                                 * state.
-                                 */
-                                state = State.DATA;
-                                continue reconsume;
+                                inContent = true;
+                                state = DATA;
+                                continue stateloop;
                             default:
                                 /*
                                  * Anything else Append the current input
@@ -3924,21 +3780,26 @@ public final class Tokenizer implements Locator {
                                  * Stay in the DOCTYPE system identifier
                                  * (double-quoted) state.
                                  */
-                                continue consume;
+                                continue;
                         }
-                    case DOCTYPE_SYSTEM_IDENTIFIER_SINGLE_QUOTED:
+                    }
+                case DOCTYPE_SYSTEM_IDENTIFIER_SINGLE_QUOTED:
+                    for (;;) {
+                        c = read(buf, end);
                         /*
                          * Consume the next input character:
                          */
                         switch (c) {
+                            case '\u0000':
+                                break stateloop;
                             case '\'':
                                 /*
                                  * U+0027 APOSTROPHE (') Switch to the after
                                  * DOCTYPE system identifier state.
                                  */
                                 systemIdentifier = longStrBufToString();
-                                state = State.AFTER_DOCTYPE_SYSTEM_IDENTIFIER;
-                                continue consume;
+                                state = AFTER_DOCTYPE_SYSTEM_IDENTIFIER;
+                                continue stateloop;
                             case '>':
                                 /*
                                  * U+003E GREATER-THAN SIGN (>) Parse error.
@@ -3955,24 +3816,9 @@ public final class Tokenizer implements Locator {
                                  * Switch to the data state.
                                  * 
                                  */
-                                state = State.DATA;
-                                continue consume;
-                            case '\u0000':
-                                /* EOF Parse error. */
-                                err("End of file inside system identifier.");
-                                /*
-                                 * Set the DOCTYPE token's force-quirks flag to
-                                 * on. Emit that DOCTYPE token.
-                                 */
-                                tokenHandler.doctype(doctypeName,
-                                        publicIdentifier, longStrBufToString(),
-                                        true);
-                                /*
-                                 * Reconsume the EOF character in the data
-                                 * state.
-                                 */
-                                state = State.DATA;
-                                continue reconsume;
+                                inContent = true;
+                                state = DATA;
+                                continue stateloop;
                             default:
                                 /*
                                  * Anything else Append the current input
@@ -3984,13 +3830,18 @@ public final class Tokenizer implements Locator {
                                  * Stay in the DOCTYPE system identifier
                                  * (double-quoted) state.
                                  */
-                                continue consume;
+                                continue;
                         }
-                    case AFTER_DOCTYPE_SYSTEM_IDENTIFIER:
+                    }
+                case AFTER_DOCTYPE_SYSTEM_IDENTIFIER:
+                    for (;;) {
+                        c = read(buf, end);
                         /*
                          * Consume the next input character:
                          */
                         switch (c) {
+                            case '\u0000':
+                                break stateloop;
                             case ' ':
                             case '\t':
                             case '\n':
@@ -4002,7 +3853,7 @@ public final class Tokenizer implements Locator {
                                  * (FF) U+0020 SPACE Stay in the after DOCTYPE
                                  * system identifier state.
                                  */
-                                continue consume;
+                                continue;
                             case '>':
                                 /*
                                  * U+003E GREATER-THAN SIGN (>) Emit the current
@@ -4014,24 +3865,9 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * Switch to the data state.
                                  */
-                                state = State.DATA;
-                                continue consume;
-                            case '\u0000':
-                                /* EOF Parse error. */
-                                err("End of file inside doctype.");
-                                /*
-                                 * Set the DOCTYPE token's force-quirks flag to
-                                 * on. Emit that DOCTYPE token.
-                                 */
-                                tokenHandler.doctype(doctypeName,
-                                        publicIdentifier, systemIdentifier,
-                                        true);
-                                /*
-                                 * Reconsume the EOF character in the data
-                                 * state.
-                                 */
-                                state = State.DATA;
-                                continue reconsume;
+                                inContent = true;
+                                state = DATA;
+                                continue stateloop;
                             default:
                                 /* Anything else Parse error. */
                                 err("Bogus doctype.");
@@ -4041,14 +3877,22 @@ public final class Tokenizer implements Locator {
                                  * to on.)
                                  */
                                 forceQuirks = false;
-                                state = State.BOGUS_DOCTYPE;
-                                continue consume;
+                                state = BOGUS_DOCTYPE;
+                                continue stateloop;
                         }
-                    case BOGUS_DOCTYPE:
+                    }
+                case BOGUS_DOCTYPE:
+                    for (;;) {
+                        if (!reconsume) {
+                            c = read(buf, end);
+                        }
+                        reconsume = false;
                         /*
                          * Consume the next input character:
                          */
                         switch (c) {
+                            case '\u0000':
+                                break stateloop;
                             case '>':
                                 /*
                                  * U+003E GREATER-THAN SIGN (>) Emit that
@@ -4060,103 +3904,104 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * Switch to the data state.
                                  */
-                                state = State.DATA;
-                                continue consume;
-                            case '\u0000':
-                                /* EOF Parse error. */
-                                err("End of file inside doctype.");
-                                /*
-                                 * Emit that DOCTYPE token.
-                                 */
-                                tokenHandler.doctype(doctypeName,
-                                        publicIdentifier, systemIdentifier,
-                                        forceQuirks);
-                                /*
-                                 * Reconsume the EOF character in the data
-                                 * state.
-                                 */
-                                state = State.DATA;
-                                continue reconsume;
+                                inContent = true;
+                                state = DATA;
+                                continue stateloop;
                             default:
                                 /*
                                  * Anything else Stay in the bogus DOCTYPE
                                  * state.
                                  */
-                                continue consume;
+                                continue;
                         }
-                    case CONSUME_ENTITY:
-                        /*
-                         * Unlike the definition is the spec, this state does
-                         * not return a value and never requires the caller to
-                         * backtrack. This state takes care of emitting
-                         * characters or appending to the current attribute
-                         * value. It also takes care of that in the case when
-                         * consuming the entity fails.
-                         */
-                        clearStrBuf();
-                        appendStrBuf('&');
-                        /*
-                         * This section defines how to consume an entity. This
-                         * definition is used when parsing entities in text and
-                         * in attributes.
-                         * 
-                         * The behavior depends on the identity of the next
-                         * character (the one immediately after the U+0026
-                         * AMPERSAND character):
-                         */
-                        switch (c) {
-                            case ' ':
-                            case '\t':
-                            case '\n':
-                            case '\u000B':
-                            case '\u000C':
-                            case '<':
-                            case '&':
-                            case '\u0000':
-                                /*
-                                 * U+0009 CHARACTER TABULATION U+000A LINE FEED
-                                 * (LF) U+000B LINE TABULATION U+000C FORM FEED
-                                 * (FF) U+0020 SPACE U+003C LESS-THAN SIGN
-                                 * U+0026 AMPERSAND EOF The additional allowed
-                                 * character, if there is one Not an entity. No
-                                 * characters are consumed, and nothing is
-                                 * returned. (This is not an error, either.)
-                                 */
-                                // additional handled under default
-                                if (returnState != State.DATA) {
+                    }
+                case CONSUME_ENTITY:
+                    c = read(buf, end);
+                    if (c == '\u0000') {
+                        break stateloop;
+                    }
+                    /*
+                     * Unlike the definition is the spec, this state does not
+                     * return a value and never requires the caller to
+                     * backtrack. This state takes care of emitting characters
+                     * or appending to the current attribute value. It also
+                     * takes care of that in the case when consuming the entity
+                     * fails.
+                     */
+                    clearStrBuf();
+                    appendStrBuf('&');
+                    /*
+                     * This section defines how to consume an entity. This
+                     * definition is used when parsing entities in text and in
+                     * attributes.
+                     * 
+                     * The behavior depends on the identity of the next
+                     * character (the one immediately after the U+0026 AMPERSAND
+                     * character):
+                     */
+                    switch (c) {
+                        case ' ':
+                        case '\t':
+                        case '\n':
+                        case '\u000B':
+                        case '\u000C':
+                        case '<':
+                        case '&':
+                            /*
+                             * U+0009 CHARACTER TABULATION U+000A LINE FEED (LF)
+                             * U+000B LINE TABULATION U+000C FORM FEED (FF)
+                             * U+0020 SPACE U+003C LESS-THAN SIGN U+0026
+                             * AMPERSAND EOF The additional allowed character,
+                             * if there is one Not an entity. No characters are
+                             * consumed, and nothing is returned. (This is not
+                             * an error, either.)
+                             */
+                            // additional handled under default
+                            if (returnState != DATA) {
+                                appendStrBufToLongStrBuf();
+                            } else {
+                                emitStrBuf();
+                            }
+                            state = returnState;
+                            reconsume = true;
+                            continue stateloop;
+                        case '#':
+                            /*
+                             * U+0023 NUMBER SIGN (#) Consume the U+0023 NUMBER
+                             * SIGN.
+                             */
+                            appendStrBuf('#');
+                            state = CONSUME_NCR;
+                            continue stateloop;
+                        default:
+                            if (c == additional) {
+                                if (returnState != DATA) {
                                     appendStrBufToLongStrBuf();
                                 } else {
                                     emitStrBuf();
                                 }
                                 state = returnState;
-                                continue reconsume;
-                            case '#':
-                                /*
-                                 * U+0023 NUMBER SIGN (#) Consume the U+0023
-                                 * NUMBER SIGN.
-                                 */
-                                appendStrBuf('#');
-                                state = State.CONSUME_NCR;
-                                continue consume;
-                            default:
-                                if (c == additional) {
-                                    if (returnState != State.DATA) {
-                                        appendStrBufToLongStrBuf();
-                                    } else {
-                                        emitStrBuf();
-                                    }
-                                    state = returnState;
-                                    continue reconsume;
-                                }
-                                entCol = -1;
-                                lo = 0;
-                                hi = (Entities.NAMES.length - 1);
-                                candidate = -1;
-                                strBufMark = 0;
-                                state = State.ENTITY_LOOP;
-                                continue reconsume;
+                                reconsume = true;
+                                continue stateloop;
+                            }
+                            entCol = -1;
+                            lo = 0;
+                            hi = (Entities.NAMES.length - 1);
+                            candidate = -1;
+                            strBufMark = 0;
+                            state = ENTITY_LOOP;
+                            reconsume = true;
+                            // FALL THROUGH continue stateloop;
+                    }
+                case ENTITY_LOOP:
+                    outer: for (;;) {
+                        if (!reconsume) {
+                            c = read(buf, end);
                         }
-                    case ENTITY_LOOP:
+                        reconsume = false;
+                        if (c == '\u0000') {
+                            break stateloop;
+                        }
                         entCol++;
                         /*
                          * Anything else Consume the maximum number of
@@ -4172,8 +4017,7 @@ public final class Tokenizer implements Locator {
                                 break hiloop;
                             }
                             if (entCol > Entities.NAMES[hi].length()) {
-                                state = State.AFTER_ENTITY_LOOP;
-                                continue reconsume;
+                                break outer;
                             } else if (c < Entities.NAMES[hi].charAt(entCol)) {
                                 hi--;
                             } else {
@@ -4183,16 +4027,14 @@ public final class Tokenizer implements Locator {
 
                         loloop: for (;;) {
                             if (hi < lo) {
-                                state = State.AFTER_ENTITY_LOOP;
-                                continue reconsume;
+                                break outer;
                             }
                             if (entCol == Entities.NAMES[lo].length()) {
                                 candidate = lo;
                                 strBufMark = strBufLen;
                                 lo++;
                             } else if (entCol > Entities.NAMES[lo].length()) {
-                                state = State.AFTER_ENTITY_LOOP;
-                                continue reconsume;
+                                break outer;
                             } else if (c > Entities.NAMES[lo].charAt(entCol)) {
                                 lo++;
                             } else {
@@ -4200,222 +4042,157 @@ public final class Tokenizer implements Locator {
                             }
                         }
                         if (hi < lo) {
-                            state = State.AFTER_ENTITY_LOOP;
-                            continue reconsume;
+                            break outer;
                         }
                         appendStrBuf(c);
-                        continue consume;
-                    case AFTER_ENTITY_LOOP:
-                        // ASSERT c hold the *next* character. we always come
-                        // here with reconsume
-                        // TODO warn about apos (IE) and TRADE (Opera)
-                        if (candidate == -1) {
-                            /*
-                             * If no match can be made, then this is a parse
-                             * error.
-                             */
-                            err("Text after \u201C&\u201D did not match an entity name.");
-                            /*
-                             * No characters are consumed, and nothing is
-                             * returned.
-                             */
-                            if (returnState != State.DATA) {
-                                appendStrBufToLongStrBuf();
-                            } else {
-                                emitStrBuf();
-                            }
-                            state = returnState;
-                            continue reconsume;
+                        continue;
+                    }
+
+                    // TODO warn about apos (IE) and TRADE (Opera)
+                    if (candidate == -1) {
+                        /*
+                         * If no match can be made, then this is a parse error.
+                         */
+                        err("Text after \u201C&\u201D did not match an entity name.");
+                        /*
+                         * No characters are consumed, and nothing is returned.
+                         */
+                        if (returnState != DATA) {
+                            appendStrBufToLongStrBuf();
                         } else {
-                            if (!Entities.NAMES[candidate].endsWith(";")) {
+                            emitStrBuf();
+                        }
+                        state = returnState;
+                        reconsume = true;
+                        continue stateloop;
+                    } else {
+                        if (!Entities.NAMES[candidate].endsWith(";")) {
+                            /*
+                             * If the last character matched is not a U+003B
+                             * SEMICOLON (;), there is a parse error.
+                             */
+                            err("Entity reference was not terminated by a semicolon.");
+                            if (returnState != DATA) {
                                 /*
-                                 * If the last character matched is not a U+003B
-                                 * SEMICOLON (;), there is a parse error.
+                                 * If the entity is being consumed as part of an
+                                 * attribute, and the last character matched is
+                                 * not a U+003B SEMICOLON (;),
                                  */
-                                err("Entity reference was not terminated by a semicolon.");
-                                if (returnState != State.DATA) {
+                                char ch;
+                                if (strBufMark == strBufLen) {
+                                    ch = c;
+                                } else {
+                                    ch = strBuf[strBufMark];
+                                }
+                                if ((ch >= '0' && ch <= '9')
+                                        || (ch >= 'A' && ch <= 'Z')
+                                        || (ch >= 'a' && ch <= 'z')) {
                                     /*
-                                     * If the entity is being consumed as part
-                                     * of an attribute, and the last character
-                                     * matched is not a U+003B SEMICOLON (;),
+                                     * and the next character is in the range
+                                     * U+0030 DIGIT ZERO to U+0039 DIGIT NINE,
+                                     * U+0041 LATIN CAPITAL LETTER A to U+005A
+                                     * LATIN CAPITAL LETTER Z, or U+0061 LATIN
+                                     * SMALL LETTER A to U+007A LATIN SMALL
+                                     * LETTER Z, then, for historical reasons,
+                                     * all the characters that were matched
+                                     * after the U+0026 AMPERSAND (&) must be
+                                     * unconsumed, and nothing is returned.
                                      */
-                                    char ch;
-                                    if (strBufMark == strBufLen) {
-                                        ch = c;
-                                    } else {
-                                        ch = strBuf[strBufMark];
-                                    }
-                                    if ((ch >= '0' && ch <= '9')
-                                            || (ch >= 'A' && ch <= 'Z')
-                                            || (ch >= 'a' && ch <= 'z')) {
-                                        /*
-                                         * and the next character is in the
-                                         * range U+0030 DIGIT ZERO to U+0039
-                                         * DIGIT NINE, U+0041 LATIN CAPITAL
-                                         * LETTER A to U+005A LATIN CAPITAL
-                                         * LETTER Z, or U+0061 LATIN SMALL
-                                         * LETTER A to U+007A LATIN SMALL LETTER
-                                         * Z, then, for historical reasons, all
-                                         * the characters that were matched
-                                         * after the U+0026 AMPERSAND (&) must
-                                         * be unconsumed, and nothing is
-                                         * returned.
-                                         */
-                                        appendStrBufToLongStrBuf();
-                                        state = returnState;
-                                        continue reconsume;
-                                    }
-                                }
-                            }
-
-                            /*
-                             * Otherwise, return a character token for the
-                             * character corresponding to the entity name (as
-                             * given by the second column of the entities
-                             * table).
-                             */
-                            char[] val = Entities.VALUES[candidate];
-                            emitOrAppend(val, returnState != State.DATA);
-                            // this is so complicated!
-                            if (strBufMark < strBufLen) {
-                                if (returnState != State.DATA) {
-                                    for (int i = strBufMark; i < strBufLen; i++) {
-                                        appendLongStrBuf(strBuf[i]);
-                                    }
-                                } else {
-                                    tokenHandler.characters(strBuf, strBufMark,
-                                            strBufLen - strBufMark);
-                                }
-                            }
-                            state = returnState;
-                            continue reconsume;
-                            /*
-                             * If the markup contains I'm &notit; I tell you,
-                             * the entity is parsed as "not", as in, I'm ¬it; I
-                             * tell you. But if the markup was I'm &notin; I
-                             * tell you, the entity would be parsed as "notin;",
-                             * resulting in I'm ∉ I tell you.
-                             */
-                        }
-                    case CONSUME_NCR:
-                        prevValue = -1;
-                        value = 0;
-                        seenDigits = false;
-                        /*
-                         * The behavior further depends on the character after
-                         * the U+0023 NUMBER SIGN:
-                         */
-                        switch (c) {
-                            case 'x':
-                            case 'X':
-
-                                /*
-                                 * U+0078 LATIN SMALL LETTER X U+0058 LATIN
-                                 * CAPITAL LETTER X Consume the X.
-                                 * 
-                                 * Follow the steps below, but using the range
-                                 * of characters U+0030 DIGIT ZERO through to
-                                 * U+0039 DIGIT NINE, U+0061 LATIN SMALL LETTER
-                                 * A through to U+0066 LATIN SMALL LETTER F, and
-                                 * U+0041 LATIN CAPITAL LETTER A, through to
-                                 * U+0046 LATIN CAPITAL LETTER F (in other
-                                 * words, 0-9, A-F, a-f).
-                                 * 
-                                 * When it comes to interpreting the number,
-                                 * interpret it as a hexadecimal number.
-                                 */
-                                appendStrBuf(c);
-                                state = State.HEX_NCR_LOOP;
-                                continue consume;
-                            default:
-                                /*
-                                 * Anything else Follow the steps below, but
-                                 * using the range of characters U+0030 DIGIT
-                                 * ZERO through to U+0039 DIGIT NINE (i.e. just
-                                 * 0-9).
-                                 * 
-                                 * When it comes to interpreting the number,
-                                 * interpret it as a decimal number.
-                                 */
-                                state = State.DECIMAL_NRC_LOOP;
-                                continue reconsume;
-                        }
-                    case HEX_NCR_LOOP:
-                        // Deal with overflow gracefully
-                        if (value < prevValue) {
-                            value = 0x110000; // Value above Unicode range but
-                                                // within int
-                            // range
-                        }
-                        prevValue = value;
-                        /*
-                         * Consume as many characters as match the range of
-                         * characters given above.
-                         */
-                        if (c >= '0' && c <= '9') {
-                            seenDigits = true;
-                            value *= 16;
-                            value += c - '0';
-                            continue consume;
-                        } else if (c >= 'A' && c <= 'F') {
-                            seenDigits = true;
-                            value *= 16;
-                            value += c - 'A' + 10;
-                            continue consume;
-                        } else if (c >= 'a' && c <= 'f') {
-                            seenDigits = true;
-                            value *= 16;
-                            value += c - 'a' + 10;
-                            continue consume;
-                        } else if (c == ';') {
-                            if (seenDigits) {
-                                state = State.HANDLE_NCR_VALUE;
-                                continue consume;
-                            } else {
-                                err("No digits after \u201C" + strBufToString()
-                                        + "\u201D.");
-                                appendStrBuf(';');
-                                if (returnState != State.DATA) {
                                     appendStrBufToLongStrBuf();
-                                } else {
-                                    emitStrBuf();
+                                    state = returnState;
+                                    reconsume = true;
+                                    continue stateloop;
                                 }
-                                state = returnState;
-                                continue consume;
                             }
-                        } else {
+                        }
+
+                        /*
+                         * Otherwise, return a character token for the character
+                         * corresponding to the entity name (as given by the
+                         * second column of the entities table).
+                         */
+                        char[] val = Entities.VALUES[candidate];
+                        emitOrAppend(val, returnState != DATA);
+                        // this is so complicated!
+                        if (strBufMark < strBufLen) {
+                            if (returnState != DATA) {
+                                for (int i = strBufMark; i < strBufLen; i++) {
+                                    appendLongStrBuf(strBuf[i]);
+                                }
+                            } else {
+                                tokenHandler.characters(strBuf, strBufMark,
+                                        strBufLen - strBufMark);
+                            }
+                        }
+                        state = returnState;
+                        reconsume = true;
+                        continue stateloop;
+                        /*
+                         * If the markup contains I'm &notit; I tell you, the
+                         * entity is parsed as "not", as in, I'm ¬it; I tell
+                         * you. But if the markup was I'm &notin; I tell you,
+                         * the entity would be parsed as "notin;", resulting in
+                         * I'm ∉ I tell you.
+                         */
+                    }
+                case CONSUME_NCR:
+                    c = read(buf, end);
+                    prevValue = -1;
+                    value = 0;
+                    seenDigits = false;
+                    /*
+                     * The behavior further depends on the character after the
+                     * U+0023 NUMBER SIGN:
+                     */
+                    switch (c) {
+                        case '\u0000':
+                            break stateloop;
+                        case 'x':
+                        case 'X':
+
                             /*
-                             * If no characters match the range, then don't
-                             * consume any characters (and unconsume the U+0023
-                             * NUMBER SIGN character and, if appropriate, the X
-                             * character). This is a parse error; nothing is
-                             * returned.
+                             * U+0078 LATIN SMALL LETTER X U+0058 LATIN CAPITAL
+                             * LETTER X Consume the X.
                              * 
-                             * Otherwise, if the next character is a U+003B
-                             * SEMICOLON, consume that too. If it isn't, there
-                             * is a parse error.
+                             * Follow the steps below, but using the range of
+                             * characters U+0030 DIGIT ZERO through to U+0039
+                             * DIGIT NINE, U+0061 LATIN SMALL LETTER A through
+                             * to U+0066 LATIN SMALL LETTER F, and U+0041 LATIN
+                             * CAPITAL LETTER A, through to U+0046 LATIN CAPITAL
+                             * LETTER F (in other words, 0-9, A-F, a-f).
+                             * 
+                             * When it comes to interpreting the number,
+                             * interpret it as a hexadecimal number.
                              */
-                            if (seenDigits) {
-                                err("Character reference was not terminated by a semicolon.");
-                                state = State.HANDLE_NCR_VALUE;
-                                continue reconsume;
-                            } else {
-                                err("No digits after \u201C" + strBufToString()
-                                        + "\u201D.");
-                                if (returnState != State.DATA) {
-                                    appendStrBufToLongStrBuf();
-                                } else {
-                                    emitStrBuf();
-                                }
-                                state = returnState;
-                                continue reconsume;
-                            }
+                            appendStrBuf(c);
+                            state = HEX_NCR_LOOP;
+                            continue stateloop;
+                        default:
+                            /*
+                             * Anything else Follow the steps below, but using
+                             * the range of characters U+0030 DIGIT ZERO through
+                             * to U+0039 DIGIT NINE (i.e. just 0-9).
+                             * 
+                             * When it comes to interpreting the number,
+                             * interpret it as a decimal number.
+                             */
+                            state = DECIMAL_NRC_LOOP;
+                            reconsume = true;
+                            // FALL THROUGH continue stateloop;
+                    }
+                case DECIMAL_NRC_LOOP:
+                    decimalloop: for (;;) {
+                        if (!reconsume) {
+                            c = read(buf, end);
                         }
-                    case DECIMAL_NRC_LOOP:
+                        reconsume = false;
+                        if (c == '\u0000') {
+                            break stateloop;
+                        }
                         // Deal with overflow gracefully
                         if (value < prevValue) {
                             value = 0x110000; // Value above Unicode range but
-                                                // within int
+                            // within int
                             // range
                         }
                         prevValue = value;
@@ -4427,22 +4204,22 @@ public final class Tokenizer implements Locator {
                             seenDigits = true;
                             value *= 10;
                             value += c - '0';
-                            continue consume;
+                            continue;
                         } else if (c == ';') {
                             if (seenDigits) {
-                                state = State.HANDLE_NCR_VALUE;
-                                continue consume;
+                                state = HANDLE_NCR_VALUE;
+                                continue stateloop;
                             } else {
                                 err("No digits after \u201C" + strBufToString()
                                         + "\u201D.");
                                 appendStrBuf(';');
-                                if (returnState != State.DATA) {
+                                if (returnState != DATA) {
                                     appendStrBufToLongStrBuf();
                                 } else {
                                     emitStrBuf();
                                 }
                                 state = returnState;
-                                continue consume;
+                                continue stateloop;
                             }
                         } else {
                             /*
@@ -4456,129 +4233,810 @@ public final class Tokenizer implements Locator {
                              * SEMICOLON, consume that too. If it isn't, there
                              * is a parse error.
                              */
-                            if (seenDigits) {
-                                err("Character reference was not terminated by a semicolon.");
-                                state = State.HANDLE_NCR_VALUE;
-                                continue reconsume;
-                            } else {
+                            if (!seenDigits) {
                                 err("No digits after \u201C" + strBufToString()
                                         + "\u201D.");
-                                if (returnState != State.DATA) {
+                                if (returnState != DATA) {
                                     appendStrBufToLongStrBuf();
                                 } else {
                                     emitStrBuf();
                                 }
                                 state = returnState;
-                                continue reconsume;
+                                reconsume = true;
+                                continue stateloop;
+                            } else {
+                                err("Character reference was not terminated by a semicolon.");
+                                state = HANDLE_NCR_VALUE;
+                                reconsume = true;
+                                // FALL THROUGH continue stateloop;
+                                break decimalloop;
                             }
                         }
-                    case HANDLE_NCR_VALUE:
-                        // WARNING c is now the *next* char! leave with
-                        // reconsume!
+                    }
+                case HANDLE_NCR_VALUE:
+                    // WARNING previous state sets reconsume
 
-                        /*
-                         * If one or more characters match the range, then take
-                         * them all and interpret the string of characters as a
-                         * number (either hexadecimal or decimal as
-                         * appropriate).
-                         */
-                        if (value >= 0x80 && value <= 0x9f) {
-                            /*
-                             * If that number is one of the numbers in the first
-                             * column of the following table, then this is a
-                             * parse error.
-                             */
-                            err("A numeric character reference expanded to the C1 controls range.");
-                            /*
-                             * Find the row with that number in the first
-                             * column, and return a character token for the
-                             * Unicode character given in the second column of
-                             * that row.
-                             */
-                            char[] val = Entities.WINDOWS_1252[value - 0x80];
-                            emitOrAppend(val, returnState != State.DATA);
-                            state = returnState;
-                            continue reconsume;
-                        } else if (value == 0x0D) {
-                            err("A numeric character reference expanded to carriage return.");
-                            emitOrAppend(LF, returnState != State.DATA);
-                            state = returnState;
-                            continue reconsume;
-                        } else if (value == 0) {
-                            /*
-                             * Otherwise, if the number is zero, if the number
-                             * is higher than 0x10FFFF, or if it's one of the
-                             * surrogate characters (characters in the range
-                             * 0xD800 to 0xDFFF), then this is a parse error;
-                             * return a character token for the U+FFFD
-                             * REPLACEMENT CHARACTER character instead.
-                             */
-                            err("Character reference expands to U+0000.");
-                            emitOrAppend(REPLACEMENT_CHARACTER,
-                                    returnState != State.DATA);
-                            state = returnState;
-                            continue reconsume;
-                        } else if ((contentSpacePolicy != XmlViolationPolicy.ALLOW)
-                                && (value == 0xB || value == 0xC)) {
-                            if (contentSpacePolicy == XmlViolationPolicy.ALTER_INFOSET) {
-                                emitOrAppend(SPACE, returnState != State.DATA);
-                            } else if (contentSpacePolicy == XmlViolationPolicy.FATAL) {
-                                fatal("A character reference expanded to a space character that is not legal XML 1.0 white space.");
-                            }
-                            state = returnState;
-                            continue reconsume;
-                        } else if ((value & 0xF800) == 0xD800) {
-                            err("Character reference expands to a surrogate.");
-                            emitOrAppend(REPLACEMENT_CHARACTER,
-                                    returnState != State.DATA);
-                            state = returnState;
-                            continue reconsume;
-                        } else if (value <= 0xFFFF) {
-                            /*
-                             * Otherwise, return a character token for the
-                             * Unicode character whose code point is that
-                             * number.
-                             */
-                            char ch = (char) value;
-                            if (ch < '\t' || (ch > '\r' && ch < ' ')
-                                    || isNonCharacter(ch)) {
-                                if (contentNonXmlCharPolicy != XmlViolationPolicy.FATAL) {
-                                    if (contentNonXmlCharPolicy == XmlViolationPolicy.ALTER_INFOSET) {
-                                        ch = '\uFFFD';
-                                    }
-                                    warn("Character reference expanded to a character that is not a legal XML 1.0 character.");
-                                } else {
-                                    fatal("Character reference expanded to a character that is not a legal XML 1.0 character.");
-                                }
-                            }
-                            if (isPrivateUse(ch)) {
-                                warnAboutPrivateUseChar();
-                            }
-                            bmpChar[0] = ch;
-                            emitOrAppend(bmpChar, returnState != State.DATA);
-                            state = returnState;
-                            continue reconsume;
-                        } else if (value <= 0x10FFFF) {
-                            if (isNonCharacter(value)) {
-                                warn("Character reference expands to an astral non-character.");
-                            }
-                            if (isAstralPrivateUse(value)) {
-                                warnAboutPrivateUseChar();
-                            }
-                            astralChar[0] = (char) (LEAD_OFFSET + (value >> 10));
-                            astralChar[1] = (char) (0xDC00 + (value & 0x3FF));
-                            emitOrAppend(astralChar, returnState != State.DATA);
-                            state = returnState;
-                            continue reconsume;
-                        } else {
-                            err("Character reference outside the permissible Unicode range.");
-                            emitOrAppend(REPLACEMENT_CHARACTER,
-                                    returnState != State.DATA);
-                            state = returnState;
-                            continue reconsume;
+                    handleNcrValue(returnState);
+                    state = returnState;
+                    continue stateloop;
+                case HEX_NCR_LOOP:
+                    for (;;) {
+                        c = read(buf, end);
+                        if (c == '\u0000') {
+                            break stateloop;
                         }
+                        // Deal with overflow gracefully
+                        if (value < prevValue) {
+                            value = 0x110000; // Value above Unicode range but
+                            // within int
+                            // range
+                        }
+                        prevValue = value;
+                        /*
+                         * Consume as many characters as match the range of
+                         * characters given above.
+                         */
+                        if (c >= '0' && c <= '9') {
+                            seenDigits = true;
+                            value *= 16;
+                            value += c - '0';
+                            continue;
+                        } else if (c >= 'A' && c <= 'F') {
+                            seenDigits = true;
+                            value *= 16;
+                            value += c - 'A' + 10;
+                            continue;
+                        } else if (c >= 'a' && c <= 'f') {
+                            seenDigits = true;
+                            value *= 16;
+                            value += c - 'a' + 10;
+                            continue;
+                        } else if (c == ';') {
+                            if (seenDigits) {
+                                state = HANDLE_NCR_VALUE;
+                                continue stateloop;
+                            } else {
+                                err("No digits after \u201C" + strBufToString()
+                                        + "\u201D.");
+                                appendStrBuf(';');
+                                if (returnState != DATA) {
+                                    appendStrBufToLongStrBuf();
+                                } else {
+                                    emitStrBuf();
+                                }
+                                state = returnState;
+                                continue stateloop;
+                            }
+                        } else {
+                            /*
+                             * If no characters match the range, then don't
+                             * consume any characters (and unconsume the U+0023
+                             * NUMBER SIGN character and, if appropriate, the X
+                             * character). This is a parse error; nothing is
+                             * returned.
+                             * 
+                             * Otherwise, if the next character is a U+003B
+                             * SEMICOLON, consume that too. If it isn't, there
+                             * is a parse error.
+                             */
+                            if (!seenDigits) {
+                                err("No digits after \u201C" + strBufToString()
+                                        + "\u201D.");
+                                if (returnState != DATA) {
+                                    appendStrBufToLongStrBuf();
+                                } else {
+                                    emitStrBuf();
+                                }
+                                state = returnState;
+                                reconsume = true;
+                                continue stateloop;
+                            } else {
+                                err("Character reference was not terminated by a semicolon.");
+                                state = HANDLE_NCR_VALUE;
+                                reconsume = true;
+                                continue stateloop;
+                            }
+                        }
+                    }
+            }
+        }
+        // Save locals
+        stateSave = state;
+        returnStateSave = returnState;
+    }
+
+    private void handleNcrValue(int returnState) throws SAXException,
+            IOException {
+        /*
+         * If one or more characters match the range, then take them all and
+         * interpret the string of characters as a number (either hexadecimal or
+         * decimal as appropriate).
+         */
+        if (value >= 0x80 && value <= 0x9f) {
+            /*
+             * If that number is one of the numbers in the first column of the
+             * following table, then this is a parse error.
+             */
+            err("A numeric character reference expanded to the C1 controls range.");
+            /*
+             * Find the row with that number in the first column, and return a
+             * character token for the Unicode character given in the second
+             * column of that row.
+             */
+            char[] val = Entities.WINDOWS_1252[value - 0x80];
+            emitOrAppend(val, returnState != DATA);
+        } else if (value == 0x0D) {
+            err("A numeric character reference expanded to carriage return.");
+            emitOrAppend(LF, returnState != DATA);
+        } else if (value == 0) {
+            /*
+             * Otherwise, if the number is zero, if the number is higher than
+             * 0x10FFFF, or if it's one of the surrogate characters (characters
+             * in the range 0xD800 to 0xDFFF), then this is a parse error;
+             * return a character token for the U+FFFD REPLACEMENT CHARACTER
+             * character instead.
+             */
+            err("Character reference expands to U+0000.");
+            emitOrAppend(REPLACEMENT_CHARACTER, returnState != DATA);
+        } else if ((contentSpacePolicy != XmlViolationPolicy.ALLOW)
+                && (value == 0xB || value == 0xC)) {
+            if (contentSpacePolicy == XmlViolationPolicy.ALTER_INFOSET) {
+                emitOrAppend(SPACE, returnState != DATA);
+            } else if (contentSpacePolicy == XmlViolationPolicy.FATAL) {
+                fatal("A character reference expanded to a space character that is not legal XML 1.0 white space.");
+            }
+        } else if ((value & 0xF800) == 0xD800) {
+            err("Character reference expands to a surrogate.");
+            emitOrAppend(REPLACEMENT_CHARACTER, returnState != DATA);
+        } else if (value <= 0xFFFF) {
+            /*
+             * Otherwise, return a character token for the Unicode character
+             * whose code point is that number.
+             */
+            char ch = (char) value;
+            if (ch < '\t' || (ch > '\r' && ch < ' ') || isNonCharacter(ch)) {
+                if (contentNonXmlCharPolicy != XmlViolationPolicy.FATAL) {
+                    if (contentNonXmlCharPolicy == XmlViolationPolicy.ALTER_INFOSET) {
+                        ch = '\uFFFD';
+                    }
+                    warn("Character reference expanded to a character that is not a legal XML 1.0 character.");
+                } else {
+                    fatal("Character reference expanded to a character that is not a legal XML 1.0 character.");
                 }
             }
+            if (isPrivateUse(ch)) {
+                warnAboutPrivateUseChar();
+            }
+            bmpChar[0] = ch;
+            emitOrAppend(bmpChar, returnState != DATA);
+        } else if (value <= 0x10FFFF) {
+            if (isNonCharacter(value)) {
+                warn("Character reference expands to an astral non-character.");
+            }
+            if (isAstralPrivateUse(value)) {
+                warnAboutPrivateUseChar();
+            }
+            astralChar[0] = (char) (LEAD_OFFSET + (value >> 10));
+            astralChar[1] = (char) (0xDC00 + (value & 0x3FF));
+            emitOrAppend(astralChar, returnState != DATA);
+        } else {
+            err("Character reference outside the permissible Unicode range.");
+            emitOrAppend(REPLACEMENT_CHARACTER, returnState != DATA);
+        }
+    }
+
+    private void eof() throws SAXException, IOException {
+        int state = stateSave;
+        int returnState = returnStateSave;
+
+        eofloop: for (;;) {
+            switch (state) {
+                case DATA:
+                    return;
+                case TAG_OPEN:
+                    /*
+                     * The behavior of this state depends on the content model
+                     * flag.
+                     */
+                    // this can't happen in PLAINTEXT, so using not PCDATA
+                    // as the condition
+                    if (contentModelFlag != ContentModelFlag.PCDATA) {
+                        /*
+                         * Otherwise, emit a U+003C LESS-THAN SIGN character
+                         * token
+                         */
+                        tokenHandler.characters(LT_GT, 0, 1);
+                        /*
+                         * and reconsume the current input character in the data
+                         * state.
+                         */
+                    } else {
+                        /*
+                         * Anything else Parse error.
+                         */
+                        err("End of file in the tag open state.");
+                        /*
+                         * Emit a U+003C LESS-THAN SIGN character token
+                         */
+                        tokenHandler.characters(LT_GT, 0, 1);
+                        /*
+                         * and reconsume the current input character in the data
+                         * state.
+                         */
+                    }
+                    break eofloop;
+                case CLOSE_TAG_OPEN_NOT_PCDATA:
+                    break eofloop;
+                case CLOSE_TAG_OPEN_PCDATA:
+                    /* EOF Parse error. */
+                    err("Saw \u201C</\u201D immediately before end of file.");
+                    /*
+                     * Emit a U+003C LESS-THAN SIGN character token and a U+002F
+                     * SOLIDUS character token.
+                     */
+                    tokenHandler.characters(LT_SOLIDUS, 0, 2);
+                    /*
+                     * Reconsume the EOF character in the data state.
+                     */
+                    break eofloop;
+                case TAG_NAME:
+                    /*
+                     * EOF Parse error.
+                     */
+                    err("End of file seen when looking for tag name");
+                    /*
+                     * Emit the current tag token.
+                     */
+                    tagName = strBufToElementNameString();
+                    emitCurrentTagToken(false);
+                    /*
+                     * Reconsume the EOF character in the data state.
+                     */
+                    break eofloop;
+                case BEFORE_ATTRIBUTE_NAME:
+                case AFTER_ATTRIBUTE_VALUE_QUOTED:
+                case SELF_CLOSING_START_TAG:
+                    /* EOF Parse error. */
+                    err("Saw end of file without the previous tag ending with \u201C>\u201C.");
+                    /*
+                     * Emit the current tag token.
+                     */
+                    emitCurrentTagToken(false);
+                    /*
+                     * Reconsume the EOF character in the data state.
+                     */
+                    break eofloop;
+                case ATTRIBUTE_NAME:
+                    /*
+                     * EOF Parse error.
+                     */
+                    err("End of file occurred in an attribute name.");
+                    /*
+                     * Emit the current tag token.
+                     */
+                    attributeNameComplete();
+                    addAttributeWithoutValue();
+                    emitCurrentTagToken(false);
+                    /*
+                     * Reconsume the EOF character in the data state.
+                     */
+                    break eofloop;
+                case AFTER_ATTRIBUTE_NAME:
+                case BEFORE_ATTRIBUTE_VALUE:
+                    /* EOF Parse error. */
+                    err("Saw end of file without the previous tag ending with \u201C>\u201C.");
+                    /*
+                     * Emit the current tag token.
+                     */
+                    addAttributeWithoutValue();
+                    emitCurrentTagToken(false);
+                    /*
+                     * Reconsume the character in the data state.
+                     */
+                    break eofloop;
+                case ATTRIBUTE_VALUE_DOUBLE_QUOTED:
+                case ATTRIBUTE_VALUE_SINGLE_QUOTED:
+                case ATTRIBUTE_VALUE_UNQUOTED:
+                    /* EOF Parse error. */
+                    err("End of file reached when inside an attribute value.");
+                    /* Emit the current tag token. */
+                    addAttributeWithValue();
+                    emitCurrentTagToken(false);
+                    /*
+                     * Reconsume the character in the data state.
+                     */
+                    break eofloop;
+                case BOGUS_COMMENT:
+                    emitComment();
+                    break eofloop;
+                case MARKUP_DECLARATION_HYPHEN:
+                    appendToComment('-');
+                    err("Bogus comment.");
+                    emitComment();
+                    break eofloop;
+                case MARKUP_DECLARATION_OPEN:
+                case MARKUP_DECLARATION_OCTYPE:
+                    err("Bogus comment.");
+                    emitComment();
+                    break eofloop;
+                case COMMENT_START:
+                case COMMENT_START_DASH:
+                case COMMENT:
+                case COMMENT_END_DASH:
+                case COMMENT_END:
+                    /*
+                     * EOF Parse error.
+                     */
+                    err("End of file inside comment.");
+                    /* Emit the comment token. */
+                    emitComment();
+                    /*
+                     * Reconsume the EOF character in the data state.
+                     */
+                    break eofloop;
+                case DOCTYPE:
+                case BEFORE_DOCTYPE_NAME:
+                    /* EOF Parse error. */
+                    err("End of file inside doctype.");
+                    /*
+                     * Create a new DOCTYPE token. Set its force-quirks flag to
+                     * on. Emit the token.
+                     */
+                    tokenHandler.doctype("", null, null, true);
+                    /*
+                     * Reconsume the EOF character in the data state.
+                     */
+                    break eofloop;
+                case DOCTYPE_NAME:
+                    /* EOF Parse error. */
+                    err("End of file inside doctype.");
+                    /*
+                     * Set the DOCTYPE token's force-quirks flag to on. Emit
+                     * that DOCTYPE token.
+                     */
+                    tokenHandler.doctype(strBufToString(), null, null, true);
+                    /*
+                     * Reconsume the EOF character in the data state.
+                     */
+                    break eofloop;
+                case DOCTYPE_UBLIC:
+                case DOCTYPE_YSTEM:
+                case AFTER_DOCTYPE_NAME:
+                case BEFORE_DOCTYPE_PUBLIC_IDENTIFIER:
+                    /* EOF Parse error. */
+                    err("End of file inside doctype.");
+                    /*
+                     * Set the DOCTYPE token's force-quirks flag to on. Emit
+                     * that DOCTYPE token.
+                     */
+                    tokenHandler.doctype(doctypeName, null, null, true);
+                    /*
+                     * Reconsume the EOF character in the data state.
+                     */
+                    break eofloop;
+                case DOCTYPE_PUBLIC_IDENTIFIER_DOUBLE_QUOTED:
+                case DOCTYPE_PUBLIC_IDENTIFIER_SINGLE_QUOTED:
+                    /* EOF Parse error. */
+                    err("End of file inside public identifier.");
+                    /*
+                     * Set the DOCTYPE token's force-quirks flag to on. Emit
+                     * that DOCTYPE token.
+                     */
+                    tokenHandler.doctype(doctypeName, longStrBufToString(),
+                            null, true);
+                    /*
+                     * Reconsume the EOF character in the data state.
+                     */
+                    break eofloop;
+                case AFTER_DOCTYPE_PUBLIC_IDENTIFIER:
+                case BEFORE_DOCTYPE_SYSTEM_IDENTIFIER:
+                    /* EOF Parse error. */
+                    err("End of file inside doctype.");
+                    /*
+                     * Set the DOCTYPE token's force-quirks flag to on. Emit
+                     * that DOCTYPE token.
+                     */
+                    tokenHandler.doctype(doctypeName, publicIdentifier, null,
+                            true);
+                    /*
+                     * Reconsume the EOF character in the data state.
+                     */
+                    break eofloop;
+                case DOCTYPE_SYSTEM_IDENTIFIER_DOUBLE_QUOTED:
+                case DOCTYPE_SYSTEM_IDENTIFIER_SINGLE_QUOTED:
+                    /* EOF Parse error. */
+                    err("End of file inside system identifier.");
+                    /*
+                     * Set the DOCTYPE token's force-quirks flag to on. Emit
+                     * that DOCTYPE token.
+                     */
+                    tokenHandler.doctype(doctypeName, publicIdentifier,
+                            longStrBufToString(), true);
+                    /*
+                     * Reconsume the EOF character in the data state.
+                     */
+                    break eofloop;
+                case AFTER_DOCTYPE_SYSTEM_IDENTIFIER:
+                    /* EOF Parse error. */
+                    err("End of file inside doctype.");
+                    /*
+                     * Set the DOCTYPE token's force-quirks flag to on. Emit
+                     * that DOCTYPE token.
+                     */
+                    tokenHandler.doctype(doctypeName, publicIdentifier,
+                            systemIdentifier, true);
+                    /*
+                     * Reconsume the EOF character in the data state.
+                     */
+                    break eofloop;
+                case BOGUS_DOCTYPE:
+                    /* EOF Parse error. */
+                    err("End of file inside doctype.");
+                    /*
+                     * Emit that DOCTYPE token.
+                     */
+                    tokenHandler.doctype(doctypeName, publicIdentifier,
+                            systemIdentifier, forceQuirks);
+                    /*
+                     * Reconsume the EOF character in the data state.
+                     */
+                    break eofloop;
+                case CONSUME_ENTITY:
+                    /*
+                     * Unlike the definition is the spec, this state does not
+                     * return a value and never requires the caller to
+                     * backtrack. This state takes care of emitting characters
+                     * or appending to the current attribute value. It also
+                     * takes care of that in the case when consuming the entity
+                     * fails.
+                     */
+                    clearStrBuf();
+                    appendStrBuf('&');
+                    /*
+                     * This section defines how to consume an entity. This
+                     * definition is used when parsing entities in text and in
+                     * attributes.
+                     * 
+                     * The behavior depends on the identity of the next
+                     * character (the one immediately after the U+0026 AMPERSAND
+                     * character):
+                     */
+
+                    /*
+                     * U+0009 CHARACTER TABULATION U+000A LINE FEED (LF) U+000B
+                     * LINE TABULATION U+000C FORM FEED (FF) U+0020 SPACE U+003C
+                     * LESS-THAN SIGN U+0026 AMPERSAND EOF The additional
+                     * allowed character, if there is one Not an entity. No
+                     * characters are consumed, and nothing is returned. (This
+                     * is not an error, either.)
+                     */
+                    // additional handled under default
+                    if (returnState != DATA) {
+                        appendStrBufToLongStrBuf();
+                    } else {
+                        emitStrBuf();
+                    }
+                    state = returnState;
+                    continue;
+                case ENTITY_LOOP:
+                    outer: for (;;) {
+                        char c = '\u0000';
+                        entCol++;
+                        /*
+                         * Anything else Consume the maximum number of
+                         * characters possible, with the consumed characters
+                         * case-sensitively matching one of the identifiers in
+                         * the first column of the entities table.
+                         */
+                        hiloop: for (;;) {
+                            if (hi == -1) {
+                                break hiloop;
+                            }
+                            if (entCol == Entities.NAMES[hi].length()) {
+                                break hiloop;
+                            }
+                            if (entCol > Entities.NAMES[hi].length()) {
+                                break outer;
+                            } else if (c < Entities.NAMES[hi].charAt(entCol)) {
+                                hi--;
+                            } else {
+                                break hiloop;
+                            }
+                        }
+
+                        loloop: for (;;) {
+                            if (hi < lo) {
+                                break outer;
+                            }
+                            if (entCol == Entities.NAMES[lo].length()) {
+                                candidate = lo;
+                                strBufMark = strBufLen;
+                                lo++;
+                            } else if (entCol > Entities.NAMES[lo].length()) {
+                                break outer;
+                            } else if (c > Entities.NAMES[lo].charAt(entCol)) {
+                                lo++;
+                            } else {
+                                break loloop;
+                            }
+                        }
+                        if (hi < lo) {
+                            break outer;
+                        }
+                        appendStrBuf(c);
+                        continue;
+                    }
+
+                    // TODO warn about apos (IE) and TRADE (Opera)
+                    if (candidate == -1) {
+                        /*
+                         * If no match can be made, then this is a parse error.
+                         */
+                        err("Text after \u201C&\u201D did not match an entity name.");
+                        /*
+                         * No characters are consumed, and nothing is returned.
+                         */
+                        if (returnState != DATA) {
+                            appendStrBufToLongStrBuf();
+                        } else {
+                            emitStrBuf();
+                        }
+                        state = returnState;
+                        continue eofloop;
+                    } else {
+                        if (!Entities.NAMES[candidate].endsWith(";")) {
+                            /*
+                             * If the last character matched is not a U+003B
+                             * SEMICOLON (;), there is a parse error.
+                             */
+                            err("Entity reference was not terminated by a semicolon.");
+                            if (returnState != DATA) {
+                                /*
+                                 * If the entity is being consumed as part of an
+                                 * attribute, and the last character matched is
+                                 * not a U+003B SEMICOLON (;),
+                                 */
+                                char ch;
+                                if (strBufMark == strBufLen) {
+                                    ch = '\u0000';
+                                } else {
+                                    ch = strBuf[strBufMark];
+                                }
+                                if ((ch >= '0' && ch <= '9')
+                                        || (ch >= 'A' && ch <= 'Z')
+                                        || (ch >= 'a' && ch <= 'z')) {
+                                    /*
+                                     * and the next character is in the range
+                                     * U+0030 DIGIT ZERO to U+0039 DIGIT NINE,
+                                     * U+0041 LATIN CAPITAL LETTER A to U+005A
+                                     * LATIN CAPITAL LETTER Z, or U+0061 LATIN
+                                     * SMALL LETTER A to U+007A LATIN SMALL
+                                     * LETTER Z, then, for historical reasons,
+                                     * all the characters that were matched
+                                     * after the U+0026 AMPERSAND (&) must be
+                                     * unconsumed, and nothing is returned.
+                                     */
+                                    appendStrBufToLongStrBuf();
+                                    state = returnState;
+                                    continue eofloop;
+                                }
+                            }
+                        }
+
+                        /*
+                         * Otherwise, return a character token for the character
+                         * corresponding to the entity name (as given by the
+                         * second column of the entities table).
+                         */
+                        char[] val = Entities.VALUES[candidate];
+                        emitOrAppend(val, returnState != DATA);
+                        // this is so complicated!
+                        if (strBufMark < strBufLen) {
+                            if (returnState != DATA) {
+                                for (int i = strBufMark; i < strBufLen; i++) {
+                                    appendLongStrBuf(strBuf[i]);
+                                }
+                            } else {
+                                tokenHandler.characters(strBuf, strBufMark,
+                                        strBufLen - strBufMark);
+                            }
+                        }
+                        state = returnState;
+                        continue eofloop;
+                        /*
+                         * If the markup contains I'm &notit; I tell you, the
+                         * entity is parsed as "not", as in, I'm ¬it; I tell
+                         * you. But if the markup was I'm &notin; I tell you,
+                         * the entity would be parsed as "notin;", resulting in
+                         * I'm ∉ I tell you.
+                         */
+                    }
+                case CONSUME_NCR:
+                case DECIMAL_NRC_LOOP:
+                case HEX_NCR_LOOP:
+                    /*
+                     * If no characters match the range, then don't consume any
+                     * characters (and unconsume the U+0023 NUMBER SIGN
+                     * character and, if appropriate, the X character). This is
+                     * a parse error; nothing is returned.
+                     * 
+                     * Otherwise, if the next character is a U+003B SEMICOLON,
+                     * consume that too. If it isn't, there is a parse error.
+                     */
+                    if (!seenDigits) {
+                        err("No digits after \u201C" + strBufToString()
+                                + "\u201D.");
+                        if (returnState != DATA) {
+                            appendStrBufToLongStrBuf();
+                        } else {
+                            emitStrBuf();
+                        }
+                        state = returnState;
+                        continue;
+                    } else {
+                        err("Character reference was not terminated by a semicolon.");
+                        // FALL THROUGH continue stateloop;
+                    }
+                    // WARNING previous state sets reconsume
+                    handleNcrValue(returnState);
+                    state = returnState;
+                    continue;
+            }
+        }
+        // case DATA:
+        /*
+         * EOF Emit an end-of-file token.
+         */
+        return; // eof() called in parent finally block
+    }
+
+    private char read(char[] buf, int end) throws SAXException {
+        char c;
+        for (;;) { // the loop is here for the CRLF case
+            pos++;
+            if (pos == end) {
+                if (cstart > -1) {
+                    flushChars(buf);
+                    cstart = -1;
+                    charDataContinuation = true;
+                } else {
+                    charDataContinuation = false;
+                }
+                return '\u0000';
+            }
+            linePrev = line;
+            colPrev = col;
+            if (nextCharOnNewLine) {
+                line++;
+                col = 1;
+                nextCharOnNewLine = false;
+            } else {
+                col++;
+            }
+
+            c = buf[pos];
+            if (errorHandler != null && confidence == Confidence.TENTATIVE
+                    && !alreadyComplainedAboutNonAscii && c > '\u007F') {
+                err("The character encoding of the document was not explicit (assumed \u201C"
+                        + characterEncoding.getCanonName()
+                        + "\u201D) but the document contains non-ASCII.");
+                alreadyComplainedAboutNonAscii = true;
+            }
+            switch (c) {
+                case '\n':
+                    /*
+                     * U+000D CARRIAGE RETURN (CR) characters, and U+000A LINE
+                     * FEED (LF) characters, are treated specially. Any CR
+                     * characters that are followed by LF characters must be
+                     * removed, and any CR characters not followed by LF
+                     * characters must be converted to LF characters.
+                     */
+                    if (prev == '\r') {
+                        // swallow the LF
+                        if (cstart > -1) {
+                            flushChars(buf);
+                            cstart = pos + 1;
+                        }
+                        col = colPrev;
+                        line = linePrev;
+                        nextCharOnNewLine = true;
+                        prev = c;
+                        continue;
+                    } else {
+                        nextCharOnNewLine = true;
+                    }
+                    break;
+                case '\r':
+                    c = buf[pos] = '\n';
+                    nextCharOnNewLine = true;
+                    prev = '\r';
+                    if (contentModelFlag != ContentModelFlag.PCDATA) {
+                        prevFourPtr++;
+                        prevFourPtr %= 4;
+                        prevFour[prevFourPtr] = c;
+                    }
+                    return c;
+                case '\u0000':
+                    /*
+                     * All U+0000 NULL characters in the input must be replaced
+                     * by U+FFFD REPLACEMENT CHARACTERs. Any occurrences of such
+                     * characters is a parse error.
+                     */
+                    err("Found U+0000 in the character stream.");
+                    c = buf[pos] = '\uFFFD';
+                    break;
+                case '\u000B':
+                case '\u000C':
+                    if (inContent
+                            && (errorHandler != null || contentNonXmlCharPolicy != XmlViolationPolicy.ALLOW)) {
+                        if (contentNonXmlCharPolicy == XmlViolationPolicy.FATAL) {
+                            fatal("This document is not mappable to XML 1.0 without data loss due to "
+                                    + toUPlusString(c)
+                                    + " which is not a legal XML 1.0 character.");
+                        } else {
+                            if (contentNonXmlCharPolicy == XmlViolationPolicy.ALTER_INFOSET) {
+                                c = buf[pos] = ' ';
+                            }
+                            warn("This document is not mappable to XML 1.0 without data loss due to "
+                                    + toUPlusString(c)
+                                    + " which is not a legal XML 1.0 character.");
+                        }
+                    }
+                    break;
+                default:
+                    if (errorHandler != null
+                            || contentNonXmlCharPolicy != XmlViolationPolicy.ALLOW) {
+                        if ((c & 0xFC00) == 0xDC00) {
+                            // Got a low surrogate. See if prev was high
+                            // surrogate
+                            if ((prev & 0xFC00) == 0xD800) {
+                                int intVal = (prev << 10) + c
+                                        + SURROGATE_OFFSET;
+                                if (isNonCharacter(intVal)) {
+                                    err("Astral non-character.");
+                                }
+                                if (isAstralPrivateUse(intVal)) {
+                                    warnAboutPrivateUseChar();
+                                }
+                            } else {
+                                // XXX figure out what to do about lone high
+                                // surrogates
+                                err("Found low surrogate without high surrogate.");
+                                // c = buf[pos] = '\uFFFD';
+                            }
+                        } else if ((c < ' ' || isNonCharacter(c))
+                                && (c != '\t')) {
+                            if (inContent) {
+                                if (contentNonXmlCharPolicy == XmlViolationPolicy.FATAL) {
+                                    fatal("Forbidden code point "
+                                            + toUPlusString(c) + ".");
+                                } else {
+                                    if (contentNonXmlCharPolicy == XmlViolationPolicy.ALTER_INFOSET) {
+                                        c = buf[pos] = '\uFFFD';
+                                    }
+                                    err("Forbidden code point "
+                                            + toUPlusString(c) + ".");
+                                }
+                            } else {
+                                err("Forbidden code point " + toUPlusString(c)
+                                        + ".");
+                            }
+                        } else if ((c >= '\u007F') && (c <= '\u009F')
+                                || (c >= '\uFDD0') && (c <= '\uFDDF')) {
+                            err("Forbidden code point " + toUPlusString(c)
+                                    + ".");
+                        } else if (isPrivateUse(c)) {
+                            warnAboutPrivateUseChar();
+                        }
+                    }
+            }
+            prev = c;
+            if (contentModelFlag != ContentModelFlag.PCDATA) {
+                prevFourPtr++;
+                prevFourPtr %= 4;
+                prevFour[prevFourPtr] = c;
+            }
+            return c;
         }
     }
 
@@ -4650,8 +5108,11 @@ public final class Tokenizer implements Locator {
                         + "\u201D which is not an ASCII superset. Not changing the encoding.");
                 return;
             }
-
-            if (characterEncoding != null && characterEncoding == actual) {
+            if (characterEncoding == null) {
+                // Reader case
+                return;
+            }
+            if (characterEncoding == actual) {
                 becomeConfident();
                 return;
             }
@@ -4663,39 +5124,15 @@ public final class Tokenizer implements Locator {
             } else {
                 Encoding newEnc = whineAboutEncodingAndReturnActual(
                         internalCharset, cs);
-                if (characterEncoding == Encoding.WINDOWS1252
-                        && canSwitchDecoder && restOfBufferCanSwitchDecoder()) {
-                    errTreeBuilder("Changing character encoding in mid-parse to \u201C"
-                            + internalCharset + "\u201D.");
-                    canSwitchDecoder = false;
-                    characterEncoding = newEnc;
-                    ((HtmlInputStreamReader) reader).switchEncoding(newEnc);
-                    becomeConfident();
-                } else {
-                    errTreeBuilder("Changing character encoding \u201C"
-                            + internalCharset + "\u201D and reparsing.");
-                    canSwitchDecoder = false;
-                    characterEncoding = newEnc;
-                    throw new ReparseException();
-                }
+                errTreeBuilder("Changing character encoding \u201C"
+                        + internalCharset + "\u201D and reparsing.");
+                characterEncoding = newEnc;
+                throw new ReparseException();
             }
         } catch (UnsupportedCharsetException e) {
             errTreeBuilder("Internal encoding declaration named an unsupported chararacter encoding \u201C"
                     + internalCharset + "\u201D.");
         }
-    }
-
-    private boolean restOfBufferCanSwitchDecoder() {
-//        for (int i = pos; i < bufLen; i++) {
-//            char c = buf[i];
-//            if (!((c >= 0x09 && c <= 0x0D) || (c >= 0x20 && c <= 0x22)
-//                    || (c >= 0x26 && c <= 0x27) || (c >= 0x2C && c <= 0x3F)
-//                    || (c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A))) {
-//                return false;
-//            }
-//        }
-//        return true;
-        return false;
     }
 
     /**
