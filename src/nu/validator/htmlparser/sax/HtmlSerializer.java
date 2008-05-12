@@ -76,9 +76,6 @@ public class HtmlSerializer implements ContentHandler, LexicalHandler {
                 for (int i = start; i < start + length; i++) {
                     char c = ch[i];
                     switch (c) {
-                        case '"':
-                            writer.write("&quot;");
-                            break;
                         case '<':
                             writer.write("&lt;");
                             break;
