@@ -82,7 +82,7 @@ class SAXStreamer extends TreeBuilder<Attributes>{
     }
 
     @Override
-    protected Attributes createElement(String name, Attributes attributes) throws SAXException {
+    protected Attributes createElement(String ns, String name, Attributes attributes) throws SAXException {
         return attributes;
     }
 
@@ -155,23 +155,24 @@ class SAXStreamer extends TreeBuilder<Attributes>{
     }
 
     /**
-     * @see nu.validator.htmlparser.impl.TreeBuilder#elementPopped(java.lang.String, java.lang.Object)
+     * @see nu.validator.htmlparser.impl.TreeBuilder#elementPopped(String, java.lang.String, java.lang.Object)
      */
     @Override
-    protected void elementPopped(String name, Attributes node) throws SAXException {
-        contentHandler.endElement("http://www.w3.org/1999/xhtml", name, name);
+    protected void elementPopped(String ns, String name, Attributes node) throws SAXException {
+        contentHandler.endElement(ns, name, name);
         depth--;        
     }
 
     /**
-     * @see nu.validator.htmlparser.impl.TreeBuilder#elementPushed(java.lang.String, java.lang.Object)
+     * @see nu.validator.htmlparser.impl.TreeBuilder#elementPushed(String, java.lang.String, java.lang.Object)
      */
     @Override
-    protected void elementPushed(String name, Attributes node) throws SAXException {
+    protected void elementPushed(String ns, String name, Attributes node) throws SAXException {
         if (depth == 0) {
             contentHandler.startPrefixMapping("", "http://www.w3.org/1999/xhtml");
         }
-        contentHandler.startElement("http://www.w3.org/1999/xhtml", name, name, node);
+        // XXX fake other prefix mappings?
+        contentHandler.startElement(ns, name, name, node);
         depth++;
     }
 

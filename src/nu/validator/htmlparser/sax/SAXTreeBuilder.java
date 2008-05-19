@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
+ * Copyright (c) 2008 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -168,8 +169,8 @@ class SAXTreeBuilder extends TreeBuilder<Element> {
     }
 
     @Override
-    protected Element createElement(String name, Attributes attributes) throws SAXException {
-        return new Element(tokenizer, "http://www.w3.org/1999/xhtml", name, name, attributes, true, null);
+    protected Element createElement(String ns, String name, Attributes attributes) throws SAXException {
+        return new Element(tokenizer, ns, name, name, attributes, true, null);
     }
 
     @Override

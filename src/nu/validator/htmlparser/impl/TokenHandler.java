@@ -71,9 +71,10 @@ public interface TokenHandler {
      * 
      * @param name the tag name
      * @param attributes the attributes
+     * @param selfClosing TODO
      * @throws SAXException if something went wrong
      */
-    public void startTag(String name, Attributes attributes) throws SAXException;
+    public void startTag(String name, Attributes attributes, boolean selfClosing) throws SAXException;
     
     /**
      * Receive an end tag token.

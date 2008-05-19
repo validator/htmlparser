@@ -58,9 +58,10 @@ class NameData {
             "implies", "in", "infinity", "input", "ins", "int", "integers",
             "intersect", "interval", "inverse", "isindex", "kbd", "label",
             "lambda", "laplacian", "lcm", "legend", "leq", "li", "limit",
-            "line", "linearGradient", "link", "list", "listener", "ln", "log",
+            "line", "linearGradient", "link", "list", "listener", "listing", "ln", "log",
             "logbase", "lowlimit", "lt", "maction", "maligngroup",
-            "malignmark", "map", "mark", "marker", "mask", "math", "matrix",
+            "malignmark", "map", "mark", "marker",
+            "marquee", "mask", "math", "matrix",
             "matrixrow", "max", "mean", "median", "menclose", "menu", "merror",
             "meta", "metadata", "meter", "mfenced", "mfrac", "mglyph", "mi",
             "min", "minus", "missing-glyph", "mlabeledtr", "mmultiscripts",
@@ -68,11 +69,11 @@ class NameData {
             "mpath", "mphantom", "mprescripts", "mroot", "mrow", "ms",
             "mspace", "msqrt", "mstyle", "msub", "msubsup", "msup", "mtable",
             "mtd", "mtext", "mtr", "munder", "munderover", "naturalnumbers",
-            "nav", "neq", "nest", "noframes", "none", "noscript", "not",
+            "nav", "neq", "nest", "nobr", "noframes", "none", "noscript", "not",
             "notanumber", "notin", "notprsubset", "notsubset", "object", "ol",
             "optgroup", "option", "or", "otherwise", "outerproduct", "output",
             "p", "param", "partialdiff", "path", "pattern", "pi", "piece",
-            "piecewise", "plus", "polygon", "polyline", "power", "pre",
+            "piecewise", "plaintext", "plus", "polygon", "polyline", "power", "pre",
             "prefetch", "primes", "product", "progress", "prsubset", "q",
             "quotient", "radialGradient", "rationals", "real", "reals", "rect",
             "reln", "rem", "root", "rule", "s", "samp", "scalarproduct",
@@ -84,5 +85,5 @@ class NameData {
             "textPath", "textarea", "tfoot", "th", "thead", "time", "times",
             "title", "tr", "transpose", "tref", "true", "tspan", "tt", "u",
             "ul", "union", "uplimit", "use", "var", "variance", "vector",
-            "vectorproduct", "video", "view", "vkern", "xor" };
+            "vectorproduct", "video", "view", "vkern", "wbr", "xmp", "xor" };
 }

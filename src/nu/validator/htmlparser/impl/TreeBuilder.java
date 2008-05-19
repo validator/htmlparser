@@ -56,24 +56,29 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     private class StackNode<S> {
         final String name;
 
+        final String ns;
+
         final S node;
-        
+
         final boolean scoping;
-        
+
         final boolean special;
 
         final boolean fosterParenting;
-        
+
         boolean tainted = false;
-        
+
         /**
          * @param name
          * @param node
          * @param scoping
          * @param special
          */
-        StackNode(final String name, final S node, final boolean scoping, final boolean special, final boolean fosterParenting) {
+        StackNode(final String ns, final String name, final S node,
+                final boolean scoping, final boolean special,
+                final boolean fosterParenting) {
             this.name = name;
+            this.ns = ns;
             this.node = node;
             this.scoping = scoping;
             this.special = special;
@@ -84,12 +89,38 @@ public abstract class TreeBuilder<T> implements TokenHandler {
          * @param name
          * @param node
          */
-        StackNode(final String name, final S node) {
+        StackNode(final String ns, final String name, final S node) {
             this.name = name;
+            this.ns = ns;
             this.node = node;
-            this.scoping = ("table" == name || "caption" == name || "html" == name || "td" == name || "th" == name || "button" == name || "marquee" == name || "object" == name || "applet" == name);
-            this.special = ("address" == name || "area" == name || "base" == name || "basefont" == name || "bgsound" == name || "blockquote" == name || "body" == name || "br" == name || "center" == name || "col" == name || "colgroup" == name || "dd" == name || "dir" == name || "div" == name || "dl" == name || "dt" == name || "embed" == name || "fieldset" == name || "form" == name || "frame" == name || "frameset" == name || "h1" == name || "h2" == name || "h3" == name || "h4" == name || "h5" == name || "h6" == name || "head" == name || "hr" == name || "iframe" == name || "image" == name || "img" == name || "input" == name || "isindex" == name || "li" == name || "link" == name || "listing" == name || "menu" == name || "meta" == name || "noembed" == name || "noframes" == name || "noscript" == name || "ol" == name || "optgroup" == name || "option" == name || "p" == name || "param" == name || "plaintext" == name || "pre" == name || "script" == name || "select" == name || "spacer" == name || "style" == name || "tbody" == name || "textarea" == name || "tfoot" == name || "thead" == name || "title" == name || "tr" == name || "ul" == name ||  "wbr" == name);
-            this.fosterParenting = ("table" == name || "tbody" == name || "tfoot" == name || "thead" == name || "tr" == name);
+            this.scoping = ("table" == name || "caption" == name
+                    || "html" == name || "td" == name || "th" == name
+                    || "button" == name || "marquee" == name
+                    || "object" == name || "applet" == name);
+            this.special = ("address" == name || "area" == name
+                    || "base" == name || "basefont" == name
+                    || "bgsound" == name || "blockquote" == name
+                    || "body" == name || "br" == name || "center" == name
+                    || "col" == name || "colgroup" == name || "dd" == name
+                    || "dir" == name || "div" == name || "dl" == name
+                    || "dt" == name || "embed" == name || "fieldset" == name
+                    || "form" == name || "frame" == name || "frameset" == name
+                    || "h1" == name || "h2" == name || "h3" == name
+                    || "h4" == name || "h5" == name || "h6" == name
+                    || "head" == name || "hr" == name || "iframe" == name
+                    || "image" == name || "img" == name || "input" == name
+                    || "isindex" == name || "li" == name || "link" == name
+                    || "listing" == name || "menu" == name || "meta" == name
+                    || "noembed" == name || "noframes" == name
+                    || "noscript" == name || "ol" == name || "optgroup" == name
+                    || "option" == name || "p" == name || "param" == name
+                    || "plaintext" == name || "pre" == name || "script" == name
+                    || "select" == name || "spacer" == name || "style" == name
+                    || "tbody" == name || "textarea" == name || "tfoot" == name
+                    || "thead" == name || "title" == name || "tr" == name
+                    || "ul" == name || "wbr" == name);
+            this.fosterParenting = ("table" == name || "tbody" == name
+                    || "tfoot" == name || "thead" == name || "tr" == name);
         }
 
         /**
@@ -100,18 +131,16 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             return name;
         }
     }
-    
+
     private final static char[] ISINDEX_PROMPT = "This is a searchable index. Insert your search keywords here: ".toCharArray();
 
     private final static String[] HTML4_PUBLIC_IDS = {
-        "-//W3C//DTD HTML 4.0 Frameset//EN",
-        "-//W3C//DTD HTML 4.0 Transitional//EN",
-        "-//W3C//DTD HTML 4.0//EN",
-        "-//W3C//DTD HTML 4.01 Frameset//EN",
-        "-//W3C//DTD HTML 4.01 Transitional//EN",
-        "-//W3C//DTD HTML 4.01//EN"
-    };
-    
+            "-//W3C//DTD HTML 4.0 Frameset//EN",
+            "-//W3C//DTD HTML 4.0 Transitional//EN",
+            "-//W3C//DTD HTML 4.0//EN", "-//W3C//DTD HTML 4.01 Frameset//EN",
+            "-//W3C//DTD HTML 4.01 Transitional//EN",
+            "-//W3C//DTD HTML 4.01//EN" };
+
     private final static String[] QUIRKY_PUBLIC_IDS = {
             "+//silmaril//dtd html pro v0r11 19970101//en",
             "-//advasoft ltd//dtd html 3.0 aswedit + extensions//en",
@@ -183,20 +212,26 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             "-/w3c/dtd html 4.0 transitional/en", "html" };
 
     private static final int NOT_FOUND_ON_STACK = Integer.MAX_VALUE;
-    
-    private final StackNode<T> MARKER = new StackNode<T>(null, null);
+
+    private static final int IN_FOREIGN = 0;
+
+    private static final int NOT_IN_FOREIGN = 1;
+
+    private final StackNode<T> MARKER = new StackNode<T>(null, null, null);
 
     private final boolean nonConformingAndStreaming;
 
     private final boolean conformingAndStreaming;
-    
-    private final boolean coalescingText;   
-    
+
+    private final boolean coalescingText;
+
     private boolean bodyCloseReported = false;
-    
+
     private boolean htmlCloseReported = false;
-    
+
     private InsertionMode mode = InsertionMode.INITIAL;
+
+    private int foreignFlag = NOT_IN_FOREIGN;
 
     protected Tokenizer tokenizer;
 
@@ -209,40 +244,41 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     private int cdataOrRcdataTimesToPop;
 
     private boolean scriptingEnabled = false;
-    
+
     private boolean needToDropLF;
 
     private boolean wantingComments;
 
     private String context;
-    
+
     private StackNode<T>[] stack;
-    
+
     private int currentPtr = -1;
 
     private StackNode<T>[] listOfActiveFormattingElements;
 
     private int listPtr = -1;
-    
+
     private T formPointer;
 
     private T headPointer;
 
     private boolean reportingDoctype = true;
-    
+
     private char[] charBuffer;
-    
+
     private int charBufferLen = 0;
 
-    protected TreeBuilder(XmlViolationPolicy streamabilityViolationPolicy, boolean coalescingText) {
+    protected TreeBuilder(XmlViolationPolicy streamabilityViolationPolicy,
+            boolean coalescingText) {
         this.conformingAndStreaming = streamabilityViolationPolicy == XmlViolationPolicy.FATAL;
         this.nonConformingAndStreaming = streamabilityViolationPolicy == XmlViolationPolicy.ALTER_INFOSET;
         this.coalescingText = coalescingText;
         if (coalescingText) {
-            charBuffer = new char[1024];        
+            charBuffer = new char[1024];
         }
     }
-    
+
     /**
      * Reports an condition that would make the infoset incompatible with XML
      * 1.0 as fatal.
@@ -251,20 +287,24 @@ public abstract class TreeBuilder<T> implements TokenHandler {
      * @throws SAXParseException
      */
     protected final void fatal() throws SAXException {
-        SAXParseException spe = new SAXParseException("Last error required non-streamable recovery.", tokenizer);
+        SAXParseException spe = new SAXParseException(
+                "Last error required non-streamable recovery.", tokenizer);
         if (errorHandler != null) {
             errorHandler.fatalError(spe);
         }
         throw spe;
     }
+
     protected final void fatal(Exception e) throws SAXException {
-        SAXParseException spe = new SAXParseException(e.getMessage(), tokenizer, e);;
+        SAXParseException spe = new SAXParseException(e.getMessage(),
+                tokenizer, e);
+        ;
         if (errorHandler != null) {
             errorHandler.fatalError(spe);
         }
         throw spe;
     }
-    
+
     /**
      * Reports a Parse Error.
      * 
@@ -297,8 +337,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     public final void start(Tokenizer self) throws SAXException {
         tokenizer = self;
-        stack  = new StackNode[64];
-        listOfActiveFormattingElements  = new StackNode[64];
+        stack = new StackNode[64];
+        listOfActiveFormattingElements = new StackNode[64];
         needToDropLF = false;
         cdataOrRcdataTimesToPop = 0;
         currentPtr = -1;
@@ -307,20 +347,26 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         start(context != null);
         if (context == null) {
             mode = InsertionMode.INITIAL;
+            foreignFlag = NOT_IN_FOREIGN;
         } else {
             T elt = createHtmlElementSetAsRoot(tokenizer.newAttributes());
-            StackNode<T> node = new StackNode<T>("html", elt);
+            StackNode<T> node = new StackNode<T>(
+                    "http://www.w3.org/1999/xhtml", "html", elt);
             currentPtr++;
             stack[currentPtr] = node;
             resetTheInsertionMode();
             if ("title" == context || "textarea" == context) {
                 tokenizer.setContentModelFlag(ContentModelFlag.RCDATA, context);
-            } else if ("style" == context || "script" == context || "xmp" == context || "iframe" == context || "noembed" == context || "noframes" == context || (scriptingEnabled && "noscript" == context)) {
-                tokenizer.setContentModelFlag(ContentModelFlag.CDATA, context);                
+            } else if ("style" == context || "script" == context
+                    || "xmp" == context || "iframe" == context
+                    || "noembed" == context || "noframes" == context
+                    || (scriptingEnabled && "noscript" == context)) {
+                tokenizer.setContentModelFlag(ContentModelFlag.CDATA, context);
             } else if ("plaintext" == context) {
-                tokenizer.setContentModelFlag(ContentModelFlag.PLAINTEXT, context);                       
+                tokenizer.setContentModelFlag(ContentModelFlag.PLAINTEXT,
+                        context);
             } else {
-                tokenizer.setContentModelFlag(ContentModelFlag.PCDATA, context);                                       
+                tokenizer.setContentModelFlag(ContentModelFlag.PCDATA, context);
             }
         }
     }
@@ -328,197 +374,252 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     public final void doctype(String name, String publicIdentifier,
             String systemIdentifier, boolean forceQuirks) throws SAXException {
         needToDropLF = false;
-        switch (mode) {
-            case INITIAL:
-                /*
-                 * A DOCTYPE token If the DOCTYPE token's name does not
-                 * case-insensitively match the string "HTML", or if the token's
-                 * public identifier is not missing, or if the token's system
-                 * identifier is not missing, then there is a parse error.
-                 * Conformance checkers may, instead of reporting this error,
-                 * switch to a conformance checking mode for another language
-                 * (e.g. based on the DOCTYPE token a conformance checker could
-                 * recognise that the document is an HTML4-era document, and
-                 * defer to an HTML4 conformance checker.)
-                 * 
-                 * Append a DocumentType node to the Document node, with the
-                 * name attribute set to the name given in the DOCTYPE token;
-                 * the publicId attribute set to the public identifier given in
-                 * the DOCTYPE token, or the empty string if the public
-                 * identifier was not set; the systemId attribute set to the
-                 * system identifier given in the DOCTYPE token, or the empty
-                 * string if the system identifier was not set; and the other
-                 * attributes specific to DocumentType objects set to null and
-                 * empty lists as appropriate. Associate the DocumentType node
-                 * with the Document object so that it is returned as the value
-                 * of the doctype attribute of the Document object.
-                 */
-                if (reportingDoctype ) {
-                appendDoctypeToDocument(name, publicIdentifier == null ? ""
-                        : publicIdentifier, systemIdentifier == null ? ""
-                        : systemIdentifier);
-                }
-                /*
-                 * Then, if the DOCTYPE token matches one of the conditions in
-                 * the following list, then set the document to quirks mode:
-                 * 
-                 * Otherwise, if the DOCTYPE token matches one of the conditions
-                 * in the following list, then set the document to limited
-                 * quirks mode: + The public identifier is set to: "-//W3C//DTD
-                 * XHTML 1.0 Frameset//EN" + The public identifier is set to:
-                 * "-//W3C//DTD XHTML 1.0 Transitional//EN" + The system
-                 * identifier is not missing and the public identifier is set
-                 * to: "-//W3C//DTD HTML 4.01 Frameset//EN" + The system
-                 * identifier is not missing and the public identifier is set
-                 * to: "-//W3C//DTD HTML 4.01 Transitional//EN"
-                 * 
-                 * The name, system identifier, and public identifier strings
-                 * must be compared to the values given in the lists above in a
-                 * case-insensitive manner.
-                 */
-                String publicIdentifierLC = toAsciiLowerCase(publicIdentifier);
-                String systemIdentifierLC = toAsciiLowerCase(systemIdentifier);
-                switch (doctypeExpectation) {
-                    case HTML:
-                        if (isQuirky(name, publicIdentifierLC,
-                                systemIdentifierLC, forceQuirks)) {
-                            err("Quirky doctype.");
-                            documentModeInternal(DocumentMode.QUIRKS_MODE,
-                                    publicIdentifier, systemIdentifier, false);
-                        } else if (isAlmostStandards(publicIdentifierLC,
-                                systemIdentifierLC)) {
-                            err("Almost standards mode doctype.");
-                            documentModeInternal(DocumentMode.ALMOST_STANDARDS_MODE,
-                                    publicIdentifier, systemIdentifier, false);
-                        } else {
-                            if (!(publicIdentifier == null && systemIdentifier == null)) {
-                                err("Legacy doctype.");
+        doctypeloop: for (;;) {
+            switch (foreignFlag) {
+                case IN_FOREIGN:
+                    break doctypeloop;
+                default:
+                    switch (mode) {
+                        case INITIAL:
+                            /*
+                             * A DOCTYPE token If the DOCTYPE token's name does
+                             * not case-insensitively match the string "HTML",
+                             * or if the token's public identifier is not
+                             * missing, or if the token's system identifier is
+                             * not missing, then there is a parse error.
+                             * Conformance checkers may, instead of reporting
+                             * this error, switch to a conformance checking mode
+                             * for another language (e.g. based on the DOCTYPE
+                             * token a conformance checker could recognise that
+                             * the document is an HTML4-era document, and defer
+                             * to an HTML4 conformance checker.)
+                             * 
+                             * Append a DocumentType node to the Document node,
+                             * with the name attribute set to the name given in
+                             * the DOCTYPE token; the publicId attribute set to
+                             * the public identifier given in the DOCTYPE token,
+                             * or the empty string if the public identifier was
+                             * not set; the systemId attribute set to the system
+                             * identifier given in the DOCTYPE token, or the
+                             * empty string if the system identifier was not
+                             * set; and the other attributes specific to
+                             * DocumentType objects set to null and empty lists
+                             * as appropriate. Associate the DocumentType node
+                             * with the Document object so that it is returned
+                             * as the value of the doctype attribute of the
+                             * Document object.
+                             */
+                            if (reportingDoctype) {
+                                appendDoctypeToDocument(name,
+                                        publicIdentifier == null ? ""
+                                                : publicIdentifier,
+                                        systemIdentifier == null ? ""
+                                                : systemIdentifier);
                             }
-                            documentModeInternal(DocumentMode.STANDARDS_MODE,
-                                    publicIdentifier, systemIdentifier, false);
-                        }
-                        break;
-                    case HTML401_STRICT:
-                        tokenizer.turnOnAdditionalHtml4Errors();
-                        if (isQuirky(name, publicIdentifierLC,
-                                systemIdentifierLC, forceQuirks)) {
-                            err("Quirky doctype.");
-                            documentModeInternal(DocumentMode.QUIRKS_MODE,
-                                    publicIdentifier, systemIdentifier, true);
-                        } else if (isAlmostStandards(publicIdentifierLC,
-                                systemIdentifierLC)) {
-                            err("Almost standards mode doctype.");
-                            documentModeInternal(DocumentMode.ALMOST_STANDARDS_MODE,
-                                    publicIdentifier, systemIdentifier, true);
-                        } else {
-                            if ("-//W3C//DTD HTML 4.01//EN".equals(publicIdentifier)) {
-                                if (!"http://www.w3.org/TR/html4/strict.dtd".equals(systemIdentifier)) {
-                                    warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification.");
-                                }
-                            } else {
-                                err("The doctype was not the HTML 4.01 Strict doctype.");
+                            /*
+                             * Then, if the DOCTYPE token matches one of the
+                             * conditions in the following list, then set the
+                             * document to quirks mode:
+                             * 
+                             * Otherwise, if the DOCTYPE token matches one of
+                             * the conditions in the following list, then set
+                             * the document to limited quirks mode: + The public
+                             * identifier is set to: "-//W3C//DTD XHTML 1.0
+                             * Frameset//EN" + The public identifier is set to:
+                             * "-//W3C//DTD XHTML 1.0 Transitional//EN" + The
+                             * system identifier is not missing and the public
+                             * identifier is set to: "-//W3C//DTD HTML 4.01
+                             * Frameset//EN" + The system identifier is not
+                             * missing and the public identifier is set to:
+                             * "-//W3C//DTD HTML 4.01 Transitional//EN"
+                             * 
+                             * The name, system identifier, and public
+                             * identifier strings must be compared to the values
+                             * given in the lists above in a case-insensitive
+                             * manner.
+                             */
+                            String publicIdentifierLC = toAsciiLowerCase(publicIdentifier);
+                            String systemIdentifierLC = toAsciiLowerCase(systemIdentifier);
+                            switch (doctypeExpectation) {
+                                case HTML:
+                                    if (isQuirky(name, publicIdentifierLC,
+                                            systemIdentifierLC, forceQuirks)) {
+                                        err("Quirky doctype.");
+                                        documentModeInternal(
+                                                DocumentMode.QUIRKS_MODE,
+                                                publicIdentifier,
+                                                systemIdentifier, false);
+                                    } else if (isAlmostStandards(
+                                            publicIdentifierLC,
+                                            systemIdentifierLC)) {
+                                        err("Almost standards mode doctype.");
+                                        documentModeInternal(
+                                                DocumentMode.ALMOST_STANDARDS_MODE,
+                                                publicIdentifier,
+                                                systemIdentifier, false);
+                                    } else {
+                                        if (!(publicIdentifier == null && systemIdentifier == null)) {
+                                            err("Legacy doctype.");
+                                        }
+                                        documentModeInternal(
+                                                DocumentMode.STANDARDS_MODE,
+                                                publicIdentifier,
+                                                systemIdentifier, false);
+                                    }
+                                    break;
+                                case HTML401_STRICT:
+                                    tokenizer.turnOnAdditionalHtml4Errors();
+                                    if (isQuirky(name, publicIdentifierLC,
+                                            systemIdentifierLC, forceQuirks)) {
+                                        err("Quirky doctype.");
+                                        documentModeInternal(
+                                                DocumentMode.QUIRKS_MODE,
+                                                publicIdentifier,
+                                                systemIdentifier, true);
+                                    } else if (isAlmostStandards(
+                                            publicIdentifierLC,
+                                            systemIdentifierLC)) {
+                                        err("Almost standards mode doctype.");
+                                        documentModeInternal(
+                                                DocumentMode.ALMOST_STANDARDS_MODE,
+                                                publicIdentifier,
+                                                systemIdentifier, true);
+                                    } else {
+                                        if ("-//W3C//DTD HTML 4.01//EN".equals(publicIdentifier)) {
+                                            if (!"http://www.w3.org/TR/html4/strict.dtd".equals(systemIdentifier)) {
+                                                warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification.");
+                                            }
+                                        } else {
+                                            err("The doctype was not the HTML 4.01 Strict doctype.");
+                                        }
+                                        documentModeInternal(
+                                                DocumentMode.STANDARDS_MODE,
+                                                publicIdentifier,
+                                                systemIdentifier, true);
+                                    }
+                                    break;
+                                case HTML401_TRANSITIONAL:
+                                    tokenizer.turnOnAdditionalHtml4Errors();
+                                    if (isQuirky(name, publicIdentifierLC,
+                                            systemIdentifierLC, forceQuirks)) {
+                                        err("Quirky doctype.");
+                                        documentModeInternal(
+                                                DocumentMode.QUIRKS_MODE,
+                                                publicIdentifier,
+                                                systemIdentifier, true);
+                                    } else if (isAlmostStandards(
+                                            publicIdentifierLC,
+                                            systemIdentifierLC)) {
+                                        if ("-//W3C//DTD HTML 4.01 Transitional//EN".equals(publicIdentifier)
+                                                && systemIdentifier != null) {
+                                            if (!"http://www.w3.org/TR/html4/loose.dtd".equals(systemIdentifier)) {
+                                                warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification.");
+                                            }
+                                        } else {
+                                            err("The doctype was not a non-quirky HTML 4.01 Transitional doctype.");
+                                        }
+                                        documentModeInternal(
+                                                DocumentMode.ALMOST_STANDARDS_MODE,
+                                                publicIdentifier,
+                                                systemIdentifier, true);
+                                    } else {
+                                        err("The doctype was not the HTML 4.01 Transitional doctype.");
+                                        documentModeInternal(
+                                                DocumentMode.STANDARDS_MODE,
+                                                publicIdentifier,
+                                                systemIdentifier, true);
+                                    }
+                                    break;
+                                case AUTO:
+                                    boolean html4 = isHtml4Doctype(publicIdentifier);
+                                    if (html4) {
+                                        tokenizer.turnOnAdditionalHtml4Errors();
+                                    }
+                                    if (isQuirky(name, publicIdentifierLC,
+                                            systemIdentifierLC, forceQuirks)) {
+                                        err("Quirky doctype.");
+                                        documentModeInternal(
+                                                DocumentMode.QUIRKS_MODE,
+                                                publicIdentifier,
+                                                systemIdentifier, html4);
+                                    } else if (isAlmostStandards(
+                                            publicIdentifierLC,
+                                            systemIdentifierLC)) {
+                                        if ("-//W3C//DTD HTML 4.01 Transitional//EN".equals(publicIdentifier)) {
+                                            tokenizer.turnOnAdditionalHtml4Errors();
+                                            if (!"http://www.w3.org/TR/html4/loose.dtd".equals(systemIdentifier)) {
+                                                warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification.");
+                                            }
+                                        } else {
+                                            err("Almost standards mode doctype.");
+                                        }
+                                        documentModeInternal(
+                                                DocumentMode.ALMOST_STANDARDS_MODE,
+                                                publicIdentifier,
+                                                systemIdentifier, html4);
+                                    } else {
+                                        if ("-//W3C//DTD HTML 4.01//EN".equals(publicIdentifier)) {
+                                            tokenizer.turnOnAdditionalHtml4Errors();
+                                            if (!"http://www.w3.org/TR/html4/strict.dtd".equals(systemIdentifier)) {
+                                                warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification.");
+                                            }
+                                        } else {
+                                            if (!(publicIdentifier == null && systemIdentifier == null)) {
+                                                err("Legacy doctype.");
+                                            }
+                                        }
+                                        documentModeInternal(
+                                                DocumentMode.STANDARDS_MODE,
+                                                publicIdentifier,
+                                                systemIdentifier, html4);
+                                    }
+                                    break;
+                                case NO_DOCTYPE_ERRORS:
+                                    if (isQuirky(name, publicIdentifierLC,
+                                            systemIdentifierLC, forceQuirks)) {
+                                        documentModeInternal(
+                                                DocumentMode.QUIRKS_MODE,
+                                                publicIdentifier,
+                                                systemIdentifier, false);
+                                    } else if (isAlmostStandards(
+                                            publicIdentifierLC,
+                                            systemIdentifierLC)) {
+                                        documentModeInternal(
+                                                DocumentMode.ALMOST_STANDARDS_MODE,
+                                                publicIdentifier,
+                                                systemIdentifier, false);
+                                    } else {
+                                        documentModeInternal(
+                                                DocumentMode.STANDARDS_MODE,
+                                                publicIdentifier,
+                                                systemIdentifier, false);
+                                    }
+                                    break;
                             }
-                            documentModeInternal(DocumentMode.STANDARDS_MODE,
-                                    publicIdentifier, systemIdentifier, true);
-                        }
-                        break;
-                    case HTML401_TRANSITIONAL:
-                        tokenizer.turnOnAdditionalHtml4Errors();
-                        if (isQuirky(name, publicIdentifierLC,
-                                systemIdentifierLC, forceQuirks)) {
-                            err("Quirky doctype.");
-                            documentModeInternal(DocumentMode.QUIRKS_MODE,
-                                    publicIdentifier, systemIdentifier, true);
-                        } else if (isAlmostStandards(publicIdentifierLC,
-                                systemIdentifierLC)) {
-                            if ("-//W3C//DTD HTML 4.01 Transitional//EN".equals(publicIdentifier)
-                                    && systemIdentifier != null) {
-                                if (!"http://www.w3.org/TR/html4/loose.dtd".equals(systemIdentifier)) {
-                                    warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification.");
-                                }
-                            } else {
-                                err("The doctype was not a non-quirky HTML 4.01 Transitional doctype.");
-                            }
-                            documentModeInternal(DocumentMode.ALMOST_STANDARDS_MODE,
-                                    publicIdentifier, systemIdentifier, true);
-                        } else {
-                            err("The doctype was not the HTML 4.01 Transitional doctype.");
-                            documentModeInternal(DocumentMode.STANDARDS_MODE,
-                                    publicIdentifier, systemIdentifier, true);
-                        }
-                        break;
-                    case AUTO:
-                        boolean html4 = isHtml4Doctype(publicIdentifier);
-                        if (html4) {
-                            tokenizer.turnOnAdditionalHtml4Errors();
-                        }
-                        if (isQuirky(name, publicIdentifierLC,
-                                systemIdentifierLC, forceQuirks)) {
-                            err("Quirky doctype.");
-                            documentModeInternal(DocumentMode.QUIRKS_MODE,
-                                    publicIdentifier, systemIdentifier, html4);
-                        } else if (isAlmostStandards(publicIdentifierLC,
-                                systemIdentifierLC)) {
-                            if ("-//W3C//DTD HTML 4.01 Transitional//EN".equals(publicIdentifier)) {
-                                tokenizer.turnOnAdditionalHtml4Errors();
-                                if (!"http://www.w3.org/TR/html4/loose.dtd".equals(systemIdentifier)) {
-                                    warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification.");
-                                }
-                            } else {
-                                err("Almost standards mode doctype.");
-                            }
-                            documentModeInternal(DocumentMode.ALMOST_STANDARDS_MODE,
-                                    publicIdentifier, systemIdentifier, html4);
-                        } else {
-                            if ("-//W3C//DTD HTML 4.01//EN".equals(publicIdentifier)) {
-                                tokenizer.turnOnAdditionalHtml4Errors();
-                                if (!"http://www.w3.org/TR/html4/strict.dtd".equals(systemIdentifier)) {
-                                    warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification.");
-                                }
-                            } else {
-                                if (!(publicIdentifier == null && systemIdentifier == null)) {
-                                    err("Legacy doctype.");
-                                }
-                            }
-                            documentModeInternal(DocumentMode.STANDARDS_MODE,
-                                    publicIdentifier, systemIdentifier, html4);
-                        }
-                        break;
-                    case NO_DOCTYPE_ERRORS:
-                        if (isQuirky(name, publicIdentifierLC,
-                                systemIdentifierLC, forceQuirks)) {
-                            documentModeInternal(DocumentMode.QUIRKS_MODE,
-                                    publicIdentifier, systemIdentifier, false);
-                        } else if (isAlmostStandards(publicIdentifierLC,
-                                systemIdentifierLC)) {
-                            documentModeInternal(DocumentMode.ALMOST_STANDARDS_MODE,
-                                    publicIdentifier, systemIdentifier, false);
-                        } else {
-                            documentModeInternal(DocumentMode.STANDARDS_MODE,
-                                    publicIdentifier, systemIdentifier, false);
-                        }
-                        break;
-                }
 
-                /*
-                 * 
-                 * Then, switch to the root element mode of the tree
-                 * construction stage.
-                 * 
-                 * 
-                 */
-                mode = InsertionMode.BEFORE_HTML;
-                return;
-            default:
-                /*
-                 * A DOCTYPE token Parse error.
-                 */
-                err("Stray doctype.");
-                /*
-                 * Ignore the token.
-                 */
-                return;
+                            /*
+                             * 
+                             * Then, switch to the root element mode of the tree
+                             * construction stage.
+                             * 
+                             * 
+                             */
+                            mode = InsertionMode.BEFORE_HTML;
+                            return;
+                        default:
+                            break doctypeloop;
+                    }
+            }
+
         }
+        /*
+         * A DOCTYPE token Parse error.
+         */
+        err("Stray doctype.");
+        /*
+         * Ignore the token.
+         */
+        return;
     }
 
     private boolean isHtml4Doctype(String publicIdentifier) {
@@ -532,45 +633,54 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     public final void comment(char[] buf, int length) throws SAXException {
         needToDropLF = false;
         if (wantingComments) {
-            switch (mode) {
-                case INITIAL:
-                case BEFORE_HTML:
-                case AFTER_AFTER_BODY:
-                case AFTER_AFTER_FRAMESET:
-                    /*
-                     * A comment token Append a Comment node to the Document
-                     * object with the data attribute set to the data given in
-                     * the comment token.
-                     */
-                    appendCommentToDocument(buf, 0, length);
-                    return;
-                case AFTER_BODY:
-                    /*
-                     * * A comment token Append a Comment node to the first
-                     * element in the stack of open elements (the html element),
-                     * with the data attribute set to the data given in the
-                     * comment token.
-                     * 
-                     */
-                    flushCharacters();
-                    appendComment(stack[0].node, buf, 0, length);
-                    return;
-                default:
-                    /*
-                     * * A comment token Append a Comment node to the current
-                     * node with the data attribute set to the data given in the
-                     * comment token.
-                     * 
-                     */
-                    flushCharacters();
-                    appendComment(stack[currentPtr].node, buf, 0, length);
-                    return;
+            commentloop: for (;;) {
+                switch (foreignFlag) {
+                    case IN_FOREIGN:
+                        break commentloop;
+                    default:
+                        switch (mode) {
+                            case INITIAL:
+                            case BEFORE_HTML:
+                            case AFTER_AFTER_BODY:
+                            case AFTER_AFTER_FRAMESET:
+                                /*
+                                 * A comment token Append a Comment node to the
+                                 * Document object with the data attribute set
+                                 * to the data given in the comment token.
+                                 */
+                                appendCommentToDocument(buf, 0, length);
+                                return;
+                            case AFTER_BODY:
+                                /*
+                                 * * A comment token Append a Comment node to
+                                 * the first element in the stack of open
+                                 * elements (the html element), with the data
+                                 * attribute set to the data given in the
+                                 * comment token.
+                                 * 
+                                 */
+                                flushCharacters();
+                                appendComment(stack[0].node, buf, 0, length);
+                                return;
+                            default:
+                                break commentloop;
+                        }
+                }
             }
         }
+        /*
+         * * A comment token Append a Comment node to the current node with the
+         * data attribute set to the data given in the comment token.
+         * 
+         */
+        flushCharacters();
+        appendComment(stack[currentPtr].node, buf, 0, length);
+        return;
     }
 
     /**
-     * @see nu.validator.htmlparser.impl.TokenHandler#characters(char[], int, int)
+     * @see nu.validator.htmlparser.impl.TokenHandler#characters(char[], int,
+     *      int)
      */
     public final void characters(char[] buf, int start, int length)
             throws SAXException {
@@ -589,7 +699,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
 
         // optimize the most common case
-        if (mode == InsertionMode.IN_BODY || mode == InsertionMode.IN_CELL
+        if (foreignFlag == IN_FOREIGN || mode == InsertionMode.IN_BODY
+                || mode == InsertionMode.IN_CELL
                 || mode == InsertionMode.IN_CAPTION) {
             reconstructTheActiveFormattingElements();
             accumulateCharacters(buf, start, length);
@@ -645,8 +756,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         case IN_CAPTION:
                             // XXX is this dead code?
                             if (start < i) {
-                                accumulateCharacters(buf, start, i
-                                        - start);
+                                accumulateCharacters(buf, start, i - start);
                                 start = i;
                             }
 
@@ -662,8 +772,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             break loop;
                         case AFTER_BODY:
                             if (start < i) {
-                                accumulateCharacters(buf, start, i
-                                        - start);
+                                accumulateCharacters(buf, start, i - start);
                                 start = i;
                             }
                             /*
@@ -713,11 +822,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                              * 
                              * Set the document to quirks mode.
                              */
-                            documentModeInternal(DocumentMode.QUIRKS_MODE, null, null,
-                                    false);
+                            documentModeInternal(DocumentMode.QUIRKS_MODE,
+                                    null, null, false);
                             /*
-                             * Then, switch to the root element mode of the
-                             * tree construction stage
+                             * Then, switch to the root element mode of the tree
+                             * construction stage
                              */
                             mode = InsertionMode.BEFORE_HTML;
                             /*
@@ -744,8 +853,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             continue;
                         case BEFORE_HEAD:
                             if (start < i) {
-                                accumulateCharacters(buf, start, i
-                                        - start);
+                                accumulateCharacters(buf, start, i - start);
                                 start = i;
                             }
                             /*
@@ -765,8 +873,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             continue;
                         case IN_HEAD:
                             if (start < i) {
-                                accumulateCharacters(buf, start, i
-                                        - start);
+                                accumulateCharacters(buf, start, i - start);
                                 start = i;
                             }
                             /*
@@ -782,8 +889,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             continue;
                         case IN_HEAD_NOSCRIPT:
                             if (start < i) {
-                                accumulateCharacters(buf, start, i
-                                        - start);
+                                accumulateCharacters(buf, start, i - start);
                                 start = i;
                             }
                             /*
@@ -800,8 +906,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             continue;
                         case AFTER_HEAD:
                             if (start < i) {
-                                accumulateCharacters(buf, start, i
-                                        - start);
+                                accumulateCharacters(buf, start, i - start);
                                 start = i;
                             }
                             /*
@@ -819,8 +924,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         case IN_CELL:
                         case IN_CAPTION:
                             if (start < i) {
-                                accumulateCharacters(buf, start, i
-                                        - start);
+                                accumulateCharacters(buf, start, i - start);
                                 start = i;
                             }
                             /*
@@ -834,8 +938,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         case IN_TABLE_BODY:
                         case IN_ROW:
                             if (start < i) {
-                                accumulateCharacters(buf, start, i
-                                        - start);
+                                accumulateCharacters(buf, start, i - start);
                             }
                             reconstructTheActiveFormattingElements();
                             appendCharMayFoster(buf, i);
@@ -843,8 +946,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             continue;
                         case IN_COLUMN_GROUP:
                             if (start < i) {
-                                accumulateCharacters(buf, start, i
-                                        - start);
+                                accumulateCharacters(buf, start, i - start);
                                 start = i;
                             }
                             /*
@@ -874,8 +976,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             continue;
                         case IN_FRAMESET:
                             if (start < i) {
-                                accumulateCharacters(buf, start, i
-                                        - start);
+                                accumulateCharacters(buf, start, i - start);
                                 start = i;
                             }
                             /*
@@ -889,8 +990,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             continue;
                         case AFTER_FRAMESET:
                             if (start < i) {
-                                accumulateCharacters(buf, start, i
-                                        - start);
+                                accumulateCharacters(buf, start, i - start);
                                 start = i;
                             }
                             /*
@@ -956,8 +1056,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                          * 
                          * Set the document to quirks mode.
                          */
-                        documentModeInternal(DocumentMode.QUIRKS_MODE, null, null,
-                                false);
+                        documentModeInternal(DocumentMode.QUIRKS_MODE, null,
+                                null, false);
                         /*
                          * Then, switch to the root element mode of the tree
                          * construction stage
@@ -1018,7 +1118,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     case IN_BODY:
                         for (int i = currentPtr; i >= 0; i--) {
                             String name = stack[i].name;
-                            if (!("dd" == name || "dt" == name || "li" == name || "p" == name || "tbody" == name || "td" == name || "tfoot" == name || "th" == name || "thead" == name || "body" == name || "html" == name)) {
+                            if (!("dd" == name || "dt" == name || "li" == name
+                                    || "p" == name || "tbody" == name
+                                    || "td" == name || "tfoot" == name
+                                    || "th" == name || "thead" == name
+                                    || "body" == name || "html" == name)) {
                                 err("End of file seen and there were open elements.");
                                 break;
                             }
@@ -1033,12 +1137,12 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         if (currentPtr > 0) {
                             err("End of file seen and there were open elements.");
                         }
-                        break eofloop;                        
+                        break eofloop;
                     case AFTER_BODY:
                     case AFTER_FRAMESET:
                     case AFTER_AFTER_BODY:
                     case AFTER_AFTER_FRAMESET:
-                        break eofloop;                        
+                        break eofloop;
                 }
             }
             while (currentPtr > 1) {
@@ -1064,796 +1168,1010 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
     }
 
-    public final void startTag(String name, Attributes attributes)
+    public final void startTag(String name, Attributes attributes, boolean selfClosing)
             throws SAXException {
         needToDropLF = false;
-        for (;;) {
-            switch (mode) {
-                case IN_TABLE_BODY:
-                    if ("tr" == name) {
-                        clearStackBackTo(findLastInTableScopeOrRootTbodyTheadTfoot());
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        mode = InsertionMode.IN_ROW;
-                        return;
-                    } else if ("td" == name || "th" == name) {
-                        err("\u201C" + name + "\u201D start tag in table body.");
-                        clearStackBackTo(findLastInTableScopeOrRootTbodyTheadTfoot());
-                        appendToCurrentNodeAndPushElement("tr",
-                                EmptyAttributes.EMPTY_ATTRIBUTES);
-                        mode = InsertionMode.IN_ROW;
-                        continue;
-                    } else if ("caption" == name || "col" == name
-                            || "colgroup" == name || "tbody" == name
-                            || "tfoot" == name || "thead" == name) {
-                        int eltPos = findLastInTableScopeOrRootTbodyTheadTfoot();
-                        if (eltPos == 0) {
+        boolean needsPostProcessing = false;
+        starttagloop: for (;;) {
+            switch (foreignFlag) {
+                case IN_FOREIGN:
+                    StackNode<T> currentNode = stack[currentPtr];
+                    String currNs = currentNode.ns;
+                    String currName = currentNode.name;
+                    if (("http://www.w3.org/1999/xhtml" == currNs)
+                            || ((!("mglyph" == name || "malignmark" == name))
+                                    && "http://www.w3.org/1998/Math/MathML" == currNs && ("mi" == currName
+                                    || "mo" == currName
+                                    || "mn" == currName
+                                    || "ms" == currName || "mtext" == currName))) {
+                        needsPostProcessing = true;
+                        // fall through to normal stuff under default
+                    } else if ("b" == name || "big" == name || "blockquote" == name || "body" == name || "br" == name || "center" == name || "code" == name || "dd" == name || "div" == name || "dl" == name || "em" == name || "embed" == name || "font" == name || "h1" == name || "h2" == name || "h3" == name || "h5" == name || "h6" == name || "head" == name || "hr" == name || "i" == name || "img" == name || "li" == name || "menu" == name || "meta" == name || "nobr" == name || "p" == name || "pre" == name || "ruby" == name || "s" == name ||  "small" == name || "span" == name || "strong" == name ||  "sub" == name || "sup" == name || "table" == name || "tt" == name || "u" == name || "ul" == name || "var" == name) {
+                        err("HTML start tag \u201C" + name + "\u201D in a foreign namespace context.");
+                        while(stack[currentPtr].ns != "http://www.w3.org/1999/xhtml") {
+                            pop();
+                        }
+                        foreignFlag = NOT_IN_FOREIGN;
+                        continue starttagloop;
+                    } else {
+                        attributes = adjustForeignAttributes(attributes);
+                        if (selfClosing) {
+                            appendVoidElementToCurrentMayFoster(currNs, name, attributes);
+                            selfClosing = false;
+                        } else {
+                            appendToCurrentNodeAndPushElementMayFoster(currNs, name, attributes);
+                        }
+                        break starttagloop;
+                    }
+                default:
+                    switch (mode) {
+                        case IN_TABLE_BODY:
+                            if ("tr" == name) {
+                                clearStackBackTo(findLastInTableScopeOrRootTbodyTheadTfoot());
+                                appendToCurrentNodeAndPushElement(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                mode = InsertionMode.IN_ROW;
+                                break starttagloop;
+                            } else if ("td" == name || "th" == name) {
+                                err("\u201C" + name
+                                        + "\u201D start tag in table body.");
+                                clearStackBackTo(findLastInTableScopeOrRootTbodyTheadTfoot());
+                                appendToCurrentNodeAndPushElement(
+                                        "http://www.w3.org/1999/xhtml", "tr",
+                                        EmptyAttributes.EMPTY_ATTRIBUTES);
+                                mode = InsertionMode.IN_ROW;
+                                continue;
+                            } else if ("caption" == name || "col" == name
+                                    || "colgroup" == name || "tbody" == name
+                                    || "tfoot" == name || "thead" == name) {
+                                int eltPos = findLastInTableScopeOrRootTbodyTheadTfoot();
+                                if (eltPos == 0) {
+                                    err("Stray \u201C" + name
+                                            + "\u201D start tag.");
+                                    break starttagloop;
+                                } else {
+                                    clearStackBackTo(eltPos);
+                                    pop();
+                                    mode = InsertionMode.IN_TABLE;
+                                    continue;
+                                }
+                            } else {
+                                // fall through to IN_TABLE
+                            }
+                        case IN_ROW:
+                            if ("td" == name || "th" == name) {
+                                clearStackBackTo(findLastOrRoot("tr"));
+                                appendToCurrentNodeAndPushElement(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                mode = InsertionMode.IN_CELL;
+                                insertMarker();
+                                break starttagloop;
+                            } else if ("caption" == name || "col" == name
+                                    || "colgroup" == name || "tbody" == name
+                                    || "tfoot" == name || "thead" == name
+                                    || "tr" == name) {
+                                int eltPos = findLastOrRoot("tr");
+                                if (eltPos == 0) {
+                                    assert context != null;
+                                    err("No table row to close.");
+                                    break starttagloop;
+                                }
+                                clearStackBackTo(eltPos);
+                                pop();
+                                mode = InsertionMode.IN_TABLE_BODY;
+                                continue;
+                            } else {
+                                // fall through to IN_TABLE
+                            }
+                        case IN_TABLE:
+                            if ("caption" == name) {
+                                clearStackBackTo(findLastOrRoot("table"));
+                                insertMarker();
+                                appendToCurrentNodeAndPushElement(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                mode = InsertionMode.IN_CAPTION;
+                                break starttagloop;
+                            } else if ("colgroup" == name) {
+                                clearStackBackTo(findLastOrRoot("table"));
+                                appendToCurrentNodeAndPushElement(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                mode = InsertionMode.IN_COLUMN_GROUP;
+                                break starttagloop;
+                            } else if ("col" == name) {
+                                clearStackBackTo(findLastOrRoot("table"));
+                                appendToCurrentNodeAndPushElement(
+                                        "http://www.w3.org/1999/xhtml",
+                                        "colgroup",
+                                        EmptyAttributes.EMPTY_ATTRIBUTES);
+                                mode = InsertionMode.IN_COLUMN_GROUP;
+                                continue;
+                            } else if ("tbody" == name || "tfoot" == name
+                                    || "thead" == name) {
+                                clearStackBackTo(findLastOrRoot("table"));
+                                appendToCurrentNodeAndPushElement(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                mode = InsertionMode.IN_TABLE_BODY;
+                                break starttagloop;
+                            } else if ("td" == name || "tr" == name
+                                    || "th" == name) {
+                                clearStackBackTo(findLastOrRoot("table"));
+                                appendToCurrentNodeAndPushElement(
+                                        "http://www.w3.org/1999/xhtml",
+                                        "tbody",
+                                        EmptyAttributes.EMPTY_ATTRIBUTES);
+                                mode = InsertionMode.IN_TABLE_BODY;
+                                continue;
+                            } else if ("table" == name) {
+                                err("Start tag for \u201Ctable\u201D seen but the previous \u201Ctable\u201D is still open.");
+                                int eltPos = findLastInTableScope(name);
+                                if (eltPos == NOT_FOUND_ON_STACK) {
+                                    assert context != null;
+                                    break starttagloop;
+                                }
+                                generateImpliedEndTags();
+                                // XXX is the next if dead code?
+                                if (!isCurrent("table")) {
+                                    err("Unclosed elements on stack.");
+                                }
+                                while (currentPtr >= eltPos) {
+                                    pop();
+                                }
+                                resetTheInsertionMode();
+                                continue;
+                            } else if (("script" == name || "style" == name)
+                                    && !isTainted()) {
+                                // XXX need to manage much more stuff here if
+                                // supporting
+                                // document.write()
+                                appendToCurrentNodeAndPushElement(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                cdataOrRcdataTimesToPop = 1;
+                                tokenizer.setContentModelFlag(
+                                        ContentModelFlag.CDATA, name);
+                                break starttagloop;
+                            } else if ("input" == name
+                                    && !isTainted()
+                                    && equalsIgnoreAsciiCase("hidden",
+                                            attributes.getValue("", "type"))) {
+                                appendVoidElementToCurrent(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes, formPointer);
+                                selfClosing = false;
+                                break starttagloop;
+                            } else {
+                                err("Start tag \u201C" + name
+                                        + "\u201D seen in \u201Ctable\u201D.");
+                                // fall through to IN_BODY
+                            }
+                        case IN_CAPTION:
+                            if ("caption" == name || "col" == name
+                                    || "colgroup" == name || "tbody" == name
+                                    || "td" == name || "tfoot" == name
+                                    || "th" == name || "thead" == name
+                                    || "tr" == name) {
+                                err("Stray \u201C"
+                                        + name
+                                        + "\u201D start tag in \u201Ccaption\u201D.");
+                                int eltPos = findLastInTableScope("caption");
+                                if (eltPos == NOT_FOUND_ON_STACK) {
+                                    break starttagloop;
+                                }
+                                generateImpliedEndTags();
+                                if (currentPtr != eltPos) {
+                                    err("Unclosed elements on stack.");
+                                }
+                                while (currentPtr >= eltPos) {
+                                    pop();
+                                }
+                                clearTheListOfActiveFormattingElementsUpToTheLastMarker();
+                                mode = InsertionMode.IN_TABLE;
+                                continue;
+                            } else {
+                                // fall through to IN_BODY
+                            }
+                        case IN_CELL:
+                            if ("caption" == name || "col" == name
+                                    || "colgroup" == name || "tbody" == name
+                                    || "td" == name || "tfoot" == name
+                                    || "th" == name || "thead" == name
+                                    || "tr" == name) {
+                                int eltPos = findLastInTableScopeTdTh();
+                                if (eltPos == NOT_FOUND_ON_STACK) {
+                                    err("No cell to close.");
+                                    break starttagloop;
+                                } else {
+                                    closeTheCell(eltPos);
+                                    continue;
+                                }
+                            } else {
+                                // fall through to IN_BODY
+                            }
+                        case IN_BODY:
+                            if ("html" == name) {
+                                err("Stray \u201Chtml\u201D start tag.");
+                                addAttributesToElement(stack[0].node,
+                                        attributes);
+                                break starttagloop;
+                            } else if ("base" == name || "link" == name
+                                    || "meta" == name || "style" == name
+                                    || "script" == name || "title" == name) {
+                                // Fall through to IN_HEAD
+                            } else if ("body" == name) {
+                                err("\u201Cbody\u201D start tag found but the \u201Cbody\u201D element is already open.");
+                                addAttributesToBody(attributes);
+                                break starttagloop;
+                            } else if ("p" == name || "div" == name
+                                    || "h1" == name || "h2" == name
+                                    || "h3" == name || "h4" == name
+                                    || "h5" == name || "h6" == name
+                                    || "blockquote" == name || "ol" == name
+                                    || "ul" == name || "dl" == name
+                                    || "fieldset" == name || "address" == name
+                                    || "menu" == name || "center" == name
+                                    || "dir" == name) {
+                                implicitlyCloseP();
+                                appendToCurrentNodeAndPushElementMayFoster(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                break starttagloop;
+                            } else if ("pre" == name || "listing" == name) {
+                                implicitlyCloseP();
+                                appendToCurrentNodeAndPushElementMayFoster(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                needToDropLF = true;
+                                break starttagloop;
+                            } else if ("form" == name) {
+                                if (formPointer != null) {
+                                    err("Saw a \u201Cform\u201D start tag, but there was already an active \u201Cform\u201D element.");
+                                    break starttagloop;
+                                } else {
+                                    implicitlyCloseP();
+                                    appendToCurrentNodeAndPushFormElementMayFoster(attributes);
+                                    break starttagloop;
+                                }
+                            } else if ("li" == name) {
+                                implicitlyCloseP();
+                                int eltPos = findLiToPop();
+                                if (eltPos < currentPtr) {
+                                    err("A \u201Cli\u201D start tag was seen but the previous \u201Cli\u201D element had open children.");
+                                }
+                                while (currentPtr >= eltPos) {
+                                    pop();
+                                }
+                                appendToCurrentNodeAndPushElementMayFoster(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                break starttagloop;
+                            } else if ("dd" == name || "dt" == name) {
+                                implicitlyCloseP();
+                                int eltPos = findDdOrDtToPop();
+                                if (eltPos < currentPtr) {
+                                    err("A definition list item start tag was seen but the previous definition list item element had open children.");
+                                }
+                                while (currentPtr >= eltPos) {
+                                    pop();
+                                }
+                                appendToCurrentNodeAndPushElementMayFoster(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                break starttagloop;
+                            } else if ("plaintext" == name) {
+                                implicitlyCloseP();
+                                appendToCurrentNodeAndPushElementMayFoster(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                tokenizer.setContentModelFlag(
+                                        ContentModelFlag.PLAINTEXT, name);
+                                break starttagloop;
+                            } else if ("a" == name) {
+                                int activeAPos = findInListOfActiveFormattingElementsContainsBetweenEndAndLastMarker("a");
+                                if (activeAPos != -1) {
+                                    err("An \u201Ca\u201D start tag seen with already an active \u201Ca\u201D element.");
+                                    StackNode<T> activeA = listOfActiveFormattingElements[activeAPos];
+                                    adoptionAgencyEndTag("a");
+                                    removeFromStack(activeA);
+                                    activeAPos = findInListOfActiveFormattingElements(activeA);
+                                    if (activeAPos != -1) {
+                                        removeFromListOfActiveFormattingElements(activeAPos);
+                                    }
+                                }
+                                reconstructTheActiveFormattingElements();
+                                appendToCurrentNodeAndPushFormattingElementMayFoster(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                break starttagloop;
+                            } else if ("i" == name || "b" == name
+                                    || "em" == name || "strong" == name
+                                    || "font" == name || "big" == name
+                                    || "s" == name || "small" == name
+                                    || "strike" == name || "tt" == name
+                                    || "u" == name) {
+                                reconstructTheActiveFormattingElements();
+                                appendToCurrentNodeAndPushFormattingElementMayFoster(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                break starttagloop;
+                            } else if ("nobr" == name) {
+                                reconstructTheActiveFormattingElements();
+                                if (NOT_FOUND_ON_STACK != findLastInScope("nobr")) {
+                                    err("\u201Cnobr\u201D start tag seen when there was an open \u201Cnobr\u201D element in scope.");
+                                    adoptionAgencyEndTag("nobr");
+                                }
+                                appendToCurrentNodeAndPushFormattingElementMayFoster(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                break starttagloop;
+                            } else if ("button" == name) {
+                                int eltPos = findLastInScope(name);
+                                if (eltPos != NOT_FOUND_ON_STACK) {
+                                    err("\u201Cbutton\u201D start tag seen when there was an open \u201Cbutton\u201D element in scope.");
+                                    generateImpliedEndTags();
+                                    if (!isCurrent("button")) {
+                                        err("There was an open \u201Cbutton\u201D element in scope with unclosed children.");
+                                    }
+                                    while (currentPtr >= eltPos) {
+                                        pop();
+                                    }
+                                    clearTheListOfActiveFormattingElementsUpToTheLastMarker();
+                                    continue;
+                                } else {
+                                    reconstructTheActiveFormattingElements();
+                                    appendToCurrentNodeAndPushElementMayFoster(
+                                            "http://www.w3.org/1999/xhtml",
+                                            name, attributes, formPointer);
+                                    insertMarker();
+                                    break starttagloop;
+                                }
+                            } else if ("object" == name || "marquee" == name
+                                    || "applet" == name) {
+                                reconstructTheActiveFormattingElements();
+                                appendToCurrentNodeAndPushElementMayFoster(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                insertMarker();
+                                break starttagloop;
+                            } else if ("xmp" == name) {
+                                reconstructTheActiveFormattingElements();
+                                appendToCurrentNodeAndPushElementMayFoster(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                cdataOrRcdataTimesToPop = 1;
+                                tokenizer.setContentModelFlag(
+                                        ContentModelFlag.CDATA, name);
+                                break starttagloop;
+                            } else if ("table" == name) {
+                                implicitlyCloseP();
+                                appendToCurrentNodeAndPushElementMayFoster(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                mode = InsertionMode.IN_TABLE;
+                                break starttagloop;
+                            } else if ("br" == name || "img" == name
+                                    || "embed" == name || "param" == name
+                                    || "area" == name || "basefont" == name
+                                    || "bgsound" == name || "spacer" == name
+                                    || "wbr" == name) {
+                                reconstructTheActiveFormattingElements();
+                                appendVoidElementToCurrentMayFoster(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                selfClosing = false;
+                                break starttagloop;
+                            } else if ("hr" == name) {
+                                implicitlyCloseP();
+                                appendVoidElementToCurrentMayFoster(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                selfClosing = false;
+                                break starttagloop;
+                            } else if ("image" == name) {
+                                err("Saw a start tag \u201Cimage\u201D.");
+                                name = "img";
+                                continue;
+                            } else if ("input" == name) {
+                                reconstructTheActiveFormattingElements();
+                                appendVoidElementToCurrentMayFoster(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes, formPointer);
+                                selfClosing = false;
+                                break starttagloop;
+                            } else if ("isindex" == name) {
+                                err("\u201Cisindex\u201D seen.");
+                                if (formPointer != null) {
+                                    break starttagloop;
+                                }
+                                implicitlyCloseP();
+                                AttributesImpl formAttrs = tokenizer.newAttributes();
+                                int actionIndex = attributes.getIndex("action");
+                                if (actionIndex > -1) {
+                                    formAttrs.addAttribute("action",
+                                            attributes.getValue(actionIndex));
+                                }
+                                appendToCurrentNodeAndPushFormElementMayFoster(formAttrs);
+                                appendVoidElementToCurrentMayFoster(
+                                        "http://www.w3.org/1999/xhtml", "hr",
+                                        EmptyAttributes.EMPTY_ATTRIBUTES);
+                                appendToCurrentNodeAndPushElementMayFoster(
+                                        "http://www.w3.org/1999/xhtml", "p",
+                                        EmptyAttributes.EMPTY_ATTRIBUTES);
+                                appendToCurrentNodeAndPushElementMayFoster(
+                                        "http://www.w3.org/1999/xhtml",
+                                        "label",
+                                        EmptyAttributes.EMPTY_ATTRIBUTES);
+                                int promptIndex = attributes.getIndex("prompt");
+                                if (promptIndex > -1) {
+                                    char[] prompt = attributes.getValue(
+                                            promptIndex).toCharArray();
+                                    appendCharacters(stack[currentPtr].node,
+                                            prompt, 0, prompt.length);
+                                } else {
+                                    // XXX localization
+                                    appendCharacters(stack[currentPtr].node,
+                                            ISINDEX_PROMPT, 0,
+                                            ISINDEX_PROMPT.length);
+                                }
+                                AttributesImpl inputAttributes = tokenizer.newAttributes();
+                                inputAttributes.addAttribute("name", "isindex");
+                                for (int i = 0; i < attributes.getLength(); i++) {
+                                    String attributeQName = attributes.getQName(i);
+                                    if (!("name".equals(attributeQName)
+                                            || "action".equals(attributeQName) || "prompt".equals(attributeQName))) {
+                                        inputAttributes.addAttribute(
+                                                attributeQName,
+                                                attributes.getValue(i));
+                                    }
+                                }
+                                appendVoidElementToCurrentMayFoster(
+                                        "http://www.w3.org/1999/xhtml",
+                                        "input", inputAttributes, formPointer);
+                                // XXX localization
+                                pop(); // label
+                                pop(); // p
+                                appendVoidElementToCurrentMayFoster(
+                                        "http://www.w3.org/1999/xhtml", "hr",
+                                        EmptyAttributes.EMPTY_ATTRIBUTES);
+                                pop(); // form
+                                selfClosing = false;
+                                break starttagloop;
+                            } else if ("textarea" == name) {
+                                appendToCurrentNodeAndPushElementMayFoster(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes, formPointer);
+                                tokenizer.setContentModelFlag(
+                                        ContentModelFlag.RCDATA, name);
+                                cdataOrRcdataTimesToPop = 1;
+                                needToDropLF = true;
+                                break starttagloop;
+                            } else if ("iframe" == name || "noembed" == name
+                                    || "noframes" == name
+                                    || ("noscript" == name && scriptingEnabled)) {
+                                appendToCurrentNodeAndPushElementMayFoster(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                cdataOrRcdataTimesToPop = 1;
+                                tokenizer.setContentModelFlag(
+                                        ContentModelFlag.CDATA, name);
+                                break starttagloop;
+                            } else if ("select" == name) {
+                                reconstructTheActiveFormattingElements();
+                                appendToCurrentNodeAndPushElementMayFoster(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes, formPointer);
+                                switch (mode) {
+                                    case IN_TABLE:
+                                    case IN_CAPTION:
+                                    case IN_COLUMN_GROUP:
+                                    case IN_TABLE_BODY:
+                                    case IN_ROW:
+                                    case IN_CELL:
+                                        mode = InsertionMode.IN_SELECT_IN_TABLE;
+                                        break;
+                                    default:
+                                        mode = InsertionMode.IN_SELECT;
+                                        break;
+                                }
+                                break starttagloop;
+                            } else if ("math" == name) {
+                                reconstructTheActiveFormattingElements();
+                                attributes = adjustForeignAttributes(attributes);
+                                if (selfClosing) {
+                                    appendVoidElementToCurrentMayFoster("http://www.w3.org/1998/Math/MathML", name, attributes);
+                                    selfClosing = false;
+                                } else {
+                                    appendToCurrentNodeAndPushElementMayFoster("http://www.w3.org/1998/Math/MathML", name, attributes);
+                                    foreignFlag = IN_FOREIGN;
+                                }
+                                break starttagloop;
+                            } else if ("caption" == name || "col" == name
+                                    || "colgroup" == name || "frame" == name
+                                    || "frameset" == name || "head" == name
+                                    || "option" == name || "optgroup" == name
+                                    || "tbody" == name || "td" == name
+                                    || "tfoot" == name || "th" == name
+                                    || "thead" == name || "tr" == name) {
+                                err("Stray start tag \u201C" + name + "\u201D.");
+                                break starttagloop;
+                            } else {
+                                reconstructTheActiveFormattingElements();
+                                appendToCurrentNodeAndPushElementMayFoster(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                break starttagloop;
+                            }
+                        case IN_HEAD:
+                            if ("html" == name) {
+                                err("Stray \u201Chtml\u201D start tag.");
+                                addAttributesToElement(stack[0].node,
+                                        attributes);
+                                break starttagloop;
+                            } else if ("base" == name) {
+                                appendVoidElementToCurrentMayFoster(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                selfClosing = false;
+                                break starttagloop;
+                            } else if ("meta" == name || "link" == name) {
+                                // Fall through to IN_HEAD_NOSCRIPT
+                            } else if ("title" == name) {
+                                appendToCurrentNodeAndPushElementMayFoster(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                cdataOrRcdataTimesToPop = 1;
+                                tokenizer.setContentModelFlag(
+                                        ContentModelFlag.RCDATA, name);
+                                break starttagloop;
+                            } else if ("noscript" == name) {
+                                if (scriptingEnabled) {
+                                    appendToCurrentNodeAndPushElement(
+                                            "http://www.w3.org/1999/xhtml",
+                                            name, attributes);
+                                    cdataOrRcdataTimesToPop = 1;
+                                    tokenizer.setContentModelFlag(
+                                            ContentModelFlag.CDATA, name);
+                                } else {
+                                    appendToCurrentNodeAndPushElementMayFoster(
+                                            "http://www.w3.org/1999/xhtml",
+                                            name, attributes);
+                                    mode = InsertionMode.IN_HEAD_NOSCRIPT;
+                                }
+                                break starttagloop;
+                            } else if ("script" == name || "style" == name) {
+                                // XXX need to manage much more stuff here if
+                                // supporting
+                                // document.write()
+                                appendToCurrentNodeAndPushElementMayFoster(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                cdataOrRcdataTimesToPop = 1;
+                                tokenizer.setContentModelFlag(
+                                        ContentModelFlag.CDATA, name);
+                                break starttagloop;
+                            } else if ("head" == name) {
+                                /* Parse error. */
+                                err("Start tag for \u201Chead\u201D seen when \u201Chead\u201D was already open.");
+                                /* Ignore the token. */
+                                break starttagloop;
+                            } else {
+                                pop();
+                                mode = InsertionMode.AFTER_HEAD;
+                                continue;
+                            }
+                        case IN_HEAD_NOSCRIPT:
+                            // XXX did Hixie really mean to omit "base" here?
+                            if ("html" == name) {
+                                err("Stray \u201Chtml\u201D start tag.");
+                                addAttributesToElement(stack[0].node,
+                                        attributes);
+                                break starttagloop;
+                            } else if ("link" == name) {
+                                appendVoidElementToCurrentMayFoster(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                selfClosing = false;
+                                break starttagloop;
+                            } else if ("meta" == name) {
+                                checkMetaCharset(attributes);
+                                appendVoidElementToCurrentMayFoster(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                selfClosing = false;
+                                break starttagloop;
+                            } else if ("style" == name) {
+                                appendToCurrentNodeAndPushElement(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                cdataOrRcdataTimesToPop = 1;
+                                tokenizer.setContentModelFlag(
+                                        ContentModelFlag.CDATA, name);
+                                break starttagloop;
+                            } else if ("head" == name) {
+                                err("Start tag for \u201Chead\u201D seen when \u201Chead\u201D was already open.");
+                                break starttagloop;
+                            } else if ("noscript" == name) {
+                                err("Start tag for \u201Cnoscript\u201D seen when \u201Cnoscript\u201D was already open.");
+                                break starttagloop;
+                            } else {
+                                err("Bad start tag in \u201Cnoscript\u201D in \u201Chead\u201D.");
+                                pop();
+                                mode = InsertionMode.IN_HEAD;
+                                continue;
+                            }
+                        case IN_COLUMN_GROUP:
+                            if ("html" == name) {
+                                err("Stray \u201Chtml\u201D start tag.");
+                                addAttributesToElement(stack[0].node,
+                                        attributes);
+                                break starttagloop;
+                            } else if ("col" == name) {
+                                appendVoidElementToCurrentMayFoster(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                selfClosing = false;
+                                break starttagloop;
+                            } else {
+                                if (currentPtr == 0) {
+                                    assert context != null;
+                                    err("Garbage in \u201Ccolgroup\u201D fragment.");
+                                    break starttagloop;
+                                }
+                                pop();
+                                mode = InsertionMode.IN_TABLE;
+                                continue;
+                            }
+                        case IN_SELECT_IN_TABLE:
+                            if ("caption" == name || "table" == name
+                                    || "tbody" == name || "tfoot" == name
+                                    || "thead" == name || "tr" == name
+                                    || "td" == name || "th" == name) {
+                                err("\u201C"
+                                        + name
+                                        + "\u201D start tag with \u201Cselect\u201D open.");
+                                endSelect();
+                                continue;
+                            } else {
+                                // fall through to IN_SELECT
+                            }
+                        case IN_SELECT:
+                            if ("html" == name) {
+                                err("Stray \u201Chtml\u201D start tag.");
+                                addAttributesToElement(stack[0].node,
+                                        attributes);
+                                break starttagloop;
+                            } else if ("option" == name) {
+                                if (isCurrent("option")) {
+                                    pop();
+                                }
+                                appendToCurrentNodeAndPushElement(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                break starttagloop;
+                            } else if ("optgroup" == name) {
+                                if (isCurrent("option")) {
+                                    pop();
+                                }
+                                if (isCurrent("optgroup")) {
+                                    pop();
+                                }
+                                appendToCurrentNodeAndPushElement(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                break starttagloop;
+                            } else if ("select" == name) {
+                                err("\u201Cselect\u201D start tag where end tag expected.");
+                                int eltPos = findLastInTableScope(name);
+                                if (eltPos == NOT_FOUND_ON_STACK) {
+                                    assert context != null;
+                                    err("No \u201Cselect\u201D in table scope.");
+                                    break starttagloop;
+                                } else {
+                                    while (currentPtr >= eltPos) {
+                                        pop();
+                                    }
+                                    resetTheInsertionMode();
+                                    break starttagloop;
+                                }
+                            } else if ("input" == name) {
+                                err("\u201Cinput\u201D start tag seen in \u201Cselect\2201D.");
+                                endSelect();
+                                continue;
+                            } else {
+                                err("Stray \u201C" + name + "\u201D start tag.");
+                                break starttagloop;
+                            }
+                        case AFTER_BODY:
+                            if ("html" == name) {
+                                err("Stray \u201Chtml\u201D start tag.");
+                                addAttributesToElement(stack[0].node,
+                                        attributes);
+                                break starttagloop;
+                            } else {
+                                err("Stray \u201C" + name + "\u201D start tag.");
+                                if (conformingAndStreaming) {
+                                    fatal();
+                                }
+                                mode = InsertionMode.IN_BODY;
+                                continue;
+                            }
+                        case IN_FRAMESET:
+                            if ("frameset" == name) {
+                                appendToCurrentNodeAndPushElement(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                break starttagloop;
+                            } else if ("frame" == name) {
+                                appendVoidElementToCurrentMayFoster(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                selfClosing = false;
+                                break starttagloop;
+                            } else {
+                                // fall through to AFTER_FRAMESET
+                            }
+                        case AFTER_FRAMESET:
+                            if ("html" == name) {
+                                err("Stray \u201Chtml\u201D start tag.");
+                                addAttributesToElement(stack[0].node,
+                                        attributes);
+                                break starttagloop;
+                            } else if ("noframes" == name) {
+                                appendToCurrentNodeAndPushElement(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                cdataOrRcdataTimesToPop = 1;
+                                tokenizer.setContentModelFlag(
+                                        ContentModelFlag.CDATA, name);
+                                break starttagloop;
+                            } else {
+                                err("Stray \u201C" + name + "\u201D start tag.");
+                                break starttagloop;
+                            }
+                        case INITIAL:
+                            /*
+                             * Parse error.
+                             */
+                            if (doctypeExpectation != DoctypeExpectation.NO_DOCTYPE_ERRORS) {
+                                err("Start tag seen without seeing a doctype first.");
+                            }
+                            /*
+                             * 
+                             * Set the document to quirks mode.
+                             */
+                            documentModeInternal(DocumentMode.QUIRKS_MODE,
+                                    null, null, false);
+                            /*
+                             * Then, switch to the root element mode of the tree
+                             * construction stage
+                             */
+                            mode = InsertionMode.BEFORE_HTML;
+                            /*
+                             * and reprocess the current token.
+                             */
+                            continue;
+                        case BEFORE_HTML:
+                            // optimize error check and streaming SAX by
+                            // hoisting
+                            // "html" handling here.
+                            if ("html" == name) {
+                                if (attributes.getLength() == 0) {
+                                    // This has the right magic side effect that
+                                    // it
+                                    // makes attributes in SAX Tree mutable.
+                                    appendHtmlElementToDocumentAndPush();
+                                } else {
+                                    appendHtmlElementToDocumentAndPush(attributes);
+                                }
+                                // XXX application cache should fire here
+                                mode = InsertionMode.BEFORE_HEAD;
+                                break starttagloop;
+                            } else {
+                                /*
+                                 * Create an HTMLElement node with the tag name
+                                 * html, in the HTML namespace. Append it to the
+                                 * Document object.
+                                 */
+                                appendHtmlElementToDocumentAndPush();
+                                /* Switch to the main mode */
+                                mode = InsertionMode.BEFORE_HEAD;
+                                /*
+                                 * reprocess the current token.
+                                 * 
+                                 */
+                                continue;
+                            }
+                        case BEFORE_HEAD:
+                            if ("html" == name) {
+                                err("Stray \u201Chtml\u201D start tag.");
+                                addAttributesToElement(stack[0].node,
+                                        attributes);
+                                break starttagloop;
+                            } else if ("head" == name) {
+                                /*
+                                 * A start tag whose tag name is "head"
+                                 * 
+                                 * Create an element for the token.
+                                 * 
+                                 * Set the head element pointer to this new
+                                 * element node.
+                                 * 
+                                 * Append the new element to the current node
+                                 * and push it onto the stack of open elements.
+                                 */
+                                appendToCurrentNodeAndPushHeadElement(attributes);
+                                /*
+                                 * 
+                                 * Change the insertion mode to "in head".
+                                 * 
+                                 */
+                                mode = InsertionMode.IN_HEAD;
+                                break starttagloop;
+                            }
+
+                            /*
+                             * Any other start tag token
+                             */
+
+                            /*
+                             * Act as if a start tag token with the tag name
+                             * "head" and no attributes had been seen,
+                             */
+                            appendToCurrentNodeAndPushHeadElement(EmptyAttributes.EMPTY_ATTRIBUTES);
+                            mode = InsertionMode.IN_HEAD;
+                            /*
+                             * then reprocess the current token.
+                             * 
+                             * This will result in an empty head element being
+                             * generated, with the current token being
+                             * reprocessed in the "after head" insertion mode.
+                             */
+                            continue;
+                        case AFTER_HEAD:
+                            if ("html" == name) {
+                                err("Stray \u201Chtml\u201D start tag.");
+                                addAttributesToElement(stack[0].node,
+                                        attributes);
+                                break starttagloop;
+                            } else if ("body" == name) {
+                                if (attributes.getLength() == 0) {
+                                    // This has the right magic side effect that
+                                    // it
+                                    // makes attributes in SAX Tree mutable.
+                                    appendToCurrentNodeAndPushBodyElement();
+                                } else {
+                                    appendToCurrentNodeAndPushBodyElement(attributes);
+                                }
+                                mode = InsertionMode.IN_BODY;
+                                break starttagloop;
+                            } else if ("frameset" == name) {
+                                appendToCurrentNodeAndPushElement(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                mode = InsertionMode.IN_FRAMESET;
+                                break starttagloop;
+                            } else if ("base" == name) {
+                                err("\u201Cbase\u201D element outside \u201Chead\u201D.");
+                                if (!nonConformingAndStreaming) {
+                                    pushHeadPointerOntoStack();
+                                }
+                                appendVoidElementToCurrentMayFoster(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                selfClosing = false;
+                                if (!nonConformingAndStreaming) {
+                                    pop(); // head
+                                }
+                                break starttagloop;
+                            } else if ("link" == name) {
+                                err("\u201Clink\u201D element outside \u201Chead\u201D.");
+                                if (!nonConformingAndStreaming) {
+                                    pushHeadPointerOntoStack();
+                                }
+                                appendVoidElementToCurrentMayFoster(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                selfClosing = false;
+                                if (!nonConformingAndStreaming) {
+                                    pop(); // head
+                                }
+                                break starttagloop;
+                            } else if ("meta" == name) {
+                                err("\u201Cmeta\u201D element outside \u201Chead\u201D.");
+                                checkMetaCharset(attributes);
+                                if (!nonConformingAndStreaming) {
+                                    pushHeadPointerOntoStack();
+                                }
+                                appendVoidElementToCurrentMayFoster(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                selfClosing = false;
+                                if (!nonConformingAndStreaming) {
+                                    pop(); // head
+                                }
+                                break starttagloop;
+                            } else if ("script" == name) {
+                                err("\u201Cscript\u201D element between \u201Chead\u201D and \u201Cbody\u201D.");
+                                if (!nonConformingAndStreaming) {
+                                    pushHeadPointerOntoStack();
+                                }
+                                appendToCurrentNodeAndPushElement(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                cdataOrRcdataTimesToPop = nonConformingAndStreaming ? 1
+                                        : 2; // pops head
+                                tokenizer.setContentModelFlag(
+                                        ContentModelFlag.CDATA, name);
+                                break starttagloop;
+                            } else if ("style" == name) {
+                                err("\u201Cstyle\u201D element between \u201Chead\u201D and \u201Cbody\u201D.");
+                                if (!nonConformingAndStreaming) {
+                                    pushHeadPointerOntoStack();
+                                }
+                                appendToCurrentNodeAndPushElement(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                cdataOrRcdataTimesToPop = nonConformingAndStreaming ? 1
+                                        : 2; // pops head
+                                tokenizer.setContentModelFlag(
+                                        ContentModelFlag.CDATA, name);
+                                break starttagloop;
+                            } else if ("title" == name) {
+                                err("\u201Ctitle\u201D element outside \u201Chead\u201D.");
+                                if (!nonConformingAndStreaming) {
+                                    pushHeadPointerOntoStack();
+                                }
+                                appendToCurrentNodeAndPushElement(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        attributes);
+                                cdataOrRcdataTimesToPop = nonConformingAndStreaming ? 1
+                                        : 2; // pops head
+                                tokenizer.setContentModelFlag(
+                                        ContentModelFlag.RCDATA, name);
+                                break starttagloop;
+                            } else {
+                                appendToCurrentNodeAndPushBodyElement();
+                                mode = InsertionMode.IN_BODY;
+                                continue;
+                            }
+                        case AFTER_AFTER_BODY:
                             err("Stray \u201C" + name + "\u201D start tag.");
-                            return;
-                        } else {
-                            clearStackBackTo(eltPos);
-                            pop();
-                            mode = InsertionMode.IN_TABLE;
+                            if (conformingAndStreaming) {
+                                fatal();
+                            }
+                            mode = InsertionMode.IN_BODY;
                             continue;
-                        }
-                    } else {
-                        // fall through to IN_TABLE
-                    }
-                case IN_ROW:
-                    if ("td" == name || "th" == name) {
-                        clearStackBackTo(findLastOrRoot("tr"));
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        mode = InsertionMode.IN_CELL;
-                        insertMarker();
-                        return;
-                    } else if ("caption" == name || "col" == name
-                            || "colgroup" == name || "tbody" == name
-                            || "tfoot" == name || "thead" == name
-                            || "tr" == name) {
-                        int eltPos = findLastOrRoot("tr");
-                        if (eltPos == 0) {
-                            assert context != null;
-                            err("No table row to close.");
-                            return;
-                        }
-                        clearStackBackTo(eltPos);
-                        pop();
-                        mode = InsertionMode.IN_TABLE_BODY;
-                        continue;
-                    } else {
-                        // fall through to IN_TABLE
-                    }
-                case IN_TABLE:
-                    if ("caption" == name) {
-                        clearStackBackTo(findLastOrRoot("table"));
-                        insertMarker();
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        mode = InsertionMode.IN_CAPTION;
-                        return;
-                    } else if ("colgroup" == name) {
-                        clearStackBackTo(findLastOrRoot("table"));
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        mode = InsertionMode.IN_COLUMN_GROUP;
-                        return;
-                    } else if ("col" == name) {
-                        clearStackBackTo(findLastOrRoot("table"));
-                        appendToCurrentNodeAndPushElement("colgroup",
-                                EmptyAttributes.EMPTY_ATTRIBUTES);
-                        mode = InsertionMode.IN_COLUMN_GROUP;
-                        continue;
-                    } else if ("tbody" == name || "tfoot" == name
-                            || "thead" == name) {
-                        clearStackBackTo(findLastOrRoot("table"));
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        mode = InsertionMode.IN_TABLE_BODY;
-                        return;
-                    } else if ("td" == name || "tr" == name || "th" == name) {
-                        clearStackBackTo(findLastOrRoot("table"));
-                        appendToCurrentNodeAndPushElement("tbody",
-                                EmptyAttributes.EMPTY_ATTRIBUTES);
-                        mode = InsertionMode.IN_TABLE_BODY;
-                        continue;
-                    } else if ("table" == name) {
-                        err("Start tag for \u201Ctable\u201D seen but the previous \u201Ctable\u201D is still open.");
-                        int eltPos = findLastInTableScope(name);
-                        if (eltPos == NOT_FOUND_ON_STACK) {
-                            assert context != null;
-                            return;
-                        }
-                        generateImpliedEndTags();
-                        // XXX is the next if dead code?
-                        if (!isCurrent("table")) {
-                            err("Unclosed elements on stack.");
-                        }
-                        while (currentPtr >= eltPos) {
-                            pop();
-                        }
-                        resetTheInsertionMode();
-                        continue;
-                    } else if (("script" == name || "style" == name) && !isTainted()) {
-                        // XXX need to manage much more stuff here if supporting
-                        // document.write()
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        cdataOrRcdataTimesToPop = 1;
-                        tokenizer.setContentModelFlag(ContentModelFlag.CDATA,
-                                name);
-                        return;
-                    } else if ("input" == name && !isTainted() && equalsIgnoreAsciiCase("hidden", attributes.getValue("", "type"))) {
-                        appendVoidElementToCurrent(name, attributes, formPointer);
-                        return;
-                    } else {
-                        err("Start tag \u201C" + name
-                                + "\u201D seen in \u201Ctable\u201D.");
-                        // fall through to IN_BODY
-                    }
-                case IN_CAPTION:
-                    if ("caption" == name || "col" == name
-                            || "colgroup" == name || "tbody" == name
-                            || "td" == name || "tfoot" == name || "th" == name
-                            || "thead" == name || "tr" == name) {
-                        err("Stray \u201C" + name
-                                + "\u201D start tag in \u201Ccaption\u201D.");
-                        int eltPos = findLastInTableScope("caption");
-                        if (eltPos == NOT_FOUND_ON_STACK) {
-                            return;
-                        }
-                        generateImpliedEndTags();
-                        if (currentPtr != eltPos) {
-                            err("Unclosed elements on stack.");
-                        }
-                        while (currentPtr >= eltPos) {
-                            pop();
-                        }
-                        clearTheListOfActiveFormattingElementsUpToTheLastMarker();
-                        mode = InsertionMode.IN_TABLE;
-                        continue;
-                    } else {
-                        // fall through to IN_BODY
-                    }
-                case IN_CELL:
-                    if ("caption" == name || "col" == name
-                            || "colgroup" == name || "tbody" == name
-                            || "td" == name || "tfoot" == name || "th" == name
-                            || "thead" == name || "tr" == name) {
-                        int eltPos = findLastInTableScopeTdTh();
-                        if (eltPos == NOT_FOUND_ON_STACK) {
-                            err("No cell to close.");
-                            return;
-                        } else {
-                            closeTheCell(eltPos);
+                        case AFTER_AFTER_FRAMESET:
+                            err("Stray \u201C" + name + "\u201D start tag.");
+                            if (conformingAndStreaming) {
+                                fatal();
+                            }
+                            mode = InsertionMode.IN_FRAMESET;
                             continue;
-                        }
-                    } else {
-                        // fall through to IN_BODY
                     }
-                case IN_BODY:
-                    if ("html" == name) {
-                        err("Stray \u201Chtml\u201D start tag.");
-                        addAttributesToElement(stack[0].node, attributes);
-                        return;
-                    } else if ("base" == name || "link" == name || "meta" == name
-                            || "style" == name || "script" == name || "title" == name) {
-                        // Fall through to IN_HEAD
-                    } else if ("body" == name) {
-                        err("\u201Cbody\u201D start tag found but the \u201Cbody\u201D element is already open.");
-                        addAttributesToBody(attributes);
-                        return;
-                    } else if ("p" == name || "div" == name || "h1" == name
-                            || "h2" == name || "h3" == name || "h4" == name
-                            || "h5" == name || "h6" == name
-                            || "blockquote" == name || "ol" == name
-                            || "ul" == name || "dl" == name
-                            || "fieldset" == name || "address" == name
-                            || "menu" == name || "center" == name
-                            || "dir" == name) {
-                        implicitlyCloseP();
-                        appendToCurrentNodeAndPushElementMayFoster(name, attributes);
-                        return;
-                    } else if ("pre" == name || "listing" == name) {
-                        implicitlyCloseP();
-                        appendToCurrentNodeAndPushElementMayFoster(name, attributes);
-                        needToDropLF = true;
-                        return;
-                    } else if ("form" == name) {
-                        if (formPointer != null) {
-                            err("Saw a \u201Cform\u201D start tag, but there was already an active \u201Cform\u201D element.");
-                            return;
-                        } else {
-                            implicitlyCloseP();
-                            appendToCurrentNodeAndPushFormElementMayFoster(attributes);
-                            return;
-                        }
-                    } else if ("li" == name) {
-                        implicitlyCloseP();
-                        int eltPos = findLiToPop();
-                        if (eltPos < currentPtr) {
-                            err("A \u201Cli\u201D start tag was seen but the previous \u201Cli\u201D element had open children.");
-                        }
-                        while (currentPtr >= eltPos) {
-                            pop();
-                        }
-                        appendToCurrentNodeAndPushElementMayFoster(name, attributes);
-                        return;
-                    } else if ("dd" == name || "dt" == name) {
-                        implicitlyCloseP();
-                        int eltPos = findDdOrDtToPop();
-                        if (eltPos < currentPtr) {
-                            err("A definition list item start tag was seen but the previous definition list item element had open children.");
-                        }
-                        while (currentPtr >= eltPos) {
-                            pop();
-                        }
-                        appendToCurrentNodeAndPushElementMayFoster(name, attributes);
-                        return;
-                    } else if ("plaintext" == name) {
-                        implicitlyCloseP();
-                        appendToCurrentNodeAndPushElementMayFoster(name, attributes);
-                        tokenizer.setContentModelFlag(
-                                ContentModelFlag.PLAINTEXT, name);
-                        return;
-                    } else if ("a" == name) {
-                        int activeAPos = findInListOfActiveFormattingElementsContainsBetweenEndAndLastMarker("a");
-                        if (activeAPos != -1) {
-                            err("An \u201Ca\u201D start tag seen with already an active \u201Ca\u201D element.");
-                            StackNode<T> activeA = listOfActiveFormattingElements[activeAPos];
-                            adoptionAgencyEndTag("a");
-                            removeFromStack(activeA);
-                            activeAPos = findInListOfActiveFormattingElements(activeA);
-                            if (activeAPos != -1) {
-                                removeFromListOfActiveFormattingElements(activeAPos);
-                            }
-                        }
-                        reconstructTheActiveFormattingElements();
-                        appendToCurrentNodeAndPushFormattingElementMayFoster(name,
-                                attributes);
-                        return;
-                    } else if ("i" == name || "b" == name || "em" == name
-                            || "strong" == name || "font" == name
-                            || "big" == name || "s" == name || "small" == name
-                            || "strike" == name || "tt" == name || "u" == name) {
-                        reconstructTheActiveFormattingElements();
-                        appendToCurrentNodeAndPushFormattingElementMayFoster(name,
-                                attributes);
-                        return;
-                    } else if ("nobr" == name) {
-                        reconstructTheActiveFormattingElements();
-                        if (NOT_FOUND_ON_STACK != findLastInScope("nobr")) {
-                            err("\u201Cnobr\u201D start tag seen when there was an open \u201Cnobr\u201D element in scope.");
-                            adoptionAgencyEndTag("nobr");
-                        }
-                        appendToCurrentNodeAndPushFormattingElementMayFoster(name,
-                                attributes);
-                        return;
-                    } else if ("button" == name) {
-                        int eltPos = findLastInScope(name);
-                        if (eltPos != NOT_FOUND_ON_STACK) {
-                            err("\u201Cbutton\u201D start tag seen when there was an open \u201Cbutton\u201D element in scope.");
-                            generateImpliedEndTags();
-                            if (!isCurrent("button")) {
-                                err("There was an open \u201Cbutton\u201D element in scope with unclosed children.");
-                            }
-                            while (currentPtr >= eltPos) {
-                                pop();
-                            }
-                            clearTheListOfActiveFormattingElementsUpToTheLastMarker();
-                            continue;
-                        } else {
-                            reconstructTheActiveFormattingElements();
-                            appendToCurrentNodeAndPushElementMayFoster(name, attributes, formPointer);
-                            insertMarker();
-                            return;
-                        }
-                    } else if ("object" == name || "marquee" == name || "applet" == name) {
-                        reconstructTheActiveFormattingElements();
-                        appendToCurrentNodeAndPushElementMayFoster(name, attributes);
-                        insertMarker();
-                        return;
-                    } else if ("xmp" == name) {
-                        reconstructTheActiveFormattingElements();
-                        appendToCurrentNodeAndPushElementMayFoster(name, attributes);
-                        cdataOrRcdataTimesToPop = 1;
-                        tokenizer.setContentModelFlag(ContentModelFlag.CDATA,
-                                name);
-                        return;
-                    } else if ("table" == name) {
-                        implicitlyCloseP();
-                        appendToCurrentNodeAndPushElementMayFoster(name, attributes);
-                        mode = InsertionMode.IN_TABLE;
-                        return;
-                    } else if ("br" == name || "img" == name || "embed" == name
-                            || "param" == name || "area" == name
-                            || "basefont" == name || "bgsound" == name
-                            || "spacer" == name || "wbr" == name) {
-                        reconstructTheActiveFormattingElements();
-                        appendVoidElementToCurrentMayFoster(name, attributes);
-                        return;
-                    } else if ("hr" == name) {
-                        implicitlyCloseP();
-                        appendVoidElementToCurrentMayFoster(name, attributes);
-                        return;
-                    } else if ("image" == name) {
-                        err("Saw a start tag \u201Cimage\u201D.");
-                        name = "img";
-                        continue;
-                    } else if ("input" == name) {
-                        reconstructTheActiveFormattingElements();
-                        appendVoidElementToCurrentMayFoster(name, attributes, formPointer);
-                        return;
-                    } else if ("isindex" == name) {
-                        err("\u201Cisindex\u201D seen.");
-                        if (formPointer != null) {
-                            return;
-                        }
-                        implicitlyCloseP();
-                        AttributesImpl formAttrs = tokenizer.newAttributes();
-                        int actionIndex = attributes.getIndex("action");
-                        if (actionIndex > -1) {
-                            formAttrs.addAttribute("action",
-                                    attributes.getValue(actionIndex));
-                        }
-                        appendToCurrentNodeAndPushFormElementMayFoster(formAttrs);
-                        appendVoidElementToCurrentMayFoster("hr", EmptyAttributes.EMPTY_ATTRIBUTES);
-                        appendToCurrentNodeAndPushElementMayFoster("p",
-                                EmptyAttributes.EMPTY_ATTRIBUTES);
-                        appendToCurrentNodeAndPushElementMayFoster("label",
-                                EmptyAttributes.EMPTY_ATTRIBUTES);
-                        int promptIndex = attributes.getIndex("prompt");
-                        if (promptIndex > -1) {
-                            char[] prompt = attributes.getValue(promptIndex).toCharArray();
-                            appendCharacters(stack[currentPtr].node, prompt,
-                                    0, prompt.length);
-                        } else {
-                            // XXX localization
-                            appendCharacters(stack[currentPtr].node, ISINDEX_PROMPT,
-                                    0, ISINDEX_PROMPT.length);
-                        }
-                        AttributesImpl inputAttributes = tokenizer.newAttributes();
-                        inputAttributes.addAttribute("name", "isindex");
-                        for (int i = 0; i < attributes.getLength(); i++) {
-                            String attributeQName = attributes.getQName(i);
-                            if (!("name".equals(attributeQName)
-                                    || "action".equals(attributeQName) || "prompt".equals(attributeQName))) {
-                                inputAttributes.addAttribute(attributeQName,
-                                        attributes.getValue(i));
-                            }
-                        }
-                        appendVoidElementToCurrentMayFoster("input", inputAttributes, formPointer);
-                        // XXX localization
-                        pop(); // label
-                        pop(); // p
-                        appendVoidElementToCurrentMayFoster("hr", EmptyAttributes.EMPTY_ATTRIBUTES);
-                        pop(); // form
-                        return;
-                    } else if ("textarea" == name) {
-                        appendToCurrentNodeAndPushElementMayFoster(name, attributes, formPointer);
-                        tokenizer.setContentModelFlag(ContentModelFlag.RCDATA,
-                                name);
-                        cdataOrRcdataTimesToPop = 1;
-                        needToDropLF = true;
-                        return;
-                    } else if ("iframe" == name || "noembed" == name
-                            || "noframes" == name
-                            || ("noscript" == name && scriptingEnabled)) {
-                        appendToCurrentNodeAndPushElementMayFoster(name, attributes);
-                        cdataOrRcdataTimesToPop = 1;
-                        tokenizer.setContentModelFlag(ContentModelFlag.CDATA,
-                                name);
-                        return;
-                    } else if ("select" == name) {
-                        reconstructTheActiveFormattingElements();
-                        appendToCurrentNodeAndPushElementMayFoster(name,
-                                attributes, formPointer);
-                        switch (mode) {
-                            case IN_TABLE:
-                            case IN_CAPTION:
-                            case IN_COLUMN_GROUP:
-                            case IN_TABLE_BODY:
-                            case IN_ROW:
-                            case IN_CELL:
-                                mode = InsertionMode.IN_SELECT_IN_TABLE;
-                                break;
-                            default:
-                                mode = InsertionMode.IN_SELECT;
-                                break;
-                        }
-                        return;
-                    } else if ("caption" == name || "col" == name
-                            || "colgroup" == name || "frame" == name
-                            || "frameset" == name || "head" == name
-                            || "option" == name || "optgroup" == name
-                            || "tbody" == name || "td" == name
-                            || "tfoot" == name || "th" == name
-                            || "thead" == name || "tr" == name) {
-                        err("Stray start tag \u201C" + name + "\u201D.");
-                        return;
-                    } else {
-                        reconstructTheActiveFormattingElements();
-                        appendToCurrentNodeAndPushElementMayFoster(name, attributes);
-                        return;
-                    }
-                case IN_HEAD:
-                    if ("html" == name) {
-                        err("Stray \u201Chtml\u201D start tag.");
-                        addAttributesToElement(stack[0].node, attributes);
-                        return;
-                    } else if ("base" == name) {
-                        appendVoidElementToCurrentMayFoster(name, attributes);
-                        return;
-                    } else if ("meta" == name || "link" == name) {
-                        // Fall through to IN_HEAD_NOSCRIPT
-                    } else if ("title" == name) {
-                        appendToCurrentNodeAndPushElementMayFoster(name,
-                                attributes);
-                        cdataOrRcdataTimesToPop = 1;
-                        tokenizer.setContentModelFlag(ContentModelFlag.RCDATA,
-                                name);
-                        return;
-                    } else if ("noscript" == name) {
-                        if (scriptingEnabled) {
-                            appendToCurrentNodeAndPushElement(name, attributes);
-                            cdataOrRcdataTimesToPop = 1;
-                            tokenizer.setContentModelFlag(
-                                    ContentModelFlag.CDATA, name);
-                        } else {
-                            appendToCurrentNodeAndPushElementMayFoster(name,
-                                    attributes);
-                            mode = InsertionMode.IN_HEAD_NOSCRIPT;
-                        }
-                        return;
-                    } else if ("script" == name || "style" == name) {
-                        // XXX need to manage much more stuff here if supporting
-                        // document.write()
-                        appendToCurrentNodeAndPushElementMayFoster(name, attributes);
-                        cdataOrRcdataTimesToPop = 1;
-                        tokenizer.setContentModelFlag(ContentModelFlag.CDATA,
-                                name);
-                        return;
-                    } else if ("head" == name) {
-                        /* Parse error. */
-                        err("Start tag for \u201Chead\u201D seen when \u201Chead\u201D was already open.");
-                        /* Ignore the token. */
-                        return;
-                    } else {
-                        pop();
-                        mode = InsertionMode.AFTER_HEAD;
-                        continue;
-                    }
-                case IN_HEAD_NOSCRIPT:
-                    // XXX did Hixie really mean to omit "base" here?
-                    if ("html" == name) {
-                        err("Stray \u201Chtml\u201D start tag.");
-                        addAttributesToElement(stack[0].node, attributes);
-                        return;
-                    } else if ("link" == name) {
-                        appendVoidElementToCurrentMayFoster(name, attributes);
-                        return;
-                    } else if ("meta" == name) {
-                        checkMetaCharset(attributes);
-                        appendVoidElementToCurrentMayFoster(name, attributes);
-                        return;
-                    } else if ("style" == name) {
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        cdataOrRcdataTimesToPop = 1;
-                        tokenizer.setContentModelFlag(ContentModelFlag.CDATA,
-                                name);
-                        return;
-                    } else if ("head" == name) {
-                        err("Start tag for \u201Chead\u201D seen when \u201Chead\u201D was already open.");
-                        return;
-                    } else if ("noscript" == name) {
-                        err("Start tag for \u201Cnoscript\u201D seen when \u201Cnoscript\u201D was already open.");
-                        return;
-                    } else {
-                        err("Bad start tag in \u201Cnoscript\u201D in \u201Chead\u201D.");
-                        pop();
-                        mode = InsertionMode.IN_HEAD;
-                        continue;
-                    }
-                case IN_COLUMN_GROUP:
-                    if ("html" == name) {
-                        err("Stray \u201Chtml\u201D start tag.");
-                        addAttributesToElement(stack[0].node, attributes);
-                        return;
-                    } else if ("col" == name) {
-                        appendVoidElementToCurrentMayFoster(name, attributes);
-                        return;
-                    } else {
-                        if (currentPtr == 0) {
-                            assert context != null;
-                            err("Garbage in \u201Ccolgroup\u201D fragment.");
-                            return;
-                        }
-                        pop();
-                        mode = InsertionMode.IN_TABLE;
-                        continue;
-                    }
-                case IN_SELECT_IN_TABLE:
-                    if ("caption" == name || "table" == name || "tbody" == name
-                            || "tfoot" == name || "thead" == name
-                            || "tr" == name || "td" == name || "th" == name) {
-                        err("\u201C" + name + "\u201D start tag with \u201Cselect\u201D open.");
-                        endSelect();
-                        continue;
-                    } else {
-                        // fall through to IN_SELECT
-                    }
-                case IN_SELECT:
-                    if ("html" == name) {
-                        err("Stray \u201Chtml\u201D start tag.");
-                        addAttributesToElement(stack[0].node, attributes);
-                        return;
-                    } else if ("option" == name) {
-                        if (isCurrent("option")) {
-                            pop();
-                        }
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        return;
-                    } else if ("optgroup" == name) {
-                        if (isCurrent("option")) {
-                            pop();
-                        }
-                        if (isCurrent("optgroup")) {
-                            pop();
-                        }
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        return;
-                    } else if ("select" == name) {
-                        err("\u201Cselect\u201D start tag where end tag expected.");
-                        int eltPos = findLastInTableScope(name);
-                        if (eltPos == NOT_FOUND_ON_STACK) {
-                            assert context != null;
-                            err("No \u201Cselect\u201D in table scope.");
-                            return;
-                        } else {
-                            while (currentPtr >= eltPos) {
-                                pop();
-                            }
-                            resetTheInsertionMode();
-                            return;
-                        }
-                    } else if ("input" == name) {
-                        err("\u201Cinput\u201D start tag seen in \u201Cselect\2201D.");
-                        endSelect();
-                        continue;
-                    } else {
-                        err("Stray \u201C" + name + "\u201D start tag.");
-                        return;
-                    }
-                case AFTER_BODY:
-                    if ("html" == name) {
-                        err("Stray \u201Chtml\u201D start tag.");
-                        addAttributesToElement(stack[0].node, attributes);
-                        return;
-                    } else {
-                        err("Stray \u201C" + name + "\u201D start tag.");
-                        if (conformingAndStreaming) {
-                            fatal();
-                        }
-                        mode = InsertionMode.IN_BODY;
-                        continue;
-                    }
-                case IN_FRAMESET:
-                    if ("frameset" == name) {
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        return;
-                    } else if ("frame" == name) {
-                        appendVoidElementToCurrentMayFoster(name, attributes);
-                        return;
-                    } else {
-                        // fall through to AFTER_FRAMESET
-                    }
-                case AFTER_FRAMESET:
-                    if ("html" == name) {
-                        err("Stray \u201Chtml\u201D start tag.");
-                        addAttributesToElement(stack[0].node, attributes);
-                        return;
-                    } else if ("noframes" == name) {
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        cdataOrRcdataTimesToPop = 1;
-                        tokenizer.setContentModelFlag(ContentModelFlag.CDATA,
-                                name);
-                        return;
-                    } else {
-                        err("Stray \u201C" + name + "\u201D start tag.");
-                        return;
-                    }
-                case INITIAL:
-                    /*
-                     * Parse error.
-                     */
-                    if (doctypeExpectation != DoctypeExpectation.NO_DOCTYPE_ERRORS) {
-                        err("Start tag seen without seeing a doctype first.");
-                    }
-                    /*
-                     * 
-                     * Set the document to quirks mode.
-                     */
-                    documentModeInternal(DocumentMode.QUIRKS_MODE, null, null, false);
-                    /*
-                     * Then, switch to the root element mode of the tree
-                     * construction stage
-                     */
-                    mode = InsertionMode.BEFORE_HTML;
-                    /*
-                     * and reprocess the current token.
-                     */
-                    continue;
-                case BEFORE_HTML:
-                    // optimize error check and streaming SAX by hoisting
-                    // "html" handling here.
-                    if ("html" == name) {
-                        if (attributes.getLength() == 0) {
-                            // This has the right magic side effect that it
-                            // makes attributes in SAX Tree mutable.
-                            appendHtmlElementToDocumentAndPush();
-                        } else {
-                            appendHtmlElementToDocumentAndPush(attributes);
-                        }
-                        // XXX application cache should fire here
-                        mode = InsertionMode.BEFORE_HEAD;
-                        return;
-                    } else {
-                        /*
-                         * Create an HTMLElement node with the tag name html, in
-                         * the HTML namespace. Append it to the Document object.
-                         */
-                        appendHtmlElementToDocumentAndPush();
-                        /* Switch to the main mode */
-                        mode = InsertionMode.BEFORE_HEAD;
-                        /*
-                         * reprocess the current token.
-                         * 
-                         */
-                        continue;
-                    }
-                case BEFORE_HEAD:
-                    if ("html" == name) {
-                        err("Stray \u201Chtml\u201D start tag.");
-                        addAttributesToElement(stack[0].node, attributes);
-                        return;
-                    } else if ("head" == name) {
-                        /*
-                         * A start tag whose tag name is "head"
-                         * 
-                         * Create an element for the token.
-                         * 
-                         * Set the head element pointer to this new element
-                         * node.
-                         * 
-                         * Append the new element to the current node and push
-                         * it onto the stack of open elements.
-                         */
-                        appendToCurrentNodeAndPushHeadElement(attributes);
-                        /*
-                         * 
-                         * Change the insertion mode to "in head".
-                         * 
-                         */
-                        mode = InsertionMode.IN_HEAD;
-                        return;
-                    }
-
-                    /*
-                     * Any other start tag token
-                     */
-
-                    /*
-                     * Act as if a start tag token with the tag name "head" and
-                     * no attributes had been seen,
-                     */
-                    appendToCurrentNodeAndPushHeadElement(EmptyAttributes.EMPTY_ATTRIBUTES);
-                    mode = InsertionMode.IN_HEAD;
-                    /*
-                     * then reprocess the current token.
-                     * 
-                     * This will result in an empty head element being
-                     * generated, with the current token being reprocessed in
-                     * the "after head" insertion mode.
-                     */
-                    continue;
-                case AFTER_HEAD:
-                    if ("html" == name) {
-                        err("Stray \u201Chtml\u201D start tag.");
-                        addAttributesToElement(stack[0].node, attributes);
-                        return;
-                    } else if ("body" == name) {
-                        if (attributes.getLength() == 0) {
-                            // This has the right magic side effect that it
-                            // makes attributes in SAX Tree mutable.
-                            appendToCurrentNodeAndPushBodyElement();
-                        } else {
-                            appendToCurrentNodeAndPushBodyElement(attributes);
-                        }
-                        mode = InsertionMode.IN_BODY;
-                        return;
-                    } else if ("frameset" == name) {
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        mode = InsertionMode.IN_FRAMESET;
-                        return;
-                    } else if ("base" == name) {
-                        err("\u201Cbase\u201D element outside \u201Chead\u201D.");
-                        if (!nonConformingAndStreaming) {
-                            pushHeadPointerOntoStack();
-                        }
-                        appendVoidElementToCurrentMayFoster(name, attributes);
-                        if (!nonConformingAndStreaming) {
-                            pop(); // head
-                        }
-                        return;
-                    } else if ("link" == name) {
-                        err("\u201Clink\u201D element outside \u201Chead\u201D.");
-                        if (!nonConformingAndStreaming) {
-                            pushHeadPointerOntoStack();
-                        }
-                        appendVoidElementToCurrentMayFoster(name, attributes);
-                        if (!nonConformingAndStreaming) {
-                            pop(); // head
-                        }
-                        return;
-                    } else if ("meta" == name) {
-                        err("\u201Cmeta\u201D element outside \u201Chead\u201D.");
-                        checkMetaCharset(attributes);
-                        if (!nonConformingAndStreaming) {
-                            pushHeadPointerOntoStack();
-                        }
-                        appendVoidElementToCurrentMayFoster(name, attributes);
-                        if (!nonConformingAndStreaming) {
-                            pop(); // head
-                        }
-                        return;
-                    } else if ("script" == name) {
-                        err("\u201Cscript\u201D element between \u201Chead\u201D and \u201Cbody\u201D.");
-                        if (!nonConformingAndStreaming) {
-                            pushHeadPointerOntoStack();
-                        }
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        cdataOrRcdataTimesToPop = nonConformingAndStreaming ? 1
-                                : 2; // pops head
-                        tokenizer.setContentModelFlag(ContentModelFlag.CDATA,
-                                name);
-                        return;
-                    } else if ("style" == name) {
-                        err("\u201Cstyle\u201D element between \u201Chead\u201D and \u201Cbody\u201D.");
-                        if (!nonConformingAndStreaming) {
-                            pushHeadPointerOntoStack();
-                        }
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        cdataOrRcdataTimesToPop = nonConformingAndStreaming ? 1
-                                : 2; // pops head
-                        tokenizer.setContentModelFlag(ContentModelFlag.CDATA,
-                                name);
-                        return;
-                    } else if ("title" == name) {
-                        err("\u201Ctitle\u201D element outside \u201Chead\u201D.");
-                        if (!nonConformingAndStreaming) {
-                            pushHeadPointerOntoStack();
-                        }
-                        appendToCurrentNodeAndPushElement(name, attributes);
-                        cdataOrRcdataTimesToPop = nonConformingAndStreaming ? 1
-                                : 2; // pops head
-                        tokenizer.setContentModelFlag(ContentModelFlag.RCDATA,
-                                name);
-                        return;
-                    } else {
-                        appendToCurrentNodeAndPushBodyElement();
-                        mode = InsertionMode.IN_BODY;
-                        continue;
-                    }
-                case AFTER_AFTER_BODY:
-                    err("Stray \u201C" + name + "\u201D start tag.");
-                    if (conformingAndStreaming) {
-                        fatal();
-                    }
-                    mode = InsertionMode.IN_BODY;
-                    continue;
-                case AFTER_AFTER_FRAMESET:
-                    err("Stray \u201C" + name + "\u201D start tag.");
-                    if (conformingAndStreaming) {
-                        fatal();
-                    }
-                    mode = InsertionMode.IN_FRAMESET;
-                    continue;
             }
         }
+        if (needsPostProcessing && foreignFlag == IN_FOREIGN && !hasForeignInScope()) {
+            /*
+             * If, after doing so, the insertion mode is still "in foreign
+             * content", but there is no element in scope that has a namespace
+             * other than the HTML namespace, switch the insertion mode to the
+             * secondary insertion mode.
+             */
+            foreignFlag = NOT_IN_FOREIGN;
+        }
+        if (selfClosing) {
+            err("Self-closing syntax (\u201C/>\u201D) used on a non-void HTML element.");
+        }
+    }
+
+    private Attributes adjustForeignAttributes(Attributes attributes) {
+        // TODO Auto-generated method stub
+        return attributes;
     }
 
     private boolean equalsIgnoreAsciiCase(CharSequence one, CharSequence other) {
@@ -1881,14 +2199,15 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
         return true;
     }
-    
+
     private void checkMetaCharset(Attributes attributes) throws SAXException {
         String content = attributes.getValue("", "content");
         String internalCharset = null;
         if (content != null) {
             internalCharset = MetaSniffer.extractCharsetFromContent(content);
             if (internalCharset != null) {
-                if (!equalsIgnoreAsciiCase("content-type", attributes.getValue("", "http-equiv"))) {
+                if (!equalsIgnoreAsciiCase("content-type", attributes.getValue(
+                        "", "http-equiv"))) {
                     warn("Attribute \u201Ccontent\u201D would be sniffed as an internal character encoding declaration but there was no matching \u201Chttp-equiv='Content-Type'\u201D attribute.");
                 }
             }
@@ -1900,7 +2219,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             tokenizer.internalEncodingDeclaration(internalCharset);
         }
     }
-    
+
     public final void endTag(String name, Attributes attributes)
             throws SAXException {
         needToDropLF = false;
@@ -1912,7 +2231,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             return;
         }
 
-        for (;;) {
+        endtagloop: for (;;) {
             switch (mode) {
                 case IN_ROW:
                     if ("tr" == name) {
@@ -1920,41 +2239,44 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         if (eltPos == 0) {
                             assert context != null;
                             err("No table row to close.");
-                            return;
+                            break endtagloop;
                         }
                         clearStackBackTo(eltPos);
                         pop();
                         mode = InsertionMode.IN_TABLE_BODY;
-                        return;
+                        break endtagloop;
                     } else if ("table" == name) {
                         int eltPos = findLastOrRoot("tr");
                         if (eltPos == 0) {
                             assert context != null;
                             err("No table row to close.");
-                            return;
+                            break endtagloop;
                         }
                         clearStackBackTo(eltPos);
                         pop();
                         mode = InsertionMode.IN_TABLE_BODY;
                         continue;
-                    } else if ("tbody" == name || "thead" == name || "tfoot" == name) {
+                    } else if ("tbody" == name || "thead" == name
+                            || "tfoot" == name) {
                         if (findLastInTableScope(name) == NOT_FOUND_ON_STACK) {
-                            err("Stray end tag \u201C" + name + "\u201D.");                            
-                            return;
+                            err("Stray end tag \u201C" + name + "\u201D.");
+                            break endtagloop;
                         }
                         int eltPos = findLastOrRoot("tr");
                         if (eltPos == 0) {
                             assert context != null;
                             err("No table row to close.");
-                            return;
+                            break endtagloop;
                         }
                         clearStackBackTo(eltPos);
                         pop();
                         mode = InsertionMode.IN_TABLE_BODY;
                         continue;
-                    } else if ("body" == name || "caption" == name || "col" == name || "colgroup" == name || "html" == name || "td" == name || "th" == name) {
-                        err("Stray end tag \u201C" + name + "\u201D.");                            
-                        return;
+                    } else if ("body" == name || "caption" == name
+                            || "col" == name || "colgroup" == name
+                            || "html" == name || "td" == name || "th" == name) {
+                        err("Stray end tag \u201C" + name + "\u201D.");
+                        break endtagloop;
                     } else {
                         // fall through to IN_TABLE
                     }
@@ -1963,26 +2285,29 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         int eltPos = findLastOrRoot(name);
                         if (eltPos == 0) {
                             err("Stray end tag \u201C" + name + "\u201D.");
-                            return;
+                            break endtagloop;
                         }
                         clearStackBackTo(eltPos);
                         pop();
                         mode = InsertionMode.IN_TABLE;
-                        return;
+                        break endtagloop;
                     } else if ("table" == name) {
-                            int eltPos = findLastInTableScopeOrRootTbodyTheadTfoot();
-                            if (eltPos == 0) {
+                        int eltPos = findLastInTableScopeOrRootTbodyTheadTfoot();
+                        if (eltPos == 0) {
                             assert context != null;
                             err("Stray end tag \u201Ctable\u201D.");
-                            return;
+                            break endtagloop;
                         }
                         clearStackBackTo(eltPos);
                         pop();
                         mode = InsertionMode.IN_TABLE;
                         continue;
-                    } else if ("body" == name || "caption" == name || "col" == name || "colgroup" == name || "html" == name || "td" == name || "th" == name || "tr" == name) {
+                    } else if ("body" == name || "caption" == name
+                            || "col" == name || "colgroup" == name
+                            || "html" == name || "td" == name || "th" == name
+                            || "tr" == name) {
                         err("Stray end tag \u201C" + name + "\u201D.");
-                        return;
+                        break endtagloop;
                     } else {
                         // fall through to IN_TABLE
                     }
@@ -1992,25 +2317,29 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         if (eltPos == NOT_FOUND_ON_STACK) {
                             assert context != null;
                             err("Stray end tag \u201Ctable\u201D.");
-                            return;
+                            break endtagloop;
                         }
                         while (currentPtr >= eltPos) {
                             pop();
                         }
                         resetTheInsertionMode();
-                        return;
-                    } else if ("body" == name || "caption" == name || "col" == name || "colgroup" == name || "html" == name || "tbody" == name || "td" == name || "tfoot" == name || "th" == name || "thead" == name || "tr" == name) {
+                        break endtagloop;
+                    } else if ("body" == name || "caption" == name
+                            || "col" == name || "colgroup" == name
+                            || "html" == name || "tbody" == name
+                            || "td" == name || "tfoot" == name || "th" == name
+                            || "thead" == name || "tr" == name) {
                         err("Stray end tag \u201C" + name + "\u201D.");
-                        return;
+                        break endtagloop;
                     } else {
-                        err("Stray end tag \u201C" + name + "\u201D.");                        
+                        err("Stray end tag \u201C" + name + "\u201D.");
                         // fall through to IN_BODY
                     }
                 case IN_CAPTION:
                     if ("caption" == name) {
                         int eltPos = findLastInTableScope("caption");
                         if (eltPos == NOT_FOUND_ON_STACK) {
-                            return;
+                            break endtagloop;
                         }
                         generateImpliedEndTags();
                         if (currentPtr != eltPos) {
@@ -2021,12 +2350,12 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         }
                         clearTheListOfActiveFormattingElementsUpToTheLastMarker();
                         mode = InsertionMode.IN_TABLE;
-                        return;
+                        break endtagloop;
                     } else if ("table" == name) {
                         err("\u201Ctable\u201D closed but \u201Ccaption\u201D was still open.");
                         int eltPos = findLastInTableScope("caption");
                         if (eltPos == NOT_FOUND_ON_STACK) {
-                            return;
+                            break endtagloop;
                         }
                         generateImpliedEndTags();
                         if (currentPtr != eltPos) {
@@ -2038,9 +2367,13 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         clearTheListOfActiveFormattingElementsUpToTheLastMarker();
                         mode = InsertionMode.IN_TABLE;
                         continue;
-                    } else if ("body" == name || "col" == name || "colgroup" == name || "html" == name || "tbody" == name || "td" == name || "tfoot" == name || "th" == name || "thead" == name || "tr" == name) {
+                    } else if ("body" == name || "col" == name
+                            || "colgroup" == name || "html" == name
+                            || "tbody" == name || "td" == name
+                            || "tfoot" == name || "th" == name
+                            || "thead" == name || "tr" == name) {
                         err("Stray end tag \u201C" + name + "\u201D.");
-                        return;                                                                                                        
+                        break endtagloop;
                     } else {
                         // fall through to IN_BODY
                     }
@@ -2049,7 +2382,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         int eltPos = findLastInTableScope(name);
                         if (eltPos == NOT_FOUND_ON_STACK) {
                             err("Stray end tag \u201C" + name + "\u201D.");
-                            return;                            
+                            break endtagloop;
                         }
                         generateImpliedEndTags();
                         if (!isCurrent(name)) {
@@ -2060,17 +2393,21 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         }
                         clearTheListOfActiveFormattingElementsUpToTheLastMarker();
                         mode = InsertionMode.IN_ROW;
-                        return;
-                    } else if ("table" == name || "tbody" == name || "tfoot" == name || "thead" == name || "tr" == name) {
+                        break endtagloop;
+                    } else if ("table" == name || "tbody" == name
+                            || "tfoot" == name || "thead" == name
+                            || "tr" == name) {
                         if (findLastInTableScope(name) == NOT_FOUND_ON_STACK) {
                             err("Stray end tag \u201C" + name + "\u201D.");
-                            return;                                                        
+                            break endtagloop;
                         }
                         closeTheCell(findLastInTableScopeTdTh());
                         continue;
-                    } else if ("body" == name || "caption" == name || "col" == name || "colgroup" == name || "html" == name) {
+                    } else if ("body" == name || "caption" == name
+                            || "col" == name || "colgroup" == name
+                            || "html" == name) {
                         err("Stray end tag \u201C" + name + "\u201D.");
-                        return;                                                                                
+                        break endtagloop;
                     } else {
                         // fall through to IN_BODY
                     }
@@ -2079,19 +2416,19 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         if (!isSecondOnStackBody()) {
                             assert context != null;
                             err("Stray end tag \u201Cbody\u201D.");
-                            return;
+                            break endtagloop;
                         }
                         assert currentPtr >= 1;
                         for (int i = 2; i <= currentPtr; i++) {
                             String stackName = stack[i].name;
-                            if (!("dd" == stackName || "dt" == stackName || "li" == stackName
-                                    || "p" == stackName)) {
+                            if (!("dd" == stackName || "dt" == stackName
+                                    || "li" == stackName || "p" == stackName)) {
                                 err("End tag for \u201Cbody\u201D seen but there were unclosed elements.");
                                 break;
                             }
                         }
                         if (conformingAndStreaming) {
-                            while(currentPtr > 1) {
+                            while (currentPtr > 1) {
                                 pop();
                             }
                         }
@@ -2100,18 +2437,23 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             bodyClosed(stack[1].node);
                         }
                         mode = InsertionMode.AFTER_BODY;
-                        return;
+                        break endtagloop;
                     } else if ("html" == name) {
                         if (!isSecondOnStackBody()) {
                             assert context != null;
                             err("Stray end tag \u201Chtml\u201D.");
-                            return;
+                            break endtagloop;
                         }
                         for (int i = 0; i <= currentPtr; i++) {
                             String stackName = stack[i].name;
-                            if (!("dd" == stackName || "dt" == stackName || "li" == stackName
-                                    || "p" == stackName || "tbody" == stackName || "td" == stackName
-                                    || "tfoot" == stackName || "th" == stackName || "thead" == stackName || "tr" == stackName || "body" == stackName || "html" == stackName)) {
+                            if (!("dd" == stackName || "dt" == stackName
+                                    || "li" == stackName || "p" == stackName
+                                    || "tbody" == stackName
+                                    || "td" == stackName
+                                    || "tfoot" == stackName
+                                    || "th" == stackName
+                                    || "thead" == stackName
+                                    || "tr" == stackName || "body" == stackName || "html" == stackName)) {
                                 err("End tag for \u201Chtml\u201D seen but there were unclosed elements.");
                                 break;
                             }
@@ -2130,32 +2472,36 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             || "menu" == name) {
                         int eltPos = findLastInScope(name);
                         if (eltPos == NOT_FOUND_ON_STACK) {
-                            err("Stray end tag \u201C" + name + "\u201D.");                            
+                            err("Stray end tag \u201C" + name + "\u201D.");
                         } else {
                             generateImpliedEndTags();
                             if (!isCurrent(name)) {
-                                err("End tag \u201C" + name + "\u201D seen but there were unclosed elements.");
+                                err("End tag \u201C"
+                                        + name
+                                        + "\u201D seen but there were unclosed elements.");
                             }
                             while (currentPtr >= eltPos) {
                                 pop();
-                            }                            
+                            }
                         }
-                        return;
+                        break endtagloop;
                     } else if ("form" == name) {
                         formPointer = null;
                         int eltPos = findLastInScope(name);
                         if (eltPos == NOT_FOUND_ON_STACK) {
-                            err("Stray end tag \u201C" + name + "\u201D.");                            
+                            err("Stray end tag \u201C" + name + "\u201D.");
                         } else {
                             generateImpliedEndTags();
                             if (!isCurrent(name)) {
-                                err("End tag \u201C" + name + "\u201D seen but there were unclosed elements.");
+                                err("End tag \u201C"
+                                        + name
+                                        + "\u201D seen but there were unclosed elements.");
                             }
                             while (currentPtr >= eltPos) {
                                 pop();
-                            }                            
+                            }
                         }
-                        return;
+                        break endtagloop;
                     } else if ("p" == name) {
                         if (!isCurrent(name)) {
                             err("End tag \u201Cp\u201D seen but there were unclosed elements.");
@@ -2166,13 +2512,15 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                 pop();
                             }
                         } else {
-                            appendVoidElementToCurrentMayFoster(name, EmptyAttributes.EMPTY_ATTRIBUTES);
+                            appendVoidElementToCurrentMayFoster(
+                                    "http://www.w3.org/1999/xhtml", name,
+                                    EmptyAttributes.EMPTY_ATTRIBUTES);
                         }
-                        return;
+                        break endtagloop;
                     } else if ("dd" == name || "dt" == name || "li" == name) {
                         int eltPos = findLastInScope(name);
                         if (eltPos == NOT_FOUND_ON_STACK) {
-                            err("Stray end tag \u201C" + name + "\u201D.");                                                        
+                            err("Stray end tag \u201C" + name + "\u201D.");
                         } else {
                             generateImpliedEndTagsExceptFor(name);
                             if (!isCurrent(name)) {
@@ -2184,12 +2532,12 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                 pop();
                             }
                         }
-                        return;
+                        break endtagloop;
                     } else if ("h1" == name || "h2" == name || "h3" == name
                             || "h4" == name || "h5" == name || "h6" == name) {
                         int eltPos = findLastInScopeHn();
                         if (eltPos == NOT_FOUND_ON_STACK) {
-                            err("Stray end tag \u201C" + name + "\u201D.");                            
+                            err("Stray end tag \u201C" + name + "\u201D.");
                         } else {
                             generateImpliedEndTags();
                             if (!isCurrent(name)) {
@@ -2201,14 +2549,19 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                 pop();
                             }
                         }
-                        return;
-                    } else if ("a" == name || "b" == name || "big" == name || "em" == name || "font" == name || "i" == name || "nobr" == name || "s" == name || "small" == name || "strike" == name || "strong" == name || "tt" == name || "u" == name) {
+                        break endtagloop;
+                    } else if ("a" == name || "b" == name || "big" == name
+                            || "em" == name || "font" == name || "i" == name
+                            || "nobr" == name || "s" == name || "small" == name
+                            || "strike" == name || "strong" == name
+                            || "tt" == name || "u" == name) {
                         adoptionAgencyEndTag(name);
-                        return;
-                    } else if ("button" == name || "marquee" == name || "object" == name || "applet" == name) {
+                        break endtagloop;
+                    } else if ("button" == name || "marquee" == name
+                            || "object" == name || "applet" == name) {
                         int eltPos = findLastInScope(name);
                         if (eltPos == NOT_FOUND_ON_STACK) {
-                            err("Stray end tag \u201C" + name + "\u201D.");                            
+                            err("Stray end tag \u201C" + name + "\u201D.");
                         } else {
                             generateImpliedEndTags();
                             if (!isCurrent(name)) {
@@ -2221,25 +2574,36 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             }
                             clearTheListOfActiveFormattingElementsUpToTheLastMarker();
                         }
-                        return;
+                        break endtagloop;
                     } else if ("br" == name) {
                         err("End tag \u201Cbr\u201D.");
                         reconstructTheActiveFormattingElements();
-                        appendVoidElementToCurrentMayFoster(name, EmptyAttributes.EMPTY_ATTRIBUTES);
-                        return;
-                    } else if ("area" == name || "basefont" == name || "bgsound" == name || "embed" == name || "hr" == name || "iframe" == name || "image" == name || "img" == name || "input" == name || "isindex" == name || "noembed" == name || "noframes" == name || "param" == name || "select" == name || "spacer" == name || "table" == name || "textarea" == name || "wbr" == name || (scriptingEnabled && "noscript" == name)) {
+                        appendVoidElementToCurrentMayFoster(
+                                "http://www.w3.org/1999/xhtml", name,
+                                EmptyAttributes.EMPTY_ATTRIBUTES);
+                        break endtagloop;
+                    } else if ("area" == name || "basefont" == name
+                            || "bgsound" == name || "embed" == name
+                            || "hr" == name || "iframe" == name
+                            || "image" == name || "img" == name
+                            || "input" == name || "isindex" == name
+                            || "noembed" == name || "noframes" == name
+                            || "param" == name || "select" == name
+                            || "spacer" == name || "table" == name
+                            || "textarea" == name || "wbr" == name
+                            || (scriptingEnabled && "noscript" == name)) {
                         err("Stray end tag \u201C" + name + "\u201D.");
-                        return;
+                        break endtagloop;
                     } else {
                         if (isCurrent(name)) {
                             pop();
-                            return;
+                            break endtagloop;
                         }
-                        for(;;) {
+                        for (;;) {
                             generateImpliedEndTags();
                             if (isCurrent(name)) {
                                 pop();
-                                return;
+                                break endtagloop;
                             }
                             StackNode<T> node = stack[currentPtr];
                             if (!(node.scoping || node.special)) {
@@ -2247,9 +2611,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         + "\u201D.");
                                 pop();
                             } else {
-                                err("Stray end tag \u201C" + name
-                                        + "\u201D.");
-                                return;
+                                err("Stray end tag \u201C" + name + "\u201D.");
+                                break endtagloop;
                             }
                         }
                     }
@@ -2258,34 +2621,36 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         if (currentPtr == 0) {
                             assert context != null;
                             err("Garbage in \u201Ccolgroup\u201D fragment.");
-                            return;
+                            break endtagloop;
                         }
                         pop();
                         mode = InsertionMode.IN_TABLE;
-                        return;                    
+                        break endtagloop;
                     } else if ("col" == name) {
-                        err("Stray end tag \u201Ccol\u201D.");                        
-                        return;
+                        err("Stray end tag \u201Ccol\u201D.");
+                        break endtagloop;
                     } else {
                         if (currentPtr == 0) {
                             assert context != null;
                             err("Garbage in \u201Ccolgroup\u201D fragment.");
-                            return;
+                            break endtagloop;
                         }
                         pop();
                         mode = InsertionMode.IN_TABLE;
-                        continue;                   
+                        continue;
                     }
                 case IN_SELECT_IN_TABLE:
                     if ("caption" == name || "table" == name || "tbody" == name
                             || "tfoot" == name || "thead" == name
                             || "tr" == name || "td" == name || "th" == name) {
-                        err("\u201C" + name + "\u201D end tag with \u201Cselect\u201D open.");
+                        err("\u201C"
+                                + name
+                                + "\u201D end tag with \u201Cselect\u201D open.");
                         if (findLastInTableScope(name) != NOT_FOUND_ON_STACK) {
                             endSelect();
-                            continue;                            
+                            continue;
                         } else {
-                            return;
+                            break endtagloop;
                         }
                     } else {
                         // fall through to IN_SELECT
@@ -2294,13 +2659,14 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     if ("option" == name) {
                         if (isCurrent("option")) {
                             pop();
-                            return;
+                            break endtagloop;
                         } else {
                             err("Stray end tag \u201Coption\u201D");
-                            return;
+                            break endtagloop;
                         }
                     } else if ("optgroup" == name) {
-                        if (isCurrent("option") && "optgroup" == stack[currentPtr - 1].name) {
+                        if (isCurrent("option")
+                                && "optgroup" == stack[currentPtr - 1].name) {
                             pop();
                         }
                         if (isCurrent("optgroup")) {
@@ -2308,26 +2674,26 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         } else {
                             err("Stray end tag \u201Coptgroup\u201D");
                         }
-                        return;                            
+                        break endtagloop;
                     } else if ("select" == name) {
                         endSelect();
-                        return;
+                        break endtagloop;
                     } else {
                         err("Stray end tag \u201C" + name + "\u201D");
-                        return;
+                        break endtagloop;
                     }
                 case AFTER_BODY:
                     if ("html" == name) {
                         if (context != null) {
                             err("Stray end tag \u201Chtml\u201D");
-                            return;                            
+                            break endtagloop;
                         } else {
                             if (context == null) {
                                 htmlCloseReported = true;
                                 htmlClosed(stack[0].node);
                             }
                             mode = InsertionMode.AFTER_AFTER_BODY;
-                            return;
+                            break endtagloop;
                         }
                     } else {
                         err("Saw an end tag after \u201Cbody\u201D had been closed.");
@@ -2342,16 +2708,16 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         if (currentPtr == 0) {
                             assert context != null;
                             err("Stray end tag \u201Cframeset\u201D");
-                            return;
+                            break endtagloop;
                         }
                         pop();
                         if ((context == null) && !isCurrent("frameset")) {
-                            mode = InsertionMode.AFTER_FRAMESET;                            
+                            mode = InsertionMode.AFTER_FRAMESET;
                         }
-                        return;
+                        break endtagloop;
                     } else {
                         err("Stray end tag \u201C" + name + "\u201D");
-                        return;                        
+                        break endtagloop;
                     }
                 case AFTER_FRAMESET:
                     if ("html" == name) {
@@ -2360,10 +2726,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             htmlClosed(stack[0].node);
                         }
                         mode = InsertionMode.AFTER_AFTER_FRAMESET;
-                        return;
+                        break endtagloop;
                     } else {
                         err("Stray end tag \u201C" + name + "\u201D");
-                        return;                        
+                        break endtagloop;
                     }
                 case INITIAL:
                     /*
@@ -2376,7 +2742,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                      * 
                      * Set the document to quirks mode.
                      */
-                    documentModeInternal(DocumentMode.QUIRKS_MODE, null, null, false);
+                    documentModeInternal(DocumentMode.QUIRKS_MODE, null, null,
+                            false);
                     /*
                      * Then, switch to the root element mode of the tree
                      * construction stage
@@ -2400,32 +2767,34 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                      */
                     continue;
                 case BEFORE_HEAD:
-                    if ("head" == name || "body" == name || "html" == name || "p" == name || "br" == name) {
+                    if ("head" == name || "body" == name || "html" == name
+                            || "p" == name || "br" == name) {
                         appendToCurrentNodeAndPushHeadElement(EmptyAttributes.EMPTY_ATTRIBUTES);
                         mode = InsertionMode.IN_HEAD;
                         continue;
                     } else {
                         err("Stray end tag \u201C" + name + "\u201D.");
-                        return;
+                        break endtagloop;
                     }
                 case IN_HEAD:
                     if ("head" == name) {
                         pop();
                         mode = InsertionMode.AFTER_HEAD;
-                        return;
-                    } else if ("body" == name || "html" == name || "p" == name || "br" == name) {
+                        break endtagloop;
+                    } else if ("body" == name || "html" == name || "p" == name
+                            || "br" == name) {
                         pop();
                         mode = InsertionMode.AFTER_HEAD;
                         continue;
                     } else {
                         err("Stray end tag \u201C" + name + "\u201D.");
-                        return;                        
+                        break endtagloop;
                     }
                 case IN_HEAD_NOSCRIPT:
                     if ("noscript" == name) {
                         pop();
                         mode = InsertionMode.IN_HEAD;
-                        return;
+                        break endtagloop;
                     } else if ("p" == name || "br" == name) {
                         err("Stray end tag \u201C" + name + "\u201D.");
                         pop();
@@ -2433,7 +2802,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         continue;
                     } else {
                         err("Stray end tag \u201C" + name + "\u201D.");
-                        return;
+                        break endtagloop;
                     }
                 case AFTER_HEAD:
                     appendToCurrentNodeAndPushBodyElement();
@@ -2455,6 +2824,15 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     continue;
             }
         }
+        if (foreignFlag == IN_FOREIGN && !hasForeignInScope()) {
+            /*
+             * If, after doing so, the insertion mode is still "in foreign
+             * content", but there is no element in scope that has a namespace
+             * other than the HTML namespace, switch the insertion mode to the
+             * secondary insertion mode.
+             */
+            foreignFlag = NOT_IN_FOREIGN;
+        }
     }
 
     /**
@@ -2465,7 +2843,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (eltPos == NOT_FOUND_ON_STACK) {
             assert context != null;
             err("Stray end tag \u201Cselect\u201D");
-            return;                                                        
+            return;
         }
         while (currentPtr >= eltPos) {
             pop();
@@ -2475,7 +2853,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private int findLastInTableScopeOrRootTbodyTheadTfoot() {
         for (int i = currentPtr; i > 0; i--) {
-            if (stack[i].name == "tbody" || stack[i].name == "thead" || stack[i].name == "tfoot") {
+            if (stack[i].name == "tbody" || stack[i].name == "thead"
+                    || stack[i].name == "tfoot") {
                 return i;
             }
         }
@@ -2490,13 +2869,13 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
         return NOT_FOUND_ON_STACK;
     }
-    
+
     private int findLastInTableScope(String name) {
         for (int i = currentPtr; i > 0; i--) {
             if (stack[i].name == name) {
                 return i;
             } else if (stack[i].name == "table") {
-                return NOT_FOUND_ON_STACK;                
+                return NOT_FOUND_ON_STACK;
             }
         }
         return NOT_FOUND_ON_STACK;
@@ -2507,7 +2886,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             if (stack[i].name == name) {
                 return i;
             } else if (stack[i].scoping) {
-                return NOT_FOUND_ON_STACK;                
+                return NOT_FOUND_ON_STACK;
             }
         }
         return NOT_FOUND_ON_STACK;
@@ -2526,21 +2905,37 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         return NOT_FOUND_ON_STACK;
     }
 
-    private void generateImpliedEndTagsExceptFor(String name) throws SAXException {
+    private boolean hasForeignInScope() {
+        for (int i = currentPtr; i > 0; i--) {
+            if (stack[i].ns != "http://www.w3.org/1999/xhtml") {
+                return true;
+            } else if (stack[i].scoping) {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    
+    private void generateImpliedEndTagsExceptFor(String name)
+            throws SAXException {
         for (;;) {
             String stackName = stack[currentPtr].name;
-            if (name != stackName && ("p" == stackName || "li" == stackName || "dd" == stackName || "dt" == stackName)) {
+            if (name != stackName
+                    && ("p" == stackName || "li" == stackName
+                            || "dd" == stackName || "dt" == stackName)) {
                 pop();
             } else {
                 return;
             }
         }
     }
-    
+
     private void generateImpliedEndTags() throws SAXException {
         for (;;) {
             String stackName = stack[currentPtr].name;
-            if ("p" == stackName || "li" == stackName || "dd" == stackName || "dt" == stackName) {
+            if ("p" == stackName || "li" == stackName || "dd" == stackName
+                    || "dt" == stackName) {
                 pop();
             } else {
                 return;
@@ -2552,14 +2947,15 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         return currentPtr >= 1 && stack[1].name == "body";
     }
 
-    private void documentModeInternal(DocumentMode mode, String publicIdentifier,
-            String systemIdentifier, boolean html4SpecificAdditionalErrorChecks) throws SAXException {
+    private void documentModeInternal(DocumentMode mode,
+            String publicIdentifier, String systemIdentifier,
+            boolean html4SpecificAdditionalErrorChecks) throws SAXException {
         if (documentModeHandler != null) {
             documentModeHandler.documentMode(mode, publicIdentifier,
                     systemIdentifier, html4SpecificAdditionalErrorChecks);
         }
-        documentMode(mode, publicIdentifier,
-                systemIdentifier, html4SpecificAdditionalErrorChecks);
+        documentMode(mode, publicIdentifier, systemIdentifier,
+                html4SpecificAdditionalErrorChecks);
     }
 
     private boolean isAlmostStandards(String publicIdentifierLC,
@@ -2639,7 +3035,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             if ("td" == name || "th" == name) {
                 return i;
             } else if (name == "table") {
-                return NOT_FOUND_ON_STACK;                
+                return NOT_FOUND_ON_STACK;
             }
         }
         return NOT_FOUND_ON_STACK;
@@ -2647,7 +3043,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private void clearStackBackTo(int eltPos) throws SAXException {
         if (eltPos != currentPtr) {
-            while(currentPtr > eltPos) { // > not >= intentional
+            while (currentPtr > eltPos) { // > not >= intentional
                 pop();
             }
         }
@@ -2662,7 +3058,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     name = context;
                 } else {
                     mode = InsertionMode.IN_BODY; // XXX from Hixie's email
-                    return;                    
+                    return;
                 }
             }
             if ("select" == name) {
@@ -2686,6 +3082,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             } else if ("table" == name) {
                 mode = InsertionMode.IN_TABLE;
                 return;
+                // XXX MathML
             } else if ("head" == name) {
                 mode = InsertionMode.IN_BODY; // really
                 return;
@@ -2697,7 +3094,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 return;
             } else if ("html" == name) {
                 if (headPointer == null) {
-                    mode = InsertionMode.BEFORE_HEAD;                    
+                    mode = InsertionMode.BEFORE_HEAD;
                 } else {
                     mode = InsertionMode.AFTER_HEAD;
                 }
@@ -2705,12 +3102,12 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             } else if (i == 0) {
                 mode = InsertionMode.IN_BODY;
                 return;
-            } 
+            }
         }
     }
 
     /**
-     * @throws SAXException 
+     * @throws SAXException
      * 
      */
     private void implicitlyCloseP() throws SAXException {
@@ -2735,7 +3132,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         listOfActiveFormattingElements[listPtr] = null;
         return true;
     }
-    
+
     private void push(StackNode<T> node) throws SAXException {
         currentPtr++;
         if (currentPtr == stack.length) {
@@ -2744,19 +3141,20 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             stack = newStack;
         }
         stack[currentPtr] = node;
-        elementPushed(node.name, node.node);
+        elementPushed("http://www.w3.org/1999/xhtml", node.name, node.node);
     }
 
     private void append(StackNode<T> node) {
         listPtr++;
         if (listPtr == listOfActiveFormattingElements.length) {
             StackNode<T>[] newList = new StackNode[listOfActiveFormattingElements.length + 64];
-            System.arraycopy(listOfActiveFormattingElements, 0, newList, 0, listOfActiveFormattingElements.length);
+            System.arraycopy(listOfActiveFormattingElements, 0, newList, 0,
+                    listOfActiveFormattingElements.length);
             listOfActiveFormattingElements = newList;
         }
         listOfActiveFormattingElements[listPtr] = node;
     }
-    
+
     private void insertMarker() {
         append(MARKER);
     }
@@ -2788,7 +3186,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             }
         }
     }
-    
+
     private void removeFromStack(StackNode<T> node) throws SAXException {
         if (stack[currentPtr] == node) {
             pop();
@@ -2819,7 +3217,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             return;
         }
         assert pos < listPtr;
-        System.arraycopy(listOfActiveFormattingElements, pos + 1, listOfActiveFormattingElements, pos, listPtr - pos);
+        System.arraycopy(listOfActiveFormattingElements, pos + 1,
+                listOfActiveFormattingElements, pos, listPtr - pos);
         assert clearLastListSlot();
         listPtr--;
     }
@@ -2889,7 +3288,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             int bookmark = formattingEltListPos;
             int nodePos = furthestBlockPos;
             StackNode<T> lastNode = furthestBlock;
-            for(;;) {
+            for (;;) {
                 nodePos--;
                 StackNode<T> node = stack[nodePos];
                 int nodeListPos = findInListOfActiveFormattingElements(node);
@@ -2911,9 +3310,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     assert node == listOfActiveFormattingElements[nodeListPos];
                     assert node == stack[nodePos];
                     T clone = shallowClone(node.node);
-                    node = new StackNode<T>(node.name, clone, node.scoping, node.special, node.fosterParenting);
+                    node = new StackNode<T>(node.ns, node.name, clone,
+                            node.scoping, node.special, node.fosterParenting);
                     listOfActiveFormattingElements[nodeListPos] = node;
-                    stack[nodePos] = node;                    
+                    stack[nodePos] = node;
                 }
                 detachFromParentAndAppendToNewParent(lastNode.node, node.node);
                 lastNode = node;
@@ -2924,38 +3324,47 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 }
                 insertIntoFosterParent(lastNode.node);
             } else {
-                detachFromParentAndAppendToNewParent(lastNode.node, commonAncestor.node);
+                detachFromParentAndAppendToNewParent(lastNode.node,
+                        commonAncestor.node);
             }
             T clone = shallowClone(formattingElt.node);
-            StackNode<T> formattingClone = new StackNode<T>(formattingElt.name, clone, formattingElt.scoping, formattingElt.special, formattingElt.fosterParenting);
+            StackNode<T> formattingClone = new StackNode<T>(formattingElt.ns,
+                    formattingElt.name, clone, formattingElt.scoping,
+                    formattingElt.special, formattingElt.fosterParenting);
             appendChildrenToNewParent(furthestBlock.node, clone);
             detachFromParentAndAppendToNewParent(clone, furthestBlock.node);
             removeFromListOfActiveFormattingElements(formattingEltListPos);
             insertIntoListOfActiveFormattingElements(formattingClone, bookmark);
             assert formattingEltStackPos < furthestBlockPos;
             removeFromStack(formattingEltStackPos);
-            // furthestBlockPos is now off by one and points to the slot after it
+            // furthestBlockPos is now off by one and points to the slot after
+            // it
             insertIntoStack(formattingClone, furthestBlockPos);
         }
     }
 
-    private void insertIntoStack(StackNode<T> node, int position) throws SAXException {
+    private void insertIntoStack(StackNode<T> node, int position)
+            throws SAXException {
         assert currentPtr + 1 < stack.length;
         assert position <= currentPtr + 1;
         if (position == currentPtr + 1) {
             flushCharacters();
             push(node);
         } else {
-            System.arraycopy(stack, position, stack, position + 1, (currentPtr - position) + 1);
+            System.arraycopy(stack, position, stack, position + 1,
+                    (currentPtr - position) + 1);
             currentPtr++;
-            stack[position] = node;        
+            stack[position] = node;
         }
     }
 
-    private void insertIntoListOfActiveFormattingElements(StackNode<T> formattingClone, int bookmark) {
+    private void insertIntoListOfActiveFormattingElements(
+            StackNode<T> formattingClone, int bookmark) {
         assert listPtr + 1 < listOfActiveFormattingElements.length;
         if (bookmark <= listPtr) {
-            System.arraycopy(listOfActiveFormattingElements, bookmark, listOfActiveFormattingElements, bookmark + 1, (listPtr - bookmark) + 1);
+            System.arraycopy(listOfActiveFormattingElements, bookmark,
+                    listOfActiveFormattingElements, bookmark + 1,
+                    (listPtr - bookmark) + 1);
         }
         listPtr++;
         listOfActiveFormattingElements[bookmark] = formattingClone;
@@ -2979,7 +3388,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             } else if (node == MARKER) {
                 return -1;
             }
-        }        
+        }
         return -1;
     }
 
@@ -2988,7 +3397,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             StackNode<T> node = stack[i];
             if ("dd" == node.name || "dt" == node.name) {
                 return i;
-            } else if ((node.scoping || node.special) && !("div" == node.name || "address" == node.name)) {
+            } else if ((node.scoping || node.special)
+                    && !("div" == node.name || "address" == node.name)) {
                 return NOT_FOUND_ON_STACK;
             }
         }
@@ -3000,7 +3410,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             StackNode<T> node = stack[i];
             if ("li" == node.name) {
                 return i;
-            } else if ((node.scoping || node.special) && !("div" == node.name || "address" == node.name)) {
+            } else if ((node.scoping || node.special)
+                    && !("div" == node.name || "address" == node.name)) {
                 return NOT_FOUND_ON_STACK;
             }
         }
@@ -3020,7 +3431,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (currentPtr >= 1) {
             StackNode<T> body = stack[1];
             if (body.name == "body") {
-                addAttributesToElement(body.node, attributes);                
+                addAttributesToElement(body.node, attributes);
             }
         }
     }
@@ -3032,14 +3443,15 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
         if (headPointer == null) {
             assert context != null;
-            push(stack[currentPtr]);            
+            push(stack[currentPtr]);
         } else {
-            push(new StackNode<T>("head", headPointer));
+            push(new StackNode<T>("http://www.w3.org/1999/xhtml", "head",
+                    headPointer));
         }
     }
 
     /**
-     * @throws SAXException 
+     * @throws SAXException
      * 
      */
     private void reconstructTheActiveFormattingElements() throws SAXException {
@@ -3051,7 +3463,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             return;
         }
         int entryPos = listPtr;
-        for(;;) {
+        for (;;) {
             entryPos--;
             if (entryPos == -1) {
                 break;
@@ -3070,10 +3482,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             entryPos++;
             StackNode<T> entry = listOfActiveFormattingElements[entryPos];
             T clone = shallowClone(entry.node);
-            StackNode<T> entryClone = new StackNode<T>(entry.name, clone, entry.scoping, entry.special, entry.fosterParenting);
+            StackNode<T> entryClone = new StackNode<T>(entry.ns, entry.name,
+                    clone, entry.scoping, entry.special, entry.fosterParenting);
             StackNode<T> currentNode = stack[currentPtr];
             if (currentNode.fosterParenting) {
-                insertIntoFosterParent(clone);                
+                insertIntoFosterParent(clone);
             } else {
                 detachFromParentAndAppendToNewParent(clone, currentNode.node);
             }
@@ -3093,9 +3506,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
         T parent = parentElementFor(elt);
         if (parent == null) {
-            detachFromParentAndAppendToNewParent(child, stack[eltPos - 1].node);            
+            detachFromParentAndAppendToNewParent(child, stack[eltPos - 1].node);
         } else {
-            insertBefore(child, elt, parent);            
+            insertBefore(child, elt, parent);
         }
     }
 
@@ -3113,7 +3526,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         StackNode<T> node = stack[currentPtr];
         assert clearLastStackSlot();
         currentPtr--;
-        elementPopped(node.name, node.node);
+        elementPopped("http://www.w3.org/1999/xhtml", node.name, node.node);
     }
 
     private void appendCharMayFoster(char[] buf, int i) throws SAXException {
@@ -3136,23 +3549,25 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 if (parent == null) {
                     appendCharacters(stack[eltPos - 1].node, buf, i, 1);
                 } else {
-                    insertCharactersBefore(buf, i, 1, elt, parent);            
+                    insertCharactersBefore(buf, i, 1, elt, parent);
                 }
             }
         } else {
             accumulateCharacters(buf, i, 1);
         }
     }
-    
+
     private boolean isTainted() {
         int eltPos = findLastOrRoot("table");
         StackNode<T> node = stack[eltPos];
         return node.tainted;
     }
 
-    private void appendHtmlElementToDocumentAndPush(Attributes attributes) throws SAXException {
+    private void appendHtmlElementToDocumentAndPush(Attributes attributes)
+            throws SAXException {
         T elt = createHtmlElementSetAsRoot(attributes);
-        StackNode<T> node = new StackNode<T>("html", elt);
+        StackNode<T> node = new StackNode<T>("http://www.w3.org/1999/xhtml",
+                "html", elt);
         push(node);
     }
 
@@ -3160,28 +3575,33 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         appendHtmlElementToDocumentAndPush(tokenizer.newAttributes());
     }
 
-    private void appendToCurrentNodeAndPushHeadElement(
-            Attributes attributes) throws SAXException {
+    private void appendToCurrentNodeAndPushHeadElement(Attributes attributes)
+            throws SAXException {
         flushCharacters();
-        T elt = createElement("head", attributes);
+        T elt = createElement("http://www.w3.org/1999/xhtml", "head",
+                attributes);
         detachFromParentAndAppendToNewParent(elt, stack[currentPtr].node);
         headPointer = elt;
-        StackNode<T> node = new StackNode<T>("head", elt);
+        StackNode<T> node = new StackNode<T>("http://www.w3.org/1999/xhtml",
+                "head", elt);
         push(node);
     }
-    
-    private void appendToCurrentNodeAndPushBodyElement(
-            Attributes attributes) throws SAXException {
-        appendToCurrentNodeAndPushElement("body", attributes);
+
+    private void appendToCurrentNodeAndPushBodyElement(Attributes attributes)
+            throws SAXException {
+        appendToCurrentNodeAndPushElement("http://www.w3.org/1999/xhtml",
+                "body", attributes);
     }
 
     private void appendToCurrentNodeAndPushBodyElement() throws SAXException {
         appendToCurrentNodeAndPushBodyElement(tokenizer.newAttributes());
     }
 
-    private void appendToCurrentNodeAndPushFormElementMayFoster(Attributes attributes) throws SAXException {
+    private void appendToCurrentNodeAndPushFormElementMayFoster(
+            Attributes attributes) throws SAXException {
         flushCharacters();
-        T elt = createElement("form", attributes);
+        T elt = createElement("http://www.w3.org/1999/xhtml", "form",
+                attributes);
         formPointer = elt;
         StackNode<T> current = stack[currentPtr];
         if (current.fosterParenting) {
@@ -3195,14 +3615,15 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         } else {
             detachFromParentAndAppendToNewParent(elt, current.node);
         }
-        StackNode<T> node = new StackNode<T>("form", elt);
+        StackNode<T> node = new StackNode<T>("http://www.w3.org/1999/xhtml",
+                "form", elt);
         push(node);
     }
-    
-    private void appendToCurrentNodeAndPushFormattingElementMayFoster(String name,
-            Attributes attributes) throws SAXException {
+
+    private void appendToCurrentNodeAndPushFormattingElementMayFoster(
+            String ns, String name, Attributes attributes) throws SAXException {
         flushCharacters();
-        T elt = createElement(name, attributes, formPointer);
+        T elt = createElement(ns, name, attributes, formPointer);
         StackNode<T> current = stack[currentPtr];
         if (current.fosterParenting) {
             if (conformingAndStreaming) {
@@ -3215,24 +3636,86 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         } else {
             detachFromParentAndAppendToNewParent(elt, current.node);
         }
-        StackNode<T> node = new StackNode<T>(name, elt);
+        StackNode<T> node = new StackNode<T>(ns, name, elt);
         push(node);
         append(node);
     }
 
-    private void appendToCurrentNodeAndPushElement(String name,
+    private void appendToCurrentNodeAndPushElement(String ns, String name,
             Attributes attributes) throws SAXException {
         flushCharacters();
-        T elt = createElement(name, attributes);
+        T elt = createElement(ns, name, attributes);
         detachFromParentAndAppendToNewParent(elt, stack[currentPtr].node);
-        StackNode<T> node = new StackNode<T>(name, elt);
-        push(node);        
+        StackNode<T> node = new StackNode<T>(ns, name, elt);
+        push(node);
     }
 
-    private void appendToCurrentNodeAndPushElementMayFoster(String name,
+    private void appendToCurrentNodeAndPushElementMayFoster(String ns,
+            String name, Attributes attributes) throws SAXException {
+        flushCharacters();
+        T elt = createElement(ns, name, attributes);
+        StackNode<T> current = stack[currentPtr];
+        if (current.fosterParenting) {
+            if (conformingAndStreaming) {
+                fatal();
+            } else if (nonConformingAndStreaming) {
+                return;
+            } else {
+                insertIntoFosterParent(elt);
+            }
+        } else {
+            detachFromParentAndAppendToNewParent(elt, current.node);
+        }
+        StackNode<T> node = new StackNode<T>(ns, name, elt);
+        push(node);
+    }
+
+    private void appendToCurrentNodeAndPushElementMayFoster(String ns,
+            String name, Attributes attributes, T form) throws SAXException {
+        flushCharacters();
+        T elt = createElement(ns, name, attributes, formPointer);
+        StackNode<T> current = stack[currentPtr];
+        if (current.fosterParenting) {
+            if (conformingAndStreaming) {
+                fatal();
+            } else if (nonConformingAndStreaming) {
+                return;
+            } else {
+                insertIntoFosterParent(elt);
+            }
+        } else {
+            detachFromParentAndAppendToNewParent(elt, current.node);
+        }
+        StackNode<T> node = new StackNode<T>(ns, name, elt);
+        push(node);
+    }
+
+    private void appendVoidElementToCurrentMayFoster(String ns, String name,
+            Attributes attributes, T form) throws SAXException {
+        flushCharacters();
+        T elt = createElement(ns, name, attributes, formPointer);
+        StackNode<T> current = stack[currentPtr];
+        if (current.fosterParenting) {
+            if (conformingAndStreaming) {
+                fatal();
+            } else if (nonConformingAndStreaming) {
+                return;
+            } else {
+                insertIntoFosterParent(elt);
+            }
+        } else {
+            detachFromParentAndAppendToNewParent(elt, current.node);
+        }
+        if (conformingAndStreaming || nonConformingAndStreaming) {
+            elementPushed(ns, name, (T) attributes);
+            elementPopped(ns, name, null);
+        }
+    }
+
+    private void appendVoidElementToCurrentMayFoster(String ns, String name,
             Attributes attributes) throws SAXException {
         flushCharacters();
-        T elt = createElement(name, attributes);
+        T elt = createElement(ns, name, attributes);
         StackNode<T> current = stack[currentPtr];
         if (current.fosterParenting) {
             if (conformingAndStreaming) {
@@ -3245,86 +3728,27 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         } else {
             detachFromParentAndAppendToNewParent(elt, current.node);
         }
-        StackNode<T> node = new StackNode<T>(name, elt);
-        push(node);
-    }
-    
-    private void appendToCurrentNodeAndPushElementMayFoster(String name, Attributes attributes, T form) throws SAXException {
-        flushCharacters();
-        T elt = createElement(name, attributes, formPointer);
-        StackNode<T> current = stack[currentPtr];
-        if (current.fosterParenting) {
-            if (conformingAndStreaming) {
-                fatal();
-            } else if (nonConformingAndStreaming) {
-                return;
-            } else {
-                insertIntoFosterParent(elt);
-            }
-        } else {
-            detachFromParentAndAppendToNewParent(elt, current.node);
+        if (conformingAndStreaming || nonConformingAndStreaming) {
+            elementPushed(ns, name, (T) attributes);
+            elementPopped(ns, name, null);
         }
-        StackNode<T> node = new StackNode<T>(name, elt);
-        push(node);
     }
 
-    private void appendVoidElementToCurrentMayFoster(String name,
+    private void appendVoidElementToCurrent(String ns, String name,
             Attributes attributes, T form) throws SAXException {
         flushCharacters();
-        T elt = createElement(name, attributes, formPointer);
-        StackNode<T> current = stack[currentPtr];
-        if (current.fosterParenting) {
-            if (conformingAndStreaming) {
-                fatal();
-            } else if (nonConformingAndStreaming) {
-                return;
-            } else {
-                insertIntoFosterParent(elt);
-            }
-        } else {
-            detachFromParentAndAppendToNewParent(elt, current.node);
-        }
-        if (conformingAndStreaming || nonConformingAndStreaming) {
-            elementPushed(name, (T) attributes);
-            elementPopped(name, null);
-        }
-    }
-    
-    private void appendVoidElementToCurrentMayFoster(String name, Attributes attributes) throws SAXException {
-        flushCharacters();
-        T elt = createElement(name, attributes);
-        StackNode<T> current = stack[currentPtr];
-        if (current.fosterParenting) {
-            if (conformingAndStreaming) {
-                fatal();
-            } else if (nonConformingAndStreaming) {
-                return;
-            } else {
-                insertIntoFosterParent(elt);
-            }
-        } else {
-            detachFromParentAndAppendToNewParent(elt, current.node);
-        }
-        if (conformingAndStreaming || nonConformingAndStreaming) {
-            elementPushed(name, (T) attributes);
-            elementPopped(name, null);
-        }
-    }
-       
-    private void appendVoidElementToCurrent(String name,
-            Attributes attributes, T form) throws SAXException {
-        flushCharacters();
-        T elt = createElement(name, attributes, formPointer);
+        T elt = createElement("http://www.w3.org/1999/xhtml", name, attributes,
+                formPointer);
         StackNode<T> current = stack[currentPtr];
         detachFromParentAndAppendToNewParent(elt, current.node);
         if (conformingAndStreaming || nonConformingAndStreaming) {
-            elementPushed(name, (T) attributes);
-            elementPopped(name, null);
+            elementPushed("http://www.w3.org/1999/xhtml", name, (T) attributes);
+            elementPopped("http://www.w3.org/1999/xhtml", name, null);
         }
     }
 
-    
-    private void accumulateCharacters(char[] buf, int start, int length) throws SAXException {
+    private void accumulateCharacters(char[] buf, int start, int length)
+            throws SAXException {
         if (coalescingText) {
             int newLen = charBufferLen + length;
             if (newLen > charBuffer.length) {
@@ -3338,83 +3762,99 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             appendCharacters(stack[currentPtr].node, buf, start, length);
         }
     }
-    
+
     private void flushCharacters() throws SAXException {
         if (charBufferLen > 0) {
-            appendCharacters(stack[currentPtr].node, charBuffer, 0, charBufferLen);
+            appendCharacters(stack[currentPtr].node, charBuffer, 0,
+                    charBufferLen);
             charBufferLen = 0;
         }
     }
-    
+
     // ------------------------------- //
-    
-    protected abstract T createElement(String name, Attributes attributes) throws SAXException;    
-    
-    protected T createElement(String name, Attributes attributes, T form) throws SAXException {
-        return createElement(name, attributes);
+
+    protected abstract T createElement(String ns, String name,
+            Attributes attributes) throws SAXException;
+
+    protected T createElement(String ns, String name, Attributes attributes,
+            T form) throws SAXException {
+        return createElement("http://www.w3.org/1999/xhtml", name, attributes);
     }
-    
-    protected abstract T createHtmlElementSetAsRoot(Attributes attributes) throws SAXException;
-    
+
+    protected abstract T createHtmlElementSetAsRoot(Attributes attributes)
+            throws SAXException;
+
     protected abstract void detachFromParent(T element) throws SAXException;
 
     protected abstract boolean hasChildren(T element) throws SAXException;
-    
-    protected abstract T shallowClone(T element) throws SAXException;
-    
-    protected abstract void detachFromParentAndAppendToNewParent(T child, T newParent) throws SAXException;
 
-    protected abstract void appendChildrenToNewParent(T oldParent, T newParent) throws SAXException;
-    
+    protected abstract T shallowClone(T element) throws SAXException;
+
+    protected abstract void detachFromParentAndAppendToNewParent(T child,
+            T newParent) throws SAXException;
+
+    protected abstract void appendChildrenToNewParent(T oldParent, T newParent)
+            throws SAXException;
+
     /**
-     * Get the parent element. MUST return <code>null</code> if there is no parent
-     * <em>or</em> the parent is not an element.
+     * Get the parent element. MUST return <code>null</code> if there is no
+     * parent <em>or</em> the parent is not an element.
      */
     protected abstract T parentElementFor(T child) throws SAXException;
-    
-    protected abstract void insertBefore(T child, T sibling, T parent) throws SAXException;
-    
-    protected abstract void insertCharactersBefore(char[] buf, int start, int length, T sibling, T parent) throws SAXException;
-    
-    protected abstract void appendCharacters(T parent,
-            char[] buf, int start, int length) throws SAXException;
-    
-    protected abstract void appendComment(T parent, char[] buf, int start, int length) throws SAXException;
 
-    protected abstract void appendCommentToDocument(char[] buf, int start, int length) throws SAXException;
+    protected abstract void insertBefore(T child, T sibling, T parent)
+            throws SAXException;
 
-    protected abstract void addAttributesToElement(T element, Attributes attributes) throws SAXException;
+    protected abstract void insertCharactersBefore(char[] buf, int start,
+            int length, T sibling, T parent) throws SAXException;
+
+    protected abstract void appendCharacters(T parent, char[] buf, int start,
+            int length) throws SAXException;
+
+    protected abstract void appendComment(T parent, char[] buf, int start,
+            int length) throws SAXException;
+
+    protected abstract void appendCommentToDocument(char[] buf, int start,
+            int length) throws SAXException;
+
+    protected abstract void addAttributesToElement(T element,
+            Attributes attributes) throws SAXException;
 
     protected void start(boolean fragment) throws SAXException {
-        
+
     }
 
     protected void end() throws SAXException {
-        
+
     }
 
     protected void bodyClosed(T body) throws SAXException {
-        
+
     }
 
     protected void htmlClosed(T html) throws SAXException {
-        
+
     }
-    
+
     protected void appendDoctypeToDocument(String name,
-            String publicIdentifier, String systemIdentifier) throws SAXException {
-        
-    }
-    
-    protected void elementPushed(String name, T node) throws SAXException {
-        
+            String publicIdentifier, String systemIdentifier)
+            throws SAXException {
+
     }
 
-    protected void elementPopped(String name, T node) throws SAXException {
-        
+    protected void elementPushed(String ns, String name, T node)
+            throws SAXException {
+
     }
 
-    protected void documentMode(DocumentMode mode, String publicIdentifier, String systemIdentifier, boolean html4SpecificAdditionalErrorChecks) throws SAXException {
+    protected void elementPopped(String ns, String name, T node)
+            throws SAXException {
+
+    }
+
+    protected void documentMode(DocumentMode m, String publicIdentifier,
+            String systemIdentifier, boolean html4SpecificAdditionalErrorChecks)
+            throws SAXException {
 
     }
 
@@ -3428,16 +3868,17 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     public void setIgnoringComments(boolean ignoreComments) {
         wantingComments = !ignoreComments;
     }
-    
+
     /**
      * Sets the errorHandler.
      * 
-     * @param errorHandler the errorHandler to set
+     * @param errorHandler
+     *            the errorHandler to set
      */
     public final void setErrorHandler(ErrorHandler errorHandler) {
         this.errorHandler = errorHandler;
     }
-    
+
     /**
      * Returns the errorHandler.
      * 
@@ -3450,7 +3891,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     public final void setFragmentContext(String context) {
         this.context = context == null ? null : context.intern();
     }
-    
+
     protected final T currentNode() {
         return stack[currentPtr].node;
     }

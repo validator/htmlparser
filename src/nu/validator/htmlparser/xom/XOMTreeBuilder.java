@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
+ * Copyright (c) 2008 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -118,11 +119,11 @@ class XOMTreeBuilder extends TreeBuilder<Element> {
     }
 
     @Override
-    protected Element createElement(String name, Attributes attributes)
+    protected Element createElement(String ns, String name, Attributes attributes)
             throws SAXException {
         try {
             Element rv = nodeFactory.makeElement(name,
-                    "http://www.w3.org/1999/xhtml");
+                    ns);
             for (int i = 0; i < attributes.getLength(); i++) {
                 rv.addAttribute(nodeFactory.makeAttribute(
                         attributes.getLocalName(i), attributes.getURI(i),
@@ -261,15 +262,15 @@ class XOMTreeBuilder extends TreeBuilder<Element> {
     }
 
     /**
-     * @see nu.validator.htmlparser.impl.TreeBuilder#createElement(java.lang.String,
-     *      org.xml.sax.Attributes, java.lang.Object)
+     * @see nu.validator.htmlparser.impl.TreeBuilder#createElement(String,
+     *      java.lang.String, org.xml.sax.Attributes, java.lang.Object)
      */
     @Override
-    protected Element createElement(String name, Attributes attributes,
-            Element form) throws SAXException {
+    protected Element createElement(String ns, String name,
+            Attributes attributes, Element form) throws SAXException {
         try {
             Element rv = nodeFactory.makeElement(name,
-                    "http://www.w3.org/1999/xhtml", form);
+                    ns, form);
             for (int i = 0; i < attributes.getLength(); i++) {
                 rv.addAttribute(nodeFactory.makeAttribute(
                         attributes.getLocalName(i), attributes.getURI(i),
