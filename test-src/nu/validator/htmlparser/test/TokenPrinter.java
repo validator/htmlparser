@@ -119,7 +119,7 @@ public class TokenPrinter implements TokenHandler, ErrorHandler {
 
     }
 
-    public void startTag(String name, Attributes attributes)
+    public void startTag(String name, Attributes attributes, boolean selfClosing)
             throws SAXException {
         try {
             writer.write('(');

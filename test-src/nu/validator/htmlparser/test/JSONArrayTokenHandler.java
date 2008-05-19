@@ -116,7 +116,7 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
         self.setContentModelFlag(contentModelFlag, contentModelElement);
     }
 
-    public void startTag(String name, Attributes attributes)
+    public void startTag(String name, Attributes attributes, boolean selfClosing)
             throws SAXException {
         flushCharacters();
         JSONArray token = new JSONArray();
@@ -127,6 +127,9 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
             attrs.getValue().put(attributes.getQName(i), new JSONString(attributes.getValue(i)));
         }
         token.getValue().add(attrs);
+        if (selfClosing) {
+            token.getValue().add(JSONBoolean.TRUE);            
+        }
         array.getValue().add(token);
     }
 

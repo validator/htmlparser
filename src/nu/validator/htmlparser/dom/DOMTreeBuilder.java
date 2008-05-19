@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
+ * Copyright (c) 2008 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -111,11 +112,11 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
     }
 
     @Override
-    protected Element createElement(String name, Attributes attributes)
+    protected Element createElement(String ns, String name, Attributes attributes)
             throws SAXException {
         try {
             Element rv = document.createElementNS(
-                    "http://www.w3.org/1999/xhtml", name);
+                    ns, name);
             for (int i = 0; i < attributes.getLength(); i++) {
                 rv.setAttributeNS(attributes.getURI(i),
                         attributes.getLocalName(i), attributes.getValue(i));
@@ -244,13 +245,13 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
     }
 
     /**
-     * @see nu.validator.htmlparser.impl.TreeBuilder#createElement(java.lang.String, org.xml.sax.Attributes, java.lang.Object)
+     * @see nu.validator.htmlparser.impl.TreeBuilder#createElement(String, java.lang.String, org.xml.sax.Attributes, java.lang.Object)
      */
     @Override
-    protected Element createElement(String name, Attributes attributes,
-            Element form) throws SAXException {
+    protected Element createElement(String ns, String name,
+            Attributes attributes, Element form) throws SAXException {
         try {
-            Element rv = createElement(name, attributes);
+            Element rv = createElement(ns, name, attributes);
             rv.setUserData("nu.validator.form-pointer", form, null);
             return rv;
         } catch (DOMException e) {

@@ -74,11 +74,11 @@ import org.xml.sax.SAXParseException;
 public final class Tokenizer implements Locator {
 
     private static final int DATA = 0;
-    
+
     private static final int RCDATA = 1;
 
     private static final int CDATA = 2;
-    
+
     private static final int PLAINTEXT = 3;
 
     private static final int TAG_OPEN = 49;
@@ -186,7 +186,7 @@ public final class Tokenizer implements Locator {
     private static final int ESCAPE_HYPHEN = 55;
 
     private static final int ESCAPE_HYPHEN_HYPHEN = 56;
-    
+
     // String interning
 
     static int stringToElementMagic(String string) {
@@ -335,27 +335,11 @@ public final class Tokenizer implements Locator {
     private RewindableInputStream rewindableInputStream;
 
     /**
-     * The main input buffer that the tokenizer reads from. Filled from
-     * <code>reader</code>.
-     */
-    private char[] buffer = new char[2048];
-
-    /**
      * The previous <code>char</code> read from the buffer with infoset
      * alteration applied except for CR. Used for CRLF normalization and
      * surrogate pair checking.
      */
     private char prev;
-
-    /**
-     * Lookbehind buffer for magic RCDATA/CDATA escaping.
-     */
-    private final char[] prevFour = new char[4];
-
-    /**
-     * Points to the last <code>char</code> written to <code>prevFour</code>.
-     */
-    private int prevFourPtr = 0;
 
     /**
      * The current line number in the current resource being parsed. (First line
@@ -404,9 +388,9 @@ public final class Tokenizer implements Locator {
     private boolean seenDigits = false;
 
     private int pos = 0;
-    
+
     private int end = 0;
-    
+
     private char[] buf;
 
     private int cstart = 0;
@@ -473,11 +457,6 @@ public final class Tokenizer implements Locator {
      * http://www.whatwg.org/specs/web-apps/current-work/#content2
      */
     private ContentModelFlag contentModelFlag = ContentModelFlag.PCDATA;
-
-    /**
-     * http://www.whatwg.org/specs/web-apps/current-work/#escape
-     */
-    private boolean escapeFlag = false;
 
     /**
      * The element whose end tag closes the current CDATA or RCDATA element.
@@ -832,8 +811,7 @@ public final class Tokenizer implements Locator {
             for (;;) {
                 try {
                     contentModelFlag = ContentModelFlag.PCDATA;
-                    escapeFlag = false;
-                    
+
                     line = linePrev = 0;
                     col = colPrev = 1;
                     nextCharOnNewLine = true;
@@ -1377,17 +1355,6 @@ public final class Tokenizer implements Locator {
         return Arrays.binarySearch(VOID_ELEMENTS, tagName) > -1;
     }
 
-    private boolean lastHyphHyph() {
-        return prevFour[(prevFourPtr - 1 + 4) % 4] == '-'
-                && prevFour[(prevFourPtr - 2 + 4) % 4] == '-';
-    }
-
-    private boolean lastLtExclHyph() {
-        return prevFour[(prevFourPtr - 1 + 4) % 4] == '-'
-                && prevFour[(prevFourPtr - 2 + 4) % 4] == '!'
-                && prevFour[(prevFourPtr - 3 + 4) % 4] == '<';
-    }
-
     /**
      * 
      */
@@ -1438,7 +1405,6 @@ public final class Tokenizer implements Locator {
              * When an end tag token is emitted, the content model flag must be
              * switched to the PCDATA state.
              */
-            escapeFlag = false;
             contentModelFlag = ContentModelFlag.PCDATA;
             if (attrs.getLength() != 0) {
                 /*
@@ -1449,7 +1415,7 @@ public final class Tokenizer implements Locator {
             }
             tokenHandler.endTag(tagName, attrs);
         } else {
-            tokenHandler.startTag(tagName, attrs);
+            tokenHandler.startTag(tagName, attrs, selfClosing);
             switch (contentModelFlag) {
                 case PCDATA:
                     rv = DATA;
@@ -1624,6 +1590,9 @@ public final class Tokenizer implements Locator {
         inForeign = false; // XXX
         seenDigits = false;
 
+        char[] buffer = new char[2048];
+        UTF16Buffer bufr = new UTF16Buffer(buffer, 0, 0);
+        boolean lastWasCR = false;
         int len = -1;
         while ((len = reader.read(buffer)) != -1) {
             assert len > 0;
@@ -1640,20 +1609,24 @@ public final class Tokenizer implements Locator {
                 CharacterHandler ch = characterHandlers[i];
                 ch.characters(buffer, offset, length);
             }
-            tokenizeBuffer(buffer, offset, length);
+            bufr.setOffset(offset);
+            bufr.setLength(length);
+            lastWasCR = normalizeLineBreaks(bufr, lastWasCR);
+            tokenizeBuffer(bufr);
         }
         eof();
     }
 
     // WARNING When editing this, makes sure the bytecode length shown by javap
     // stays under 8000 bytes!
-    private void tokenizeBuffer(char[] bufr, int offset, int length)
+    private void tokenizeBuffer(UTF16Buffer buffer)
             throws SAXException, IOException {
-        buf = bufr;
+        buf = buffer.getBuffer();
         int state = stateSave;
         int returnState = returnStateSave;
         char c = '\u0000';
 
+        int offset = buffer.getOffset();
         /**
          * The index of the last <code>char</code> read from <code>buf</code>.
          */
@@ -1665,18 +1638,19 @@ public final class Tokenizer implements Locator {
          * if there is not a current run being coalesced.
          */
         cstart = offset;
-        
+
         /**
          * The number of <code>char</code>s in <code>buf</code> that have
          * meaning. (The rest of the array is garbage and should not be
          * examined.)
          */
-        end = offset + length;
+        end = offset + buffer.getLength();
         boolean reconsume = false;
         stateLoop(state, c, reconsume, returnState);
     }
 
-private void stateLoop(int state, char c, boolean reconsume, int returnState) throws SAXException {
+    private void stateLoop(int state, char c, boolean reconsume, int returnState)
+            throws SAXException {
         stateloop: for (;;) {
             switch (state) {
                 case PLAINTEXT:
@@ -1690,8 +1664,8 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                                 break stateloop;
                             default:
                                 /*
-                                 * Anything else Emit the input
-                                 * character as a character token.
+                                 * Anything else Emit the input character as a
+                                 * character token.
                                  */
                                 /*
                                  * Stay in the data state.
@@ -1699,7 +1673,7 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                                 continue;
                         }
                     }
-                // XXX reorder point
+                    // XXX reorder point
                 case RCDATA:
                     rcdataloop: for (;;) {
                         if (!reconsume) {
@@ -1711,13 +1685,11 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                                 break stateloop;
                             case '&':
                                 /*
-                                 * U+0026 AMPERSAND (&) When the content
-                                 * model flag is set to one of the
-                                 * PCDATA or RCDATA states and the
-                                 * escape flag is false: switch to the
-                                 * entity data state. Otherwise: treat
-                                 * it as per the "anything else" entry
-                                 * below.
+                                 * U+0026 AMPERSAND (&) When the content model
+                                 * flag is set to one of the PCDATA or RCDATA
+                                 * states and the escape flag is false: switch
+                                 * to the entity data state. Otherwise: treat it
+                                 * as per the "anything else" entry below.
                                  */
                                 flushChars();
                                 additional = '\u0000';
@@ -1726,26 +1698,25 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                                 continue stateloop;
                             case '<':
                                 /*
-                                 * U+003C LESS-THAN SIGN (<) When the
-                                 * content model flag is set to the
-                                 * PCDATA state: switch to the tag open
-                                 * state. When the content model flag is
-                                 * set to either the RCDATA state or the
-                                 * CDATA state and the escape flag is
-                                 * false: switch to the tag open state.
-                                 * Otherwise: treat it as per the
-                                 * "anything else" entry below.
+                                 * U+003C LESS-THAN SIGN (<) When the content
+                                 * model flag is set to the PCDATA state: switch
+                                 * to the tag open state. When the content model
+                                 * flag is set to either the RCDATA state or the
+                                 * CDATA state and the escape flag is false:
+                                 * switch to the tag open state. Otherwise:
+                                 * treat it as per the "anything else" entry
+                                 * below.
                                  */
                                 flushChars();
                                 resetAttributes();
-                                
+
                                 returnState = state;
                                 state = TAG_OPEN_NON_PCDATA;
                                 continue stateloop;
                             default:
                                 /*
-                                 * Anything else Emit the input
-                                 * character as a character token.
+                                 * Anything else Emit the input character as a
+                                 * character token.
                                  */
                                 /*
                                  * Stay in the data state.
@@ -1753,7 +1724,7 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                                 continue;
                         }
                     }
-                // XXX reorder point
+                    // XXX reorder point
                 case CDATA:
                     cdataloop: for (;;) {
                         if (!reconsume) {
@@ -1765,26 +1736,26 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                                 break stateloop;
                             case '<':
                                 /*
-                                 * U+003C LESS-THAN SIGN (<) When the
-                                 * content model flag is set to the
-                                 * PCDATA state: switch to the tag open
-                                 * state. When the content model flag is
-                                 * set to either the RCDATA state or the
-                                 * CDATA state and the escape flag is
-                                 * false: switch to the tag open state.
-                                 * Otherwise: treat it as per the
-                                 * "anything else" entry below.
+                                 * U+003C LESS-THAN SIGN (<) When the content
+                                 * model flag is set to the PCDATA state: switch
+                                 * to the tag open state. When the content model
+                                 * flag is set to either the RCDATA state or the
+                                 * CDATA state and the escape flag is false:
+                                 * switch to the tag open state. Otherwise:
+                                 * treat it as per the "anything else" entry
+                                 * below.
                                  */
                                 flushChars();
                                 resetAttributes();
-                                
+
                                 returnState = state;
                                 state = TAG_OPEN_NON_PCDATA;
-                                break cdataloop; // FALL THRU continue stateloop;
+                                break cdataloop; // FALL THRU continue
+                            // stateloop;
                             default:
                                 /*
-                                 * Anything else Emit the input
-                                 * character as a character token.
+                                 * Anything else Emit the input character as a
+                                 * character token.
                                  */
                                 /*
                                  * Stay in the data state.
@@ -1792,80 +1763,85 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                                 continue;
                         }
                     }
-                // WARNING FALLTHRU CASE TRANSITION: DON'T REORDER
+                    // WARNING FALLTHRU CASE TRANSITION: DON'T REORDER
                 case TAG_OPEN_NON_PCDATA:
-                    tagopennonpcdataloop: for(;;) {
-                    c = read();
-                    switch (c) {
-                        case '\u0000':
-                            break stateloop;
-                        case '!':
-                            tokenHandler.characters(LT_GT, 0, 1);
-                            cstart = pos;
-                            state = ESCAPE_EXCLAMATION;
-                            break tagopennonpcdataloop; // FALL THRU continue stateloop;
-                        case '/':
-                            /*
-                             * If the content model flag is set to the RCDATA or
-                             * CDATA states Consume the next input character.
-                             */
-                            if (contentModelElement != null) {
+                    tagopennonpcdataloop: for (;;) {
+                        c = read();
+                        switch (c) {
+                            case '\u0000':
+                                break stateloop;
+                            case '!':
+                                tokenHandler.characters(LT_GT, 0, 1);
+                                cstart = pos;
+                                state = ESCAPE_EXCLAMATION;
+                                break tagopennonpcdataloop; // FALL THRU
+                            // continue
+                            // stateloop;
+                            case '/':
                                 /*
-                                 * If it is a U+002F SOLIDUS (/) character,
-                                 * switch to the close tag open state.
+                                 * If the content model flag is set to the
+                                 * RCDATA or CDATA states Consume the next input
+                                 * character.
                                  */
-                                index = 0;
-                                clearStrBuf();
-                                state = CLOSE_TAG_OPEN_NOT_PCDATA;
+                                if (contentModelElement != null) {
+                                    /*
+                                     * If it is a U+002F SOLIDUS (/) character,
+                                     * switch to the close tag open state.
+                                     */
+                                    index = 0;
+                                    clearStrBuf();
+                                    state = CLOSE_TAG_OPEN_NOT_PCDATA;
+                                    continue stateloop;
+                                } // else fall through
+                            default:
+                                /*
+                                 * Otherwise, emit a U+003C LESS-THAN SIGN
+                                 * character token
+                                 */
+                                tokenHandler.characters(LT_GT, 0, 1);
+                                /*
+                                 * and reconsume the current input character in
+                                 * the data state.
+                                 */
+                                cstart = pos;
+                                state = returnState;
+                                reconsume = true;
                                 continue stateloop;
-                            } // else fall through
-                        default:
-                            /*
-                             * Otherwise, emit a U+003C LESS-THAN SIGN character
-                             * token
-                             */
-                            tokenHandler.characters(LT_GT, 0, 1);
-                            /*
-                             * and reconsume the current input character in the
-                             * data state.
-                             */
-                            cstart = pos;
-                            state = returnState;
-                            reconsume = true;
-                            continue stateloop;
+                        }
                     }
-                    }
-                // WARNING FALLTHRU CASE TRANSITION: DON'T REORDER
+                    // WARNING FALLTHRU CASE TRANSITION: DON'T REORDER
                 case ESCAPE_EXCLAMATION:
-                    escapeexclamationloop: for(;;) {
-                    c = read();
-                    switch (c) {
-                        case '\u0000':
-                            break stateloop;
-                        case '-':
-                            state = ESCAPE_EXCLAMATION_HYPHEN;
-                            break escapeexclamationloop; // FALL THRU continue stateloop;
-                        default:
-                            state = returnState;
-                            reconsume = true;
-                            continue stateloop;
-                    }
-                    }
-                // WARNING FALLTHRU CASE TRANSITION: DON'T REORDER
-                case ESCAPE_EXCLAMATION_HYPHEN:
+                    escapeexclamationloop: for (;;) {
                         c = read();
                         switch (c) {
                             case '\u0000':
                                 break stateloop;
                             case '-':
-                                state = ESCAPE_HYPHEN_HYPHEN;
-                                continue stateloop;
+                                state = ESCAPE_EXCLAMATION_HYPHEN;
+                                break escapeexclamationloop; // FALL THRU
+                            // continue
+                            // stateloop;
                             default:
                                 state = returnState;
                                 reconsume = true;
                                 continue stateloop;
                         }
-                        // XXX reorder point
+                    }
+                    // WARNING FALLTHRU CASE TRANSITION: DON'T REORDER
+                case ESCAPE_EXCLAMATION_HYPHEN:
+                    c = read();
+                    switch (c) {
+                        case '\u0000':
+                            break stateloop;
+                        case '-':
+                            state = ESCAPE_HYPHEN_HYPHEN;
+                            continue stateloop;
+                        default:
+                            state = returnState;
+                            reconsume = true;
+                            continue stateloop;
+                    }
+                    // XXX reorder point
                 case ESCAPE:
                     escapeloop: for (;;) {
                         c = read();
@@ -1875,7 +1851,7 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                             case '-':
                                 state = ESCAPE_HYPHEN;
                                 break escapeloop; // FALL THRU continue
-                                                    // stateloop;
+                            // stateloop;
                             default:
                                 continue escapeloop;
                         }
@@ -1890,7 +1866,7 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                             case '-':
                                 state = ESCAPE_HYPHEN_HYPHEN;
                                 break escapehyphenloop; // FALL THRU continue
-                                                    // stateloop;
+                            // stateloop;
                             default:
                                 state = ESCAPE;
                                 continue stateloop;
@@ -1899,19 +1875,19 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                     // WARNING FALLTHRU CASE TRANSITION: DON'T REORDER
                 case ESCAPE_HYPHEN_HYPHEN:
                     for (;;) {
-                    c = read();
-                    switch (c) {
-                        case '\u0000':
-                            break stateloop;
-                        case '-':
-                            continue;
-                        case '>':
-                            state = returnState;
-                            continue stateloop;
-                        default:
-                            state = ESCAPE;
-                            continue stateloop;
-                    }
+                        c = read();
+                        switch (c) {
+                            case '\u0000':
+                                break stateloop;
+                            case '-':
+                                continue;
+                            case '>':
+                                state = returnState;
+                                continue stateloop;
+                            default:
+                                state = ESCAPE;
+                                continue stateloop;
+                        }
                     }
                     // XXX reorder point
                 case DATA:
@@ -1925,41 +1901,38 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                                 break stateloop;
                             case '&':
                                 /*
-                                 * U+0026 AMPERSAND (&) When the content
-                                 * model flag is set to one of the
-                                 * PCDATA or RCDATA states and the
-                                 * escape flag is false: switch to the
-                                 * entity data state. Otherwise: treat
-                                 * it as per the "anything else" entry
-                                 * below.
+                                 * U+0026 AMPERSAND (&) When the content model
+                                 * flag is set to one of the PCDATA or RCDATA
+                                 * states and the escape flag is false: switch
+                                 * to the entity data state. Otherwise: treat it
+                                 * as per the "anything else" entry below.
                                  */
-                                    flushChars();
+                                flushChars();
                                 additional = '\u0000';
                                 returnState = state;
                                 state = CONSUME_ENTITY;
                                 continue stateloop;
                             case '<':
                                 /*
-                                 * U+003C LESS-THAN SIGN (<) When the
-                                 * content model flag is set to the
-                                 * PCDATA state: switch to the tag open
-                                 * state. When the content model flag is
-                                 * set to either the RCDATA state or the
-                                 * CDATA state and the escape flag is
-                                 * false: switch to the tag open state.
-                                 * Otherwise: treat it as per the
-                                 * "anything else" entry below.
+                                 * U+003C LESS-THAN SIGN (<) When the content
+                                 * model flag is set to the PCDATA state: switch
+                                 * to the tag open state. When the content model
+                                 * flag is set to either the RCDATA state or the
+                                 * CDATA state and the escape flag is false:
+                                 * switch to the tag open state. Otherwise:
+                                 * treat it as per the "anything else" entry
+                                 * below.
                                  */
-                                    flushChars();
+                                flushChars();
                                 resetAttributes();
-                                
+
                                 state = TAG_OPEN;
                                 break dataloop; // FALL THROUGH continue
                             // stateloop;
                             default:
                                 /*
-                                 * Anything else Emit the input
-                                 * character as a character token.
+                                 * Anything else Emit the input character as a
+                                 * character token.
                                  */
                                 /*
                                  * Stay in the data state.
@@ -1977,110 +1950,108 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                      * The behavior of this state depends on the content model
                      * flag.
                      */
+                    /*
+                     * If the content model flag is set to the PCDATA state
+                     * Consume the next input character:
+                     */
+                    if (c == '!') {
                         /*
-                         * If the content model flag is set to the PCDATA state
-                         * Consume the next input character:
+                         * U+0021 EXCLAMATION MARK (!) Switch to the markup
+                         * declaration open state.
                          */
-                        if (c == '!') {
-                            /*
-                             * U+0021 EXCLAMATION MARK (!) Switch to the markup
-                             * declaration open state.
-                             */
-                            clearLongStrBuf();
-                            state = MARKUP_DECLARATION_OPEN;
-                            continue stateloop;
-                        } else if (c == '/') {
-                            /*
-                             * U+002F SOLIDUS (/) Switch to the close tag open
-                             * state.
-                             */
-                            state = CLOSE_TAG_OPEN_PCDATA;
-                            continue stateloop;
-                        } else if (c >= 'A' && c <= 'Z') {
-                            /*
-                             * U+0041 LATIN CAPITAL LETTER A through to U+005A
-                             * LATIN CAPITAL LETTER Z Create a new start tag
-                             * token,
-                             */
-                            endTag = false;
-                            /*
-                             * set its tag name to the lowercase version of the
-                             * input character (add 0x0020 to the character's
-                             * code point),
-                             */
-                            clearStrBuf();
-                            appendStrBuf((char) (c + 0x20));
-                            /* then switch to the tag name state. */
-                            state = TAG_NAME;
-                            /*
-                             * (Don't emit the token yet; further details will
-                             * be filled in before it is emitted.)
-                             */
-                            continue stateloop;
-                        } else if (c >= 'a' && c <= 'z') {
-                            /*
-                             * U+0061 LATIN SMALL LETTER A through to U+007A
-                             * LATIN SMALL LETTER Z Create a new start tag
-                             * token,
-                             */
-                            endTag = false;
-                            /*
-                             * set its tag name to the input character,
-                             */
-                            clearStrBuf();
-                            appendStrBuf(c);
-                            /* then switch to the tag name state. */
-                            state = TAG_NAME;
-                            /*
-                             * (Don't emit the token yet; further details will
-                             * be filled in before it is emitted.)
-                             */
-                            continue stateloop;
-                        } else if (c == '>') {
-                            /*
-                             * U+003E GREATER-THAN SIGN (>) Parse error.
-                             */
-                            err("Bad character \u201C>\u201D in the tag open state.");
-                            /*
-                             * Emit a U+003C LESS-THAN SIGN character token and
-                             * a U+003E GREATER-THAN SIGN character token.
-                             */
-                            tokenHandler.characters(LT_GT, 0, 2);
-                            /* Switch to the data state. */
-                            cstart = pos + 1;
-                            state = DATA;
-                            continue stateloop;
-                        } else if (c == '?') {
-                            /*
-                             * U+003F QUESTION MARK (?) Parse error.
-                             */
-                            err("Bad character \u201C?\u201D in the tag open state.");
-                            /*
-                             * Switch to the bogus comment state.
-                             */
-                            clearLongStrBuf();
-                            appendLongStrBuf(c);
-                            state = BOGUS_COMMENT;
-                            continue stateloop;
-                        } else {
-                            /*
-                             * Anything else Parse error.
-                             */
-                            err("Bad character \u201C" + c
-                                    + "\u201D in the tag open state.");
-                            /*
-                             * Emit a U+003C LESS-THAN SIGN character token
-                             */
-                            tokenHandler.characters(LT_GT, 0, 1);
-                            /*
-                             * and reconsume the current input character in the
-                             * data state.
-                             */
-                            cstart = pos;
-                            state = DATA;
-                            reconsume = true;
-                            continue stateloop;
-                        }
+                        clearLongStrBuf();
+                        state = MARKUP_DECLARATION_OPEN;
+                        continue stateloop;
+                    } else if (c == '/') {
+                        /*
+                         * U+002F SOLIDUS (/) Switch to the close tag open
+                         * state.
+                         */
+                        state = CLOSE_TAG_OPEN_PCDATA;
+                        continue stateloop;
+                    } else if (c >= 'A' && c <= 'Z') {
+                        /*
+                         * U+0041 LATIN CAPITAL LETTER A through to U+005A LATIN
+                         * CAPITAL LETTER Z Create a new start tag token,
+                         */
+                        endTag = false;
+                        /*
+                         * set its tag name to the lowercase version of the
+                         * input character (add 0x0020 to the character's code
+                         * point),
+                         */
+                        clearStrBuf();
+                        appendStrBuf((char) (c + 0x20));
+                        /* then switch to the tag name state. */
+                        state = TAG_NAME;
+                        /*
+                         * (Don't emit the token yet; further details will be
+                         * filled in before it is emitted.)
+                         */
+                        continue stateloop;
+                    } else if (c >= 'a' && c <= 'z') {
+                        /*
+                         * U+0061 LATIN SMALL LETTER A through to U+007A LATIN
+                         * SMALL LETTER Z Create a new start tag token,
+                         */
+                        endTag = false;
+                        /*
+                         * set its tag name to the input character,
+                         */
+                        clearStrBuf();
+                        appendStrBuf(c);
+                        /* then switch to the tag name state. */
+                        state = TAG_NAME;
+                        /*
+                         * (Don't emit the token yet; further details will be
+                         * filled in before it is emitted.)
+                         */
+                        continue stateloop;
+                    } else if (c == '>') {
+                        /*
+                         * U+003E GREATER-THAN SIGN (>) Parse error.
+                         */
+                        err("Bad character \u201C>\u201D in the tag open state.");
+                        /*
+                         * Emit a U+003C LESS-THAN SIGN character token and a
+                         * U+003E GREATER-THAN SIGN character token.
+                         */
+                        tokenHandler.characters(LT_GT, 0, 2);
+                        /* Switch to the data state. */
+                        cstart = pos + 1;
+                        state = DATA;
+                        continue stateloop;
+                    } else if (c == '?') {
+                        /*
+                         * U+003F QUESTION MARK (?) Parse error.
+                         */
+                        err("Bad character \u201C?\u201D in the tag open state.");
+                        /*
+                         * Switch to the bogus comment state.
+                         */
+                        clearLongStrBuf();
+                        appendLongStrBuf(c);
+                        state = BOGUS_COMMENT;
+                        continue stateloop;
+                    } else {
+                        /*
+                         * Anything else Parse error.
+                         */
+                        err("Bad character \u201C" + c
+                                + "\u201D in the tag open state.");
+                        /*
+                         * Emit a U+003C LESS-THAN SIGN character token
+                         */
+                        tokenHandler.characters(LT_GT, 0, 1);
+                        /*
+                         * and reconsume the current input character in the data
+                         * state.
+                         */
+                        cstart = pos;
+                        state = DATA;
+                        reconsume = true;
+                        continue stateloop;
+                    }
                 case CLOSE_TAG_OPEN_NOT_PCDATA:
                     for (;;) {
                         c = read();
@@ -2211,7 +2182,7 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                                     }
                                     tokenHandler.characters(LT_SOLIDUS, 0, 2);
                                     emitStrBuf();
-                                    cstart = pos; // don't drop the character           
+                                    cstart = pos; // don't drop the character
                                     state = DATA;
                                     continue stateloop;
                             }
@@ -2662,7 +2633,7 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                                  * U+0022 QUOTATION MARK (") Switch to the
                                  * attribute value (double-quoted) state.
                                  */
-                                
+
                                 state = ATTRIBUTE_VALUE_DOUBLE_QUOTED;
                                 continue stateloop;
                             case '&':
@@ -2671,7 +2642,7 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                                  * value (unquoted) state and reconsume this
                                  * input character.
                                  */
-                                
+
                                 state = ATTRIBUTE_VALUE_UNQUOTED;
                                 reconsume = true;
                                 continue stateloop;
@@ -2680,7 +2651,7 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                                  * U+0027 APOSTROPHE (') Switch to the attribute
                                  * value (single-quoted) state.
                                  */
-                                
+
                                 state = ATTRIBUTE_VALUE_SINGLE_QUOTED;
                                 continue stateloop;
                             case '>':
@@ -2726,7 +2697,7 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                                  * Switch to the attribute value (unquoted)
                                  * state.
                                  */
-                                
+
                                 state = ATTRIBUTE_VALUE_UNQUOTED;
                                 continue stateloop;
                         }
@@ -2749,7 +2720,7 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                                  * attribute value (quoted) state.
                                  */
                                 addAttributeWithValue();
-                                
+
                                 state = AFTER_ATTRIBUTE_VALUE_QUOTED;
                                 continue stateloop;
                             case '&':
@@ -2794,7 +2765,7 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                                  * attribute value (quoted) state.
                                  */
                                 addAttributeWithValue();
-                                
+
                                 state = AFTER_ATTRIBUTE_VALUE_QUOTED;
                                 continue stateloop;
                             case '&':
@@ -2845,7 +2816,7 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                                  * attribute name state.
                                  */
                                 addAttributeWithValue();
-                                
+
                                 state = BEFORE_ATTRIBUTE_NAME;
                                 continue stateloop;
                             case '&':
@@ -2993,7 +2964,7 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                             }
                             /*
                              * Switch to the data state.
-                             */                           
+                             */
                             continue stateloop;
                         default:
                             /* Anything else Parse error. */
@@ -3038,7 +3009,7 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                                 break stateloop;
                             case '>':
                                 emitComment();
-                                cstart = pos + 1;                            
+                                cstart = pos + 1;
                                 state = DATA;
                                 continue stateloop;
                             default:
@@ -3172,8 +3143,8 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                             emitComment();
                             /*
                              * Switch to the data state.
-                             */                            
-                            cstart = pos + 1;                            
+                             */
+                            cstart = pos + 1;
                             state = DATA;
                             continue stateloop;
                         default:
@@ -3214,8 +3185,8 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                             emitComment();
                             /*
                              * Switch to the data state.
-                             */                            
-                            cstart = pos + 1;                            
+                             */
+                            cstart = pos + 1;
                             state = DATA;
                             continue stateloop;
                         default:
@@ -3308,7 +3279,7 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                                 /*
                                  * Switch to the data state.
                                  */
-                                cstart = pos + 1;                            
+                                cstart = pos + 1;
                                 state = DATA;
                                 continue stateloop;
                             case '-':
@@ -3419,8 +3390,8 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                                 tokenHandler.doctype("", null, null, true);
                                 /*
                                  * Switch to the data state.
-                                 */                                
-                                cstart = pos + 1;                            
+                                 */
+                                cstart = pos + 1;
                                 state = DATA;
                                 continue stateloop;
                             default:
@@ -3471,7 +3442,7 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                                 /*
                                  * Switch to the data state.
                                  */
-                                cstart = pos + 1;                            
+                                cstart = pos + 1;
                                 state = DATA;
                                 continue stateloop;
                             default:
@@ -3518,7 +3489,7 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                                 /*
                                  * Switch to the data state.
                                  */
-                                cstart = pos + 1;                            
+                                cstart = pos + 1;
                                 state = DATA;
                                 continue stateloop;
                             case 'p':
@@ -3672,7 +3643,7 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                                 /*
                                  * Switch to the data state.
                                  */
-                                cstart = pos + 1;                                
+                                cstart = pos + 1;
                                 state = DATA;
                                 continue stateloop;
                             default:
@@ -3723,7 +3694,7 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                                 /*
                                  * Switch to the data state.
                                  */
-                                cstart = pos + 1;                            
+                                cstart = pos + 1;
                                 state = DATA;
                                 continue stateloop;
                             default:
@@ -3771,7 +3742,7 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                                 /*
                                  * Switch to the data state.
                                  */
-                                cstart = pos + 1;                                                            
+                                cstart = pos + 1;
                                 state = DATA;
                                 continue stateloop;
                             default:
@@ -3844,7 +3815,7 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                                 /*
                                  * Switch to the data state.
                                  */
-                                cstart = pos + 1;                            
+                                cstart = pos + 1;
                                 state = DATA;
                                 continue stateloop;
                             default:
@@ -3923,7 +3894,7 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                                 /*
                                  * Switch to the data state.
                                  */
-                                cstart = pos + 1;                            
+                                cstart = pos + 1;
                                 state = DATA;
                                 continue stateloop;
                             default:
@@ -3975,7 +3946,7 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                                  * Switch to the data state.
                                  * 
                                  */
-                                cstart = pos + 1;                                                            
+                                cstart = pos + 1;
                                 state = DATA;
                                 continue stateloop;
                             default:
@@ -4025,7 +3996,7 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                                  * Switch to the data state.
                                  * 
                                  */
-                                cstart = pos + 1;                            
+                                cstart = pos + 1;
                                 state = DATA;
                                 continue stateloop;
                             default:
@@ -4074,7 +4045,7 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                                 /*
                                  * Switch to the data state.
                                  */
-                                cstart = pos + 1;                            
+                                cstart = pos + 1;
                                 state = DATA;
                                 continue stateloop;
                             default:
@@ -4113,7 +4084,7 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                                 /*
                                  * Switch to the data state.
                                  */
-                                cstart = pos + 1;                            
+                                cstart = pos + 1;
                                 state = DATA;
                                 continue stateloop;
                             default:
@@ -4191,7 +4162,7 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                         case '\u0000':
                             break stateloop;
                         case '>':
-                            cstart = pos + 1;                            
+                            cstart = pos + 1;
                             state = DATA;
                             continue stateloop;
                         default:
@@ -4389,7 +4360,7 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                                         strBufLen - strBufMark);
                             }
                         }
-                            cstart = pos;
+                        cstart = pos;
                         state = returnState;
                         reconsume = true;
                         continue stateloop;
@@ -4475,7 +4446,7 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                         } else if (c == ';') {
                             if (seenDigits) {
                                 state = HANDLE_NCR_VALUE;
-                                    cstart = pos + 1;
+                                cstart = pos + 1;
                                 // FALL THROUGH continue stateloop;
                                 break decimalloop;
                             } else {
@@ -4483,7 +4454,7 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                                         + "\u201D.");
                                 appendStrBuf(';');
                                 emitOrAppendStrBuf(returnState);
-                                    cstart = pos + 1;
+                                cstart = pos + 1;
                                 state = returnState;
                                 continue stateloop;
                             }
@@ -4503,7 +4474,7 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                                 err("No digits after \u201C" + strBufToString()
                                         + "\u201D.");
                                 emitOrAppendStrBuf(returnState);
-                                    cstart = pos;
+                                cstart = pos;
                                 state = returnState;
                                 reconsume = true;
                                 continue stateloop;
@@ -4511,7 +4482,7 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                                 err("Character reference was not terminated by a semicolon.");
                                 state = HANDLE_NCR_VALUE;
                                 reconsume = true;
-                                    cstart = pos;
+                                cstart = pos;
                                 // FALL THROUGH continue stateloop;
                                 break decimalloop;
                             }
@@ -4559,14 +4530,14 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                         } else if (c == ';') {
                             if (seenDigits) {
                                 state = HANDLE_NCR_VALUE;
-                                    cstart = pos + 1;
+                                cstart = pos + 1;
                                 continue stateloop;
                             } else {
                                 err("No digits after \u201C" + strBufToString()
                                         + "\u201D.");
                                 appendStrBuf(';');
                                 emitOrAppendStrBuf(returnState);
-                                    cstart = pos + 1;
+                                cstart = pos + 1;
                                 state = returnState;
                                 continue stateloop;
                             }
@@ -4586,13 +4557,13 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
                                 err("No digits after \u201C" + strBufToString()
                                         + "\u201D.");
                                 emitOrAppendStrBuf(returnState);
-                                    cstart = pos;
+                                cstart = pos;
                                 state = returnState;
                                 reconsume = true;
                                 continue stateloop;
                             } else {
                                 err("Character reference was not terminated by a semicolon.");
-                                    cstart = pos;
+                                cstart = pos;
                                 state = HANDLE_NCR_VALUE;
                                 reconsume = true;
                                 continue stateloop;
@@ -4607,13 +4578,13 @@ private void stateLoop(int state, char c, boolean reconsume, int returnState) th
         returnStateSave = returnState;
     }
 
-private void emitOrAppendStrBuf(int returnState) throws SAXException {
-    if ((returnState & (~1)) != 0) {
-        appendStrBufToLongStrBuf();
-    } else {
-        emitStrBuf();
+    private void emitOrAppendStrBuf(int returnState) throws SAXException {
+        if ((returnState & (~1)) != 0) {
+            appendStrBufToLongStrBuf();
+        } else {
+            emitStrBuf();
+        }
     }
-}
 
     private void handleNcrValue(int returnState) throws SAXException {
         /*
@@ -4702,8 +4673,7 @@ private void emitOrAppendStrBuf(int returnState) throws SAXException {
             switch (state) {
                 case TAG_OPEN_NON_PCDATA:
                     /*
-                     * Otherwise, emit a U+003C LESS-THAN SIGN character
-                     * token
+                     * Otherwise, emit a U+003C LESS-THAN SIGN character token
                      */
                     tokenHandler.characters(LT_GT, 0, 1);
                     /*
@@ -4716,18 +4686,18 @@ private void emitOrAppendStrBuf(int returnState) throws SAXException {
                      * The behavior of this state depends on the content model
                      * flag.
                      */
-                        /*
-                         * Anything else Parse error.
-                         */
-                        err("End of file in the tag open state.");
-                        /*
-                         * Emit a U+003C LESS-THAN SIGN character token
-                         */
-                        tokenHandler.characters(LT_GT, 0, 1);
-                        /*
-                         * and reconsume the current input character in the data
-                         * state.
-                         */
+                    /*
+                     * Anything else Parse error.
+                     */
+                    err("End of file in the tag open state.");
+                    /*
+                     * Emit a U+003C LESS-THAN SIGN character token
+                     */
+                    tokenHandler.characters(LT_GT, 0, 1);
+                    /*
+                     * and reconsume the current input character in the data
+                     * state.
+                     */
                     break eofloop;
                 case CLOSE_TAG_OPEN_NOT_PCDATA:
                     break eofloop;
@@ -5121,8 +5091,8 @@ private void emitOrAppendStrBuf(int returnState) throws SAXException {
                     handleNcrValue(returnState);
                     state = returnState;
                     continue;
-                    default:
-                        break eofloop;
+                default:
+                    break eofloop;
             }
         }
         // case DATA:
@@ -5132,25 +5102,94 @@ private void emitOrAppendStrBuf(int returnState) throws SAXException {
         return; // eof() called in parent finally block
     }
 
+    private boolean normalizeLineBreaks(UTF16Buffer buffer, boolean lastWasCR) {
+        char[] arr = buffer.getBuffer();
+        int i = buffer.getOffset();
+        int origEnd = buffer.getLength() + i;
+        int j = origEnd;
+        checkloop: while (i < origEnd) {
+            char c = arr[i];
+            switch (c) {
+                case '\n':
+                    if (lastWasCR) {
+                        j = i;
+                        i++;
+                        lastWasCR = false;
+                        break checkloop;
+                    }
+                    lastWasCR = false;
+                    break;
+                case '\r':
+                    arr[i] = '\n';
+                    lastWasCR = true;
+                    break;
+                default:
+                    lastWasCR = false;
+                    break;
+            }
+            i++;
+        }
+        while (i < origEnd) {
+            char c = arr[i];
+            switch (c) {
+                case '\n':
+                    if (!lastWasCR) {
+                        arr[j] = '\n';
+                        j++;
+                    }
+                    lastWasCR = false;
+                    break;
+                case '\r':
+                    arr[j] = '\n';
+                    j++;
+                    lastWasCR = true;
+                    break;
+                default:
+                    arr[j] = c;
+                    j++;
+                    lastWasCR = false;
+                    break;
+            }
+            i++;
+        }
+        buffer.setLength(j - buffer.getOffset());
+        return lastWasCR;
+    }
+
     private char read() throws SAXException {
         char c;
-        for (;;) { // the loop is here for the CRLF case
-            pos++;
-            if (pos == end) {
-                return '\u0000';
-            }
-            linePrev = line;
-            colPrev = col;
-            if (nextCharOnNewLine) {
-                line++;
-                col = 1;
-                nextCharOnNewLine = false;
-            } else {
-                col++;
-            }
+        pos++;
+        if (pos == end) {
+            return '\u0000';
+        }
+        linePrev = line;
+        colPrev = col;
+        if (nextCharOnNewLine) {
+            line++;
+            col = 1;
+            nextCharOnNewLine = false;
+        } else {
+            col++;
+        }
 
-            c = buf[pos];
-            if (errorHandler != null && confidence == Confidence.TENTATIVE
+        c = buf[pos];
+        if (errorHandler == null
+                && contentNonXmlCharPolicy == XmlViolationPolicy.ALLOW) {
+            switch (c) {
+                case '\n':
+                    nextCharOnNewLine = true;
+                    break;
+                case '\u0000':
+                    /*
+                     * All U+0000 NULL characters in the input must be replaced
+                     * by U+FFFD REPLACEMENT CHARACTERs. Any occurrences of such
+                     * characters is a parse error.
+                     */
+                    c = buf[pos] = '\uFFFD';
+                    break;
+            }
+        } else {
+            if (confidence == Confidence.TENTATIVE
                     && !alreadyComplainedAboutNonAscii && c > '\u007F') {
                 err("The character encoding of the document was not explicit (assumed \u201C"
                         + characterEncoding.getCanonName()
@@ -5159,36 +5198,8 @@ private void emitOrAppendStrBuf(int returnState) throws SAXException {
             }
             switch (c) {
                 case '\n':
-                    /*
-                     * U+000D CARRIAGE RETURN (CR) characters, and U+000A LINE
-                     * FEED (LF) characters, are treated specially. Any CR
-                     * characters that are followed by LF characters must be
-                     * removed, and any CR characters not followed by LF
-                     * characters must be converted to LF characters.
-                     */
-                    if (prev == '\r') {
-                        // swallow the LF
-                        flushChars();
-                        cstart = pos + 1;
-                        col = colPrev;
-                        line = linePrev;
-                        nextCharOnNewLine = true;
-                        prev = c;
-                        continue;
-                    } else {
-                        nextCharOnNewLine = true;
-                    }
-                    break;
-                case '\r':
-                    c = buf[pos] = '\n';
                     nextCharOnNewLine = true;
-                    prev = '\r';
-                    if (contentModelFlag != ContentModelFlag.PCDATA) {
-                        prevFourPtr++;
-                        prevFourPtr %= 4;
-                        prevFour[prevFourPtr] = c;
-                    }
-                    return c;
+                    break;
                 case '\u0000':
                     /*
                      * All U+0000 NULL characters in the input must be replaced
@@ -5200,73 +5211,60 @@ private void emitOrAppendStrBuf(int returnState) throws SAXException {
                     break;
                 case '\u000B':
                 case '\u000C':
-                    if ((errorHandler != null || contentNonXmlCharPolicy != XmlViolationPolicy.ALLOW)) {
-                        if (contentNonXmlCharPolicy == XmlViolationPolicy.FATAL) {
-                            fatal("This document is not mappable to XML 1.0 without data loss due to "
-                                    + toUPlusString(c)
-                                    + " which is not a legal XML 1.0 character.");
-                        } else {
-                            if (contentNonXmlCharPolicy == XmlViolationPolicy.ALTER_INFOSET) {
-                                c = buf[pos] = ' ';
-                            }
-                            warn("This document is not mappable to XML 1.0 without data loss due to "
-                                    + toUPlusString(c)
-                                    + " which is not a legal XML 1.0 character.");
+                    if (contentNonXmlCharPolicy == XmlViolationPolicy.FATAL) {
+                        fatal("This document is not mappable to XML 1.0 without data loss due to "
+                                + toUPlusString(c)
+                                + " which is not a legal XML 1.0 character.");
+                    } else {
+                        if (contentNonXmlCharPolicy == XmlViolationPolicy.ALTER_INFOSET) {
+                            c = buf[pos] = ' ';
                         }
+                        warn("This document is not mappable to XML 1.0 without data loss due to "
+                                + toUPlusString(c)
+                                + " which is not a legal XML 1.0 character.");
                     }
                     break;
                 default:
-                    if (errorHandler != null
-                            || contentNonXmlCharPolicy != XmlViolationPolicy.ALLOW) {
-                        if ((c & 0xFC00) == 0xDC00) {
-                            // Got a low surrogate. See if prev was high
-                            // surrogate
-                            if ((prev & 0xFC00) == 0xD800) {
-                                int intVal = (prev << 10) + c
-                                        + SURROGATE_OFFSET;
-                                if (isNonCharacter(intVal)) {
-                                    err("Astral non-character.");
-                                }
-                                if (isAstralPrivateUse(intVal)) {
-                                    warnAboutPrivateUseChar();
-                                }
-                            } else {
-                                // XXX figure out what to do about lone high
-                                // surrogates
-                                err("Found low surrogate without high surrogate.");
-                                // c = buf[pos] = '\uFFFD';
+                    if ((c & 0xFC00) == 0xDC00) {
+                        // Got a low surrogate. See if prev was high
+                        // surrogate
+                        if ((prev & 0xFC00) == 0xD800) {
+                            int intVal = (prev << 10) + c + SURROGATE_OFFSET;
+                            if (isNonCharacter(intVal)) {
+                                err("Astral non-character.");
                             }
-                        } else if ((c < ' ' || isNonCharacter(c))
-                                && (c != '\t')) {
-                            switch (contentNonXmlCharPolicy) {
-                                case FATAL:
-                                    fatal("Forbidden code point "
-                                            + toUPlusString(c) + ".");
-                                    break;
-                                case ALTER_INFOSET:
-                                        c = buf[pos] = '\uFFFD';
-                                        // fall through
-                                case ALLOW:
-                                        err("Forbidden code point "
-                                            + toUPlusString(c) + ".");
+                            if (isAstralPrivateUse(intVal)) {
+                                warnAboutPrivateUseChar();
                             }
-                        } else if ((c >= '\u007F') && (c <= '\u009F')
-                                || (c >= '\uFDD0') && (c <= '\uFDDF')) {
-                            err("Forbidden code point " + toUPlusString(c)
-                                    + ".");
-                        } else if (isPrivateUse(c)) {
-                            warnAboutPrivateUseChar();
+                        } else {
+                            // XXX figure out what to do about lone high
+                            // surrogates
+                            err("Found low surrogate without high surrogate.");
+                            // c = buf[pos] = '\uFFFD';
                         }
+                    } else if ((c < ' ' || isNonCharacter(c)) && (c != '\t')) {
+                        switch (contentNonXmlCharPolicy) {
+                            case FATAL:
+                                fatal("Forbidden code point "
+                                        + toUPlusString(c) + ".");
+                                break;
+                            case ALTER_INFOSET:
+                                c = buf[pos] = '\uFFFD';
+                                // fall through
+                            case ALLOW:
+                                err("Forbidden code point " + toUPlusString(c)
+                                        + ".");
+                        }
+                    } else if ((c >= '\u007F') && (c <= '\u009F')
+                            || (c >= '\uFDD0') && (c <= '\uFDDF')) {
+                        err("Forbidden code point " + toUPlusString(c) + ".");
+                    } else if (isPrivateUse(c)) {
+                        warnAboutPrivateUseChar();
                     }
             }
             prev = c;
-            if (contentModelFlag != ContentModelFlag.PCDATA) {
-                prevFourPtr++;
-                prevFourPtr %= 4;
-                prevFour[prevFourPtr] = c;
-            }
-            return c;
         }
+        return c;
     }
 
     /**
@@ -5274,8 +5272,7 @@ private void emitOrAppendStrBuf(int returnState) throws SAXException {
      * @throws SAXException
      * @throws IOException
      */
-    private void emitOrAppend(char[] val, int returnState)
-            throws SAXException {
+    private void emitOrAppend(char[] val, int returnState) throws SAXException {
         if ((returnState & (~1)) != 0) {
             appendLongStrBuf(val);
         } else {
