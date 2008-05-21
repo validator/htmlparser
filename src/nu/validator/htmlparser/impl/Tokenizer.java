@@ -211,12 +211,12 @@ public final class Tokenizer implements Locator {
 
     private static final int[] elementMagic;
 
-    private static final NameData[] elements;
+    private static final ElementName[] elements;
 
     static {
         SortedSet<SortStruct> set = new TreeSet<SortStruct>();
-        Set<NameData> names = NameData.buildSet();
-        for (NameData eltName : names) {
+        Set<ElementName> names = ElementName.buildSet();
+        for (ElementName eltName : names) {
             SortStruct struct = new SortStruct(eltName);
             if (set.contains(struct)) {
                 throw new RuntimeException(
@@ -225,7 +225,7 @@ public final class Tokenizer implements Locator {
             set.add(struct);
         }
         elementMagic = new int[set.size()];
-        elements = new NameData[set.size()];
+        elements = new ElementName[set.size()];
         int i = 0;
         for (SortStruct sortStruct : set) {
             elementMagic[i] = sortStruct.getMagic();
@@ -461,7 +461,7 @@ public final class Tokenizer implements Locator {
     /**
      * The element whose end tag closes the current CDATA or RCDATA element.
      */
-    private NameData contentModelElement = null;
+    private ElementName contentModelElement = null;
 
     /**
      * <code>true</code> if tokenizing an end tag
@@ -471,7 +471,7 @@ public final class Tokenizer implements Locator {
     /**
      * The current tag token name.
      */
-    private NameData tagName = null;
+    private ElementName tagName = null;
 
     /**
      * The current attribute name.
@@ -909,7 +909,7 @@ public final class Tokenizer implements Locator {
      *            the element causing the flag to be set
      */
     public void setContentModelFlag(ContentModelFlag contentModelFlag,
-            NameData contentModelElement) {
+            ElementName contentModelElement) {
         this.contentModelFlag = contentModelFlag;
         this.contentModelElement = contentModelElement;
     }
@@ -1377,20 +1377,20 @@ public final class Tokenizer implements Locator {
         attributes = null; // XXX figure out reuse
     }
 
-    private NameData strBufToElementNameString() {
+    private ElementName strBufToElementNameString() {
         int magic = bufToElementMagic(strBuf, strBufLen);
         int index = Arrays.binarySearch(elementMagic, magic);
         if (index < 0) {
-            return new NameData(strBufToString().intern());
+            return new ElementName(strBufToString().intern());
         } else {
-            NameData rv = elements[index];
+            ElementName rv = elements[index];
             String name = rv.name;
             if (name.length() != strBufLen) {
-                return new NameData(strBufToString().intern());
+                return new ElementName(strBufToString().intern());
             }
             for (int i = 0; i < strBufLen; i++) {
                 if (name.charAt(i) != strBuf[i]) {
-                    return new NameData(strBufToString().intern());
+                    return new ElementName(strBufToString().intern());
                 }
             }
             return rv;

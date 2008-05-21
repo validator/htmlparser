@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 
-import nu.validator.htmlparser.impl.NameData;
+import nu.validator.htmlparser.impl.ElementName;
 import nu.validator.htmlparser.impl.TokenHandler;
 import nu.validator.htmlparser.impl.Tokenizer;
 
@@ -89,7 +89,7 @@ public class TokenPrinter implements TokenHandler, ErrorHandler {
         }
     }
 
-    public void endTag(NameData eltName) throws SAXException {
+    public void endTag(ElementName eltName) throws SAXException {
         try {
             writer.write(')');
             writer.write(eltName.name);
@@ -113,7 +113,7 @@ public class TokenPrinter implements TokenHandler, ErrorHandler {
 
     }
 
-    public void startTag(NameData eltName, Attributes attributes, boolean selfClosing)
+    public void startTag(ElementName eltName, Attributes attributes, boolean selfClosing)
             throws SAXException {
         try {
             writer.write('(');
