@@ -100,7 +100,7 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
         array.getValue().add(token);
     }
 
-    public void endTag(NameData eltName, Attributes attributes) throws SAXException {
+    public void endTag(NameData eltName) throws SAXException {
         String name = eltName.name;
         flushCharacters();
         JSONArray token = new JSONArray();

@@ -1429,7 +1429,7 @@ public final class Tokenizer implements Locator {
                  */
                 err("End tag had attributes.");
             }
-            tokenHandler.endTag(tagName, attrs);
+            tokenHandler.endTag(tagName);
         } else {
             tokenHandler.startTag(tagName, attrs, selfClosing);
             switch (contentModelFlag) {

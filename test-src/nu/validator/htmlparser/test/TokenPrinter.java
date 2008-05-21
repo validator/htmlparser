@@ -89,18 +89,11 @@ public class TokenPrinter implements TokenHandler, ErrorHandler {
         }
     }
 
-    public void endTag(NameData eltName, Attributes attributes) throws SAXException {
+    public void endTag(NameData eltName) throws SAXException {
         try {
             writer.write(')');
             writer.write(eltName.name);
             writer.write('\n');
-            for (int i = 0; i < attributes.getLength(); i++) {
-                writer.write('A');
-                writer.write(attributes.getQName(i));
-                writer.write(' ');
-                writer.write(attributes.getValue(i));
-                writer.write('\n');                
-            }
         } catch (IOException e) {
             throw new SAXException(e);
         }
