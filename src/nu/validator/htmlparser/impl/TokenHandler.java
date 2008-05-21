@@ -74,7 +74,7 @@ public interface TokenHandler {
      * @param selfClosing TODO
      * @throws SAXException if something went wrong
      */
-    public void startTag(NameData eltName, Attributes attributes, boolean selfClosing) throws SAXException;
+    public void startTag(ElementName eltName, Attributes attributes, boolean selfClosing) throws SAXException;
     
     /**
      * Receive an end tag token.
@@ -82,7 +82,7 @@ public interface TokenHandler {
      * @param eltName the tag name
      * @throws SAXException if something went wrong
      */
-    public void endTag(NameData eltName) throws SAXException;
+    public void endTag(ElementName eltName) throws SAXException;
     
     /**
      * Receive a comment token. The data is junk if the <code>wantsComments()</code> 
