@@ -24,6 +24,7 @@
 package nu.validator.htmlparser.test;
 
 import nu.validator.htmlparser.impl.ContentModelFlag;
+import nu.validator.htmlparser.impl.NameData;
 import nu.validator.htmlparser.impl.TokenHandler;
 import nu.validator.htmlparser.impl.Tokenizer;
 
@@ -99,7 +100,8 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
         array.getValue().add(token);
     }
 
-    public void endTag(String name, Attributes attributes) throws SAXException {
+    public void endTag(NameData eltName, Attributes attributes) throws SAXException {
+        String name = eltName.name;
         flushCharacters();
         JSONArray token = new JSONArray();
         token.getValue().add(END_TAG);
@@ -116,8 +118,9 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
         self.setContentModelFlag(contentModelFlag, contentModelElement);
     }
 
-    public void startTag(String name, Attributes attributes, boolean selfClosing)
+    public void startTag(NameData eltName, Attributes attributes, boolean selfClosing)
             throws SAXException {
+        String name = eltName.name;
         flushCharacters();
         JSONArray token = new JSONArray();
         token.getValue().add(START_TAG);

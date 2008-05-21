@@ -40,6 +40,7 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.Arrays;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
@@ -210,14 +211,13 @@ public final class Tokenizer implements Locator {
 
     private static final int[] elementMagic;
 
-    private static final String[] elements;
+    private static final NameData[] elements;
 
     static {
         SortedSet<SortStruct> set = new TreeSet<SortStruct>();
-        String[] names = NameData.ELEMENT_DATA;
-        for (int i = 0; i < names.length; i++) {
-            String name = names[i];
-            SortStruct struct = new SortStruct(name);
+        Set<NameData> names = NameData.buildSet();
+        for (NameData eltName : names) {
+            SortStruct struct = new SortStruct(eltName);
             if (set.contains(struct)) {
                 throw new RuntimeException(
                         "String magic number function doesn't fit the data!");
@@ -225,11 +225,11 @@ public final class Tokenizer implements Locator {
             set.add(struct);
         }
         elementMagic = new int[set.size()];
-        elements = new String[set.size()];
+        elements = new NameData[set.size()];
         int i = 0;
         for (SortStruct sortStruct : set) {
             elementMagic[i] = sortStruct.getMagic();
-            elements[i] = sortStruct.getString();
+            elements[i] = sortStruct.getEltName();
             i++;
         }
     }
@@ -461,7 +461,7 @@ public final class Tokenizer implements Locator {
     /**
      * The element whose end tag closes the current CDATA or RCDATA element.
      */
-    private String contentModelElement = "";
+    private NameData contentModelElement = null;
 
     /**
      * <code>true</code> if tokenizing an end tag
@@ -471,7 +471,7 @@ public final class Tokenizer implements Locator {
     /**
      * The current tag token name.
      */
-    private String tagName = null;
+    private NameData tagName = null;
 
     /**
      * The current attribute name.
@@ -896,9 +896,24 @@ public final class Tokenizer implements Locator {
     public void setContentModelFlag(ContentModelFlag contentModelFlag,
             String contentModelElement) {
         this.contentModelFlag = contentModelFlag;
-        this.contentModelElement = contentModelElement;
+        int magic = bufToElementMagic(contentModelElement.toCharArray(), contentModelElement.length());
+        this.contentModelElement = elements[Arrays.binarySearch(elementMagic, magic)];
     }
 
+    /**
+     * Sets the content model flag and the associated element name.
+     * 
+     * @param contentModelFlag
+     *            the flag
+     * @param contentModelElement
+     *            the element causing the flag to be set
+     */
+    public void setContentModelFlag(ContentModelFlag contentModelFlag,
+            NameData contentModelElement) {
+        this.contentModelFlag = contentModelFlag;
+        this.contentModelElement = contentModelElement;
+    }
+    
     // start Locator impl
 
     /**
@@ -1362,19 +1377,20 @@ public final class Tokenizer implements Locator {
         attributes = null; // XXX figure out reuse
     }
 
-    private String strBufToElementNameString() {
+    private NameData strBufToElementNameString() {
         int magic = bufToElementMagic(strBuf, strBufLen);
         int index = Arrays.binarySearch(elementMagic, magic);
         if (index < 0) {
-            return strBufToString(); // intern?
+            return new NameData(strBufToString().intern());
         } else {
-            String rv = elements[index];
-            if (rv.length() != strBufLen) {
-                return strBufToString(); // intern?
+            NameData rv = elements[index];
+            String name = rv.name;
+            if (name.length() != strBufLen) {
+                return new NameData(strBufToString().intern());
             }
             for (int i = 0; i < strBufLen; i++) {
-                if (rv.charAt(i) != strBuf[i]) {
-                    return strBufToString(); // intern?
+                if (name.charAt(i) != strBuf[i]) {
+                    return new NameData(strBufToString().intern());
                 }
             }
             return rv;
@@ -1386,7 +1402,7 @@ public final class Tokenizer implements Locator {
             err("Stray \u201C/\u201D in an end tag.");
         }
         if (namePolicy != XmlViolationPolicy.ALLOW) {
-            if (!isNcname(tagName)) {
+            if (tagName.custom && !isNcname(tagName.name)) {
                 if (namePolicy == XmlViolationPolicy.FATAL) {
                     fatal((endTag ? "End" : "Start") + " tag \u201C" + tagName
                             + "\u201D has a non-NCName name.");
@@ -1499,7 +1515,7 @@ public final class Tokenizer implements Locator {
     }
 
     private void addAttributeWithValue() throws SAXException {
-        if (metaBoundaryPassed && "meta" == tagName
+        if (metaBoundaryPassed && "meta" == tagName.name
                 && "charset".equals(attributeName)) {
             err("A \u201Ccharset\u201D attribute on a \u201Cmeta\u201D element found after the first 512 bytes.");
         }
@@ -1507,7 +1523,7 @@ public final class Tokenizer implements Locator {
             String value = longStrBufToString();
             if (!endTag) {
                 if ("xmlns".equals(attributeName)) {
-                    if ("html" == tagName
+                    if ("html" == tagName.name
                             && "http://www.w3.org/1999/xhtml".equals(value)) {
                         if (xmlnsPolicy == XmlViolationPolicy.ALTER_INFOSET) {
                             return;
@@ -2086,8 +2102,8 @@ public final class Tokenizer implements Locator {
                         // fails.
                         // Duplicating the relevant part of tag name state here
                         // as well.
-                        if (index < contentModelElement.length()) {
-                            char e = contentModelElement.charAt(index);
+                        if (index < contentModelElement.name.length()) {
+                            char e = contentModelElement.name.charAt(index);
                             char folded = c;
                             if (c >= 'A' && c <= 'Z') {
                                 folded += 0x20;
@@ -2123,6 +2139,7 @@ public final class Tokenizer implements Locator {
                             continue;
                         } else {
                             endTag = true;
+                            // XXX replace contentModelElement with different type
                             tagName = contentModelElement;
                             switch (c) {
                                 case ' ':
