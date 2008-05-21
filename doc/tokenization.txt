@@ -1,15 +1,15 @@
-   #8.2 Parsing HTML documents Table of contents 8.2.4 Tree construction
+   #8.2 Parsing HTML documents Table of contents 8.2.5 Tree construction
 
    WHATWG
 
 HTML 5
 
-Working Draft — 9 March 2008
+Working Draft — 26 April 2008
 
-   < 8.2 Parsing HTML documents – Table of contents – 8.2.4 Tree
+   < 8.2 Parsing HTML documents – Table of contents – 8.2.5 Tree
    construction >
 
-    8.2.3 Tokenisation
+    8.2.4 Tokenisation
 
    Implementations must act as if they used the following state machine to
    tokenise HTML. The state machine must start in the data state. Most
@@ -17,15 +17,16 @@ Working Draft — 9 March 2008
    and either switches the state machine to a new state to reconsume the
    same character, or switches it to a new state (to consume the next
    character), or repeats the same state (to consume the next character).
-   Some states have more complicated behaviour and can consume several
+   Some states have more complicated behavior and can consume several
    characters before switching to another state.
 
-   The exact behaviour of certain states depends on a content model flag
+   The exact behavior of certain states depends on a content model flag
    that is set after certain tokens are emitted. The flag has several
    states: PCDATA, RCDATA, CDATA, and PLAINTEXT. Initially it must be in
    the PCDATA state. In the RCDATA and CDATA states, a further escape flag
-   is used to control the behaviour of the tokeniser. It is either true or
-   false, and initially must be set to the false state.
+   is used to control the behavior of the tokeniser. It is either true or
+   false, and initially must be set to the false state. The insertion mode
+   and the stack of open elements also affects tokenisation.
 
    The output of the tokenisation step is a series of zero or more of the
    following tokens: DOCTYPE, start tag, end tag, comment, character,
@@ -34,8 +35,11 @@ Working Draft — 9 March 2008
    its name, public identifier, and system identifier must be marked as
    missing (which is a distinct state from the empty string), and the
    force-quirks flag must be set to off (its other state is on). Start and
-   end tag tokens have a tag name and a list of attributes, each of which
-   has a name and a value. Comment and character tokens have data.
+   end tag tokens have a tag name, a self-closing flag, and a list of
+   attributes, each of which has a name and a value. When a DOCTYPE token
+   is created, its self-closing flag must be unset (its other state is
+   that it be set), and its attributes list must be empty. Comment and
+   character tokens have data.
 
    When a token is emitted, it must immediately be handled by the tree
    construction stage. The tree construction stage can affect the state of
@@ -44,16 +48,18 @@ Working Draft — 9 March 2008
    executing and using the dynamic markup insertion APIs to insert
    characters into the stream being tokenised.)
 
+   When a start tag token is emitted with its self-closing flag set, if
+   the flag is not acknowledged when it is processed by the tree
+   construction stage, that is a parse error.
+
    When an end tag token is emitted, the content model flag must be
    switched to the PCDATA state.
 
    When an end tag token is emitted with attributes, that is a parse
    error.
 
-   A permitted slash is a U+002F SOLIDUS character that is immediately
-   followed by a U+003E GREATER-THAN SIGN, if, and only if, the current
-   token being processed is a start tag token whose tag name is the same
-   as the tag name of one of void elements.
+   When an end tag token is emitted with its self-closing flag set, that
+   is a parse error.
 
    Before each step of the tokeniser, the user agent may check to see if
    either one of the scripts in the list of scripts that will execute as
@@ -127,7 +133,7 @@ Working Draft — 9 March 2008
           Finally, switch to the data state.
 
    Tag open state
-          The behaviour of this state depends on the content model flag.
+          The behavior of this state depends on the content model flag.
 
         If the content model flag is set to the RCDATA or CDATA states
                 Consume the next input character. If it is a U+002F
@@ -250,8 +256,7 @@ Working Draft — 9 March 2008
                 character in the data state.
 
         U+002F SOLIDUS (/)
-                Parse error unless this is a permitted slash. Switch to
-                the before attribute name state.
+                Switch to the self-closing start tag state.
 
         Anything else
                 Append the current input character to the current tag
@@ -279,8 +284,7 @@ Working Draft — 9 March 2008
                 attribute name state.
 
         U+002F SOLIDUS (/)
-                Parse error unless this is a permitted slash. Stay in the
-                before attribute name state.
+                Switch to the self-closing start tag state.
 
         U+0022 QUOTATION MARK (")
         U+0027 APOSTROPHE (')
@@ -322,8 +326,7 @@ Working Draft — 9 March 2008
                 state.
 
         U+002F SOLIDUS (/)
-                Parse error unless this is a permitted slash. Switch to
-                the before attribute name state.
+                Switch to the self-closing start tag state.
 
         U+0022 QUOTATION MARK (")
         U+0027 APOSTROPHE (')
@@ -371,8 +374,7 @@ Working Draft — 9 March 2008
                 attribute name state.
 
         U+002F SOLIDUS (/)
-                Parse error unless this is a permitted slash. Switch to
-                the before attribute name state.
+                Switch to the self-closing start tag state.
 
         EOF
                 Parse error. Emit the current tag token. Reconsume the EOF
@@ -517,8 +519,18 @@ Working Draft — 9 March 2008
                 Emit the current tag token. Switch to the data state.
 
         U+002F SOLIDUS (/)
-                Parse error unless this is a permitted slash. Switch to
-                the before attribute name state.
+                Switch to the self-closing start tag state.
+
+        Anything else
+                Parse error. Reconsume the character in the before
+                attribute name state.
+
+   Self-closing start tag state
+          Consume the next input character:
+
+        U+003E GREATER-THAN SIGN (>)
+                Set the self-closing flag of the current tag token. Emit
+                the current tag token. Switch to the data state.
 
         Anything else
                 Parse error. Reconsume the character in the before
@@ -551,9 +563,17 @@ Working Draft — 9 March 2008
           whose data is the empty string, and switch to the comment start
           state.
 
-          Otherwise if the next seven characters are a case-insensitive
+          Otherwise, if the next seven characters are a case-insensitive
           match for the word "DOCTYPE", then consume those characters and
           switch to the DOCTYPE state.
+
+          Otherwise, if the insertion mode is "in foreign content" and the
+          current node is not an element in the HTML namespace and the
+          next seven characters are a case-sensitive match for the string
+          "[CDATA[" (the five uppercase letters "CDATA" with a U+005B LEFT
+          SQUARE BRACKET character before and after), then consume those
+          characters and switch to the CDATA block state (which is
+          unrelated to the content model flag's CDATA state).
 
           Otherwise, this is a parse error. Switch to the bogus comment
           state. The next character that is consumed, if any, is the first
@@ -949,12 +969,29 @@ Working Draft — 9 March 2008
         Anything else
                 Stay in the bogus DOCTYPE state.
 
-      8.2.3.1. Tokenising entities
+   CDATA block state
+          (This can only happen if the content model flag is set to the
+          PCDATA state, and is unrelated to the content model flag's CDATA
+          state.)
+
+          Consume every character up to the next occurrence of the three
+          character sequence U+005D RIGHT SQUARE BRACKET U+005D RIGHT
+          SQUARE BRACKET U+003E GREATER-THAN SIGN (]]>), or the end of the
+          file (EOF), whichever comes first. Emit a series of text tokens
+          consisting of all the characters consumed except the matching
+          three character sequence at the end (if one was found before the
+          end of the file).
+
+          Switch to the data state.
+
+          If the end of the file was reached, reconsume the EOF character.
+
+      8.2.4.1. Tokenising entities
 
    This section defines how to consume an entity. This definition is used
    when parsing entities in text and in attributes.
 
-   The behaviour depends on the identity of the next character (the one
+   The behavior depends on the identity of the next character (the one
    immediately after the U+0026 AMPERSAND character):
 
    U+0009 CHARACTER TABULATION
@@ -972,7 +1009,7 @@ Working Draft — 9 March 2008
    U+0023 NUMBER SIGN (#)
           Consume the U+0023 NUMBER SIGN.
 
-          The behaviour further depends on the character after the U+0023
+          The behavior further depends on the character after the U+0023
           NUMBER SIGN:
 
         U+0078 LATIN SMALL LETTER X

@@ -2402,7 +2402,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
     }
 
-    public final void endTag(NameData elementName, Attributes attributes)
+    public final void endTag(NameData elementName)
             throws SAXException {
         needToDropLF = false;
         if (cdataOrRcdataTimesToPop > 0) {

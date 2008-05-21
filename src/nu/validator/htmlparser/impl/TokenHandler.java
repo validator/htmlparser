@@ -80,10 +80,9 @@ public interface TokenHandler {
      * Receive an end tag token.
      * 
      * @param eltName the tag name
-     * @param attributes the attributes
      * @throws SAXException if something went wrong
      */
-    public void endTag(NameData eltName, Attributes attributes) throws SAXException;
+    public void endTag(NameData eltName) throws SAXException;
     
     /**
      * Receive a comment token. The data is junk if the <code>wantsComments()</code> 
