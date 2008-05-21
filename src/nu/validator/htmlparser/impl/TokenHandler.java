@@ -69,21 +69,21 @@ public interface TokenHandler {
     /**
      * Receive a start tag token.
      * 
-     * @param name the tag name
+     * @param eltName the tag name
      * @param attributes the attributes
      * @param selfClosing TODO
      * @throws SAXException if something went wrong
      */
-    public void startTag(String name, Attributes attributes, boolean selfClosing) throws SAXException;
+    public void startTag(NameData eltName, Attributes attributes, boolean selfClosing) throws SAXException;
     
     /**
      * Receive an end tag token.
      * 
-     * @param name the tag name
+     * @param eltName the tag name
      * @param attributes the attributes
      * @throws SAXException if something went wrong
      */
-    public void endTag(String name, Attributes attributes) throws SAXException;
+    public void endTag(NameData eltName, Attributes attributes) throws SAXException;
     
     /**
      * Receive a comment token. The data is junk if the <code>wantsComments()</code> 

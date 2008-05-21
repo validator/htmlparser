@@ -24,7 +24,7 @@ package nu.validator.htmlparser.impl;
 
 class SortStruct implements Comparable<SortStruct> {
 
-    private final String string;
+    private final NameData eltName;
     
     private final int magic;
     
@@ -60,11 +60,11 @@ class SortStruct implements Comparable<SortStruct> {
     }
 
     /**
-     * @param string
+     * @param eltName
      */
-    SortStruct(String string) {
-        this.string = string.toLowerCase().intern();
-        this.magic = Tokenizer.stringToElementMagic(string);
+    SortStruct(NameData eltName) {
+        this.eltName = eltName;
+        this.magic = Tokenizer.stringToElementMagic(eltName.name);
     }
 
     /**
@@ -72,8 +72,8 @@ class SortStruct implements Comparable<SortStruct> {
      * 
      * @return the string
      */
-    String getString() {
-        return string;
+    NameData getEltName() {
+        return eltName;
     }
 
     /**

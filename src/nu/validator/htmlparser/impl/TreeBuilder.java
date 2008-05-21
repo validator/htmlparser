@@ -49,12 +49,118 @@ import org.xml.sax.SAXParseException;
 
 public abstract class TreeBuilder<T> implements TokenHandler {
 
+    final static int OTHER = 0;
+
+    final static int A = 1;
+
+    final static int BASE = 2;
+
+    final static int BODY = 3;
+
+    final static int BR = 4;
+
+    final static int BUTTON = 5;
+
+    final static int CAPTION = 6;
+
+    final static int COL = 7;
+
+    final static int COLGROUP = 8;
+
+    final static int FORM = 9;
+
+    final static int FRAME = 10;
+
+    final static int FRAMESET = 11;
+
+    final static int IMAGE = 12;
+
+    final static int INPUT = 13;
+
+    final static int ISINDEX = 14;
+
+    final static int LI = 15;
+
+    final static int LINK = 16;
+
+    final static int MATH = 17;
+
+    final static int META = 18;
+
+    final static int SVG = 19;
+
+    final static int HEAD = 20;
+
+    final static int HR = 22;
+
+    final static int HTML = 23;
+
+    final static int NOBR = 24;
+
+    final static int NOFRAMES = 25;
+
+    final static int NOSCRIPT = 26;
+
+    final static int OPTGROUP = 27;
+
+    final static int OPTION = 28;
+
+    final static int P = 29;
+
+    final static int PLAINTEXT = 30;
+
+    final static int SCRIPT = 31;
+
+    final static int SELECT = 32;
+
+    final static int STYLE = 33;
+
+    final static int TABLE = 34;
+
+    final static int TEXTAREA = 35;
+
+    final static int TITLE = 36;
+
+    final static int TR = 37;
+
+    final static int XMP = 38;
+
+    final static int TBODY_OR_THEAD_OR_TFOOT = 39;
+
+    final static int TD_OR_TH = 40;
+
+    final static int DD_OR_DT = 41;
+
+    final static int H1_OR_H2_OR_H3_OR_H4_OR_H5_OR_H6 = 42;
+
+    final static int OBJECT_OR_MARQUEE_OR_APPLET = 43;
+
+    final static int PRE_OR_LISTING = 44;
+
+    final static int B_OR_BIG_OR_EM_OR_FONT_OR_I_OR_S_OR_SMALL_OR_STRIKE_OR_STRONG_OR_TT_OR_U = 45;
+
+    final static int UL_OR_OL_OR_DL = 46;
+
+    final static int IFRAME_OR_NOEMBED = 47;
+
+    final static int EMBED_OR_IMG = 48;
+
+    final static int AREA_OR_BASEFONT_OR_BGSOUND_OR_PARAM_OR_SPACER_OR_WBR = 49;
+
+    final static int DIV_OR_BLOCKQUOTE_OR_CENTER_OR_MENU = 50;
+
+    final static int FIELDSET_OR_ADDRESS_OR_DIR = 51;
+
+    final static int CODE_OR_RUBY_OR_SPAN_OR_SUB_OR_SUP_OR_VAR = 52;
+
     private enum InsertionMode {
         INITIAL, BEFORE_HTML, BEFORE_HEAD, IN_HEAD, IN_HEAD_NOSCRIPT, AFTER_HEAD, IN_BODY, IN_TABLE, IN_CAPTION, IN_COLUMN_GROUP, IN_TABLE_BODY, IN_ROW, IN_CELL, IN_SELECT, IN_SELECT_IN_TABLE, AFTER_BODY, IN_FRAMESET, AFTER_FRAMESET, AFTER_AFTER_BODY, AFTER_AFTER_FRAMESET
     }
 
     private class StackNode<S> {
         final String name;
+        
+        final String popName;
 
         final String ns;
 
@@ -73,54 +179,32 @@ public abstract class TreeBuilder<T> implements TokenHandler {
          * @param node
          * @param scoping
          * @param special
+         * @param popName TODO
          */
         StackNode(final String ns, final String name, final S node,
                 final boolean scoping, final boolean special,
-                final boolean fosterParenting) {
+                final boolean fosterParenting, String popName) {
             this.name = name;
             this.ns = ns;
             this.node = node;
             this.scoping = scoping;
             this.special = special;
             this.fosterParenting = fosterParenting;
+            this.popName = popName;
         }
 
         /**
-         * @param name
+         * @param elementName TODO
          * @param node
          */
-        StackNode(final String ns, final String name, final S node) {
-            this.name = name;
+        StackNode(final String ns, NameData elementName, final S node) {
+            this.name = elementName.name;
+            this.popName = elementName.name;
             this.ns = ns;
             this.node = node;
-            this.scoping = ("table" == name || "caption" == name
-                    || "html" == name || "td" == name || "th" == name
-                    || "button" == name || "marquee" == name
-                    || "object" == name || "applet" == name);
-            this.special = ("address" == name || "area" == name
-                    || "base" == name || "basefont" == name
-                    || "bgsound" == name || "blockquote" == name
-                    || "body" == name || "br" == name || "center" == name
-                    || "col" == name || "colgroup" == name || "dd" == name
-                    || "dir" == name || "div" == name || "dl" == name
-                    || "dt" == name || "embed" == name || "fieldset" == name
-                    || "form" == name || "frame" == name || "frameset" == name
-                    || "h1" == name || "h2" == name || "h3" == name
-                    || "h4" == name || "h5" == name || "h6" == name
-                    || "head" == name || "hr" == name || "iframe" == name
-                    || "image" == name || "img" == name || "input" == name
-                    || "isindex" == name || "li" == name || "link" == name
-                    || "listing" == name || "menu" == name || "meta" == name
-                    || "noembed" == name || "noframes" == name
-                    || "noscript" == name || "ol" == name || "optgroup" == name
-                    || "option" == name || "p" == name || "param" == name
-                    || "plaintext" == name || "pre" == name || "script" == name
-                    || "select" == name || "spacer" == name || "style" == name
-                    || "tbody" == name || "textarea" == name || "tfoot" == name
-                    || "thead" == name || "title" == name || "tr" == name
-                    || "ul" == name || "wbr" == name);
-            this.fosterParenting = ("table" == name || "tbody" == name
-                    || "tfoot" == name || "thead" == name || "tr" == name);
+            this.scoping = elementName.scoping;
+            this.special = elementName.special;
+            this.fosterParenting = elementName.fosterParenting;
         }
 
         /**
@@ -217,7 +301,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private static final int NOT_IN_FOREIGN = 1;
 
-    private final StackNode<T> MARKER = new StackNode<T>(null, null, null);
+    private final StackNode<T> MARKER = new StackNode<T>(null, new NameData(null), null);
 
     private final boolean nonConformingAndStreaming;
 
@@ -351,7 +435,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         } else {
             T elt = createHtmlElementSetAsRoot(tokenizer.newAttributes());
             StackNode<T> node = new StackNode<T>(
-                    "http://www.w3.org/1999/xhtml", "html", elt);
+                    "http://www.w3.org/1999/xhtml", NameData.HTML, elt);
             currentPtr++;
             stack[currentPtr] = node;
             resetTheInsertionMode();
@@ -1168,11 +1252,14 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
     }
 
-    public final void startTag(String name, Attributes attributes, boolean selfClosing)
-            throws SAXException {
+    public final void startTag(NameData elementName, Attributes attributes,
+            boolean selfClosing) throws SAXException {
+        int eltPos;
         needToDropLF = false;
         boolean needsPostProcessing = false;
         starttagloop: for (;;) {
+            int magic = elementName.magic;
+            String name = elementName.name;
             switch (foreignFlag) {
                 case IN_FOREIGN:
                     StackNode<T> currentNode = stack[currentPtr];
@@ -1186,751 +1273,836 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     || "ms" == currName || "mtext" == currName))) {
                         needsPostProcessing = true;
                         // fall through to normal stuff under default
-                    } else if ("b" == name || "big" == name || "blockquote" == name || "body" == name || "br" == name || "center" == name || "code" == name || "dd" == name || "div" == name || "dl" == name || "em" == name || "embed" == name || "font" == name || "h1" == name || "h2" == name || "h3" == name || "h5" == name || "h6" == name || "head" == name || "hr" == name || "i" == name || "img" == name || "li" == name || "menu" == name || "meta" == name || "nobr" == name || "p" == name || "pre" == name || "ruby" == name || "s" == name ||  "small" == name || "span" == name || "strong" == name ||  "sub" == name || "sup" == name || "table" == name || "tt" == name || "u" == name || "ul" == name || "var" == name) {
-                        err("HTML start tag \u201C" + name + "\u201D in a foreign namespace context.");
-                        while(stack[currentPtr].ns != "http://www.w3.org/1999/xhtml") {
-                            pop();
-                        }
-                        foreignFlag = NOT_IN_FOREIGN;
-                        continue starttagloop;
                     } else {
-                        attributes = adjustForeignAttributes(attributes);
-                        if (selfClosing) {
-                            appendVoidElementToCurrentMayFoster(currNs, name, attributes);
-                            selfClosing = false;
-                        } else {
-                            appendToCurrentNodeAndPushElementMayFoster(currNs, name, attributes);
+                        switch (magic) {
+                            case B_OR_BIG_OR_EM_OR_FONT_OR_I_OR_S_OR_SMALL_OR_STRIKE_OR_STRONG_OR_TT_OR_U:
+                            case DIV_OR_BLOCKQUOTE_OR_CENTER_OR_MENU:
+                            case BODY:
+                            case BR:
+                            case CODE_OR_RUBY_OR_SPAN_OR_SUB_OR_SUP_OR_VAR:
+                            case DD_OR_DT:
+                            case EMBED_OR_IMG:
+                            case H1_OR_H2_OR_H3_OR_H4_OR_H5_OR_H6:
+                            case HEAD:
+                            case HR:
+                            case LI:
+                            case META:
+                            case NOBR:
+                            case P:
+                            case PRE_OR_LISTING:
+                                err("HTML start tag \u201C"
+                                        + name
+                                        + "\u201D in a foreign namespace context.");
+                                while (stack[currentPtr].ns != "http://www.w3.org/1999/xhtml") {
+                                    pop();
+                                }
+                                foreignFlag = NOT_IN_FOREIGN;
+                                continue starttagloop;
+                            default:
+                                attributes = adjustForeignAttributes(attributes);
+                                if (selfClosing) {
+                                    appendVoidElementToCurrentMayFoster(currNs,
+                                            name, attributes);
+                                    selfClosing = false;
+                                } else {
+                                    appendToCurrentNodeAndPushElementMayFoster(
+                                            currNs, elementName, attributes);
+                                }
+                                break starttagloop;
                         }
-                        break starttagloop;
                     }
                 default:
                     switch (mode) {
                         case IN_TABLE_BODY:
-                            if ("tr" == name) {
-                                clearStackBackTo(findLastInTableScopeOrRootTbodyTheadTfoot());
-                                appendToCurrentNodeAndPushElement(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                mode = InsertionMode.IN_ROW;
-                                break starttagloop;
-                            } else if ("td" == name || "th" == name) {
-                                err("\u201C" + name
-                                        + "\u201D start tag in table body.");
-                                clearStackBackTo(findLastInTableScopeOrRootTbodyTheadTfoot());
-                                appendToCurrentNodeAndPushElement(
-                                        "http://www.w3.org/1999/xhtml", "tr",
-                                        EmptyAttributes.EMPTY_ATTRIBUTES);
-                                mode = InsertionMode.IN_ROW;
-                                continue;
-                            } else if ("caption" == name || "col" == name
-                                    || "colgroup" == name || "tbody" == name
-                                    || "tfoot" == name || "thead" == name) {
-                                int eltPos = findLastInTableScopeOrRootTbodyTheadTfoot();
-                                if (eltPos == 0) {
-                                    err("Stray \u201C" + name
-                                            + "\u201D start tag.");
+                            switch (magic) {
+                                case TR:
+                                    clearStackBackTo(findLastInTableScopeOrRootTbodyTheadTfoot());
+                                    appendToCurrentNodeAndPushElement(
+                                            "http://www.w3.org/1999/xhtml",
+                                            elementName, attributes);
+                                    mode = InsertionMode.IN_ROW;
                                     break starttagloop;
-                                } else {
-                                    clearStackBackTo(eltPos);
-                                    pop();
-                                    mode = InsertionMode.IN_TABLE;
+                                case TD_OR_TH:
+                                    err("\u201C" + name
+                                            + "\u201D start tag in table body.");
+                                    clearStackBackTo(findLastInTableScopeOrRootTbodyTheadTfoot());
+                                    appendToCurrentNodeAndPushElement(
+                                            "http://www.w3.org/1999/xhtml",
+                                            NameData.TR,
+                                            EmptyAttributes.EMPTY_ATTRIBUTES);
+                                    mode = InsertionMode.IN_ROW;
                                     continue;
-                                }
-                            } else {
-                                // fall through to IN_TABLE
+                                case CAPTION:
+                                case COL:
+                                case COLGROUP:
+                                case TBODY_OR_THEAD_OR_TFOOT:
+                                    eltPos = findLastInTableScopeOrRootTbodyTheadTfoot();
+                                    if (eltPos == 0) {
+                                        err("Stray \u201C" + name
+                                                + "\u201D start tag.");
+                                        break starttagloop;
+                                    } else {
+                                        clearStackBackTo(eltPos);
+                                        pop();
+                                        mode = InsertionMode.IN_TABLE;
+                                        continue;
+                                    }
+                                default:
+                                    // fall through to IN_TABLE
                             }
                         case IN_ROW:
-                            if ("td" == name || "th" == name) {
-                                clearStackBackTo(findLastOrRoot("tr"));
-                                appendToCurrentNodeAndPushElement(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                mode = InsertionMode.IN_CELL;
-                                insertMarker();
-                                break starttagloop;
-                            } else if ("caption" == name || "col" == name
-                                    || "colgroup" == name || "tbody" == name
-                                    || "tfoot" == name || "thead" == name
-                                    || "tr" == name) {
-                                int eltPos = findLastOrRoot("tr");
-                                if (eltPos == 0) {
-                                    assert context != null;
-                                    err("No table row to close.");
+                            switch (magic) {
+                                case TD_OR_TH:
+                                    clearStackBackTo(findLastOrRoot("tr"));
+                                    appendToCurrentNodeAndPushElement(
+                                            "http://www.w3.org/1999/xhtml",
+                                            elementName, attributes);
+                                    mode = InsertionMode.IN_CELL;
+                                    insertMarker();
                                     break starttagloop;
-                                }
-                                clearStackBackTo(eltPos);
-                                pop();
-                                mode = InsertionMode.IN_TABLE_BODY;
-                                continue;
-                            } else {
-                                // fall through to IN_TABLE
+                                case CAPTION:
+                                case COL:
+                                case COLGROUP:
+                                case TBODY_OR_THEAD_OR_TFOOT:
+                                case TR:
+                                    eltPos = findLastOrRoot("tr");
+                                    if (eltPos == 0) {
+                                        assert context != null;
+                                        err("No table row to close.");
+                                        break starttagloop;
+                                    }
+                                    clearStackBackTo(eltPos);
+                                    pop();
+                                    mode = InsertionMode.IN_TABLE_BODY;
+                                    continue;
+                                default:
+                                    // fall through to IN_TABLE
                             }
                         case IN_TABLE:
-                            if ("caption" == name) {
-                                clearStackBackTo(findLastOrRoot("table"));
-                                insertMarker();
-                                appendToCurrentNodeAndPushElement(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                mode = InsertionMode.IN_CAPTION;
-                                break starttagloop;
-                            } else if ("colgroup" == name) {
-                                clearStackBackTo(findLastOrRoot("table"));
-                                appendToCurrentNodeAndPushElement(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                mode = InsertionMode.IN_COLUMN_GROUP;
-                                break starttagloop;
-                            } else if ("col" == name) {
-                                clearStackBackTo(findLastOrRoot("table"));
-                                appendToCurrentNodeAndPushElement(
-                                        "http://www.w3.org/1999/xhtml",
-                                        "colgroup",
-                                        EmptyAttributes.EMPTY_ATTRIBUTES);
-                                mode = InsertionMode.IN_COLUMN_GROUP;
-                                continue;
-                            } else if ("tbody" == name || "tfoot" == name
-                                    || "thead" == name) {
-                                clearStackBackTo(findLastOrRoot("table"));
-                                appendToCurrentNodeAndPushElement(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                mode = InsertionMode.IN_TABLE_BODY;
-                                break starttagloop;
-                            } else if ("td" == name || "tr" == name
-                                    || "th" == name) {
-                                clearStackBackTo(findLastOrRoot("table"));
-                                appendToCurrentNodeAndPushElement(
-                                        "http://www.w3.org/1999/xhtml",
-                                        "tbody",
-                                        EmptyAttributes.EMPTY_ATTRIBUTES);
-                                mode = InsertionMode.IN_TABLE_BODY;
-                                continue;
-                            } else if ("table" == name) {
-                                err("Start tag for \u201Ctable\u201D seen but the previous \u201Ctable\u201D is still open.");
-                                int eltPos = findLastInTableScope(name);
-                                if (eltPos == NOT_FOUND_ON_STACK) {
-                                    assert context != null;
-                                    break starttagloop;
+                            intableloop: for (;;) {
+                                switch (magic) {
+                                    case CAPTION:
+                                        clearStackBackTo(findLastOrRoot("table"));
+                                        insertMarker();
+                                        appendToCurrentNodeAndPushElement(
+                                                "http://www.w3.org/1999/xhtml",
+                                                elementName, attributes);
+                                        mode = InsertionMode.IN_CAPTION;
+                                        break starttagloop;
+                                    case COLGROUP:
+                                        clearStackBackTo(findLastOrRoot("table"));
+                                        appendToCurrentNodeAndPushElement(
+                                                "http://www.w3.org/1999/xhtml",
+                                                elementName, attributes);
+                                        mode = InsertionMode.IN_COLUMN_GROUP;
+                                        break starttagloop;
+                                    case COL:
+                                        clearStackBackTo(findLastOrRoot("table"));
+                                        appendToCurrentNodeAndPushElement(
+                                                "http://www.w3.org/1999/xhtml",
+                                                NameData.COLGROUP,
+                                                EmptyAttributes.EMPTY_ATTRIBUTES);
+                                        mode = InsertionMode.IN_COLUMN_GROUP;
+                                        continue starttagloop;
+                                    case TBODY_OR_THEAD_OR_TFOOT:
+                                        clearStackBackTo(findLastOrRoot("table"));
+                                        appendToCurrentNodeAndPushElement(
+                                                "http://www.w3.org/1999/xhtml",
+                                                elementName, attributes);
+                                        mode = InsertionMode.IN_TABLE_BODY;
+                                        break starttagloop;
+                                    case TR:
+                                    case TD_OR_TH:
+                                        clearStackBackTo(findLastOrRoot("table"));
+                                        appendToCurrentNodeAndPushElement(
+                                                "http://www.w3.org/1999/xhtml",
+                                                NameData.TBODY,
+                                                EmptyAttributes.EMPTY_ATTRIBUTES);
+                                        mode = InsertionMode.IN_TABLE_BODY;
+                                        continue starttagloop;
+                                    case TABLE:
+                                        err("Start tag for \u201Ctable\u201D seen but the previous \u201Ctable\u201D is still open.");
+                                        eltPos = findLastInTableScope(name);
+                                        if (eltPos == NOT_FOUND_ON_STACK) {
+                                            assert context != null;
+                                            break starttagloop;
+                                        }
+                                        generateImpliedEndTags();
+                                        // XXX is the next if dead code?
+                                        if (!isCurrent("table")) {
+                                            err("Unclosed elements on stack.");
+                                        }
+                                        while (currentPtr >= eltPos) {
+                                            pop();
+                                        }
+                                        resetTheInsertionMode();
+                                        continue starttagloop;
+                                    case SCRIPT:
+                                    case STYLE:
+                                        if (isTainted()) {
+                                            break intableloop;
+                                        }
+                                        // XXX need to manage much more stuff
+                                        // here if
+                                        // supporting
+                                        // document.write()
+                                        appendToCurrentNodeAndPushElement(
+                                                "http://www.w3.org/1999/xhtml",
+                                                elementName, attributes);
+                                        cdataOrRcdataTimesToPop = 1;
+                                        tokenizer.setContentModelFlag(
+                                                ContentModelFlag.CDATA, elementName);
+                                        break starttagloop;
+                                    case INPUT:
+                                        if (isTainted()
+                                                || !equalsIgnoreAsciiCase(
+                                                        "hidden",
+                                                        attributes.getValue("",
+                                                                "type"))) {
+                                            break intableloop;
+                                        }
+                                        appendVoidElementToCurrent(
+                                                "http://www.w3.org/1999/xhtml",
+                                                name, attributes, formPointer);
+                                        selfClosing = false;
+                                        break starttagloop;
+                                    default:
+                                        err("Start tag \u201C"
+                                                + name
+                                                + "\u201D seen in \u201Ctable\u201D.");
+                                        // fall through to IN_BODY
+                                        break intableloop;
                                 }
-                                generateImpliedEndTags();
-                                // XXX is the next if dead code?
-                                if (!isCurrent("table")) {
-                                    err("Unclosed elements on stack.");
-                                }
-                                while (currentPtr >= eltPos) {
-                                    pop();
-                                }
-                                resetTheInsertionMode();
-                                continue;
-                            } else if (("script" == name || "style" == name)
-                                    && !isTainted()) {
-                                // XXX need to manage much more stuff here if
-                                // supporting
-                                // document.write()
-                                appendToCurrentNodeAndPushElement(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                cdataOrRcdataTimesToPop = 1;
-                                tokenizer.setContentModelFlag(
-                                        ContentModelFlag.CDATA, name);
-                                break starttagloop;
-                            } else if ("input" == name
-                                    && !isTainted()
-                                    && equalsIgnoreAsciiCase("hidden",
-                                            attributes.getValue("", "type"))) {
-                                appendVoidElementToCurrent(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes, formPointer);
-                                selfClosing = false;
-                                break starttagloop;
-                            } else {
-                                err("Start tag \u201C" + name
-                                        + "\u201D seen in \u201Ctable\u201D.");
-                                // fall through to IN_BODY
                             }
                         case IN_CAPTION:
-                            if ("caption" == name || "col" == name
-                                    || "colgroup" == name || "tbody" == name
-                                    || "td" == name || "tfoot" == name
-                                    || "th" == name || "thead" == name
-                                    || "tr" == name) {
-                                err("Stray \u201C"
-                                        + name
-                                        + "\u201D start tag in \u201Ccaption\u201D.");
-                                int eltPos = findLastInTableScope("caption");
-                                if (eltPos == NOT_FOUND_ON_STACK) {
-                                    break starttagloop;
-                                }
-                                generateImpliedEndTags();
-                                if (currentPtr != eltPos) {
-                                    err("Unclosed elements on stack.");
-                                }
-                                while (currentPtr >= eltPos) {
-                                    pop();
-                                }
-                                clearTheListOfActiveFormattingElementsUpToTheLastMarker();
-                                mode = InsertionMode.IN_TABLE;
-                                continue;
-                            } else {
-                                // fall through to IN_BODY
-                            }
-                        case IN_CELL:
-                            if ("caption" == name || "col" == name
-                                    || "colgroup" == name || "tbody" == name
-                                    || "td" == name || "tfoot" == name
-                                    || "th" == name || "thead" == name
-                                    || "tr" == name) {
-                                int eltPos = findLastInTableScopeTdTh();
-                                if (eltPos == NOT_FOUND_ON_STACK) {
-                                    err("No cell to close.");
-                                    break starttagloop;
-                                } else {
-                                    closeTheCell(eltPos);
-                                    continue;
-                                }
-                            } else {
-                                // fall through to IN_BODY
-                            }
-                        case IN_BODY:
-                            if ("html" == name) {
-                                err("Stray \u201Chtml\u201D start tag.");
-                                addAttributesToElement(stack[0].node,
-                                        attributes);
-                                break starttagloop;
-                            } else if ("base" == name || "link" == name
-                                    || "meta" == name || "style" == name
-                                    || "script" == name || "title" == name) {
-                                // Fall through to IN_HEAD
-                            } else if ("body" == name) {
-                                err("\u201Cbody\u201D start tag found but the \u201Cbody\u201D element is already open.");
-                                addAttributesToBody(attributes);
-                                break starttagloop;
-                            } else if ("p" == name || "div" == name
-                                    || "h1" == name || "h2" == name
-                                    || "h3" == name || "h4" == name
-                                    || "h5" == name || "h6" == name
-                                    || "blockquote" == name || "ol" == name
-                                    || "ul" == name || "dl" == name
-                                    || "fieldset" == name || "address" == name
-                                    || "menu" == name || "center" == name
-                                    || "dir" == name) {
-                                implicitlyCloseP();
-                                appendToCurrentNodeAndPushElementMayFoster(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                break starttagloop;
-                            } else if ("pre" == name || "listing" == name) {
-                                implicitlyCloseP();
-                                appendToCurrentNodeAndPushElementMayFoster(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                needToDropLF = true;
-                                break starttagloop;
-                            } else if ("form" == name) {
-                                if (formPointer != null) {
-                                    err("Saw a \u201Cform\u201D start tag, but there was already an active \u201Cform\u201D element.");
-                                    break starttagloop;
-                                } else {
-                                    implicitlyCloseP();
-                                    appendToCurrentNodeAndPushFormElementMayFoster(attributes);
-                                    break starttagloop;
-                                }
-                            } else if ("li" == name) {
-                                implicitlyCloseP();
-                                int eltPos = findLiToPop();
-                                if (eltPos < currentPtr) {
-                                    err("A \u201Cli\u201D start tag was seen but the previous \u201Cli\u201D element had open children.");
-                                }
-                                while (currentPtr >= eltPos) {
-                                    pop();
-                                }
-                                appendToCurrentNodeAndPushElementMayFoster(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                break starttagloop;
-                            } else if ("dd" == name || "dt" == name) {
-                                implicitlyCloseP();
-                                int eltPos = findDdOrDtToPop();
-                                if (eltPos < currentPtr) {
-                                    err("A definition list item start tag was seen but the previous definition list item element had open children.");
-                                }
-                                while (currentPtr >= eltPos) {
-                                    pop();
-                                }
-                                appendToCurrentNodeAndPushElementMayFoster(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                break starttagloop;
-                            } else if ("plaintext" == name) {
-                                implicitlyCloseP();
-                                appendToCurrentNodeAndPushElementMayFoster(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                tokenizer.setContentModelFlag(
-                                        ContentModelFlag.PLAINTEXT, name);
-                                break starttagloop;
-                            } else if ("a" == name) {
-                                int activeAPos = findInListOfActiveFormattingElementsContainsBetweenEndAndLastMarker("a");
-                                if (activeAPos != -1) {
-                                    err("An \u201Ca\u201D start tag seen with already an active \u201Ca\u201D element.");
-                                    StackNode<T> activeA = listOfActiveFormattingElements[activeAPos];
-                                    adoptionAgencyEndTag("a");
-                                    removeFromStack(activeA);
-                                    activeAPos = findInListOfActiveFormattingElements(activeA);
-                                    if (activeAPos != -1) {
-                                        removeFromListOfActiveFormattingElements(activeAPos);
+                            switch (magic) {
+                                case CAPTION:
+                                case COL:
+                                case COLGROUP:
+                                case TBODY_OR_THEAD_OR_TFOOT:
+                                case TR:
+                                case TD_OR_TH:
+                                    err("Stray \u201C"
+                                            + name
+                                            + "\u201D start tag in \u201Ccaption\u201D.");
+                                    eltPos = findLastInTableScope("caption");
+                                    if (eltPos == NOT_FOUND_ON_STACK) {
+                                        break starttagloop;
                                     }
-                                }
-                                reconstructTheActiveFormattingElements();
-                                appendToCurrentNodeAndPushFormattingElementMayFoster(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                break starttagloop;
-                            } else if ("i" == name || "b" == name
-                                    || "em" == name || "strong" == name
-                                    || "font" == name || "big" == name
-                                    || "s" == name || "small" == name
-                                    || "strike" == name || "tt" == name
-                                    || "u" == name) {
-                                reconstructTheActiveFormattingElements();
-                                appendToCurrentNodeAndPushFormattingElementMayFoster(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                break starttagloop;
-                            } else if ("nobr" == name) {
-                                reconstructTheActiveFormattingElements();
-                                if (NOT_FOUND_ON_STACK != findLastInScope("nobr")) {
-                                    err("\u201Cnobr\u201D start tag seen when there was an open \u201Cnobr\u201D element in scope.");
-                                    adoptionAgencyEndTag("nobr");
-                                }
-                                appendToCurrentNodeAndPushFormattingElementMayFoster(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                break starttagloop;
-                            } else if ("button" == name) {
-                                int eltPos = findLastInScope(name);
-                                if (eltPos != NOT_FOUND_ON_STACK) {
-                                    err("\u201Cbutton\u201D start tag seen when there was an open \u201Cbutton\u201D element in scope.");
                                     generateImpliedEndTags();
-                                    if (!isCurrent("button")) {
-                                        err("There was an open \u201Cbutton\u201D element in scope with unclosed children.");
+                                    if (currentPtr != eltPos) {
+                                        err("Unclosed elements on stack.");
                                     }
                                     while (currentPtr >= eltPos) {
                                         pop();
                                     }
                                     clearTheListOfActiveFormattingElementsUpToTheLastMarker();
+                                    mode = InsertionMode.IN_TABLE;
                                     continue;
-                                } else {
-                                    reconstructTheActiveFormattingElements();
-                                    appendToCurrentNodeAndPushElementMayFoster(
-                                            "http://www.w3.org/1999/xhtml",
-                                            name, attributes, formPointer);
-                                    insertMarker();
-                                    break starttagloop;
-                                }
-                            } else if ("object" == name || "marquee" == name
-                                    || "applet" == name) {
-                                reconstructTheActiveFormattingElements();
-                                appendToCurrentNodeAndPushElementMayFoster(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                insertMarker();
-                                break starttagloop;
-                            } else if ("xmp" == name) {
-                                reconstructTheActiveFormattingElements();
-                                appendToCurrentNodeAndPushElementMayFoster(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                cdataOrRcdataTimesToPop = 1;
-                                tokenizer.setContentModelFlag(
-                                        ContentModelFlag.CDATA, name);
-                                break starttagloop;
-                            } else if ("table" == name) {
-                                implicitlyCloseP();
-                                appendToCurrentNodeAndPushElementMayFoster(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                mode = InsertionMode.IN_TABLE;
-                                break starttagloop;
-                            } else if ("br" == name || "img" == name
-                                    || "embed" == name || "param" == name
-                                    || "area" == name || "basefont" == name
-                                    || "bgsound" == name || "spacer" == name
-                                    || "wbr" == name) {
-                                reconstructTheActiveFormattingElements();
-                                appendVoidElementToCurrentMayFoster(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                selfClosing = false;
-                                break starttagloop;
-                            } else if ("hr" == name) {
-                                implicitlyCloseP();
-                                appendVoidElementToCurrentMayFoster(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                selfClosing = false;
-                                break starttagloop;
-                            } else if ("image" == name) {
-                                err("Saw a start tag \u201Cimage\u201D.");
-                                name = "img";
-                                continue;
-                            } else if ("input" == name) {
-                                reconstructTheActiveFormattingElements();
-                                appendVoidElementToCurrentMayFoster(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes, formPointer);
-                                selfClosing = false;
-                                break starttagloop;
-                            } else if ("isindex" == name) {
-                                err("\u201Cisindex\u201D seen.");
-                                if (formPointer != null) {
-                                    break starttagloop;
-                                }
-                                implicitlyCloseP();
-                                AttributesImpl formAttrs = tokenizer.newAttributes();
-                                int actionIndex = attributes.getIndex("action");
-                                if (actionIndex > -1) {
-                                    formAttrs.addAttribute("action",
-                                            attributes.getValue(actionIndex));
-                                }
-                                appendToCurrentNodeAndPushFormElementMayFoster(formAttrs);
-                                appendVoidElementToCurrentMayFoster(
-                                        "http://www.w3.org/1999/xhtml", "hr",
-                                        EmptyAttributes.EMPTY_ATTRIBUTES);
-                                appendToCurrentNodeAndPushElementMayFoster(
-                                        "http://www.w3.org/1999/xhtml", "p",
-                                        EmptyAttributes.EMPTY_ATTRIBUTES);
-                                appendToCurrentNodeAndPushElementMayFoster(
-                                        "http://www.w3.org/1999/xhtml",
-                                        "label",
-                                        EmptyAttributes.EMPTY_ATTRIBUTES);
-                                int promptIndex = attributes.getIndex("prompt");
-                                if (promptIndex > -1) {
-                                    char[] prompt = attributes.getValue(
-                                            promptIndex).toCharArray();
-                                    appendCharacters(stack[currentPtr].node,
-                                            prompt, 0, prompt.length);
-                                } else {
-                                    // XXX localization
-                                    appendCharacters(stack[currentPtr].node,
-                                            ISINDEX_PROMPT, 0,
-                                            ISINDEX_PROMPT.length);
-                                }
-                                AttributesImpl inputAttributes = tokenizer.newAttributes();
-                                inputAttributes.addAttribute("name", "isindex");
-                                for (int i = 0; i < attributes.getLength(); i++) {
-                                    String attributeQName = attributes.getQName(i);
-                                    if (!("name".equals(attributeQName)
-                                            || "action".equals(attributeQName) || "prompt".equals(attributeQName))) {
-                                        inputAttributes.addAttribute(
-                                                attributeQName,
-                                                attributes.getValue(i));
+                                default:
+                                    // fall through to IN_BODY
+                            }
+                        case IN_CELL:
+                            switch (magic) {
+                                case CAPTION:
+                                case COL:
+                                case COLGROUP:
+                                case TBODY_OR_THEAD_OR_TFOOT:
+                                case TR:
+                                case TD_OR_TH:
+                                    eltPos = findLastInTableScopeTdTh();
+                                    if (eltPos == NOT_FOUND_ON_STACK) {
+                                        err("No cell to close.");
+                                        break starttagloop;
+                                    } else {
+                                        closeTheCell(eltPos);
+                                        continue;
                                     }
-                                }
-                                appendVoidElementToCurrentMayFoster(
-                                        "http://www.w3.org/1999/xhtml",
-                                        "input", inputAttributes, formPointer);
-                                // XXX localization
-                                pop(); // label
-                                pop(); // p
-                                appendVoidElementToCurrentMayFoster(
-                                        "http://www.w3.org/1999/xhtml", "hr",
-                                        EmptyAttributes.EMPTY_ATTRIBUTES);
-                                pop(); // form
-                                selfClosing = false;
-                                break starttagloop;
-                            } else if ("textarea" == name) {
-                                appendToCurrentNodeAndPushElementMayFoster(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes, formPointer);
-                                tokenizer.setContentModelFlag(
-                                        ContentModelFlag.RCDATA, name);
-                                cdataOrRcdataTimesToPop = 1;
-                                needToDropLF = true;
-                                break starttagloop;
-                            } else if ("iframe" == name || "noembed" == name
-                                    || "noframes" == name
-                                    || ("noscript" == name && scriptingEnabled)) {
-                                appendToCurrentNodeAndPushElementMayFoster(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                cdataOrRcdataTimesToPop = 1;
-                                tokenizer.setContentModelFlag(
-                                        ContentModelFlag.CDATA, name);
-                                break starttagloop;
-                            } else if ("select" == name) {
-                                reconstructTheActiveFormattingElements();
-                                appendToCurrentNodeAndPushElementMayFoster(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes, formPointer);
-                                switch (mode) {
-                                    case IN_TABLE:
-                                    case IN_CAPTION:
-                                    case IN_COLUMN_GROUP:
-                                    case IN_TABLE_BODY:
-                                    case IN_ROW:
-                                    case IN_CELL:
-                                        mode = InsertionMode.IN_SELECT_IN_TABLE;
-                                        break;
+                                default:
+                                    // fall through to IN_BODY
+                            }
+                        case IN_BODY:
+                            inbodyloop: for (;;) {
+                                switch (magic) {
+                                    case HTML:
+                                        err("Stray \u201Chtml\u201D start tag.");
+                                        addAttributesToElement(stack[0].node,
+                                                attributes);
+                                        break starttagloop;
+                                    case BASE:
+                                    case LINK:
+                                    case META:
+                                    case STYLE:
+                                    case SCRIPT:
+                                    case TITLE:
+                                        // Fall through to IN_HEAD
+                                        break inbodyloop;
+                                    case BODY:
+                                        err("\u201Cbody\u201D start tag found but the \u201Cbody\u201D element is already open.");
+                                        addAttributesToBody(attributes);
+                                        break starttagloop;
+                                    case P:
+                                    case DIV_OR_BLOCKQUOTE_OR_CENTER_OR_MENU:
+                                    case H1_OR_H2_OR_H3_OR_H4_OR_H5_OR_H6:
+                                    case UL_OR_OL_OR_DL:
+                                    case FIELDSET_OR_ADDRESS_OR_DIR:
+                                        implicitlyCloseP();
+                                        appendToCurrentNodeAndPushElementMayFoster(
+                                                "http://www.w3.org/1999/xhtml",
+                                                elementName, attributes);
+                                        break starttagloop;
+                                    case PRE_OR_LISTING:
+                                        implicitlyCloseP();
+                                        appendToCurrentNodeAndPushElementMayFoster(
+                                                "http://www.w3.org/1999/xhtml",
+                                                elementName, attributes);
+                                        needToDropLF = true;
+                                        break starttagloop;
+                                    case FORM:
+                                        if (formPointer != null) {
+                                            err("Saw a \u201Cform\u201D start tag, but there was already an active \u201Cform\u201D element.");
+                                            break starttagloop;
+                                        } else {
+                                            implicitlyCloseP();
+                                            appendToCurrentNodeAndPushFormElementMayFoster(attributes);
+                                            break starttagloop;
+                                        }
+                                    case LI:
+                                        implicitlyCloseP();
+                                        eltPos = findLiToPop();
+                                        if (eltPos < currentPtr) {
+                                            err("A \u201Cli\u201D start tag was seen but the previous \u201Cli\u201D element had open children.");
+                                        }
+                                        while (currentPtr >= eltPos) {
+                                            pop();
+                                        }
+                                        appendToCurrentNodeAndPushElementMayFoster(
+                                                "http://www.w3.org/1999/xhtml",
+                                                elementName, attributes);
+                                        break starttagloop;
+                                    case DD_OR_DT:
+                                        implicitlyCloseP();
+                                        eltPos = findDdOrDtToPop();
+                                        if (eltPos < currentPtr) {
+                                            err("A definition list item start tag was seen but the previous definition list item element had open children.");
+                                        }
+                                        while (currentPtr >= eltPos) {
+                                            pop();
+                                        }
+                                        appendToCurrentNodeAndPushElementMayFoster(
+                                                "http://www.w3.org/1999/xhtml",
+                                                elementName, attributes);
+                                        break starttagloop;
+                                    case PLAINTEXT:
+                                        implicitlyCloseP();
+                                        appendToCurrentNodeAndPushElementMayFoster(
+                                                "http://www.w3.org/1999/xhtml",
+                                                elementName, attributes);
+                                        tokenizer.setContentModelFlag(
+                                                ContentModelFlag.PLAINTEXT,
+                                                elementName);
+                                        break starttagloop;
+                                    case A:
+                                        int activeAPos = findInListOfActiveFormattingElementsContainsBetweenEndAndLastMarker("a");
+                                        if (activeAPos != -1) {
+                                            err("An \u201Ca\u201D start tag seen with already an active \u201Ca\u201D element.");
+                                            StackNode<T> activeA = listOfActiveFormattingElements[activeAPos];
+                                            adoptionAgencyEndTag("a");
+                                            removeFromStack(activeA);
+                                            activeAPos = findInListOfActiveFormattingElements(activeA);
+                                            if (activeAPos != -1) {
+                                                removeFromListOfActiveFormattingElements(activeAPos);
+                                            }
+                                        }
+                                        reconstructTheActiveFormattingElements();
+                                        appendToCurrentNodeAndPushFormattingElementMayFoster(
+                                                "http://www.w3.org/1999/xhtml",
+                                                elementName, attributes);
+                                        break starttagloop;
+                                    case B_OR_BIG_OR_EM_OR_FONT_OR_I_OR_S_OR_SMALL_OR_STRIKE_OR_STRONG_OR_TT_OR_U:
+                                        reconstructTheActiveFormattingElements();
+                                        appendToCurrentNodeAndPushFormattingElementMayFoster(
+                                                "http://www.w3.org/1999/xhtml",
+                                                elementName, attributes);
+                                        break starttagloop;
+                                    case NOBR:
+                                        reconstructTheActiveFormattingElements();
+                                        if (NOT_FOUND_ON_STACK != findLastInScope("nobr")) {
+                                            err("\u201Cnobr\u201D start tag seen when there was an open \u201Cnobr\u201D element in scope.");
+                                            adoptionAgencyEndTag("nobr");
+                                        }
+                                        appendToCurrentNodeAndPushFormattingElementMayFoster(
+                                                "http://www.w3.org/1999/xhtml",
+                                                elementName, attributes);
+                                        break starttagloop;
+                                    case BUTTON:
+                                        eltPos = findLastInScope(name);
+                                        if (eltPos != NOT_FOUND_ON_STACK) {
+                                            err("\u201Cbutton\u201D start tag seen when there was an open \u201Cbutton\u201D element in scope.");
+                                            generateImpliedEndTags();
+                                            if (!isCurrent("button")) {
+                                                err("There was an open \u201Cbutton\u201D element in scope with unclosed children.");
+                                            }
+                                            while (currentPtr >= eltPos) {
+                                                pop();
+                                            }
+                                            clearTheListOfActiveFormattingElementsUpToTheLastMarker();
+                                            continue starttagloop;
+                                        } else {
+                                            reconstructTheActiveFormattingElements();
+                                            appendToCurrentNodeAndPushElementMayFoster(
+                                                    "http://www.w3.org/1999/xhtml",
+                                                    elementName, attributes,
+                                                    formPointer);
+                                            insertMarker();
+                                            break starttagloop;
+                                        }
+                                    case OBJECT_OR_MARQUEE_OR_APPLET:
+                                        reconstructTheActiveFormattingElements();
+                                        appendToCurrentNodeAndPushElementMayFoster(
+                                                "http://www.w3.org/1999/xhtml",
+                                                elementName, attributes);
+                                        insertMarker();
+                                        break starttagloop;
+                                    case XMP:
+                                        reconstructTheActiveFormattingElements();
+                                        appendToCurrentNodeAndPushElementMayFoster(
+                                                "http://www.w3.org/1999/xhtml",
+                                                elementName, attributes);
+                                        cdataOrRcdataTimesToPop = 1;
+                                        tokenizer.setContentModelFlag(
+                                                ContentModelFlag.CDATA, elementName);
+                                        break starttagloop;
+                                    case TABLE:
+                                        implicitlyCloseP();
+                                        appendToCurrentNodeAndPushElementMayFoster(
+                                                "http://www.w3.org/1999/xhtml",
+                                                elementName, attributes);
+                                        mode = InsertionMode.IN_TABLE;
+                                        break starttagloop;
+                                    case BR:
+                                    case EMBED_OR_IMG:
+                                    case AREA_OR_BASEFONT_OR_BGSOUND_OR_PARAM_OR_SPACER_OR_WBR:
+                                        reconstructTheActiveFormattingElements();
+                                        appendVoidElementToCurrentMayFoster(
+                                                "http://www.w3.org/1999/xhtml",
+                                                name, attributes);
+                                        selfClosing = false;
+                                        break starttagloop;
+                                    case HR:
+                                        implicitlyCloseP();
+                                        appendVoidElementToCurrentMayFoster(
+                                                "http://www.w3.org/1999/xhtml",
+                                                name, attributes);
+                                        selfClosing = false;
+                                        break starttagloop;
+                                    case IMAGE:
+                                        err("Saw a start tag \u201Cimage\u201D.");
+                                        elementName = NameData.IMG;
+                                        continue starttagloop;
+                                    case INPUT:
+                                        reconstructTheActiveFormattingElements();
+                                        appendVoidElementToCurrentMayFoster(
+                                                "http://www.w3.org/1999/xhtml",
+                                                name, attributes, formPointer);
+                                        selfClosing = false;
+                                        break starttagloop;
+                                    case ISINDEX:
+                                        err("\u201Cisindex\u201D seen.");
+                                        if (formPointer != null) {
+                                            break starttagloop;
+                                        }
+                                        implicitlyCloseP();
+                                        AttributesImpl formAttrs = tokenizer.newAttributes();
+                                        int actionIndex = attributes.getIndex("action");
+                                        if (actionIndex > -1) {
+                                            formAttrs.addAttribute(
+                                                    "action",
+                                                    attributes.getValue(actionIndex));
+                                        }
+                                        appendToCurrentNodeAndPushFormElementMayFoster(formAttrs);
+                                        appendVoidElementToCurrentMayFoster(
+                                                "http://www.w3.org/1999/xhtml",
+                                                "hr",
+                                                EmptyAttributes.EMPTY_ATTRIBUTES);
+                                        appendToCurrentNodeAndPushElementMayFoster(
+                                                "http://www.w3.org/1999/xhtml",
+                                                NameData.P,
+                                                EmptyAttributes.EMPTY_ATTRIBUTES);
+                                        appendToCurrentNodeAndPushElementMayFoster(
+                                                "http://www.w3.org/1999/xhtml",
+                                                NameData.LABEL,
+                                                EmptyAttributes.EMPTY_ATTRIBUTES);
+                                        int promptIndex = attributes.getIndex("prompt");
+                                        if (promptIndex > -1) {
+                                            char[] prompt = attributes.getValue(
+                                                    promptIndex).toCharArray();
+                                            appendCharacters(
+                                                    stack[currentPtr].node,
+                                                    prompt, 0, prompt.length);
+                                        } else {
+                                            // XXX localization
+                                            appendCharacters(
+                                                    stack[currentPtr].node,
+                                                    ISINDEX_PROMPT, 0,
+                                                    ISINDEX_PROMPT.length);
+                                        }
+                                        AttributesImpl inputAttributes = tokenizer.newAttributes();
+                                        inputAttributes.addAttribute("name",
+                                                "isindex");
+                                        for (int i = 0; i < attributes.getLength(); i++) {
+                                            String attributeQName = attributes.getQName(i);
+                                            if (!("name".equals(attributeQName)
+                                                    || "action".equals(attributeQName) || "prompt".equals(attributeQName))) {
+                                                inputAttributes.addAttribute(
+                                                        attributeQName,
+                                                        attributes.getValue(i));
+                                            }
+                                        }
+                                        appendVoidElementToCurrentMayFoster(
+                                                "http://www.w3.org/1999/xhtml",
+                                                "input", inputAttributes,
+                                                formPointer);
+                                        // XXX localization
+                                        pop(); // label
+                                        pop(); // p
+                                        appendVoidElementToCurrentMayFoster(
+                                                "http://www.w3.org/1999/xhtml",
+                                                "hr",
+                                                EmptyAttributes.EMPTY_ATTRIBUTES);
+                                        pop(); // form
+                                        selfClosing = false;
+                                        break starttagloop;
+                                    case TEXTAREA:
+                                        appendToCurrentNodeAndPushElementMayFoster(
+                                                "http://www.w3.org/1999/xhtml",
+                                                elementName, attributes, formPointer);
+                                        tokenizer.setContentModelFlag(
+                                                ContentModelFlag.RCDATA, elementName);
+                                        cdataOrRcdataTimesToPop = 1;
+                                        needToDropLF = true;
+                                        break starttagloop;
+                                    case NOSCRIPT:
+                                        if (!scriptingEnabled) {
+                                            reconstructTheActiveFormattingElements();
+                                            appendToCurrentNodeAndPushElementMayFoster(
+                                                    "http://www.w3.org/1999/xhtml",
+                                                    elementName, attributes);
+                                            break starttagloop;
+                                        } else {
+                                            // fall through
+                                        }
+                                    case IFRAME_OR_NOEMBED:
+                                    case NOFRAMES:
+                                        appendToCurrentNodeAndPushElementMayFoster(
+                                                "http://www.w3.org/1999/xhtml",
+                                                elementName, attributes);
+                                        cdataOrRcdataTimesToPop = 1;
+                                        tokenizer.setContentModelFlag(
+                                                ContentModelFlag.CDATA, elementName);
+                                        break starttagloop;
+                                    case SELECT:
+                                        reconstructTheActiveFormattingElements();
+                                        appendToCurrentNodeAndPushElementMayFoster(
+                                                "http://www.w3.org/1999/xhtml",
+                                                elementName, attributes, formPointer);
+                                        switch (mode) {
+                                            case IN_TABLE:
+                                            case IN_CAPTION:
+                                            case IN_COLUMN_GROUP:
+                                            case IN_TABLE_BODY:
+                                            case IN_ROW:
+                                            case IN_CELL:
+                                                mode = InsertionMode.IN_SELECT_IN_TABLE;
+                                                break;
+                                            default:
+                                                mode = InsertionMode.IN_SELECT;
+                                                break;
+                                        }
+                                        break starttagloop;
+                                    case MATH:
+                                        reconstructTheActiveFormattingElements();
+                                        attributes = adjustForeignAttributes(attributes);
+                                        if (selfClosing) {
+                                            appendVoidElementToCurrentMayFoster(
+                                                    "http://www.w3.org/1998/Math/MathML",
+                                                    name, attributes);
+                                            selfClosing = false;
+                                        } else {
+                                            appendToCurrentNodeAndPushElementMayFoster(
+                                                    "http://www.w3.org/1998/Math/MathML",
+                                                    elementName, attributes);
+                                            foreignFlag = IN_FOREIGN;
+                                        }
+                                        break starttagloop;
+                                    case CAPTION:
+                                    case COL:
+                                    case COLGROUP:
+                                    case TBODY_OR_THEAD_OR_TFOOT:
+                                    case TR:
+                                    case TD_OR_TH:
+                                    case FRAME:
+                                    case FRAMESET:
+                                    case HEAD:
+                                    case OPTION:
+                                    case OPTGROUP:
+                                        err("Stray start tag \u201C" + name
+                                                + "\u201D.");
+                                        break starttagloop;
                                     default:
-                                        mode = InsertionMode.IN_SELECT;
-                                        break;
+                                        reconstructTheActiveFormattingElements();
+                                        appendToCurrentNodeAndPushElementMayFoster(
+                                                "http://www.w3.org/1999/xhtml",
+                                                elementName, attributes);
+                                        break starttagloop;
                                 }
-                                break starttagloop;
-                            } else if ("math" == name) {
-                                reconstructTheActiveFormattingElements();
-                                attributes = adjustForeignAttributes(attributes);
-                                if (selfClosing) {
-                                    appendVoidElementToCurrentMayFoster("http://www.w3.org/1998/Math/MathML", name, attributes);
-                                    selfClosing = false;
-                                } else {
-                                    appendToCurrentNodeAndPushElementMayFoster("http://www.w3.org/1998/Math/MathML", name, attributes);
-                                    foreignFlag = IN_FOREIGN;
-                                }
-                                break starttagloop;
-                            } else if ("caption" == name || "col" == name
-                                    || "colgroup" == name || "frame" == name
-                                    || "frameset" == name || "head" == name
-                                    || "option" == name || "optgroup" == name
-                                    || "tbody" == name || "td" == name
-                                    || "tfoot" == name || "th" == name
-                                    || "thead" == name || "tr" == name) {
-                                err("Stray start tag \u201C" + name + "\u201D.");
-                                break starttagloop;
-                            } else {
-                                reconstructTheActiveFormattingElements();
-                                appendToCurrentNodeAndPushElementMayFoster(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                break starttagloop;
                             }
                         case IN_HEAD:
-                            if ("html" == name) {
-                                err("Stray \u201Chtml\u201D start tag.");
-                                addAttributesToElement(stack[0].node,
-                                        attributes);
-                                break starttagloop;
-                            } else if ("base" == name) {
-                                appendVoidElementToCurrentMayFoster(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                selfClosing = false;
-                                break starttagloop;
-                            } else if ("meta" == name || "link" == name) {
-                                // Fall through to IN_HEAD_NOSCRIPT
-                            } else if ("title" == name) {
-                                appendToCurrentNodeAndPushElementMayFoster(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                cdataOrRcdataTimesToPop = 1;
-                                tokenizer.setContentModelFlag(
-                                        ContentModelFlag.RCDATA, name);
-                                break starttagloop;
-                            } else if ("noscript" == name) {
-                                if (scriptingEnabled) {
-                                    appendToCurrentNodeAndPushElement(
-                                            "http://www.w3.org/1999/xhtml",
-                                            name, attributes);
-                                    cdataOrRcdataTimesToPop = 1;
-                                    tokenizer.setContentModelFlag(
-                                            ContentModelFlag.CDATA, name);
-                                } else {
-                                    appendToCurrentNodeAndPushElementMayFoster(
-                                            "http://www.w3.org/1999/xhtml",
-                                            name, attributes);
-                                    mode = InsertionMode.IN_HEAD_NOSCRIPT;
+                            inheadloop: for (;;) {
+                                switch (magic) {
+                                    case HTML:
+                                        err("Stray \u201Chtml\u201D start tag.");
+                                        addAttributesToElement(stack[0].node,
+                                                attributes);
+                                        break starttagloop;
+                                    case BASE:
+                                        appendVoidElementToCurrentMayFoster(
+                                                "http://www.w3.org/1999/xhtml",
+                                                name, attributes);
+                                        selfClosing = false;
+                                        break starttagloop;
+                                    case META:
+                                    case LINK:
+                                        // Fall through to IN_HEAD_NOSCRIPT
+                                        break inheadloop;
+                                    case TITLE:
+                                        appendToCurrentNodeAndPushElementMayFoster(
+                                                "http://www.w3.org/1999/xhtml",
+                                                elementName, attributes);
+                                        cdataOrRcdataTimesToPop = 1;
+                                        tokenizer.setContentModelFlag(
+                                                ContentModelFlag.RCDATA, elementName);
+                                        break starttagloop;
+                                    case NOSCRIPT:
+                                        if (scriptingEnabled) {
+                                            appendToCurrentNodeAndPushElement(
+                                                    "http://www.w3.org/1999/xhtml",
+                                                    elementName, attributes);
+                                            cdataOrRcdataTimesToPop = 1;
+                                            tokenizer.setContentModelFlag(
+                                                    ContentModelFlag.CDATA,
+                                                    elementName);
+                                        } else {
+                                            appendToCurrentNodeAndPushElementMayFoster(
+                                                    "http://www.w3.org/1999/xhtml",
+                                                    elementName, attributes);
+                                            mode = InsertionMode.IN_HEAD_NOSCRIPT;
+                                        }
+                                        break starttagloop;
+                                    case SCRIPT:
+                                    case STYLE:
+                                        // XXX need to manage much more stuff
+                                        // here if
+                                        // supporting
+                                        // document.write()
+                                        appendToCurrentNodeAndPushElementMayFoster(
+                                                "http://www.w3.org/1999/xhtml",
+                                                elementName, attributes);
+                                        cdataOrRcdataTimesToPop = 1;
+                                        tokenizer.setContentModelFlag(
+                                                ContentModelFlag.CDATA, elementName);
+                                        break starttagloop;
+                                    case HEAD:
+                                        /* Parse error. */
+                                        err("Start tag for \u201Chead\u201D seen when \u201Chead\u201D was already open.");
+                                        /* Ignore the token. */
+                                        break starttagloop;
+                                    default:
+                                        pop();
+                                        mode = InsertionMode.AFTER_HEAD;
+                                        continue starttagloop;
                                 }
-                                break starttagloop;
-                            } else if ("script" == name || "style" == name) {
-                                // XXX need to manage much more stuff here if
-                                // supporting
-                                // document.write()
-                                appendToCurrentNodeAndPushElementMayFoster(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                cdataOrRcdataTimesToPop = 1;
-                                tokenizer.setContentModelFlag(
-                                        ContentModelFlag.CDATA, name);
-                                break starttagloop;
-                            } else if ("head" == name) {
-                                /* Parse error. */
-                                err("Start tag for \u201Chead\u201D seen when \u201Chead\u201D was already open.");
-                                /* Ignore the token. */
-                                break starttagloop;
-                            } else {
-                                pop();
-                                mode = InsertionMode.AFTER_HEAD;
-                                continue;
                             }
                         case IN_HEAD_NOSCRIPT:
-                            // XXX did Hixie really mean to omit "base" here?
-                            if ("html" == name) {
-                                err("Stray \u201Chtml\u201D start tag.");
-                                addAttributesToElement(stack[0].node,
-                                        attributes);
-                                break starttagloop;
-                            } else if ("link" == name) {
-                                appendVoidElementToCurrentMayFoster(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                selfClosing = false;
-                                break starttagloop;
-                            } else if ("meta" == name) {
-                                checkMetaCharset(attributes);
-                                appendVoidElementToCurrentMayFoster(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                selfClosing = false;
-                                break starttagloop;
-                            } else if ("style" == name) {
-                                appendToCurrentNodeAndPushElement(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                cdataOrRcdataTimesToPop = 1;
-                                tokenizer.setContentModelFlag(
-                                        ContentModelFlag.CDATA, name);
-                                break starttagloop;
-                            } else if ("head" == name) {
-                                err("Start tag for \u201Chead\u201D seen when \u201Chead\u201D was already open.");
-                                break starttagloop;
-                            } else if ("noscript" == name) {
-                                err("Start tag for \u201Cnoscript\u201D seen when \u201Cnoscript\u201D was already open.");
-                                break starttagloop;
-                            } else {
-                                err("Bad start tag in \u201Cnoscript\u201D in \u201Chead\u201D.");
-                                pop();
-                                mode = InsertionMode.IN_HEAD;
-                                continue;
+                            switch (magic) {
+                                case HTML:
+                                    // XXX did Hixie really mean to omit "base"
+                                    // here?
+                                    err("Stray \u201Chtml\u201D start tag.");
+                                    addAttributesToElement(stack[0].node,
+                                            attributes);
+                                    break starttagloop;
+                                case LINK:
+                                    appendVoidElementToCurrentMayFoster(
+                                            "http://www.w3.org/1999/xhtml",
+                                            name, attributes);
+                                    selfClosing = false;
+                                    break starttagloop;
+                                case META:
+                                    checkMetaCharset(attributes);
+                                    appendVoidElementToCurrentMayFoster(
+                                            "http://www.w3.org/1999/xhtml",
+                                            name, attributes);
+                                    selfClosing = false;
+                                    break starttagloop;
+                                case STYLE:
+                                    appendToCurrentNodeAndPushElement(
+                                            "http://www.w3.org/1999/xhtml",
+                                            elementName, attributes);
+                                    cdataOrRcdataTimesToPop = 1;
+                                    tokenizer.setContentModelFlag(
+                                            ContentModelFlag.CDATA, elementName);
+                                    break starttagloop;
+                                case HEAD:
+                                    err("Start tag for \u201Chead\u201D seen when \u201Chead\u201D was already open.");
+                                    break starttagloop;
+                                case NOSCRIPT:
+                                    err("Start tag for \u201Cnoscript\u201D seen when \u201Cnoscript\u201D was already open.");
+                                    break starttagloop;
+                                default:
+                                    err("Bad start tag in \u201Cnoscript\u201D in \u201Chead\u201D.");
+                                    pop();
+                                    mode = InsertionMode.IN_HEAD;
+                                    continue;
                             }
                         case IN_COLUMN_GROUP:
-                            if ("html" == name) {
-                                err("Stray \u201Chtml\u201D start tag.");
-                                addAttributesToElement(stack[0].node,
-                                        attributes);
-                                break starttagloop;
-                            } else if ("col" == name) {
-                                appendVoidElementToCurrentMayFoster(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                selfClosing = false;
-                                break starttagloop;
-                            } else {
-                                if (currentPtr == 0) {
-                                    assert context != null;
-                                    err("Garbage in \u201Ccolgroup\u201D fragment.");
+                            switch (magic) {
+                                case HTML:
+                                    err("Stray \u201Chtml\u201D start tag.");
+                                    addAttributesToElement(stack[0].node,
+                                            attributes);
                                     break starttagloop;
-                                }
-                                pop();
-                                mode = InsertionMode.IN_TABLE;
-                                continue;
+                                case COL:
+                                    appendVoidElementToCurrentMayFoster(
+                                            "http://www.w3.org/1999/xhtml",
+                                            name, attributes);
+                                    selfClosing = false;
+                                    break starttagloop;
+                                default:
+                                    if (currentPtr == 0) {
+                                        assert context != null;
+                                        err("Garbage in \u201Ccolgroup\u201D fragment.");
+                                        break starttagloop;
+                                    }
+                                    pop();
+                                    mode = InsertionMode.IN_TABLE;
+                                    continue;
                             }
                         case IN_SELECT_IN_TABLE:
-                            if ("caption" == name || "table" == name
-                                    || "tbody" == name || "tfoot" == name
-                                    || "thead" == name || "tr" == name
-                                    || "td" == name || "th" == name) {
-                                err("\u201C"
-                                        + name
-                                        + "\u201D start tag with \u201Cselect\u201D open.");
-                                endSelect();
-                                continue;
-                            } else {
-                                // fall through to IN_SELECT
+                            switch (magic) {
+                                case CAPTION:
+                                case TBODY_OR_THEAD_OR_TFOOT:
+                                case TR:
+                                case TD_OR_TH:
+                                case TABLE:
+                                    err("\u201C"
+                                            + name
+                                            + "\u201D start tag with \u201Cselect\u201D open.");
+                                    endSelect();
+                                    continue;
+                                default:
+                                    // fall through to IN_SELECT
                             }
                         case IN_SELECT:
-                            if ("html" == name) {
-                                err("Stray \u201Chtml\u201D start tag.");
-                                addAttributesToElement(stack[0].node,
-                                        attributes);
-                                break starttagloop;
-                            } else if ("option" == name) {
-                                if (isCurrent("option")) {
-                                    pop();
-                                }
-                                appendToCurrentNodeAndPushElement(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                break starttagloop;
-                            } else if ("optgroup" == name) {
-                                if (isCurrent("option")) {
-                                    pop();
-                                }
-                                if (isCurrent("optgroup")) {
-                                    pop();
-                                }
-                                appendToCurrentNodeAndPushElement(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                break starttagloop;
-                            } else if ("select" == name) {
-                                err("\u201Cselect\u201D start tag where end tag expected.");
-                                int eltPos = findLastInTableScope(name);
-                                if (eltPos == NOT_FOUND_ON_STACK) {
-                                    assert context != null;
-                                    err("No \u201Cselect\u201D in table scope.");
+                            switch (magic) {
+                                case HTML:
+                                    err("Stray \u201Chtml\u201D start tag.");
+                                    addAttributesToElement(stack[0].node,
+                                            attributes);
                                     break starttagloop;
-                                } else {
-                                    while (currentPtr >= eltPos) {
+                                case OPTION:
+                                    if (isCurrent("option")) {
                                         pop();
                                     }
-                                    resetTheInsertionMode();
+                                    appendToCurrentNodeAndPushElement(
+                                            "http://www.w3.org/1999/xhtml",
+                                            elementName, attributes);
                                     break starttagloop;
-                                }
-                            } else if ("input" == name) {
-                                err("\u201Cinput\u201D start tag seen in \u201Cselect\2201D.");
-                                endSelect();
-                                continue;
-                            } else {
-                                err("Stray \u201C" + name + "\u201D start tag.");
-                                break starttagloop;
+                                case OPTGROUP:
+                                    if (isCurrent("option")) {
+                                        pop();
+                                    }
+                                    if (isCurrent("optgroup")) {
+                                        pop();
+                                    }
+                                    appendToCurrentNodeAndPushElement(
+                                            "http://www.w3.org/1999/xhtml",
+                                            elementName, attributes);
+                                    break starttagloop;
+                                case SELECT:
+                                    err("\u201Cselect\u201D start tag where end tag expected.");
+                                    eltPos = findLastInTableScope(name);
+                                    if (eltPos == NOT_FOUND_ON_STACK) {
+                                        assert context != null;
+                                        err("No \u201Cselect\u201D in table scope.");
+                                        break starttagloop;
+                                    } else {
+                                        while (currentPtr >= eltPos) {
+                                            pop();
+                                        }
+                                        resetTheInsertionMode();
+                                        break starttagloop;
+                                    }
+                                case INPUT:
+                                    err("\u201Cinput\u201D start tag seen in \u201Cselect\2201D.");
+                                    endSelect();
+                                    continue;
+                                default:
+                                    err("Stray \u201C" + name
+                                            + "\u201D start tag.");
+                                    break starttagloop;
                             }
                         case AFTER_BODY:
-                            if ("html" == name) {
-                                err("Stray \u201Chtml\u201D start tag.");
-                                addAttributesToElement(stack[0].node,
-                                        attributes);
-                                break starttagloop;
-                            } else {
-                                err("Stray \u201C" + name + "\u201D start tag.");
-                                if (conformingAndStreaming) {
-                                    fatal();
-                                }
-                                mode = InsertionMode.IN_BODY;
-                                continue;
+                            switch (magic) {
+                                case HTML:
+                                    err("Stray \u201Chtml\u201D start tag.");
+                                    addAttributesToElement(stack[0].node,
+                                            attributes);
+                                    break starttagloop;
+                                default:
+                                    err("Stray \u201C" + name
+                                            + "\u201D start tag.");
+                                    if (conformingAndStreaming) {
+                                        fatal();
+                                    }
+                                    mode = InsertionMode.IN_BODY;
+                                    continue;
                             }
                         case IN_FRAMESET:
-                            if ("frameset" == name) {
-                                appendToCurrentNodeAndPushElement(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                break starttagloop;
-                            } else if ("frame" == name) {
-                                appendVoidElementToCurrentMayFoster(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                selfClosing = false;
-                                break starttagloop;
-                            } else {
-                                // fall through to AFTER_FRAMESET
+                            switch (magic) {
+                                case FRAMESET:
+                                    appendToCurrentNodeAndPushElement(
+                                            "http://www.w3.org/1999/xhtml",
+                                            elementName, attributes);
+                                    break starttagloop;
+                                case FRAME:
+                                    appendVoidElementToCurrentMayFoster(
+                                            "http://www.w3.org/1999/xhtml",
+                                            name, attributes);
+                                    selfClosing = false;
+                                    break starttagloop;
+                                default:
+                                    // fall through to AFTER_FRAMESET
                             }
                         case AFTER_FRAMESET:
-                            if ("html" == name) {
-                                err("Stray \u201Chtml\u201D start tag.");
-                                addAttributesToElement(stack[0].node,
-                                        attributes);
-                                break starttagloop;
-                            } else if ("noframes" == name) {
-                                appendToCurrentNodeAndPushElement(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                cdataOrRcdataTimesToPop = 1;
-                                tokenizer.setContentModelFlag(
-                                        ContentModelFlag.CDATA, name);
-                                break starttagloop;
-                            } else {
-                                err("Stray \u201C" + name + "\u201D start tag.");
-                                break starttagloop;
+                            switch (magic) {
+                                case HTML:
+                                    err("Stray \u201Chtml\u201D start tag.");
+                                    addAttributesToElement(stack[0].node,
+                                            attributes);
+                                    break starttagloop;
+                                case NOFRAMES:
+                                    appendToCurrentNodeAndPushElement(
+                                            "http://www.w3.org/1999/xhtml",
+                                            elementName, attributes);
+                                    cdataOrRcdataTimesToPop = 1;
+                                    tokenizer.setContentModelFlag(
+                                            ContentModelFlag.CDATA, elementName);
+                                    break starttagloop;
+                                default:
+                                    err("Stray \u201C" + name
+                                            + "\u201D start tag.");
+                                    break starttagloop;
                             }
                         case INITIAL:
                             /*
@@ -1955,188 +2127,197 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                              */
                             continue;
                         case BEFORE_HTML:
-                            // optimize error check and streaming SAX by
-                            // hoisting
-                            // "html" handling here.
-                            if ("html" == name) {
-                                if (attributes.getLength() == 0) {
-                                    // This has the right magic side effect that
-                                    // it
-                                    // makes attributes in SAX Tree mutable.
+                            switch (magic) {
+                                case HTML:
+                                    // optimize error check and streaming SAX by
+                                    // hoisting
+                                    // "html" handling here.
+                                    if (attributes.getLength() == 0) {
+                                        // This has the right magic side effect
+                                        // that
+                                        // it
+                                        // makes attributes in SAX Tree mutable.
+                                        appendHtmlElementToDocumentAndPush();
+                                    } else {
+                                        appendHtmlElementToDocumentAndPush(attributes);
+                                    }
+                                    // XXX application cache should fire here
+                                    mode = InsertionMode.BEFORE_HEAD;
+                                    break starttagloop;
+                                default:
+                                    /*
+                                     * Create an HTMLElement node with the tag
+                                     * name html, in the HTML namespace. Append
+                                     * it to the Document object.
+                                     */
                                     appendHtmlElementToDocumentAndPush();
-                                } else {
-                                    appendHtmlElementToDocumentAndPush(attributes);
-                                }
-                                // XXX application cache should fire here
-                                mode = InsertionMode.BEFORE_HEAD;
-                                break starttagloop;
-                            } else {
-                                /*
-                                 * Create an HTMLElement node with the tag name
-                                 * html, in the HTML namespace. Append it to the
-                                 * Document object.
-                                 */
-                                appendHtmlElementToDocumentAndPush();
-                                /* Switch to the main mode */
-                                mode = InsertionMode.BEFORE_HEAD;
-                                /*
-                                 * reprocess the current token.
-                                 * 
-                                 */
-                                continue;
+                                    /* Switch to the main mode */
+                                    mode = InsertionMode.BEFORE_HEAD;
+                                    /*
+                                     * reprocess the current token.
+                                     * 
+                                     */
+                                    continue;
                             }
                         case BEFORE_HEAD:
-                            if ("html" == name) {
-                                err("Stray \u201Chtml\u201D start tag.");
-                                addAttributesToElement(stack[0].node,
-                                        attributes);
-                                break starttagloop;
-                            } else if ("head" == name) {
-                                /*
-                                 * A start tag whose tag name is "head"
-                                 * 
-                                 * Create an element for the token.
-                                 * 
-                                 * Set the head element pointer to this new
-                                 * element node.
-                                 * 
-                                 * Append the new element to the current node
-                                 * and push it onto the stack of open elements.
-                                 */
-                                appendToCurrentNodeAndPushHeadElement(attributes);
-                                /*
-                                 * 
-                                 * Change the insertion mode to "in head".
-                                 * 
-                                 */
-                                mode = InsertionMode.IN_HEAD;
-                                break starttagloop;
+                            switch (magic) {
+                                case HTML:
+                                    err("Stray \u201Chtml\u201D start tag.");
+                                    addAttributesToElement(stack[0].node,
+                                            attributes);
+                                    break starttagloop;
+                                case HEAD:
+                                    /*
+                                     * A start tag whose tag name is "head"
+                                     * 
+                                     * Create an element for the token.
+                                     * 
+                                     * Set the head element pointer to this new
+                                     * element node.
+                                     * 
+                                     * Append the new element to the current
+                                     * node and push it onto the stack of open
+                                     * elements.
+                                     */
+                                    appendToCurrentNodeAndPushHeadElement(attributes);
+                                    /*
+                                     * 
+                                     * Change the insertion mode to "in head".
+                                     * 
+                                     */
+                                    mode = InsertionMode.IN_HEAD;
+                                    break starttagloop;
+                                default:
+
+                                    /*
+                                     * Any other start tag token
+                                     */
+
+                                    /*
+                                     * Act as if a start tag token with the tag
+                                     * name "head" and no attributes had been
+                                     * seen,
+                                     */
+                                    appendToCurrentNodeAndPushHeadElement(EmptyAttributes.EMPTY_ATTRIBUTES);
+                                    mode = InsertionMode.IN_HEAD;
+                                    /*
+                                     * then reprocess the current token.
+                                     * 
+                                     * This will result in an empty head element
+                                     * being generated, with the current token
+                                     * being reprocessed in the "after head"
+                                     * insertion mode.
+                                     */
+                                    continue;
                             }
-
-                            /*
-                             * Any other start tag token
-                             */
-
-                            /*
-                             * Act as if a start tag token with the tag name
-                             * "head" and no attributes had been seen,
-                             */
-                            appendToCurrentNodeAndPushHeadElement(EmptyAttributes.EMPTY_ATTRIBUTES);
-                            mode = InsertionMode.IN_HEAD;
-                            /*
-                             * then reprocess the current token.
-                             * 
-                             * This will result in an empty head element being
-                             * generated, with the current token being
-                             * reprocessed in the "after head" insertion mode.
-                             */
-                            continue;
                         case AFTER_HEAD:
-                            if ("html" == name) {
-                                err("Stray \u201Chtml\u201D start tag.");
-                                addAttributesToElement(stack[0].node,
-                                        attributes);
-                                break starttagloop;
-                            } else if ("body" == name) {
-                                if (attributes.getLength() == 0) {
-                                    // This has the right magic side effect that
-                                    // it
-                                    // makes attributes in SAX Tree mutable.
+                            switch (magic) {
+                                case HTML:
+                                    err("Stray \u201Chtml\u201D start tag.");
+                                    addAttributesToElement(stack[0].node,
+                                            attributes);
+                                    break starttagloop;
+                                case BODY:
+                                    if (attributes.getLength() == 0) {
+                                        // This has the right magic side effect
+                                        // that
+                                        // it
+                                        // makes attributes in SAX Tree mutable.
+                                        appendToCurrentNodeAndPushBodyElement();
+                                    } else {
+                                        appendToCurrentNodeAndPushBodyElement(attributes);
+                                    }
+                                    mode = InsertionMode.IN_BODY;
+                                    break starttagloop;
+                                case FRAMESET:
+                                    appendToCurrentNodeAndPushElement(
+                                            "http://www.w3.org/1999/xhtml",
+                                            elementName, attributes);
+                                    mode = InsertionMode.IN_FRAMESET;
+                                    break starttagloop;
+                                case BASE:
+                                    err("\u201Cbase\u201D element outside \u201Chead\u201D.");
+                                    if (!nonConformingAndStreaming) {
+                                        pushHeadPointerOntoStack();
+                                    }
+                                    appendVoidElementToCurrentMayFoster(
+                                            "http://www.w3.org/1999/xhtml",
+                                            name, attributes);
+                                    selfClosing = false;
+                                    if (!nonConformingAndStreaming) {
+                                        pop(); // head
+                                    }
+                                    break starttagloop;
+                                case LINK:
+                                    err("\u201Clink\u201D element outside \u201Chead\u201D.");
+                                    if (!nonConformingAndStreaming) {
+                                        pushHeadPointerOntoStack();
+                                    }
+                                    appendVoidElementToCurrentMayFoster(
+                                            "http://www.w3.org/1999/xhtml",
+                                            name, attributes);
+                                    selfClosing = false;
+                                    if (!nonConformingAndStreaming) {
+                                        pop(); // head
+                                    }
+                                    break starttagloop;
+                                case META:
+                                    err("\u201Cmeta\u201D element outside \u201Chead\u201D.");
+                                    checkMetaCharset(attributes);
+                                    if (!nonConformingAndStreaming) {
+                                        pushHeadPointerOntoStack();
+                                    }
+                                    appendVoidElementToCurrentMayFoster(
+                                            "http://www.w3.org/1999/xhtml",
+                                            name, attributes);
+                                    selfClosing = false;
+                                    if (!nonConformingAndStreaming) {
+                                        pop(); // head
+                                    }
+                                    break starttagloop;
+                                case SCRIPT:
+                                    err("\u201Cscript\u201D element between \u201Chead\u201D and \u201Cbody\u201D.");
+                                    if (!nonConformingAndStreaming) {
+                                        pushHeadPointerOntoStack();
+                                    }
+                                    appendToCurrentNodeAndPushElement(
+                                            "http://www.w3.org/1999/xhtml",
+                                            elementName, attributes);
+                                    cdataOrRcdataTimesToPop = nonConformingAndStreaming ? 1
+                                            : 2; // pops head
+                                    tokenizer.setContentModelFlag(
+                                            ContentModelFlag.CDATA, elementName);
+                                    break starttagloop;
+                                case STYLE:
+                                    err("\u201Cstyle\u201D element between \u201Chead\u201D and \u201Cbody\u201D.");
+                                    if (!nonConformingAndStreaming) {
+                                        pushHeadPointerOntoStack();
+                                    }
+                                    appendToCurrentNodeAndPushElement(
+                                            "http://www.w3.org/1999/xhtml",
+                                            elementName, attributes);
+                                    cdataOrRcdataTimesToPop = nonConformingAndStreaming ? 1
+                                            : 2; // pops head
+                                    tokenizer.setContentModelFlag(
+                                            ContentModelFlag.CDATA, elementName);
+                                    break starttagloop;
+                                case TITLE:
+                                    err("\u201Ctitle\u201D element outside \u201Chead\u201D.");
+                                    if (!nonConformingAndStreaming) {
+                                        pushHeadPointerOntoStack();
+                                    }
+                                    appendToCurrentNodeAndPushElement(
+                                            "http://www.w3.org/1999/xhtml",
+                                            elementName, attributes);
+                                    cdataOrRcdataTimesToPop = nonConformingAndStreaming ? 1
+                                            : 2; // pops head
+                                    tokenizer.setContentModelFlag(
+                                            ContentModelFlag.RCDATA, elementName);
+                                    break starttagloop;
+                                default:
                                     appendToCurrentNodeAndPushBodyElement();
-                                } else {
-                                    appendToCurrentNodeAndPushBodyElement(attributes);
-                                }
-                                mode = InsertionMode.IN_BODY;
-                                break starttagloop;
-                            } else if ("frameset" == name) {
-                                appendToCurrentNodeAndPushElement(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                mode = InsertionMode.IN_FRAMESET;
-                                break starttagloop;
-                            } else if ("base" == name) {
-                                err("\u201Cbase\u201D element outside \u201Chead\u201D.");
-                                if (!nonConformingAndStreaming) {
-                                    pushHeadPointerOntoStack();
-                                }
-                                appendVoidElementToCurrentMayFoster(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                selfClosing = false;
-                                if (!nonConformingAndStreaming) {
-                                    pop(); // head
-                                }
-                                break starttagloop;
-                            } else if ("link" == name) {
-                                err("\u201Clink\u201D element outside \u201Chead\u201D.");
-                                if (!nonConformingAndStreaming) {
-                                    pushHeadPointerOntoStack();
-                                }
-                                appendVoidElementToCurrentMayFoster(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                selfClosing = false;
-                                if (!nonConformingAndStreaming) {
-                                    pop(); // head
-                                }
-                                break starttagloop;
-                            } else if ("meta" == name) {
-                                err("\u201Cmeta\u201D element outside \u201Chead\u201D.");
-                                checkMetaCharset(attributes);
-                                if (!nonConformingAndStreaming) {
-                                    pushHeadPointerOntoStack();
-                                }
-                                appendVoidElementToCurrentMayFoster(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                selfClosing = false;
-                                if (!nonConformingAndStreaming) {
-                                    pop(); // head
-                                }
-                                break starttagloop;
-                            } else if ("script" == name) {
-                                err("\u201Cscript\u201D element between \u201Chead\u201D and \u201Cbody\u201D.");
-                                if (!nonConformingAndStreaming) {
-                                    pushHeadPointerOntoStack();
-                                }
-                                appendToCurrentNodeAndPushElement(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                cdataOrRcdataTimesToPop = nonConformingAndStreaming ? 1
-                                        : 2; // pops head
-                                tokenizer.setContentModelFlag(
-                                        ContentModelFlag.CDATA, name);
-                                break starttagloop;
-                            } else if ("style" == name) {
-                                err("\u201Cstyle\u201D element between \u201Chead\u201D and \u201Cbody\u201D.");
-                                if (!nonConformingAndStreaming) {
-                                    pushHeadPointerOntoStack();
-                                }
-                                appendToCurrentNodeAndPushElement(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                cdataOrRcdataTimesToPop = nonConformingAndStreaming ? 1
-                                        : 2; // pops head
-                                tokenizer.setContentModelFlag(
-                                        ContentModelFlag.CDATA, name);
-                                break starttagloop;
-                            } else if ("title" == name) {
-                                err("\u201Ctitle\u201D element outside \u201Chead\u201D.");
-                                if (!nonConformingAndStreaming) {
-                                    pushHeadPointerOntoStack();
-                                }
-                                appendToCurrentNodeAndPushElement(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        attributes);
-                                cdataOrRcdataTimesToPop = nonConformingAndStreaming ? 1
-                                        : 2; // pops head
-                                tokenizer.setContentModelFlag(
-                                        ContentModelFlag.RCDATA, name);
-                                break starttagloop;
-                            } else {
-                                appendToCurrentNodeAndPushBodyElement();
-                                mode = InsertionMode.IN_BODY;
-                                continue;
+                                    mode = InsertionMode.IN_BODY;
+                                    continue;
                             }
                         case AFTER_AFTER_BODY:
                             err("Stray \u201C" + name + "\u201D start tag.");
@@ -2155,7 +2336,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     }
             }
         }
-        if (needsPostProcessing && foreignFlag == IN_FOREIGN && !hasForeignInScope()) {
+        if (needsPostProcessing && foreignFlag == IN_FOREIGN
+                && !hasForeignInScope()) {
             /*
              * If, after doing so, the insertion mode is still "in foreign
              * content", but there is no element in scope that has a namespace
@@ -2220,7 +2402,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
     }
 
-    public final void endTag(String name, Attributes attributes)
+    public final void endTag(NameData elementName, Attributes attributes)
             throws SAXException {
         needToDropLF = false;
         if (cdataOrRcdataTimesToPop > 0) {
@@ -2231,505 +2413,535 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             return;
         }
 
+        int eltPos;
         endtagloop: for (;;) {
+            int magic = elementName.magic;
+            String name = elementName.name;
             switch (mode) {
                 case IN_ROW:
-                    if ("tr" == name) {
-                        int eltPos = findLastOrRoot("tr");
-                        if (eltPos == 0) {
-                            assert context != null;
-                            err("No table row to close.");
+                    switch (magic) {
+                        case TR:
+                            eltPos = findLastOrRoot("tr");
+                            if (eltPos == 0) {
+                                assert context != null;
+                                err("No table row to close.");
+                                break endtagloop;
+                            }
+                            clearStackBackTo(eltPos);
+                            pop();
+                            mode = InsertionMode.IN_TABLE_BODY;
                             break endtagloop;
-                        }
-                        clearStackBackTo(eltPos);
-                        pop();
-                        mode = InsertionMode.IN_TABLE_BODY;
-                        break endtagloop;
-                    } else if ("table" == name) {
-                        int eltPos = findLastOrRoot("tr");
-                        if (eltPos == 0) {
-                            assert context != null;
-                            err("No table row to close.");
-                            break endtagloop;
-                        }
-                        clearStackBackTo(eltPos);
-                        pop();
-                        mode = InsertionMode.IN_TABLE_BODY;
-                        continue;
-                    } else if ("tbody" == name || "thead" == name
-                            || "tfoot" == name) {
-                        if (findLastInTableScope(name) == NOT_FOUND_ON_STACK) {
+                        case TABLE:
+                            eltPos = findLastOrRoot("tr");
+                            if (eltPos == 0) {
+                                assert context != null;
+                                err("No table row to close.");
+                                break endtagloop;
+                            }
+                            clearStackBackTo(eltPos);
+                            pop();
+                            mode = InsertionMode.IN_TABLE_BODY;
+                            continue;
+                        case TBODY_OR_THEAD_OR_TFOOT:
+                            if (findLastInTableScope(name) == NOT_FOUND_ON_STACK) {
+                                err("Stray end tag \u201C" + name + "\u201D.");
+                                break endtagloop;
+                            }
+                            eltPos = findLastOrRoot("tr");
+                            if (eltPos == 0) {
+                                assert context != null;
+                                err("No table row to close.");
+                                break endtagloop;
+                            }
+                            clearStackBackTo(eltPos);
+                            pop();
+                            mode = InsertionMode.IN_TABLE_BODY;
+                            continue;
+                        case BODY:
+                        case CAPTION:
+                        case COL:
+                        case COLGROUP:
+                        case HTML:
+                        case TD_OR_TH:
                             err("Stray end tag \u201C" + name + "\u201D.");
                             break endtagloop;
-                        }
-                        int eltPos = findLastOrRoot("tr");
-                        if (eltPos == 0) {
-                            assert context != null;
-                            err("No table row to close.");
-                            break endtagloop;
-                        }
-                        clearStackBackTo(eltPos);
-                        pop();
-                        mode = InsertionMode.IN_TABLE_BODY;
-                        continue;
-                    } else if ("body" == name || "caption" == name
-                            || "col" == name || "colgroup" == name
-                            || "html" == name || "td" == name || "th" == name) {
-                        err("Stray end tag \u201C" + name + "\u201D.");
-                        break endtagloop;
-                    } else {
-                        // fall through to IN_TABLE
+                        default:
+                            // fall through to IN_TABLE
                     }
                 case IN_TABLE_BODY:
-                    if ("tbody" == name || "tfoot" == name || "thead" == name) {
-                        int eltPos = findLastOrRoot(name);
-                        if (eltPos == 0) {
+                    switch (magic) {
+                        case TBODY_OR_THEAD_OR_TFOOT:
+                            eltPos = findLastOrRoot(name);
+                            if (eltPos == 0) {
+                                err("Stray end tag \u201C" + name + "\u201D.");
+                                break endtagloop;
+                            }
+                            clearStackBackTo(eltPos);
+                            pop();
+                            mode = InsertionMode.IN_TABLE;
+                            break endtagloop;
+                        case TABLE:
+                            eltPos = findLastInTableScopeOrRootTbodyTheadTfoot();
+                            if (eltPos == 0) {
+                                assert context != null;
+                                err("Stray end tag \u201Ctable\u201D.");
+                                break endtagloop;
+                            }
+                            clearStackBackTo(eltPos);
+                            pop();
+                            mode = InsertionMode.IN_TABLE;
+                            continue;
+                        case BODY:
+                        case CAPTION:
+                        case COL:
+                        case COLGROUP:
+                        case HTML:
+                        case TD_OR_TH:
+                        case TR:
                             err("Stray end tag \u201C" + name + "\u201D.");
                             break endtagloop;
-                        }
-                        clearStackBackTo(eltPos);
-                        pop();
-                        mode = InsertionMode.IN_TABLE;
-                        break endtagloop;
-                    } else if ("table" == name) {
-                        int eltPos = findLastInTableScopeOrRootTbodyTheadTfoot();
-                        if (eltPos == 0) {
-                            assert context != null;
-                            err("Stray end tag \u201Ctable\u201D.");
-                            break endtagloop;
-                        }
-                        clearStackBackTo(eltPos);
-                        pop();
-                        mode = InsertionMode.IN_TABLE;
-                        continue;
-                    } else if ("body" == name || "caption" == name
-                            || "col" == name || "colgroup" == name
-                            || "html" == name || "td" == name || "th" == name
-                            || "tr" == name) {
-                        err("Stray end tag \u201C" + name + "\u201D.");
-                        break endtagloop;
-                    } else {
-                        // fall through to IN_TABLE
+                        default:
+                            // fall through to IN_TABLE
                     }
                 case IN_TABLE:
-                    if ("table" == name) {
-                        int eltPos = findLast("table");
-                        if (eltPos == NOT_FOUND_ON_STACK) {
-                            assert context != null;
-                            err("Stray end tag \u201Ctable\u201D.");
+                    switch (magic) {
+                        case TABLE:
+                            eltPos = findLast("table");
+                            if (eltPos == NOT_FOUND_ON_STACK) {
+                                assert context != null;
+                                err("Stray end tag \u201Ctable\u201D.");
+                                break endtagloop;
+                            }
+                            while (currentPtr >= eltPos) {
+                                pop();
+                            }
+                            resetTheInsertionMode();
                             break endtagloop;
-                        }
-                        while (currentPtr >= eltPos) {
-                            pop();
-                        }
-                        resetTheInsertionMode();
-                        break endtagloop;
-                    } else if ("body" == name || "caption" == name
-                            || "col" == name || "colgroup" == name
-                            || "html" == name || "tbody" == name
-                            || "td" == name || "tfoot" == name || "th" == name
-                            || "thead" == name || "tr" == name) {
-                        err("Stray end tag \u201C" + name + "\u201D.");
-                        break endtagloop;
-                    } else {
-                        err("Stray end tag \u201C" + name + "\u201D.");
-                        // fall through to IN_BODY
+                        case BODY:
+                        case CAPTION:
+                        case COL:
+                        case COLGROUP:
+                        case HTML:
+                        case TBODY_OR_THEAD_OR_TFOOT:
+                        case TD_OR_TH:
+                        case TR:
+                            err("Stray end tag \u201C" + name + "\u201D.");
+                            break endtagloop;
+                        default:
+                            err("Stray end tag \u201C" + name + "\u201D.");
+                            // fall through to IN_BODY
                     }
                 case IN_CAPTION:
-                    if ("caption" == name) {
-                        int eltPos = findLastInTableScope("caption");
-                        if (eltPos == NOT_FOUND_ON_STACK) {
-                            break endtagloop;
-                        }
-                        generateImpliedEndTags();
-                        if (currentPtr != eltPos) {
-                            err("Unclosed elements on stack.");
-                        }
-                        while (currentPtr >= eltPos) {
-                            pop();
-                        }
-                        clearTheListOfActiveFormattingElementsUpToTheLastMarker();
-                        mode = InsertionMode.IN_TABLE;
-                        break endtagloop;
-                    } else if ("table" == name) {
-                        err("\u201Ctable\u201D closed but \u201Ccaption\u201D was still open.");
-                        int eltPos = findLastInTableScope("caption");
-                        if (eltPos == NOT_FOUND_ON_STACK) {
-                            break endtagloop;
-                        }
-                        generateImpliedEndTags();
-                        if (currentPtr != eltPos) {
-                            err("Unclosed elements on stack.");
-                        }
-                        while (currentPtr >= eltPos) {
-                            pop();
-                        }
-                        clearTheListOfActiveFormattingElementsUpToTheLastMarker();
-                        mode = InsertionMode.IN_TABLE;
-                        continue;
-                    } else if ("body" == name || "col" == name
-                            || "colgroup" == name || "html" == name
-                            || "tbody" == name || "td" == name
-                            || "tfoot" == name || "th" == name
-                            || "thead" == name || "tr" == name) {
-                        err("Stray end tag \u201C" + name + "\u201D.");
-                        break endtagloop;
-                    } else {
-                        // fall through to IN_BODY
-                    }
-                case IN_CELL:
-                    if ("td" == name || "th" == name) {
-                        int eltPos = findLastInTableScope(name);
-                        if (eltPos == NOT_FOUND_ON_STACK) {
-                            err("Stray end tag \u201C" + name + "\u201D.");
-                            break endtagloop;
-                        }
-                        generateImpliedEndTags();
-                        if (!isCurrent(name)) {
-                            err("Unclosed elements.");
-                        }
-                        while (currentPtr >= eltPos) {
-                            pop();
-                        }
-                        clearTheListOfActiveFormattingElementsUpToTheLastMarker();
-                        mode = InsertionMode.IN_ROW;
-                        break endtagloop;
-                    } else if ("table" == name || "tbody" == name
-                            || "tfoot" == name || "thead" == name
-                            || "tr" == name) {
-                        if (findLastInTableScope(name) == NOT_FOUND_ON_STACK) {
-                            err("Stray end tag \u201C" + name + "\u201D.");
-                            break endtagloop;
-                        }
-                        closeTheCell(findLastInTableScopeTdTh());
-                        continue;
-                    } else if ("body" == name || "caption" == name
-                            || "col" == name || "colgroup" == name
-                            || "html" == name) {
-                        err("Stray end tag \u201C" + name + "\u201D.");
-                        break endtagloop;
-                    } else {
-                        // fall through to IN_BODY
-                    }
-                case IN_BODY:
-                    if ("body" == name) {
-                        if (!isSecondOnStackBody()) {
-                            assert context != null;
-                            err("Stray end tag \u201Cbody\u201D.");
-                            break endtagloop;
-                        }
-                        assert currentPtr >= 1;
-                        for (int i = 2; i <= currentPtr; i++) {
-                            String stackName = stack[i].name;
-                            if (!("dd" == stackName || "dt" == stackName
-                                    || "li" == stackName || "p" == stackName)) {
-                                err("End tag for \u201Cbody\u201D seen but there were unclosed elements.");
-                                break;
+                    switch (magic) {
+                        case CAPTION:
+                            eltPos = findLastInTableScope("caption");
+                            if (eltPos == NOT_FOUND_ON_STACK) {
+                                break endtagloop;
                             }
-                        }
-                        if (conformingAndStreaming) {
-                            while (currentPtr > 1) {
-                                pop();
-                            }
-                        }
-                        if (context == null) {
-                            bodyCloseReported = true;
-                            bodyClosed(stack[1].node);
-                        }
-                        mode = InsertionMode.AFTER_BODY;
-                        break endtagloop;
-                    } else if ("html" == name) {
-                        if (!isSecondOnStackBody()) {
-                            assert context != null;
-                            err("Stray end tag \u201Chtml\u201D.");
-                            break endtagloop;
-                        }
-                        for (int i = 0; i <= currentPtr; i++) {
-                            String stackName = stack[i].name;
-                            if (!("dd" == stackName || "dt" == stackName
-                                    || "li" == stackName || "p" == stackName
-                                    || "tbody" == stackName
-                                    || "td" == stackName
-                                    || "tfoot" == stackName
-                                    || "th" == stackName
-                                    || "thead" == stackName
-                                    || "tr" == stackName || "body" == stackName || "html" == stackName)) {
-                                err("End tag for \u201Chtml\u201D seen but there were unclosed elements.");
-                                break;
-                            }
-                        }
-                        if (context == null) {
-                            bodyCloseReported = true;
-                            bodyClosed(stack[1].node);
-                        }
-                        mode = InsertionMode.AFTER_BODY;
-                        continue;
-                    } else if ("div" == name || "blockquote" == name
-                            || "ul" == name || "ol" == name || "pre" == name
-                            || "dl" == name || "fieldset" == name
-                            || "address" == name || "center" == name
-                            || "dir" == name || "listing" == name
-                            || "menu" == name) {
-                        int eltPos = findLastInScope(name);
-                        if (eltPos == NOT_FOUND_ON_STACK) {
-                            err("Stray end tag \u201C" + name + "\u201D.");
-                        } else {
                             generateImpliedEndTags();
-                            if (!isCurrent(name)) {
-                                err("End tag \u201C"
-                                        + name
-                                        + "\u201D seen but there were unclosed elements.");
-                            }
-                            while (currentPtr >= eltPos) {
-                                pop();
-                            }
-                        }
-                        break endtagloop;
-                    } else if ("form" == name) {
-                        formPointer = null;
-                        int eltPos = findLastInScope(name);
-                        if (eltPos == NOT_FOUND_ON_STACK) {
-                            err("Stray end tag \u201C" + name + "\u201D.");
-                        } else {
-                            generateImpliedEndTags();
-                            if (!isCurrent(name)) {
-                                err("End tag \u201C"
-                                        + name
-                                        + "\u201D seen but there were unclosed elements.");
-                            }
-                            while (currentPtr >= eltPos) {
-                                pop();
-                            }
-                        }
-                        break endtagloop;
-                    } else if ("p" == name) {
-                        if (!isCurrent(name)) {
-                            err("End tag \u201Cp\u201D seen but there were unclosed elements.");
-                        }
-                        int eltPos = findLastInScope(name);
-                        if (eltPos != NOT_FOUND_ON_STACK) {
-                            while (currentPtr >= eltPos) {
-                                pop();
-                            }
-                        } else {
-                            appendVoidElementToCurrentMayFoster(
-                                    "http://www.w3.org/1999/xhtml", name,
-                                    EmptyAttributes.EMPTY_ATTRIBUTES);
-                        }
-                        break endtagloop;
-                    } else if ("dd" == name || "dt" == name || "li" == name) {
-                        int eltPos = findLastInScope(name);
-                        if (eltPos == NOT_FOUND_ON_STACK) {
-                            err("Stray end tag \u201C" + name + "\u201D.");
-                        } else {
-                            generateImpliedEndTagsExceptFor(name);
-                            if (!isCurrent(name)) {
-                                err("End tag \u201C"
-                                        + name
-                                        + "\u201D seen but there were unclosed elements.");
-                            }
-                            while (currentPtr >= eltPos) {
-                                pop();
-                            }
-                        }
-                        break endtagloop;
-                    } else if ("h1" == name || "h2" == name || "h3" == name
-                            || "h4" == name || "h5" == name || "h6" == name) {
-                        int eltPos = findLastInScopeHn();
-                        if (eltPos == NOT_FOUND_ON_STACK) {
-                            err("Stray end tag \u201C" + name + "\u201D.");
-                        } else {
-                            generateImpliedEndTags();
-                            if (!isCurrent(name)) {
-                                err("End tag \u201C"
-                                        + name
-                                        + "\u201D seen but there were unclosed elements.");
-                            }
-                            while (currentPtr >= eltPos) {
-                                pop();
-                            }
-                        }
-                        break endtagloop;
-                    } else if ("a" == name || "b" == name || "big" == name
-                            || "em" == name || "font" == name || "i" == name
-                            || "nobr" == name || "s" == name || "small" == name
-                            || "strike" == name || "strong" == name
-                            || "tt" == name || "u" == name) {
-                        adoptionAgencyEndTag(name);
-                        break endtagloop;
-                    } else if ("button" == name || "marquee" == name
-                            || "object" == name || "applet" == name) {
-                        int eltPos = findLastInScope(name);
-                        if (eltPos == NOT_FOUND_ON_STACK) {
-                            err("Stray end tag \u201C" + name + "\u201D.");
-                        } else {
-                            generateImpliedEndTags();
-                            if (!isCurrent(name)) {
-                                err("End tag \u201C"
-                                        + name
-                                        + "\u201D seen but there were unclosed elements.");
+                            if (currentPtr != eltPos) {
+                                err("Unclosed elements on stack.");
                             }
                             while (currentPtr >= eltPos) {
                                 pop();
                             }
                             clearTheListOfActiveFormattingElementsUpToTheLastMarker();
-                        }
-                        break endtagloop;
-                    } else if ("br" == name) {
-                        err("End tag \u201Cbr\u201D.");
-                        reconstructTheActiveFormattingElements();
-                        appendVoidElementToCurrentMayFoster(
-                                "http://www.w3.org/1999/xhtml", name,
-                                EmptyAttributes.EMPTY_ATTRIBUTES);
-                        break endtagloop;
-                    } else if ("area" == name || "basefont" == name
-                            || "bgsound" == name || "embed" == name
-                            || "hr" == name || "iframe" == name
-                            || "image" == name || "img" == name
-                            || "input" == name || "isindex" == name
-                            || "noembed" == name || "noframes" == name
-                            || "param" == name || "select" == name
-                            || "spacer" == name || "table" == name
-                            || "textarea" == name || "wbr" == name
-                            || (scriptingEnabled && "noscript" == name)) {
-                        err("Stray end tag \u201C" + name + "\u201D.");
-                        break endtagloop;
-                    } else {
-                        if (isCurrent(name)) {
-                            pop();
+                            mode = InsertionMode.IN_TABLE;
                             break endtagloop;
-                        }
-                        for (;;) {
+                        case TABLE:
+                            err("\u201Ctable\u201D closed but \u201Ccaption\u201D was still open.");
+                            eltPos = findLastInTableScope("caption");
+                            if (eltPos == NOT_FOUND_ON_STACK) {
+                                break endtagloop;
+                            }
                             generateImpliedEndTags();
+                            if (currentPtr != eltPos) {
+                                err("Unclosed elements on stack.");
+                            }
+                            while (currentPtr >= eltPos) {
+                                pop();
+                            }
+                            clearTheListOfActiveFormattingElementsUpToTheLastMarker();
+                            mode = InsertionMode.IN_TABLE;
+                            continue;
+                        case BODY:
+                        case COL:
+                        case COLGROUP:
+                        case HTML:
+                        case TBODY_OR_THEAD_OR_TFOOT:
+                        case TD_OR_TH:
+                        case TR:
+                            err("Stray end tag \u201C" + name + "\u201D.");
+                            break endtagloop;
+                        default:
+                            // fall through to IN_BODY
+                    }
+                case IN_CELL:
+                    switch (magic) {
+                        case TD_OR_TH:
+                            eltPos = findLastInTableScope(name);
+                            if (eltPos == NOT_FOUND_ON_STACK) {
+                                err("Stray end tag \u201C" + name + "\u201D.");
+                                break endtagloop;
+                            }
+                            generateImpliedEndTags();
+                            if (!isCurrent(name)) {
+                                err("Unclosed elements.");
+                            }
+                            while (currentPtr >= eltPos) {
+                                pop();
+                            }
+                            clearTheListOfActiveFormattingElementsUpToTheLastMarker();
+                            mode = InsertionMode.IN_ROW;
+                            break endtagloop;
+                        case TABLE:
+                        case TBODY_OR_THEAD_OR_TFOOT:
+                        case TR:
+                            if (findLastInTableScope(name) == NOT_FOUND_ON_STACK) {
+                                err("Stray end tag \u201C" + name + "\u201D.");
+                                break endtagloop;
+                            }
+                            closeTheCell(findLastInTableScopeTdTh());
+                            continue;
+                        case BODY:
+                        case CAPTION:
+                        case COL:
+                        case COLGROUP:
+                        case HTML:
+                            err("Stray end tag \u201C" + name + "\u201D.");
+                            break endtagloop;
+                        default:
+                            // fall through to IN_BODY
+                    }
+                case IN_BODY:
+                    switch (magic) {
+                        case BODY:
+                            if (!isSecondOnStackBody()) {
+                                assert context != null;
+                                err("Stray end tag \u201Cbody\u201D.");
+                                break endtagloop;
+                            }
+                            assert currentPtr >= 1;
+                            for (int i = 2; i <= currentPtr; i++) {
+                                String stackName = stack[i].name;
+                                if (!("dd" == stackName || "dt" == stackName
+                                        || "li" == stackName || "p" == stackName)) {
+                                    err("End tag for \u201Cbody\u201D seen but there were unclosed elements.");
+                                    break;
+                                }
+                            }
+                            if (conformingAndStreaming) {
+                                while (currentPtr > 1) {
+                                    pop();
+                                }
+                            }
+                            if (context == null) {
+                                bodyCloseReported = true;
+                                bodyClosed(stack[1].node);
+                            }
+                            mode = InsertionMode.AFTER_BODY;
+                            break endtagloop;
+                        case HTML:
+                            if (!isSecondOnStackBody()) {
+                                assert context != null;
+                                err("Stray end tag \u201Chtml\u201D.");
+                                break endtagloop;
+                            }
+                            for (int i = 0; i <= currentPtr; i++) {
+                                String stackName = stack[i].name;
+                                if (!("dd" == stackName || "dt" == stackName
+                                        || "li" == stackName
+                                        || "p" == stackName
+                                        || "tbody" == stackName
+                                        || "td" == stackName
+                                        || "tfoot" == stackName
+                                        || "th" == stackName
+                                        || "thead" == stackName
+                                        || "tr" == stackName
+                                        || "body" == stackName || "html" == stackName)) {
+                                    err("End tag for \u201Chtml\u201D seen but there were unclosed elements.");
+                                    break;
+                                }
+                            }
+                            if (context == null) {
+                                bodyCloseReported = true;
+                                bodyClosed(stack[1].node);
+                            }
+                            mode = InsertionMode.AFTER_BODY;
+                            continue;
+                        case DIV_OR_BLOCKQUOTE_OR_CENTER_OR_MENU:
+                        case UL_OR_OL_OR_DL:
+                        case PRE_OR_LISTING:
+                        case FIELDSET_OR_ADDRESS_OR_DIR:
+                            eltPos = findLastInScope(name);
+                            if (eltPos == NOT_FOUND_ON_STACK) {
+                                err("Stray end tag \u201C" + name + "\u201D.");
+                            } else {
+                                generateImpliedEndTags();
+                                if (!isCurrent(name)) {
+                                    err("End tag \u201C"
+                                            + name
+                                            + "\u201D seen but there were unclosed elements.");
+                                }
+                                while (currentPtr >= eltPos) {
+                                    pop();
+                                }
+                            }
+                            break endtagloop;
+                        case FORM:
+                            formPointer = null;
+                            eltPos = findLastInScope(name);
+                            if (eltPos == NOT_FOUND_ON_STACK) {
+                                err("Stray end tag \u201C" + name + "\u201D.");
+                            } else {
+                                generateImpliedEndTags();
+                                if (!isCurrent(name)) {
+                                    err("End tag \u201C"
+                                            + name
+                                            + "\u201D seen but there were unclosed elements.");
+                                }
+                                while (currentPtr >= eltPos) {
+                                    pop();
+                                }
+                            }
+                            break endtagloop;
+                        case P:
+                            if (!isCurrent(name)) {
+                                err("End tag \u201Cp\u201D seen but there were unclosed elements.");
+                            }
+                            eltPos = findLastInScope(name);
+                            if (eltPos != NOT_FOUND_ON_STACK) {
+                                while (currentPtr >= eltPos) {
+                                    pop();
+                                }
+                            } else {
+                                appendVoidElementToCurrentMayFoster(
+                                        "http://www.w3.org/1999/xhtml", name,
+                                        EmptyAttributes.EMPTY_ATTRIBUTES);
+                            }
+                            break endtagloop;
+                        case DD_OR_DT:
+                        case LI:
+                            eltPos = findLastInScope(name);
+                            if (eltPos == NOT_FOUND_ON_STACK) {
+                                err("Stray end tag \u201C" + name + "\u201D.");
+                            } else {
+                                generateImpliedEndTagsExceptFor(name);
+                                if (!isCurrent(name)) {
+                                    err("End tag \u201C"
+                                            + name
+                                            + "\u201D seen but there were unclosed elements.");
+                                }
+                                while (currentPtr >= eltPos) {
+                                    pop();
+                                }
+                            }
+                            break endtagloop;
+                        case H1_OR_H2_OR_H3_OR_H4_OR_H5_OR_H6:
+                            eltPos = findLastInScopeHn();
+                            if (eltPos == NOT_FOUND_ON_STACK) {
+                                err("Stray end tag \u201C" + name + "\u201D.");
+                            } else {
+                                generateImpliedEndTags();
+                                if (!isCurrent(name)) {
+                                    err("End tag \u201C"
+                                            + name
+                                            + "\u201D seen but there were unclosed elements.");
+                                }
+                                while (currentPtr >= eltPos) {
+                                    pop();
+                                }
+                            }
+                            break endtagloop;
+                        case A:
+                        case B_OR_BIG_OR_EM_OR_FONT_OR_I_OR_S_OR_SMALL_OR_STRIKE_OR_STRONG_OR_TT_OR_U:
+                        case NOBR:
+                            adoptionAgencyEndTag(name);
+                            break endtagloop;
+                        case BUTTON:
+                        case OBJECT_OR_MARQUEE_OR_APPLET:
+                            eltPos = findLastInScope(name);
+                            if (eltPos == NOT_FOUND_ON_STACK) {
+                                err("Stray end tag \u201C" + name + "\u201D.");
+                            } else {
+                                generateImpliedEndTags();
+                                if (!isCurrent(name)) {
+                                    err("End tag \u201C"
+                                            + name
+                                            + "\u201D seen but there were unclosed elements.");
+                                }
+                                while (currentPtr >= eltPos) {
+                                    pop();
+                                }
+                                clearTheListOfActiveFormattingElementsUpToTheLastMarker();
+                            }
+                            break endtagloop;
+                        case BR:
+                            err("End tag \u201Cbr\u201D.");
+                            reconstructTheActiveFormattingElements();
+                            appendVoidElementToCurrentMayFoster(
+                                    "http://www.w3.org/1999/xhtml", name,
+                                    EmptyAttributes.EMPTY_ATTRIBUTES);
+                            break endtagloop;
+                        case AREA_OR_BASEFONT_OR_BGSOUND_OR_PARAM_OR_SPACER_OR_WBR:
+                        case EMBED_OR_IMG:
+                        case IMAGE:
+                        case INPUT:
+                        case HR:
+                        case ISINDEX:
+                        case IFRAME_OR_NOEMBED: // XXX???
+                        case NOFRAMES: // XXX??
+                        case SELECT:
+                        case TABLE:
+                        case TEXTAREA: // XXX??
+                        case NOSCRIPT: // XXX??
+                            err("Stray end tag \u201C" + name + "\u201D.");
+                            break endtagloop;
+                        default:
                             if (isCurrent(name)) {
                                 pop();
                                 break endtagloop;
                             }
-                            StackNode<T> node = stack[currentPtr];
-                            if (!(node.scoping || node.special)) {
-                                err("Unclosed element \u201C" + node.name
-                                        + "\u201D.");
-                                pop();
-                            } else {
-                                err("Stray end tag \u201C" + name + "\u201D.");
-                                break endtagloop;
+                            for (;;) {
+                                generateImpliedEndTags();
+                                if (isCurrent(name)) {
+                                    pop();
+                                    break endtagloop;
+                                }
+                                StackNode<T> node = stack[currentPtr];
+                                if (!(node.scoping || node.special)) {
+                                    err("Unclosed element \u201C" + node.name
+                                            + "\u201D.");
+                                    pop();
+                                } else {
+                                    err("Stray end tag \u201C" + name
+                                            + "\u201D.");
+                                    break endtagloop;
+                                }
                             }
-                        }
                     }
                 case IN_COLUMN_GROUP:
-                    if ("colgroup" == name) {
-                        if (currentPtr == 0) {
-                            assert context != null;
-                            err("Garbage in \u201Ccolgroup\u201D fragment.");
+                    switch (magic) {
+                        case COLGROUP:
+                            if (currentPtr == 0) {
+                                assert context != null;
+                                err("Garbage in \u201Ccolgroup\u201D fragment.");
+                                break endtagloop;
+                            }
+                            pop();
+                            mode = InsertionMode.IN_TABLE;
                             break endtagloop;
-                        }
-                        pop();
-                        mode = InsertionMode.IN_TABLE;
-                        break endtagloop;
-                    } else if ("col" == name) {
-                        err("Stray end tag \u201Ccol\u201D.");
-                        break endtagloop;
-                    } else {
-                        if (currentPtr == 0) {
-                            assert context != null;
-                            err("Garbage in \u201Ccolgroup\u201D fragment.");
+                        case COL:
+                            err("Stray end tag \u201Ccol\u201D.");
                             break endtagloop;
-                        }
-                        pop();
-                        mode = InsertionMode.IN_TABLE;
-                        continue;
+                        default:
+                            if (currentPtr == 0) {
+                                assert context != null;
+                                err("Garbage in \u201Ccolgroup\u201D fragment.");
+                                break endtagloop;
+                            }
+                            pop();
+                            mode = InsertionMode.IN_TABLE;
+                            continue;
                     }
                 case IN_SELECT_IN_TABLE:
-                    if ("caption" == name || "table" == name || "tbody" == name
-                            || "tfoot" == name || "thead" == name
-                            || "tr" == name || "td" == name || "th" == name) {
-                        err("\u201C"
-                                + name
-                                + "\u201D end tag with \u201Cselect\u201D open.");
-                        if (findLastInTableScope(name) != NOT_FOUND_ON_STACK) {
-                            endSelect();
-                            continue;
-                        } else {
-                            break endtagloop;
-                        }
-                    } else {
-                        // fall through to IN_SELECT
+                    switch (magic) {
+                        case CAPTION:
+                        case TABLE:
+                        case TBODY_OR_THEAD_OR_TFOOT:
+                        case TR:
+                        case TD_OR_TH:
+                            err("\u201C"
+                                    + name
+                                    + "\u201D end tag with \u201Cselect\u201D open.");
+                            if (findLastInTableScope(name) != NOT_FOUND_ON_STACK) {
+                                endSelect();
+                                continue;
+                            } else {
+                                break endtagloop;
+                            }
+                        default:
+                            // fall through to IN_SELECT
                     }
                 case IN_SELECT:
-                    if ("option" == name) {
-                        if (isCurrent("option")) {
-                            pop();
+                    switch (magic) {
+                        case OPTION:
+                            if (isCurrent("option")) {
+                                pop();
+                                break endtagloop;
+                            } else {
+                                err("Stray end tag \u201Coption\u201D");
+                                break endtagloop;
+                            }
+                        case OPTGROUP:
+                            if (isCurrent("option")
+                                    && "optgroup" == stack[currentPtr - 1].name) {
+                                pop();
+                            }
+                            if (isCurrent("optgroup")) {
+                                pop();
+                            } else {
+                                err("Stray end tag \u201Coptgroup\u201D");
+                            }
                             break endtagloop;
-                        } else {
-                            err("Stray end tag \u201Coption\u201D");
+                        case SELECT:
+                            endSelect();
                             break endtagloop;
-                        }
-                    } else if ("optgroup" == name) {
-                        if (isCurrent("option")
-                                && "optgroup" == stack[currentPtr - 1].name) {
-                            pop();
-                        }
-                        if (isCurrent("optgroup")) {
-                            pop();
-                        } else {
-                            err("Stray end tag \u201Coptgroup\u201D");
-                        }
-                        break endtagloop;
-                    } else if ("select" == name) {
-                        endSelect();
-                        break endtagloop;
-                    } else {
-                        err("Stray end tag \u201C" + name + "\u201D");
-                        break endtagloop;
+                        default:
+                            err("Stray end tag \u201C" + name + "\u201D");
+                            break endtagloop;
                     }
                 case AFTER_BODY:
-                    if ("html" == name) {
-                        if (context != null) {
-                            err("Stray end tag \u201Chtml\u201D");
+                    switch (magic) {
+                        case HTML:
+                            if (context != null) {
+                                err("Stray end tag \u201Chtml\u201D");
+                                break endtagloop;
+                            } else {
+                                if (context == null) {
+                                    htmlCloseReported = true;
+                                    htmlClosed(stack[0].node);
+                                }
+                                mode = InsertionMode.AFTER_AFTER_BODY;
+                                break endtagloop;
+                            }
+                        default:
+                            err("Saw an end tag after \u201Cbody\u201D had been closed.");
+                            if (conformingAndStreaming) {
+                                fatal();
+                            }
+                            mode = InsertionMode.IN_BODY;
+                            continue;
+                    }
+                case IN_FRAMESET:
+                    switch (magic) {
+                        case FRAMESET:
+                            if (currentPtr == 0) {
+                                assert context != null;
+                                err("Stray end tag \u201Cframeset\u201D");
+                                break endtagloop;
+                            }
+                            pop();
+                            if ((context == null) && !isCurrent("frameset")) {
+                                mode = InsertionMode.AFTER_FRAMESET;
+                            }
                             break endtagloop;
-                        } else {
+                        default:
+                            err("Stray end tag \u201C" + name + "\u201D");
+                            break endtagloop;
+                    }
+                case AFTER_FRAMESET:
+                    switch (magic) {
+                        case HTML:
                             if (context == null) {
                                 htmlCloseReported = true;
                                 htmlClosed(stack[0].node);
                             }
-                            mode = InsertionMode.AFTER_AFTER_BODY;
+                            mode = InsertionMode.AFTER_AFTER_FRAMESET;
                             break endtagloop;
-                        }
-                    } else {
-                        err("Saw an end tag after \u201Cbody\u201D had been closed.");
-                        if (conformingAndStreaming) {
-                            fatal();
-                        }
-                        mode = InsertionMode.IN_BODY;
-                        continue;
-                    }
-                case IN_FRAMESET:
-                    if ("frameset" == name) {
-                        if (currentPtr == 0) {
-                            assert context != null;
-                            err("Stray end tag \u201Cframeset\u201D");
+                        default:
+                            err("Stray end tag \u201C" + name + "\u201D");
                             break endtagloop;
-                        }
-                        pop();
-                        if ((context == null) && !isCurrent("frameset")) {
-                            mode = InsertionMode.AFTER_FRAMESET;
-                        }
-                        break endtagloop;
-                    } else {
-                        err("Stray end tag \u201C" + name + "\u201D");
-                        break endtagloop;
-                    }
-                case AFTER_FRAMESET:
-                    if ("html" == name) {
-                        if (context == null) {
-                            htmlCloseReported = true;
-                            htmlClosed(stack[0].node);
-                        }
-                        mode = InsertionMode.AFTER_AFTER_FRAMESET;
-                        break endtagloop;
-                    } else {
-                        err("Stray end tag \u201C" + name + "\u201D");
-                        break endtagloop;
                     }
                 case INITIAL:
                     /*
@@ -2767,42 +2979,51 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                      */
                     continue;
                 case BEFORE_HEAD:
-                    if ("head" == name || "body" == name || "html" == name
-                            || "p" == name || "br" == name) {
-                        appendToCurrentNodeAndPushHeadElement(EmptyAttributes.EMPTY_ATTRIBUTES);
-                        mode = InsertionMode.IN_HEAD;
-                        continue;
-                    } else {
-                        err("Stray end tag \u201C" + name + "\u201D.");
-                        break endtagloop;
+                    switch (magic) {
+                        case HEAD:
+                        case BODY:
+                        case HTML:
+                        case P:
+                        case BR:
+                            appendToCurrentNodeAndPushHeadElement(EmptyAttributes.EMPTY_ATTRIBUTES);
+                            mode = InsertionMode.IN_HEAD;
+                            continue;
+                        default:
+                            err("Stray end tag \u201C" + name + "\u201D.");
+                            break endtagloop;
                     }
                 case IN_HEAD:
-                    if ("head" == name) {
-                        pop();
-                        mode = InsertionMode.AFTER_HEAD;
-                        break endtagloop;
-                    } else if ("body" == name || "html" == name || "p" == name
-                            || "br" == name) {
-                        pop();
-                        mode = InsertionMode.AFTER_HEAD;
-                        continue;
-                    } else {
-                        err("Stray end tag \u201C" + name + "\u201D.");
-                        break endtagloop;
+                    switch (magic) {
+                        case HEAD:
+                            pop();
+                            mode = InsertionMode.AFTER_HEAD;
+                            break endtagloop;
+                        case BODY:
+                        case HTML:
+                        case P:
+                        case BR:
+                            pop();
+                            mode = InsertionMode.AFTER_HEAD;
+                            continue;
+                        default:
+                            err("Stray end tag \u201C" + name + "\u201D.");
+                            break endtagloop;
                     }
                 case IN_HEAD_NOSCRIPT:
-                    if ("noscript" == name) {
-                        pop();
-                        mode = InsertionMode.IN_HEAD;
-                        break endtagloop;
-                    } else if ("p" == name || "br" == name) {
-                        err("Stray end tag \u201C" + name + "\u201D.");
-                        pop();
-                        mode = InsertionMode.IN_HEAD;
-                        continue;
-                    } else {
-                        err("Stray end tag \u201C" + name + "\u201D.");
-                        break endtagloop;
+                    switch (magic) {
+                        case NOSCRIPT:
+                            pop();
+                            mode = InsertionMode.IN_HEAD;
+                            break endtagloop;
+                        case P:
+                        case BR:
+                            err("Stray end tag \u201C" + name + "\u201D.");
+                            pop();
+                            mode = InsertionMode.IN_HEAD;
+                            continue;
+                        default:
+                            err("Stray end tag \u201C" + name + "\u201D.");
+                            break endtagloop;
                     }
                 case AFTER_HEAD:
                     appendToCurrentNodeAndPushBodyElement();
@@ -2916,7 +3137,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         return false;
     }
 
-    
     private void generateImpliedEndTagsExceptFor(String name)
             throws SAXException {
         for (;;) {
@@ -3311,7 +3531,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     assert node == stack[nodePos];
                     T clone = shallowClone(node.node);
                     node = new StackNode<T>(node.ns, node.name, clone,
-                            node.scoping, node.special, node.fosterParenting);
+                            node.scoping, node.special, node.fosterParenting, node.popName);
                     listOfActiveFormattingElements[nodeListPos] = node;
                     stack[nodePos] = node;
                 }
@@ -3330,7 +3550,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             T clone = shallowClone(formattingElt.node);
             StackNode<T> formattingClone = new StackNode<T>(formattingElt.ns,
                     formattingElt.name, clone, formattingElt.scoping,
-                    formattingElt.special, formattingElt.fosterParenting);
+                    formattingElt.special, formattingElt.fosterParenting, formattingElt.popName);
             appendChildrenToNewParent(furthestBlock.node, clone);
             detachFromParentAndAppendToNewParent(clone, furthestBlock.node);
             removeFromListOfActiveFormattingElements(formattingEltListPos);
@@ -3445,7 +3665,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             assert context != null;
             push(stack[currentPtr]);
         } else {
-            push(new StackNode<T>("http://www.w3.org/1999/xhtml", "head",
+            push(new StackNode<T>("http://www.w3.org/1999/xhtml", NameData.HEAD,
                     headPointer));
         }
     }
@@ -3483,7 +3703,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             StackNode<T> entry = listOfActiveFormattingElements[entryPos];
             T clone = shallowClone(entry.node);
             StackNode<T> entryClone = new StackNode<T>(entry.ns, entry.name,
-                    clone, entry.scoping, entry.special, entry.fosterParenting);
+                    clone, entry.scoping, entry.special, entry.fosterParenting, entry.popName);
             StackNode<T> currentNode = stack[currentPtr];
             if (currentNode.fosterParenting) {
                 insertIntoFosterParent(clone);
@@ -3567,7 +3787,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             throws SAXException {
         T elt = createHtmlElementSetAsRoot(attributes);
         StackNode<T> node = new StackNode<T>("http://www.w3.org/1999/xhtml",
-                "html", elt);
+                NameData.HTML, elt);
         push(node);
     }
 
@@ -3583,14 +3803,14 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         detachFromParentAndAppendToNewParent(elt, stack[currentPtr].node);
         headPointer = elt;
         StackNode<T> node = new StackNode<T>("http://www.w3.org/1999/xhtml",
-                "head", elt);
+                NameData.HEAD, elt);
         push(node);
     }
 
     private void appendToCurrentNodeAndPushBodyElement(Attributes attributes)
             throws SAXException {
         appendToCurrentNodeAndPushElement("http://www.w3.org/1999/xhtml",
-                "body", attributes);
+                NameData.BODY, attributes);
     }
 
     private void appendToCurrentNodeAndPushBodyElement() throws SAXException {
@@ -3616,14 +3836,14 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             detachFromParentAndAppendToNewParent(elt, current.node);
         }
         StackNode<T> node = new StackNode<T>("http://www.w3.org/1999/xhtml",
-                "form", elt);
+                NameData.FORM, elt);
         push(node);
     }
 
     private void appendToCurrentNodeAndPushFormattingElementMayFoster(
-            String ns, String name, Attributes attributes) throws SAXException {
+            String ns, NameData elementName, Attributes attributes) throws SAXException {
         flushCharacters();
-        T elt = createElement(ns, name, attributes, formPointer);
+        T elt = createElement(ns, elementName.name, attributes, formPointer);
         StackNode<T> current = stack[currentPtr];
         if (current.fosterParenting) {
             if (conformingAndStreaming) {
@@ -3636,24 +3856,24 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         } else {
             detachFromParentAndAppendToNewParent(elt, current.node);
         }
-        StackNode<T> node = new StackNode<T>(ns, name, elt);
+        StackNode<T> node = new StackNode<T>(ns, elementName, elt);
         push(node);
         append(node);
     }
 
-    private void appendToCurrentNodeAndPushElement(String ns, String name,
+    private void appendToCurrentNodeAndPushElement(String ns, NameData elementName,
             Attributes attributes) throws SAXException {
         flushCharacters();
-        T elt = createElement(ns, name, attributes);
+        T elt = createElement(ns, elementName.name, attributes);
         detachFromParentAndAppendToNewParent(elt, stack[currentPtr].node);
-        StackNode<T> node = new StackNode<T>(ns, name, elt);
+        StackNode<T> node = new StackNode<T>(ns, elementName, elt);
         push(node);
     }
 
     private void appendToCurrentNodeAndPushElementMayFoster(String ns,
-            String name, Attributes attributes) throws SAXException {
+            NameData elementName, Attributes attributes) throws SAXException {
         flushCharacters();
-        T elt = createElement(ns, name, attributes);
+        T elt = createElement(ns, elementName.name, attributes);
         StackNode<T> current = stack[currentPtr];
         if (current.fosterParenting) {
             if (conformingAndStreaming) {
@@ -3666,14 +3886,14 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         } else {
             detachFromParentAndAppendToNewParent(elt, current.node);
         }
-        StackNode<T> node = new StackNode<T>(ns, name, elt);
+        StackNode<T> node = new StackNode<T>(ns, elementName, elt);
         push(node);
     }
 
     private void appendToCurrentNodeAndPushElementMayFoster(String ns,
-            String name, Attributes attributes, T form) throws SAXException {
+            NameData elementName, Attributes attributes, T form) throws SAXException {
         flushCharacters();
-        T elt = createElement(ns, name, attributes, formPointer);
+        T elt = createElement(ns, elementName.name, attributes, formPointer);
         StackNode<T> current = stack[currentPtr];
         if (current.fosterParenting) {
             if (conformingAndStreaming) {
@@ -3686,7 +3906,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         } else {
             detachFromParentAndAppendToNewParent(elt, current.node);
         }
-        StackNode<T> node = new StackNode<T>(ns, name, elt);
+        StackNode<T> node = new StackNode<T>(ns, elementName, elt);
         push(node);
     }
 
@@ -3908,7 +4128,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     /**
      * Sets the scriptingEnabled.
      * 
-     * @param scriptingEnabled the scriptingEnabled to set
+     * @param scriptingEnabled
+     *            the scriptingEnabled to set
      */
     public void setScriptingEnabled(boolean scriptingEnabled) {
         this.scriptingEnabled = scriptingEnabled;
@@ -3917,7 +4138,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     /**
      * Sets the doctypeExpectation.
      * 
-     * @param doctypeExpectation the doctypeExpectation to set
+     * @param doctypeExpectation
+     *            the doctypeExpectation to set
      */
     public void setDoctypeExpectation(DoctypeExpectation doctypeExpectation) {
         this.doctypeExpectation = doctypeExpectation;
@@ -3926,7 +4148,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     /**
      * Sets the documentModeHandler.
      * 
-     * @param documentModeHandler the documentModeHandler to set
+     * @param documentModeHandler
+     *            the documentModeHandler to set
      */
     public void setDocumentModeHandler(DocumentModeHandler documentModeHandler) {
         this.documentModeHandler = documentModeHandler;
@@ -3935,7 +4158,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     /**
      * Sets the reportingDoctype.
      * 
-     * @param reportingDoctype the reportingDoctype to set
+     * @param reportingDoctype
+     *            the reportingDoctype to set
      */
     public void setReportingDoctype(boolean reportingDoctype) {
         this.reportingDoctype = reportingDoctype;
