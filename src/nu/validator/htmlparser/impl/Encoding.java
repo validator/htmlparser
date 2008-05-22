@@ -182,6 +182,14 @@ public class Encoding {
             encodingByLowerCaseName.put("x-x-big5", forName("big5"));
         } catch(UnsupportedCharsetException e) {
         }        
+        try {
+            encodingByLowerCaseName.put("euc-kr", forName("windows-949"));
+        } catch(UnsupportedCharsetException e) {
+        }        
+        try {
+            encodingByLowerCaseName.put("ks_c_5601-1987", forName("windows-949"));
+        } catch(UnsupportedCharsetException e) {
+        }        
     }
 
     private static boolean isAsciiSupersetnessSensitive(int c) {
