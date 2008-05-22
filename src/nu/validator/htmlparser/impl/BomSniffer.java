@@ -23,8 +23,6 @@
 package nu.validator.htmlparser.impl;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
 
 /**
  * The BOM sniffing part of the HTML5 encoding sniffing algorithm.

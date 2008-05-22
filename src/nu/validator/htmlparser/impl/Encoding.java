@@ -38,8 +38,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 public class Encoding {
     
