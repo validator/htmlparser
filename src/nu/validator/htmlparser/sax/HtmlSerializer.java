@@ -195,7 +195,7 @@ public class HtmlSerializer implements ContentHandler, LexicalHandler {
                 ignoreLevel++;
                 return;
             }
-            if ("pre".equals(localName) || "textarea".equals(localName)) {
+            if ("pre".equals(localName) || "textarea".equals(localName) || "listing".equals(localName)) {
                 writer.write('\n');
             }
             if (escapeLevel == 0
