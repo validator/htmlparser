@@ -1650,10 +1650,27 @@ public final class Tokenizer implements Locator {
 
         /**
          * The index of the first <code>char</code> in <code>buf</code> that
-         * is part of a coalesced run of character tokens or <code>-1</code>
-         * if there is not a current run being coalesced.
+         * is part of a coalesced run of character tokens or
+         * <code>Integer.MAX_VALUE</code> if there is not a current run being
+         * coalesced.
          */
-        cstart = offset;
+        switch (state) {
+            case DATA:
+            case RCDATA:
+            case CDATA:
+            case PLAINTEXT:
+            case CDATA_BLOCK:
+            case ESCAPE:
+            case ESCAPE_EXCLAMATION:
+            case ESCAPE_EXCLAMATION_HYPHEN:
+            case ESCAPE_HYPHEN:
+            case ESCAPE_HYPHEN_HYPHEN:
+                cstart = offset;
+                break;
+            default:
+                cstart = Integer.MAX_VALUE;
+                break;
+        }
 
         /**
          * The number of <code>char</code>s in <code>buf</code> that have
@@ -5183,6 +5200,10 @@ public final class Tokenizer implements Locator {
         colPrev = col;
         if (nextCharOnNewLine) {
             line++;
+            if (line == 5086) {
+                int i = 0;
+                i++;
+            }
             col = 1;
             nextCharOnNewLine = false;
         } else {
