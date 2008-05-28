@@ -20,7 +20,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-package nu.validator.htmlparser.impl;
+package nu.validator.htmlparser.io;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,6 +36,8 @@ import java.nio.charset.CodingErrorAction;
 import nu.validator.htmlparser.common.Heuristics;
 import nu.validator.htmlparser.extra.ChardetSniffer;
 import nu.validator.htmlparser.extra.IcuDetectorSniffer;
+import nu.validator.htmlparser.impl.Confidence;
+import nu.validator.htmlparser.impl.Tokenizer;
 
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.Locator;

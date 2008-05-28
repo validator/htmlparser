@@ -25,8 +25,8 @@ package nu.validator.htmlparser.extra;
 import java.io.IOException;
 import java.io.InputStream;
 
-import nu.validator.htmlparser.impl.ByteReadable;
-import nu.validator.htmlparser.impl.Encoding;
+import nu.validator.htmlparser.io.ByteReadable;
+import nu.validator.htmlparser.io.Encoding;
 
 import com.ibm.icu.text.CharsetDetector;
 import com.ibm.icu.text.CharsetMatch;

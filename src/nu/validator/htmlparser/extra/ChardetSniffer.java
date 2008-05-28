@@ -25,7 +25,7 @@ package nu.validator.htmlparser.extra;
 import java.io.IOException;
 import java.nio.charset.UnsupportedCharsetException;
 
-import nu.validator.htmlparser.impl.Encoding;
+import nu.validator.htmlparser.io.Encoding;
 
 import org.mozilla.intl.chardet.nsDetector;
 import org.mozilla.intl.chardet.nsICharsetDetectionObserver;

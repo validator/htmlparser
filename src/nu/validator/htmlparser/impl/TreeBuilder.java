@@ -36,6 +36,8 @@
 package nu.validator.htmlparser.impl;
 
 import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import nu.validator.htmlparser.common.DoctypeExpectation;
 import nu.validator.htmlparser.common.DocumentMode;
@@ -2396,12 +2398,33 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
         return true;
     }
+    
+    private static final Pattern CONTENT = Pattern.compile("^[^;]*;[\\x09\\x0A\\x0B\\x0C\\x0D\\x20]*[cC][hH][aA][rR][sS][eE][tT][\\x09\\x0A\\x0B\\x0C\\x0D\\x20]*=[\\x09\\x0A\\x0B\\x0C\\x0D\\x20]*(?:(?:([^'\"\\x09\\x0A\\x0B\\x0C\\x0D\\x20][^\\x09\\x0A\\x0B\\x0C\\x0D\\x20]*)(?:[\\x09\\x0A\\x0B\\x0C\\x0D\\x20].*)?)|(?:\"([^\"]*)\".*)|(?:'([^']*)'.*))$", Pattern.DOTALL);
+    
+    /**
+     * @return 
+     * @throws SAXException
+     * @throws StopSniffingException
+     */
+    public static String extractCharsetFromContent(CharSequence attributeValue) {
+        Matcher m = CONTENT.matcher(attributeValue);
+        if (m.matches()) {
+            String value = null;
+            for (int i = 1; i < 4; i++) {
+                value = m.group(i);
+                if (value != null) {
+                    return value;
+                }
+            }
+        }
+        return null;
+    }
 
     private void checkMetaCharset(Attributes attributes) throws SAXException {
         String content = attributes.getValue("", "content");
         String internalCharset = null;
         if (content != null) {
-            internalCharset = MetaSniffer.extractCharsetFromContent(content);
+            internalCharset = extractCharsetFromContent(content);
             if (internalCharset != null) {
                 if (!equalsIgnoreAsciiCase("content-type", attributes.getValue(
                         "", "http-equiv"))) {
