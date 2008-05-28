@@ -3283,9 +3283,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     private void resetTheInsertionMode() {
+        StackNode<T> node;
         String name;
         for (int i = currentPtr; i >= 0; i--) {
-            name = stack[i].name;
+            node = stack[i];
+            name = node.name;
             if (i == 0) {
                 if (!(context == "td" || context == "th")) {
                     name = context;
@@ -3315,7 +3317,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             } else if ("table" == name) {
                 mode = InsertionMode.IN_TABLE;
                 return;
-                // XXX MathML
+            } else if ("http://www.w3.org/1999/xhtml" != node.ns) {
+                foreignFlag = IN_FOREIGN;
+                mode = InsertionMode.IN_BODY;
+                return;
             } else if ("head" == name) {
                 mode = InsertionMode.IN_BODY; // really
                 return;
