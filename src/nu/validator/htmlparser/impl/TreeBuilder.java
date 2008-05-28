@@ -1132,6 +1132,15 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     public final void eof() throws SAXException {
         try {
             flushCharacters();
+            switch (foreignFlag) {
+                case IN_FOREIGN:
+                    err("End of file in a foreign namespace context.");
+                    while (stack[currentPtr].ns != "http://www.w3.org/1999/xhtml") {
+                        pop();
+                    }
+                    foreignFlag = NOT_IN_FOREIGN;
+                default:
+            }
             eofloop: for (;;) {
                 switch (mode) {
                     case INITIAL:
