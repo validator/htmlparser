@@ -20,15 +20,18 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-package nu.validator.htmlparser.impl;
+package nu.validator.htmlparser.extra;
 
 import java.io.IOException;
 import java.io.InputStream;
 
+import nu.validator.htmlparser.impl.ByteReadable;
+import nu.validator.htmlparser.impl.Encoding;
+
 import com.ibm.icu.text.CharsetDetector;
 import com.ibm.icu.text.CharsetMatch;
 
-class IcuDetectorSniffer extends InputStream {
+public class IcuDetectorSniffer extends InputStream {
 
     private final ByteReadable source;
 
@@ -44,7 +47,7 @@ class IcuDetectorSniffer extends InputStream {
         return source.readByte();
     }
     
-    Encoding sniff() throws IOException {
+    public Encoding sniff() throws IOException {
         try {
             CharsetDetector detector = new CharsetDetector();
             detector.setText(this);
