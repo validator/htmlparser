@@ -1536,6 +1536,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     case STYLE:
                                     case SCRIPT:
                                     case TITLE:
+                                    case NOFRAMES:
                                         // Fall through to IN_HEAD
                                         break inbodyloop;
                                     case BODY:
@@ -1797,7 +1798,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                             // fall through
                                         }
                                     case IFRAME_OR_NOEMBED:
-                                    case NOFRAMES:
                                         appendToCurrentNodeAndPushElementMayFoster(
                                                 "http://www.w3.org/1999/xhtml",
                                                 elementName, attributes);
@@ -1908,6 +1908,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         break starttagloop;
                                     case SCRIPT:
                                     case STYLE:
+                                    case NOFRAMES:
                                         // XXX need to manage much more stuff
                                         // here if
                                         // supporting
@@ -1954,6 +1955,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     selfClosing = false;
                                     break starttagloop;
                                 case STYLE:
+                                case NOFRAMES:
                                     appendToCurrentNodeAndPushElement(
                                             "http://www.w3.org/1999/xhtml",
                                             elementName, attributes);
@@ -2300,7 +2302,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                             ContentModelFlag.CDATA, elementName);
                                     break starttagloop;
                                 case STYLE:
-                                    err("\u201Cstyle\u201D element between \u201Chead\u201D and \u201Cbody\u201D.");
+                                case NOFRAMES:
+                                    err("\u201C" + name + "\u201D element between \u201Chead\u201D and \u201Cbody\u201D.");
                                     if (!nonConformingAndStreaming) {
                                         pushHeadPointerOntoStack();
                                     }
