@@ -51,29 +51,29 @@ public class Encoding {
 
     public static final Encoding WINDOWS1252;
 
-    private static String[] SHOULD_NOT = { "jis_x0212-1990", "utf-32",
-            "utf-32be", "utf-32le", "x-jis0208" };
+    private static String[] SHOULD_NOT = { "jisx02121990", "utf32",
+        "utf32be", "utf32le", "xjis0208" };
 
-    private static String[] BANNED = { "bocu-1", "cesu-8", "compound_text",
-            "macarabic", "maccentraleurroman", "maccroatian", "maccyrillic",
-            "macdevanagari", "macfarsi", "macgreek", "macgujarati",
-            "macgurmukhi", "machebrew", "macicelandic", "macroman",
-            "macromanian", "macthai", "macturkish", "macukranian", "scsu",
-            "utf-7", "x-imap-mailbox-name", "x-jisautodetect",
-            "x-utf-16be-bom", "x-utf-16le-bom", "x-utf-32be-bom",
-            "x-utf-32le-bom", "x-utf16_oppositeendian",
-            "x-utf16_platformendian", "x-utf32_oppositeendian",
-            "x-utf32_platformendian" };
+private static String[] BANNED = { "bocu1", "cesu8", "compoundtext",
+        "macarabic", "maccentraleurroman", "maccroatian", "maccyrillic",
+        "macdevanagari", "macfarsi", "macgreek", "macgujarati",
+        "macgurmukhi", "machebrew", "macicelandic", "macroman",
+        "macromanian", "macthai", "macturkish", "macukranian", "scsu",
+        "utf7", "ximapmailboxname", "xjisautodetect",
+        "xutf16bebom", "xutf16lebom", "xutf32bebom",
+        "xutf32lebom", "xutf16oppositeendian",
+        "xutf16platformendian", "xutf32oppositeendian",
+        "xutf32platformendian" };
 
-    private static String[] NOT_OBSCURE = { "big5", "big5-hkscs", "euc-jp",
-            "euc-kr", "gb18030", "gbk", "iso-2022-jp", "iso-2022-kr",
-            "iso-8859-1", "iso-8859-13", "iso-8859-15", "iso-8859-2",
-            "iso-8859-3", "iso-8859-4", "iso-8859-5", "iso-8859-6",
-            "iso-8859-7", "iso-8859-8", "iso-8859-9", "koi8-r", "shift_jis",
-            "tis-620", "us-ascii", "utf-16", "utf-16be", "utf-16le", "utf-8",
-            "windows-1250", "windows-1251", "windows-1252", "windows-1253",
-            "windows-1254", "windows-1255", "windows-1256", "windows-1257",
-            "windows-1258" };
+private static String[] NOT_OBSCURE = { "big5", "big5hkscs", "eucjp",
+        "euckr", "gb18030", "gbk", "iso2022jp", "iso2022kr",
+        "iso88591", "iso885913", "iso885915", "iso88592",
+        "iso88593", "iso88594", "iso88595", "iso88596",
+        "iso88597", "iso88598", "iso88599", "koi8r", "shiftjis",
+        "tis620", "usascii", "utf16", "utf16be", "utf16le", "utf8",
+        "windows1250", "windows1251", "windows1252", "windows1253",
+        "windows1254", "windows1255", "windows1256", "windows1257",
+        "windows1258" };
 
     private static Map<String, Encoding> encodingByCookedName = new HashMap<String, Encoding>();
 
