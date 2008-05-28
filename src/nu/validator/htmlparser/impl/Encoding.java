@@ -40,114 +40,89 @@ import java.util.Set;
 import java.util.SortedMap;
 
 public class Encoding {
-    
+
     public static final Encoding UTF8;
+
     public static final Encoding UTF16;
+
     public static final Encoding UTF16LE;
+
     public static final Encoding UTF16BE;
+
     public static final Encoding WINDOWS1252;
 
-    private static String[] SHOULD_NOT = { "jis_x0212-1990",
-        "utf-32",
-        "utf-32be",
-        "utf-32le",
-        "x-jis0208" };
-    
+    private static String[] SHOULD_NOT = { "jis_x0212-1990", "utf-32",
+            "utf-32be", "utf-32le", "x-jis0208" };
+
     private static String[] BANNED = { "bocu-1", "cesu-8", "compound_text",
             "macarabic", "maccentraleurroman", "maccroatian", "maccyrillic",
             "macdevanagari", "macfarsi", "macgreek", "macgujarati",
             "macgurmukhi", "machebrew", "macicelandic", "macroman",
-            "macromanian", "macthai", "macturkish", "macukranian",
-            "scsu", "utf-7", "x-imap-mailbox-name", "x-jisautodetect",
+            "macromanian", "macthai", "macturkish", "macukranian", "scsu",
+            "utf-7", "x-imap-mailbox-name", "x-jisautodetect",
             "x-utf-16be-bom", "x-utf-16le-bom", "x-utf-32be-bom",
             "x-utf-32le-bom", "x-utf16_oppositeendian",
             "x-utf16_platformendian", "x-utf32_oppositeendian",
             "x-utf32_platformendian" };
-    
-    private static String[] NOT_OBSCURE = {"big5",
-        "big5-hkscs",
-        "euc-jp",
-        "euc-kr",
-        "gb18030",
-        "gbk",
-        "iso-2022-jp",
-        "iso-2022-kr",
-        "iso-8859-1",
-        "iso-8859-13",
-        "iso-8859-15",
-        "iso-8859-2",
-        "iso-8859-3",
-        "iso-8859-4",
-        "iso-8859-5",
-        "iso-8859-6",
-        "iso-8859-7",
-        "iso-8859-8",
-        "iso-8859-9",
-        "koi8-r",
-        "shift_jis",
-        "tis-620",
-        "us-ascii",
-        "utf-16",
-        "utf-16be",
-        "utf-16le",
-        "utf-8",
-        "windows-1250",
-        "windows-1251",
-        "windows-1252",
-        "windows-1253",
-        "windows-1254",
-        "windows-1255",
-        "windows-1256",
-        "windows-1257",
-        "windows-1258"};
-    
-    private static Map<String, Encoding> encodingByLowerCaseName = new HashMap<String, Encoding>();
+
+    private static String[] NOT_OBSCURE = { "big5", "big5-hkscs", "euc-jp",
+            "euc-kr", "gb18030", "gbk", "iso-2022-jp", "iso-2022-kr",
+            "iso-8859-1", "iso-8859-13", "iso-8859-15", "iso-8859-2",
+            "iso-8859-3", "iso-8859-4", "iso-8859-5", "iso-8859-6",
+            "iso-8859-7", "iso-8859-8", "iso-8859-9", "koi8-r", "shift_jis",
+            "tis-620", "us-ascii", "utf-16", "utf-16be", "utf-16le", "utf-8",
+            "windows-1250", "windows-1251", "windows-1252", "windows-1253",
+            "windows-1254", "windows-1255", "windows-1256", "windows-1257",
+            "windows-1258" };
+
+    private static Map<String, Encoding> encodingByCookedName = new HashMap<String, Encoding>();
 
     private final String canonName;
-    
+
     private final Charset charset;
-    
+
     private final boolean asciiSuperset;
-    
+
     private final boolean obscure;
-    
+
     private final boolean shouldNot;
-    
+
     private final boolean likelyEbcdic;
-    
+
     private Encoding actualHtmlEncoding = null;
-    
-    
+
     static {
         byte[] testBuf = new byte[0x7F];
         for (int i = 0; i < 0x7F; i++) {
             if (isAsciiSupersetnessSensitive(i)) {
-                testBuf[i] = (byte) i;                
+                testBuf[i] = (byte) i;
             } else {
-                testBuf[i] = (byte) 0x20;                                
+                testBuf[i] = (byte) 0x20;
             }
         }
 
         Set<Encoding> encodings = new HashSet<Encoding>();
-        
+
         SortedMap<String, Charset> charsets = Charset.availableCharsets();
         for (Map.Entry<String, Charset> entry : charsets.entrySet()) {
             Charset cs = entry.getValue();
-            String name = toAsciiLowerCase(cs.name());
+            String name = toNameKey(cs.name());
             if (!isBanned(name)) {
                 name = name.intern();
                 boolean asciiSuperset = asciiMapsToBasicLatin(testBuf, cs);
-                Encoding enc = new Encoding(name, cs, asciiSuperset, isObscure(name), isShouldNot(name), isLikelyEbcdic(name, asciiSuperset));
+                Encoding enc = new Encoding(name, cs, asciiSuperset,
+                        isObscure(name), isShouldNot(name), isLikelyEbcdic(
+                                name, asciiSuperset));
                 encodings.add(enc);
                 Set<String> aliases = cs.aliases();
                 for (String alias : aliases) {
-                    encodingByLowerCaseName.put(toAsciiLowerCase(alias).intern(), enc);
+                    encodingByCookedName.put(toNameKey(alias).intern(), enc);
                 }
             }
         }
         // Overwrite possible overlapping aliases with the real things--just in case
         for (Encoding encoding : encodings) {
-            encodingByLowerCaseName.put(encoding.getCanonName(), encoding);
+            encodingByCookedName.put(encoding.getCanonName(), encoding);
         }
         UTF8 = forName("utf-8");
         UTF16 = forName("utf-16");
@@ -155,41 +130,46 @@ public class Encoding {
         UTF16LE = forName("utf-16le");
         WINDOWS1252 = forName("windows-1252");
         try {
-            forName("iso-8859-1").actualHtmlEncoding = forName("windows-1252");            
-        } catch(UnsupportedCharsetException e) {
+            forName("iso-8859-1").actualHtmlEncoding = forName("windows-1252");
+        } catch (UnsupportedCharsetException e) {
         }
         try {
-            forName("iso-8859-11").actualHtmlEncoding = forName("windows-874");            
-        } catch(UnsupportedCharsetException e) {
+            forName("iso-8859-9").actualHtmlEncoding = forName("windows-1254");
+        } catch (UnsupportedCharsetException e) {
         }
         try {
-            forName("x-iso-8859-11").actualHtmlEncoding = forName("windows-874");            
-        } catch(UnsupportedCharsetException e) {
+            forName("iso-8859-11").actualHtmlEncoding = forName("windows-874");
+        } catch (UnsupportedCharsetException e) {
         }
         try {
-            forName("tis-620").actualHtmlEncoding = forName("windows-874");            
-        } catch(UnsupportedCharsetException e) {
+            forName("x-iso-8859-11").actualHtmlEncoding = forName("windows-874");
+        } catch (UnsupportedCharsetException e) {
         }
         try {
-            forName("gb_2312-80").actualHtmlEncoding = forName("gbk");            
-        } catch(UnsupportedCharsetException e) {
-        }        
-        try {
-            forName("gb2312").actualHtmlEncoding = forName("gbk");            
-        } catch(UnsupportedCharsetException e) {
+            forName("tis-620").actualHtmlEncoding = forName("windows-874");
+        } catch (UnsupportedCharsetException e) {
         }
         try {
-            encodingByLowerCaseName.put("x-x-big5", forName("big5"));
-        } catch(UnsupportedCharsetException e) {
-        }        
+            forName("gb_2312-80").actualHtmlEncoding = forName("gbk");
+        } catch (UnsupportedCharsetException e) {
+        }
         try {
-            encodingByLowerCaseName.put("euc-kr", forName("windows-949"));
-        } catch(UnsupportedCharsetException e) {
-        }        
+            forName("gb2312").actualHtmlEncoding = forName("gbk");
+        } catch (UnsupportedCharsetException e) {
+        }
         try {
-            encodingByLowerCaseName.put("ks_c_5601-1987", forName("windows-949"));
-        } catch(UnsupportedCharsetException e) {
-        }        
+            encodingByCookedName.put("x-x-big5", forName("big5"));
+        } catch (UnsupportedCharsetException e) {
+        }
+        try {
+            encodingByCookedName.put("euc-kr", forName("windows-949"));
+        } catch (UnsupportedCharsetException e) {
+        }
+        try {
+            encodingByCookedName.put("ks_c_5601-1987",
+                    forName("windows-949"));
+        } catch (UnsupportedCharsetException e) {
+        }
     }
 
     private static boolean isAsciiSupersetnessSensitive(int c) {
@@ -197,7 +177,7 @@ public class Encoding {
                 || (c >= 0x26 && c <= 0x27) || (c >= 0x2C && c <= 0x3F)
                 || (c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A);
     }
-    
+
     private static boolean isObscure(String lowerCasePreferredIanaName) {
         return !(Arrays.binarySearch(NOT_OBSCURE, lowerCasePreferredIanaName) > -1);
     }
@@ -209,7 +189,7 @@ public class Encoding {
     private static boolean isShouldNot(String lowerCasePreferredIanaName) {
         return (Arrays.binarySearch(SHOULD_NOT, lowerCasePreferredIanaName) > -1);
     }
-    
+
     /**
      * @param testBuf
      * @param cs
@@ -240,23 +220,45 @@ public class Encoding {
         return true;
     }
 
-    private static boolean isLikelyEbcdic(String canonName, boolean asciiSuperset) {
+    private static boolean isLikelyEbcdic(String canonName,
+            boolean asciiSuperset) {
         if (!asciiSuperset) {
             return (canonName.startsWith("cp") || canonName.startsWith("ibm") || canonName.startsWith("x-ibm"));
         } else {
             return false;
         }
     }
-    
+
     public static Encoding forName(String name) {
-        Encoding rv = encodingByLowerCaseName.get(toAsciiLowerCase(name));
+        Encoding rv = encodingByCookedName.get(toNameKey(name));
         if (rv == null) {
-            throw new UnsupportedCharsetException(name);            
+            throw new UnsupportedCharsetException(name);
         } else {
             return rv;
         }
     }
-    
+
+    public static String toNameKey(String str) {
+        if (str == null) {
+            return null;
+        }
+        int j = 0;
+        char[] buf = new char[str.length()];
+        for (int i = 0; i < str.length(); i++) {
+            char c = str.charAt(i);
+            if (c >= 'A' && c <= 'Z') {
+                c += 0x20;
+            }
+            if (!((c >= '\t' && c <= '\r') || (c >= '\u0020' && c <= '\u002F')
+                    || (c >= '\u003A' && c <= '\u0040')
+                    || (c >= '\u005B' && c <= '\u0060') || (c >= '\u007B' && c <= '\u007E'))) {
+                buf[j] = c;
+                j++;
+            }
+        }
+        return new String(buf, 0, j);
+    }
+
     public static String toAsciiLowerCase(String str) {
         if (str == null) {
             return null;
@@ -280,7 +282,9 @@ public class Encoding {
      * @param shouldNot
      * @param likelyEbcdic
      */
-    private Encoding(final String canonName, final Charset charset, final boolean asciiSuperset, final boolean obscure, final boolean shouldNot, final boolean likelyEbcdic) {
+    private Encoding(final String canonName, final Charset charset,
+            final boolean asciiSuperset, final boolean obscure,
+            final boolean shouldNot, final boolean likelyEbcdic) {
         this.canonName = canonName;
         this.charset = charset;
         this.asciiSuperset = asciiSuperset;
@@ -333,7 +337,7 @@ public class Encoding {
     public boolean isShouldNot() {
         return shouldNot;
     }
-    
+
     public boolean isRegistered() {
         return !canonName.startsWith("x-");
     }
@@ -370,13 +374,17 @@ public class Encoding {
     public Encoding getActualHtmlEncoding() {
         return actualHtmlEncoding;
     }
-    
+
     public static void main(String[] args) {
-        for (Map.Entry<String, Encoding> entry : encodingByLowerCaseName.entrySet()) {
+        for (Map.Entry<String, Encoding> entry : encodingByCookedName.entrySet()) {
             String name = entry.getKey();
             Encoding enc = entry.getValue();
-            System.out.printf("%21s: canon %21s, obs %5s, reg %5s, asc %5s, ebc %5s\n", name, enc.getCanonName(), enc.isObscure(), enc.isRegistered(), enc.isAsciiSuperset(), enc.isLikelyEbcdic());
+            System.out.printf(
+                    "%21s: canon %21s, obs %5s, reg %5s, asc %5s, ebc %5s\n",
+                    name, enc.getCanonName(), enc.isObscure(),
+                    enc.isRegistered(), enc.isAsciiSuperset(),
+                    enc.isLikelyEbcdic());
         }
     }
-    
+
 }
