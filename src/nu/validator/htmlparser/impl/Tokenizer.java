@@ -5351,10 +5351,7 @@ public final class Tokenizer implements Locator {
             Encoding cs;
             if ("utf-16".equals(internalCharset)
                     || "utf-16be".equals(internalCharset)
-                    || "utf-16le".equals(internalCharset)
-                    || "utf-32".equals(internalCharset)
-                    || "utf-32be".equals(internalCharset)
-                    || "utf-32le".equals(internalCharset)) {
+                    || "utf-16le".equals(internalCharset)) {
                 cs = Encoding.UTF8;
                 errTreeBuilder("Internal encoding declaration specified \u201C"
                         + internalCharset
