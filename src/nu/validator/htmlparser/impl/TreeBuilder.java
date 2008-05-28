@@ -2058,7 +2058,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         break starttagloop;
                                     }
                                 case INPUT:
-                                    err("\u201Cinput\u201D start tag seen in \u201Cselect\2201D.");
+                                case TEXTAREA:
+                                    err("\u201C" + name + "\u201D start tag seen in \u201Cselect\2201D.");
                                     endSelect();
                                     continue;
                                 default:
