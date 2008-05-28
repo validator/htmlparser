@@ -49,6 +49,8 @@ import java.util.regex.Pattern;
 import nu.validator.htmlparser.common.Heuristics;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
 import nu.validator.htmlparser.extra.NormalizationChecker;
+import nu.validator.htmlparser.io.Encoding;
+import nu.validator.htmlparser.io.HtmlInputStreamReader;
 import nu.validator.htmlparser.rewindable.RewindableInputStream;
 
 import org.xml.sax.Attributes;
@@ -957,7 +959,7 @@ public final class Tokenizer implements Locator {
 
     // end public API
 
-    void notifyAboutMetaBoundary() {
+    public void notifyAboutMetaBoundary() {
         metaBoundaryPassed = true;
     }
 
@@ -5337,7 +5339,7 @@ public final class Tokenizer implements Locator {
         this.mappingLangToXmlLang = mappingLangToXmlLang;
     }
 
-    void setEncoding(Encoding encoding, Confidence confidence) {
+    public void setEncoding(Encoding encoding, Confidence confidence) {
         this.characterEncoding = encoding;
         if (confidence == Confidence.CERTAIN) {
             becomeConfident();

@@ -21,12 +21,14 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-package nu.validator.htmlparser.impl;
+package nu.validator.htmlparser.io;
 
 import java.io.IOException;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import nu.validator.htmlparser.impl.TreeBuilder;
 
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.Locator;
@@ -39,27 +41,6 @@ public final class MetaSniffer implements Locator {
 
     }
 
-    private static final Pattern CONTENT = Pattern.compile("^[^;]*;[\\x09\\x0A\\x0B\\x0C\\x0D\\x20]*[cC][hH][aA][rR][sS][eE][tT][\\x09\\x0A\\x0B\\x0C\\x0D\\x20]*=[\\x09\\x0A\\x0B\\x0C\\x0D\\x20]*(?:(?:([^'\"\\x09\\x0A\\x0B\\x0C\\x0D\\x20][^\\x09\\x0A\\x0B\\x0C\\x0D\\x20]*)(?:[\\x09\\x0A\\x0B\\x0C\\x0D\\x20].*)?)|(?:\"([^\"]*)\".*)|(?:'([^']*)'.*))$", Pattern.DOTALL);
-    
-    /**
-     * @return 
-     * @throws SAXException
-     * @throws StopSniffingException
-     */
-    static String extractCharsetFromContent(CharSequence attributeValue) {
-        Matcher m = CONTENT.matcher(attributeValue);
-        if (m.matches()) {
-            String value = null;
-            for (int i = 1; i < 4; i++) {
-                value = m.group(i);
-                if (value != null) {
-                    return value;
-                }
-            }
-        }
-        return null;
-    }
-    
     private enum MetaState {
         NO, M, E, T, A
     }
@@ -390,7 +371,7 @@ public final class MetaSniffer implements Locator {
                 // XXX revisit trim() to trime only space characters
                 tryCharset(attributeValue.toString().trim());
             } else if ("content".equals(name)) {
-                String charset = extractCharsetFromContent(attributeValue);
+                String charset = TreeBuilder.extractCharsetFromContent(attributeValue);
                 if (charset != null) {
                     tryCharset(charset);
                 }

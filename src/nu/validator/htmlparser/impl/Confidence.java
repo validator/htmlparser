@@ -22,6 +22,6 @@
 
 package nu.validator.htmlparser.impl;
 
-enum Confidence {
+public enum Confidence {
     TENTATIVE, CERTAIN
 }
