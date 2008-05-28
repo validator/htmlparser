@@ -159,9 +159,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private class StackNode<S> {
         final int magic;
-        
+
         final String name;
-        
+
         final String popName;
 
         final String ns;
@@ -177,16 +177,18 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         boolean tainted = false;
 
         /**
-         * @param magic TODO
+         * @param magic
+         *            TODO
          * @param name
          * @param node
          * @param scoping
          * @param special
-         * @param popName TODO
+         * @param popName
+         *            TODO
          */
-        StackNode(int magic, final String ns, final String name,
-                final S node, final boolean scoping,
-                final boolean special, final boolean fosterParenting, String popName) {
+        StackNode(int magic, final String ns, final String name, final S node,
+                final boolean scoping, final boolean special,
+                final boolean fosterParenting, String popName) {
             this.magic = magic;
             this.name = name;
             this.ns = ns;
@@ -198,7 +200,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
 
         /**
-         * @param elementName TODO
+         * @param elementName
+         *            TODO
          * @param node
          */
         StackNode(final String ns, ElementName elementName, final S node) {
@@ -231,74 +234,56 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             "-//W3C//DTD HTML 4.01//EN" };
 
     private final static String[] QUIRKY_PUBLIC_IDS = {
-            "+//silmaril//dtd html pro v0r11 19970101//en",
-            "-//advasoft ltd//dtd html 3.0 aswedit + extensions//en",
-            "-//as//dtd html 3.0 aswedit + extensions//en",
-            "-//ietf//dtd html 2.0 level 1//en",
-            "-//ietf//dtd html 2.0 level 2//en",
-            "-//ietf//dtd html 2.0 strict level 1//en",
-            "-//ietf//dtd html 2.0 strict level 2//en",
-            "-//ietf//dtd html 2.0 strict//en",
-            "-//ietf//dtd html 2.0//en",
-            "-//ietf//dtd html 2.1e//en",
-            "-//ietf//dtd html 3.0//en",
-            "-//ietf//dtd html 3.0//en//",
-            "-//ietf//dtd html 3.2 final//en",
-            "-//ietf//dtd html 3.2//en",
-            "-//ietf//dtd html 3//en",
-            "-//ietf//dtd html level 0//en",
-            "-//ietf//dtd html level 0//en//2.0",
-            "-//ietf//dtd html level 1//en",
-            "-//ietf//dtd html level 1//en//2.0",
-            "-//ietf//dtd html level 2//en",
-            "-//ietf//dtd html level 2//en//2.0",
-            "-//ietf//dtd html level 3//en",
-            "-//ietf//dtd html level 3//en//3.0",
-            "-//ietf//dtd html strict level 0//en",
-            "-//ietf//dtd html strict level 0//en//2.0",
-            "-//ietf//dtd html strict level 1//en",
-            "-//ietf//dtd html strict level 1//en//2.0",
-            "-//ietf//dtd html strict level 2//en",
-            "-//ietf//dtd html strict level 2//en//2.0",
-            "-//ietf//dtd html strict level 3//en",
-            "-//ietf//dtd html strict level 3//en//3.0",
-            "-//ietf//dtd html strict//en",
-            "-//ietf//dtd html strict//en//2.0",
-            "-//ietf//dtd html strict//en//3.0",
-            "-//ietf//dtd html//en",
-            "-//ietf//dtd html//en//2.0",
-            "-//ietf//dtd html//en//3.0",
-            "-//metrius//dtd metrius presentational//en",
-            "-//microsoft//dtd internet explorer 2.0 html strict//en",
-            "-//microsoft//dtd internet explorer 2.0 html//en",
-            "-//microsoft//dtd internet explorer 2.0 tables//en",
-            "-//microsoft//dtd internet explorer 3.0 html strict//en",
-            "-//microsoft//dtd internet explorer 3.0 html//en",
-            "-//microsoft//dtd internet explorer 3.0 tables//en",
-            "-//netscape comm. corp.//dtd html//en",
-            "-//netscape comm. corp.//dtd strict html//en",
-            "-//o'reilly and associates//dtd html 2.0//en",
-            "-//o'reilly and associates//dtd html extended 1.0//en",
-            "-//o'reilly and associates//dtd html extended relaxed 1.0//en",
-            "-//softquad software//dtd hotmetal pro 6.0::19990601::extensions to html 4.0//en",
-            "-//softquad//dtd hotmetal pro 4.0::19971010::extensions to html 4.0//en",
-            "-//spyglass//dtd html 2.0 extended//en",
-            "-//sq//dtd html 2.0 hotmetal + extensions//en",
-            "-//sun microsystems corp.//dtd hotjava html//en",
-            "-//sun microsystems corp.//dtd hotjava strict html//en",
-            "-//w3c//dtd html 3 1995-03-24//en",
-            "-//w3c//dtd html 3.2 draft//en", "-//w3c//dtd html 3.2 final//en",
-            "-//w3c//dtd html 3.2//en", "-//w3c//dtd html 3.2s draft//en",
-            "-//w3c//dtd html 4.0 frameset//en",
-            "-//w3c//dtd html 4.0 transitional//en",
-            "-//w3c//dtd html experimental 19960712//en",
-            "-//w3c//dtd html experimental 970421//en",
-            "-//w3c//dtd w3 html//en", "-//w3o//dtd w3 html 3.0//en",
-            "-//w3o//dtd w3 html 3.0//en//",
-            "-//w3o//dtd w3 html strict 3.0//en//",
-            "-//webtechs//dtd mozilla html 2.0//en",
-            "-//webtechs//dtd mozilla html//en",
-            "-/w3c/dtd html 4.0 transitional/en", "html" };
+            "+//silmaril//dtd html pro v0r11 19970101//",
+            "-//advasoft ltd//dtd html 3.0 aswedit + extensions//",
+            "-//as//dtd html 3.0 aswedit + extensions//",
+            "-//ietf//dtd html 2.0 level 1//",
+            "-//ietf//dtd html 2.0 level 2//",
+            "-//ietf//dtd html 2.0 strict level 1//",
+            "-//ietf//dtd html 2.0 strict level 2//",
+            "-//ietf//dtd html 2.0 strict//",
+            "-//ietf//dtd html 2.0//",
+            "-//ietf//dtd html 2.1e//",
+            "-//ietf//dtd html 3.0//",
+            "-//ietf//dtd html 3.2 final//",
+            "-//ietf//dtd html 3.2//",
+            "-//ietf//dtd html 3//",
+            "-//ietf//dtd html level 0//",
+            "-//ietf//dtd html level 1//",
+            "-//ietf//dtd html level 2//",
+            "-//ietf//dtd html level 3//",
+            "-//ietf//dtd html strict level 0//",
+            "-//ietf//dtd html strict level 1//",
+            "-//ietf//dtd html strict level 2//",
+            "-//ietf//dtd html strict level 3//",
+            "-//ietf//dtd html strict//",
+            "-//ietf//dtd html//",
+            "-//metrius//dtd metrius presentational//",
+            "-//microsoft//dtd internet explorer 2.0 html strict//",
+            "-//microsoft//dtd internet explorer 2.0 html//",
+            "-//microsoft//dtd internet explorer 2.0 tables//",
+            "-//microsoft//dtd internet explorer 3.0 html strict//",
+            "-//microsoft//dtd internet explorer 3.0 html//",
+            "-//microsoft//dtd internet explorer 3.0 tables//",
+            "-//netscape comm. corp.//dtd html//",
+            "-//netscape comm. corp.//dtd strict html//",
+            "-//o'reilly and associates//dtd html 2.0//",
+            "-//o'reilly and associates//dtd html extended 1.0//",
+            "-//o'reilly and associates//dtd html extended relaxed 1.0//",
+            "-//softquad software//dtd hotmetal pro 6.0::19990601::extensions to html 4.0//",
+            "-//softquad//dtd hotmetal pro 4.0::19971010::extensions to html 4.0//",
+            "-//spyglass//dtd html 2.0 extended//",
+            "-//sq//dtd html 2.0 hotmetal + extensions//",
+            "-//sun microsystems corp.//dtd hotjava html//",
+            "-//sun microsystems corp.//dtd hotjava strict html//",
+            "-//w3c//dtd html 3 1995-03-24//", "-//w3c//dtd html 3.2 draft//",
+            "-//w3c//dtd html 3.2 final//", "-//w3c//dtd html 3.2//",
+            "-//w3c//dtd html 3.2s draft//", "-//w3c//dtd html 4.0 frameset//",
+            "-//w3c//dtd html 4.0 transitional//",
+            "-//w3c//dtd html experimental 19960712//",
+            "-//w3c//dtd html experimental 970421//", "-//w3c//dtd w3 html//",
+            "-//w3o//dtd w3 html 3.0//", "-//webtechs//dtd mozilla html 2.0//",
+            "-//webtechs//dtd mozilla html//" };
 
     private static final int NOT_FOUND_ON_STACK = Integer.MAX_VALUE;
 
@@ -306,7 +291,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private static final int NOT_IN_FOREIGN = 1;
 
-    private final StackNode<T> MARKER = new StackNode<T>(null, new ElementName(null), null);
+    private final StackNode<T> MARKER = new StackNode<T>(null, new ElementName(
+            null), null);
 
     private final boolean nonConformingAndStreaming;
 
@@ -1465,7 +1451,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                                 elementName, attributes);
                                         cdataOrRcdataTimesToPop = 1;
                                         tokenizer.setContentModelFlag(
-                                                ContentModelFlag.CDATA, elementName);
+                                                ContentModelFlag.CDATA,
+                                                elementName);
                                         break starttagloop;
                                     case INPUT:
                                         if (isTainted()
@@ -1685,7 +1672,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                                 elementName, attributes);
                                         cdataOrRcdataTimesToPop = 1;
                                         tokenizer.setContentModelFlag(
-                                                ContentModelFlag.CDATA, elementName);
+                                                ContentModelFlag.CDATA,
+                                                elementName);
                                         break starttagloop;
                                     case TABLE:
                                         implicitlyCloseP();
@@ -1790,9 +1778,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     case TEXTAREA:
                                         appendToCurrentNodeAndPushElementMayFoster(
                                                 "http://www.w3.org/1999/xhtml",
-                                                elementName, attributes, formPointer);
+                                                elementName, attributes,
+                                                formPointer);
                                         tokenizer.setContentModelFlag(
-                                                ContentModelFlag.RCDATA, elementName);
+                                                ContentModelFlag.RCDATA,
+                                                elementName);
                                         cdataOrRcdataTimesToPop = 1;
                                         needToDropLF = true;
                                         break starttagloop;
@@ -1813,13 +1803,15 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                                 elementName, attributes);
                                         cdataOrRcdataTimesToPop = 1;
                                         tokenizer.setContentModelFlag(
-                                                ContentModelFlag.CDATA, elementName);
+                                                ContentModelFlag.CDATA,
+                                                elementName);
                                         break starttagloop;
                                     case SELECT:
                                         reconstructTheActiveFormattingElements();
                                         appendToCurrentNodeAndPushElementMayFoster(
                                                 "http://www.w3.org/1999/xhtml",
-                                                elementName, attributes, formPointer);
+                                                elementName, attributes,
+                                                formPointer);
                                         switch (mode) {
                                             case IN_TABLE:
                                             case IN_CAPTION:
@@ -1895,7 +1887,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                                 elementName, attributes);
                                         cdataOrRcdataTimesToPop = 1;
                                         tokenizer.setContentModelFlag(
-                                                ContentModelFlag.RCDATA, elementName);
+                                                ContentModelFlag.RCDATA,
+                                                elementName);
                                         break starttagloop;
                                     case NOSCRIPT:
                                         if (scriptingEnabled) {
@@ -1924,7 +1917,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                                 elementName, attributes);
                                         cdataOrRcdataTimesToPop = 1;
                                         tokenizer.setContentModelFlag(
-                                                ContentModelFlag.CDATA, elementName);
+                                                ContentModelFlag.CDATA,
+                                                elementName);
                                         break starttagloop;
                                     case HEAD:
                                         /* Parse error. */
@@ -2059,7 +2053,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     }
                                 case INPUT:
                                 case TEXTAREA:
-                                    err("\u201C" + name + "\u201D start tag seen in \u201Cselect\2201D.");
+                                    err("\u201C"
+                                            + name
+                                            + "\u201D start tag seen in \u201Cselect\2201D.");
                                     endSelect();
                                     continue;
                                 default:
@@ -2327,7 +2323,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     cdataOrRcdataTimesToPop = nonConformingAndStreaming ? 1
                                             : 2; // pops head
                                     tokenizer.setContentModelFlag(
-                                            ContentModelFlag.RCDATA, elementName);
+                                            ContentModelFlag.RCDATA,
+                                            elementName);
                                     break starttagloop;
                                 default:
                                     appendToCurrentNodeAndPushBodyElement();
@@ -2417,8 +2414,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
     }
 
-    public final void endTag(ElementName elementName)
-            throws SAXException {
+    public final void endTag(ElementName elementName) throws SAXException {
         needToDropLF = false;
         if (cdataOrRcdataTimesToPop > 0) {
             while (cdataOrRcdataTimesToPop > 0) {
@@ -3219,9 +3215,17 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (!"HTML".equalsIgnoreCase(name)) {
             return true;
         }
-        if (publicIdentifierLC != null
-                && (Arrays.binarySearch(QUIRKY_PUBLIC_IDS, publicIdentifierLC) > -1)) {
-            return true;
+        if (publicIdentifierLC != null) {
+            for (int i = 0; i < QUIRKY_PUBLIC_IDS.length; i++) {
+                if (publicIdentifierLC.startsWith(QUIRKY_PUBLIC_IDS[i])) {
+                    return true;
+                }
+            }
+            if ("-//w3o//dtd w3 html strict 3.0//en//".equals(publicIdentifierLC)
+                    || "-/w3c/dtd html 4.0 transitional/en".equals(publicIdentifierLC)
+                    || "html".equals(publicIdentifierLC)) {
+                return true;
+            }
         }
         if (systemIdentifierLC == null) {
             if ("-//w3c//dtd html 4.01 transitional//en".equals(publicIdentifierLC)) {
@@ -3551,7 +3555,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     assert node == stack[nodePos];
                     T clone = shallowClone(node.node);
                     node = new StackNode<T>(node.magic, node.ns, node.name,
-                            clone, node.scoping, node.special, node.fosterParenting, node.popName);
+                            clone, node.scoping, node.special,
+                            node.fosterParenting, node.popName);
                     listOfActiveFormattingElements[nodeListPos] = node;
                     stack[nodePos] = node;
                 }
@@ -3568,9 +3573,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         commonAncestor.node);
             }
             T clone = shallowClone(formattingElt.node);
-            StackNode<T> formattingClone = new StackNode<T>(formattingElt.magic,
-                    formattingElt.ns, formattingElt.name, clone,
-                    formattingElt.scoping, formattingElt.special, formattingElt.fosterParenting, formattingElt.popName);
+            StackNode<T> formattingClone = new StackNode<T>(
+                    formattingElt.magic, formattingElt.ns, formattingElt.name,
+                    clone, formattingElt.scoping, formattingElt.special,
+                    formattingElt.fosterParenting, formattingElt.popName);
             appendChildrenToNewParent(furthestBlock.node, clone);
             detachFromParentAndAppendToNewParent(clone, furthestBlock.node);
             removeFromListOfActiveFormattingElements(formattingEltListPos);
@@ -3675,7 +3681,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
         return 0;
     }
-    
+
     private void addAttributesToBody(Attributes attributes) throws SAXException {
         if (currentPtr >= 1) {
             StackNode<T> body = stack[1];
@@ -3694,8 +3700,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             assert context != null;
             push(stack[currentPtr]);
         } else {
-            push(new StackNode<T>("http://www.w3.org/1999/xhtml", ElementName.HEAD,
-                    headPointer));
+            push(new StackNode<T>("http://www.w3.org/1999/xhtml",
+                    ElementName.HEAD, headPointer));
         }
     }
 
@@ -3732,7 +3738,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             StackNode<T> entry = listOfActiveFormattingElements[entryPos];
             T clone = shallowClone(entry.node);
             StackNode<T> entryClone = new StackNode<T>(entry.magic, entry.ns,
-                    entry.name, clone, entry.scoping, entry.special, entry.fosterParenting, entry.popName);
+                    entry.name, clone, entry.scoping, entry.special,
+                    entry.fosterParenting, entry.popName);
             StackNode<T> currentNode = stack[currentPtr];
             if (currentNode.fosterParenting) {
                 insertIntoFosterParent(clone);
@@ -3870,7 +3877,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     private void appendToCurrentNodeAndPushFormattingElementMayFoster(
-            String ns, ElementName elementName, Attributes attributes) throws SAXException {
+            String ns, ElementName elementName, Attributes attributes)
+            throws SAXException {
         flushCharacters();
         T elt = createElement(ns, elementName.name, attributes, formPointer);
         StackNode<T> current = stack[currentPtr];
@@ -3890,8 +3898,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         append(node);
     }
 
-    private void appendToCurrentNodeAndPushElement(String ns, ElementName elementName,
-            Attributes attributes) throws SAXException {
+    private void appendToCurrentNodeAndPushElement(String ns,
+            ElementName elementName, Attributes attributes) throws SAXException {
         flushCharacters();
         T elt = createElement(ns, elementName.name, attributes);
         detachFromParentAndAppendToNewParent(elt, stack[currentPtr].node);
@@ -3920,7 +3928,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     private void appendToCurrentNodeAndPushElementMayFoster(String ns,
-            ElementName elementName, Attributes attributes, T form) throws SAXException {
+            ElementName elementName, Attributes attributes, T form)
+            throws SAXException {
         flushCharacters();
         T elt = createElement(ns, elementName.name, attributes, formPointer);
         StackNode<T> current = stack[currentPtr];
