@@ -3283,6 +3283,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     private void resetTheInsertionMode() {
+        foreignFlag = NOT_IN_FOREIGN;
         StackNode<T> node;
         String name;
         for (int i = currentPtr; i >= 0; i--) {
