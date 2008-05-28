@@ -34,6 +34,8 @@ import java.nio.charset.CodingErrorAction;
 
 
 import nu.validator.htmlparser.common.Heuristics;
+import nu.validator.htmlparser.extra.ChardetSniffer;
+import nu.validator.htmlparser.extra.IcuDetectorSniffer;
 
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.Locator;

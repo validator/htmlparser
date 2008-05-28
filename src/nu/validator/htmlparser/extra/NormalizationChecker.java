@@ -21,7 +21,9 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-package nu.validator.htmlparser.impl;
+package nu.validator.htmlparser.extra;
+
+import nu.validator.htmlparser.impl.CharacterHandler;
 
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.Locator;

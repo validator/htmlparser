@@ -48,6 +48,7 @@ import java.util.regex.Pattern;
 
 import nu.validator.htmlparser.common.Heuristics;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
+import nu.validator.htmlparser.extra.NormalizationChecker;
 import nu.validator.htmlparser.rewindable.RewindableInputStream;
 
 import org.xml.sax.Attributes;

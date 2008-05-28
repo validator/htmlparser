@@ -20,10 +20,12 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-package nu.validator.htmlparser.impl;
+package nu.validator.htmlparser.extra;
 
 import java.io.IOException;
 import java.nio.charset.UnsupportedCharsetException;
+
+import nu.validator.htmlparser.impl.Encoding;
 
 import org.mozilla.intl.chardet.nsDetector;
 import org.mozilla.intl.chardet.nsICharsetDetectionObserver;
@@ -31,7 +33,7 @@ import org.mozilla.intl.chardet.nsPSMDetector;
 
 import com.ibm.icu.text.CharsetDetector;
 
-class ChardetSniffer implements nsICharsetDetectionObserver {
+public class ChardetSniffer implements nsICharsetDetectionObserver {
 
     private final byte[] source;
 
@@ -47,7 +49,7 @@ class ChardetSniffer implements nsICharsetDetectionObserver {
         this.length = length;
     }
     
-    Encoding sniff() throws IOException {
+    public Encoding sniff() throws IOException {
         nsDetector detector = new nsDetector(nsPSMDetector.ALL);
         detector.Init(this);
         detector.DoIt(source, length, false);
