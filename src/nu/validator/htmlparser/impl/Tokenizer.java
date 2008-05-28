@@ -5308,7 +5308,6 @@ public final class Tokenizer implements Locator {
     /**
      * @param val
      * @throws SAXException
-     * @throws IOException
      */
     private void emitOrAppend(char[] val, int returnState) throws SAXException {
         if ((returnState & (~1)) != 0) {
