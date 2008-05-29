@@ -36,9 +36,6 @@
 package nu.validator.htmlparser.impl;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
-import java.nio.charset.UnsupportedCharsetException;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.SortedSet;
@@ -46,16 +43,11 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import nu.validator.htmlparser.common.Heuristics;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
 import nu.validator.htmlparser.extra.NormalizationChecker;
-import nu.validator.htmlparser.io.Encoding;
-import nu.validator.htmlparser.io.HtmlInputStreamReader;
-import nu.validator.htmlparser.rewindable.RewindableInputStream;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.ErrorHandler;
-import org.xml.sax.InputSource;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -75,7 +67,7 @@ import org.xml.sax.SAXParseException;
  * @version $Id$
  * @author hsivonen
  */
-public final class Tokenizer implements Locator {
+public class Tokenizer implements Locator {
 
     private static final int DATA = 0;
 
@@ -318,24 +310,12 @@ public final class Tokenizer implements Locator {
     /**
      * The token handler.
      */
-    private final TokenHandler tokenHandler;
+    protected final TokenHandler tokenHandler;
 
     /**
      * The error handler.
      */
-    private ErrorHandler errorHandler;
-
-    /**
-     * The input UTF-16 code unit stream. If a byte stream was given, this
-     * object is an instance of <code>HtmlInputStreamReader</code>.
-     */
-    private Reader reader;
-
-    /**
-     * The reference to the rewindable byte stream. <code>null</code> if p
-     * rohibited or no longer needed.
-     */
-    private RewindableInputStream rewindableInputStream;
+    protected ErrorHandler errorHandler;
 
     /**
      * The previous <code>char</code> read from the buffer with infoset
@@ -402,13 +382,13 @@ public final class Tokenizer implements Locator {
      * The SAX public id for the resource being tokenized. (Only passed to back
      * as part of locator data.)
      */
-    private String publicId;
+    protected String publicId;
 
     /**
      * The SAX system id for the resource being tokenized. (Only passed to back
      * as part of locator data.)
      */
-    private String systemId;
+    protected String systemId;
 
     /**
      * Buffer for short identifiers.
@@ -474,12 +454,12 @@ public final class Tokenizer implements Locator {
     /**
      * The current tag token name.
      */
-    private ElementName tagName = null;
+    protected ElementName tagName = null;
 
     /**
      * The current attribute name.
      */
-    private String attributeName = null;
+    protected String attributeName = null;
 
     /**
      * Whether comment tokens are emitted.
@@ -499,7 +479,7 @@ public final class Tokenizer implements Locator {
     /**
      * Used together with <code>nonAsciiProhibited</code>.
      */
-    private boolean alreadyComplainedAboutNonAscii;
+    protected boolean alreadyComplainedAboutNonAscii;
 
     /**
      * Whether the stream is past the first 512 bytes.
@@ -509,23 +489,23 @@ public final class Tokenizer implements Locator {
     /**
      * The name of the current doctype token.
      */
-    private String doctypeName;
+    protected String doctypeName;
 
     /**
      * The public id of the current doctype token.
      */
-    private String publicIdentifier;
+    protected String publicIdentifier;
 
     /**
      * The system id of the current doctype token.
      */
-    private String systemIdentifier;
+    protected String systemIdentifier;
 
     /**
      * Used for NFC checking if non-<code>null</code>, source code capture,
      * etc.
      */
-    private CharacterHandler[] characterHandlers = new CharacterHandler[0];
+    protected CharacterHandler[] characterHandlers = new CharacterHandler[0];
 
     /**
      * The policy for vertical tab and form feed.
@@ -546,23 +526,13 @@ public final class Tokenizer implements Locator {
 
     private XmlViolationPolicy namePolicy = XmlViolationPolicy.ALLOW;
 
-    private boolean swallowBom;
-
     private boolean html4ModeCompatibleWithXhtml1Schemata;
 
-    private boolean mappingLangToXmlLang;
+    protected boolean mappingLangToXmlLang;
 
     private XmlViolationPolicy bogusXmlnsPolicy;
 
-    private Encoding characterEncoding;
-
-    private Confidence confidence;
-
-    private boolean allowRewinding = true;
-
-    private Heuristics heuristics = Heuristics.NONE;
-
-    // start public API
+    protected Confidence confidence;
 
     /**
      * The constuctor.
@@ -572,86 +542,6 @@ public final class Tokenizer implements Locator {
      */
     public Tokenizer(TokenHandler tokenHandler) {
         this.tokenHandler = tokenHandler;
-    }
-
-    /**
-     * Returns the allowRewinding.
-     * 
-     * @return the allowRewinding
-     */
-    public boolean isAllowRewinding() {
-        return allowRewinding;
-    }
-
-    /**
-     * Sets the allowRewinding.
-     * 
-     * @param allowRewinding
-     *            the allowRewinding to set
-     */
-    public void setAllowRewinding(boolean allowRewinding) {
-        this.allowRewinding = allowRewinding;
-    }
-
-    /**
-     * Turns NFC checking on or off.
-     * 
-     * @param enable
-     *            <code>true</code> if checking on
-     */
-    public void setCheckingNormalization(boolean enable) {
-        if (enable) {
-            if (isCheckingNormalization()) {
-                return;
-            } else {
-                NormalizationChecker normalizationChecker = new NormalizationChecker(
-                        this);
-                normalizationChecker.setErrorHandler(errorHandler);
-
-            }
-        } else {
-            if (isCheckingNormalization()) {
-                CharacterHandler[] newHandlers = new CharacterHandler[characterHandlers.length - 1];
-                boolean skipped = false;
-                int j = 0;
-                for (int i = 0; i < characterHandlers.length; i++) {
-                    CharacterHandler ch = characterHandlers[i];
-                    if (!(!skipped && (ch instanceof NormalizationChecker))) {
-                        newHandlers[j] = ch;
-                        j++;
-                    }
-                }
-                characterHandlers = newHandlers;
-            } else {
-                return;
-            }
-        }
-    }
-
-    public void addCharacterHandler(CharacterHandler characterHandler) {
-        if (characterHandler == null) {
-            throw new IllegalArgumentException("Null argument.");
-        }
-        CharacterHandler[] newHandlers = new CharacterHandler[characterHandlers.length + 1];
-        System.arraycopy(characterHandlers, 0, newHandlers, 0,
-                characterHandlers.length);
-        newHandlers[characterHandlers.length] = characterHandler;
-        characterHandlers = newHandlers;
-    }
-
-    /**
-     * Query if checking normalization.
-     * 
-     * @return <code>true</code> if checking on
-     */
-    public boolean isCheckingNormalization() {
-        for (int i = 0; i < characterHandlers.length; i++) {
-            CharacterHandler ch = characterHandlers[i];
-            if (ch instanceof NormalizationChecker) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**
@@ -766,127 +656,6 @@ public final class Tokenizer implements Locator {
         this.html4ModeCompatibleWithXhtml1Schemata = html4ModeCompatibleWithXhtml1Schemata;
     }
 
-    /**
-     * Runs the tokenization. This is the main entry point.
-     * 
-     * @param is
-     *            the input source
-     * @throws SAXException
-     *             on fatal error (if configured to treat XML violations as
-     *             fatal) or if the token handler threw
-     * @throws IOException
-     *             if the stream threw
-     */
-    public void tokenize(InputSource is) throws SAXException, IOException {
-        if (is == null) {
-            throw new IllegalArgumentException("InputSource was null.");
-        }
-        confidence = Confidence.TENTATIVE;
-        alreadyComplainedAboutNonAscii = false;
-        swallowBom = true;
-        rewindableInputStream = null;
-        this.systemId = is.getSystemId();
-        this.publicId = is.getPublicId();
-        this.reader = is.getCharacterStream();
-        this.characterEncoding = encodingFromExternalDeclaration(is.getEncoding());
-        if (this.reader == null) {
-            InputStream inputStream = is.getByteStream();
-            if (inputStream == null) {
-                throw new SAXException("Both streams in InputSource were null.");
-            }
-            if (this.characterEncoding == null) {
-                if (allowRewinding) {
-                    inputStream = rewindableInputStream = new RewindableInputStream(
-                            inputStream);
-                }
-                this.reader = new HtmlInputStreamReader(inputStream,
-                        errorHandler, this, this, heuristics);
-            } else {
-                becomeConfident();
-                this.reader = new HtmlInputStreamReader(inputStream,
-                        errorHandler, this, this, this.characterEncoding);
-            }
-        } else {
-            becomeConfident();
-        }
-        Throwable t = null;
-        try {
-            for (;;) {
-                try {
-                    contentModelFlag = ContentModelFlag.PCDATA;
-
-                    line = linePrev = 0;
-                    col = colPrev = 1;
-                    nextCharOnNewLine = true;
-                    prev = '\u0000';
-                    html4 = false;
-                    alreadyWarnedAboutPrivateUseCharacters = false;
-                    metaBoundaryPassed = false;
-                    tokenHandler.start(this);
-                    for (int i = 0; i < characterHandlers.length; i++) {
-                        CharacterHandler ch = characterHandlers[i];
-                        ch.start();
-                    }
-                    wantsComments = tokenHandler.wantsComments();
-                    runStates();
-                    if (confidence == Confidence.TENTATIVE
-                            && !alreadyComplainedAboutNonAscii) {
-                        warnWithoutLocation("The character encoding of the document was not declared.");
-                    }
-                    break;
-                } catch (ReparseException e) {
-                    if (rewindableInputStream == null) {
-                        fatal("Changing encoding at this point would need non-streamable behavior.");
-                    } else {
-                        rewindableInputStream.rewind();
-                        becomeConfident();
-                        this.reader = new HtmlInputStreamReader(
-                                rewindableInputStream, errorHandler, this,
-                                this, this.characterEncoding);
-                    }
-                    continue;
-                }
-            }
-        } catch (Throwable tr) {
-            t = tr;
-        } finally {
-            try {
-                systemIdentifier = null;
-                publicIdentifier = null;
-                doctypeName = null;
-                tagName = null;
-                attributeName = null;
-                characterEncoding = null;
-                tokenHandler.eof();
-                for (int i = 0; i < characterHandlers.length; i++) {
-                    CharacterHandler ch = characterHandlers[i];
-                    ch.end();
-                }
-                reader.close();
-                reader = null;
-                rewindableInputStream = null;
-            } catch (Throwable tr) {
-                if (t == null) {
-                    t = tr;
-                } // else drop the later throwable
-            }
-            if (t != null) {
-                if (t instanceof IOException) {
-                    throw (IOException) t;
-                } else if (t instanceof SAXException) {
-                    throw (SAXException) t;
-                } else if (t instanceof RuntimeException) {
-                    throw (RuntimeException) t;
-                } else if (t instanceof Error) {
-                    throw (Error) t;
-                } else {
-                    // impossible
-                    throw new RuntimeException(t);
-                }
-            }
-        }
-    }
-
     // For the token handler to call
     /**
      * Sets the content model flag and the associated element name.
@@ -965,10 +734,6 @@ public final class Tokenizer implements Locator {
 
     void turnOnAdditionalHtml4Errors() {
         html4 = true;
-    }
-
-    void dontSwallowBom() {
-        swallowBom = false;
     }
 
     AttributesImpl newAttributes() {
@@ -1228,7 +993,7 @@ public final class Tokenizer implements Locator {
      * @throws SAXException
      * @throws SAXParseException
      */
-    private void fatal(String message) throws SAXException {
+    protected void fatal(String message) throws SAXException {
         SAXParseException spe = new SAXParseException(message, this);
         if (errorHandler != null) {
             errorHandler.fatalError(spe);
@@ -1243,28 +1008,12 @@ public final class Tokenizer implements Locator {
      *            the message
      * @throws SAXException
      */
-    private void err(String message) throws SAXException {
+    protected void err(String message) throws SAXException {
         if (errorHandler == null) {
             return;
         }
         SAXParseException spe = new SAXParseException(message, this);
         errorHandler.error(spe);
-    }
-
-    private void errTreeBuilder(String message) throws SAXException {
-        ErrorHandler eh = null;
-        if (tokenHandler instanceof TreeBuilder<?>) {
-            TreeBuilder<?> treeBuilder = (TreeBuilder<?>) tokenHandler;
-            eh = treeBuilder.getErrorHandler();
-        }
-        if (eh == null) {
-            eh = errorHandler;
-        }
-        if (eh == null) {
-            return;
-        }
-        SAXParseException spe = new SAXParseException(message, this);
-        eh.error(spe);
     }
 
     /**
@@ -1274,99 +1023,12 @@ public final class Tokenizer implements Locator {
      *            the message
      * @throws SAXException
      */
-    private void warn(String message) throws SAXException {
+    protected void warn(String message) throws SAXException {
         if (errorHandler == null) {
             return;
         }
         SAXParseException spe = new SAXParseException(message, this);
         errorHandler.warning(spe);
-    }
-
-    /**
-     * Reports a warning without line/col
-     * 
-     * @param message
-     *            the message
-     * @throws SAXException
-     */
-    private void warnWithoutLocation(String message) throws SAXException {
-        if (errorHandler == null) {
-            return;
-        }
-        SAXParseException spe = new SAXParseException(message, null,
-                getSystemId(), -1, -1);
-        errorHandler.warning(spe);
-    }
-
-    /**
-     * Initializes a decoder from external decl.
-     */
-    private Encoding encodingFromExternalDeclaration(String encoding)
-            throws SAXException {
-        if (encoding == null) {
-            return null;
-        }
-        encoding = Encoding.toAsciiLowerCase(encoding);
-        try {
-            Encoding cs = Encoding.forName(encoding);
-            if ("utf-16".equals(cs.getCanonName())
-                    || "utf-32".equals(cs.getCanonName())) {
-                swallowBom = false;
-            }
-            return whineAboutEncodingAndReturnActual(encoding, cs);
-        } catch (UnsupportedCharsetException e) {
-            err("Unsupported character encoding name: \u201C" + encoding
-                    + "\u201D. Will sniff.");
-            swallowBom = true;
-        }
-        return null; // keep the compiler happy
-    }
-
-    /**
-     * @param encoding
-     * @param cs
-     * @return
-     * @throws SAXException
-     */
-    private Encoding whineAboutEncodingAndReturnActual(String encoding,
-            Encoding cs) throws SAXException {
-        String canonName = cs.getCanonName();
-        if (!cs.isRegistered()) {
-            if (encoding.startsWith("x-")) {
-                err("The encoding \u201C"
-                        + encoding
-                        + "\u201D is not an IANA-registered encoding. (Charmod C022)");
-            } else {
-                err("The encoding \u201C"
-                        + encoding
-                        + "\u201D is not an IANA-registered encoding and did not use the \u201Cx-\u201D prefix. (Charmod C023)");
-            }
-        } else if (!canonName.equals(encoding)) {
-            err("The encoding \u201C"
-                    + encoding
-                    + "\u201D is not the preferred name of the character encoding in use. The preferred name is \u201C"
-                    + canonName + "\u201D. (Charmod C024)");
-        }
-        if (cs.isShouldNot()) {
-            warn("Authors should not use the character encoding \u201C"
-                    + encoding
-                    + "\u201D. It is recommended to use \u201CUTF-8\u201D.");
-        } else if (cs.isLikelyEbcdic()) {
-            warn("Authors should not use EBCDIC-based encodings. It is recommended to use \u201CUTF-8\u201D.");
-        } else if (cs.isObscure()) {
-            warn("The character encoding \u201C"
-                    + encoding
-                    + "\u201D is not widely supported. Better interoperability may be achieved by using \u201CUTF-8\u201D.");
-        }
-        Encoding actual = cs.getActualHtmlEncoding();
-        if (actual == null) {
-            return cs;
-        } else {
-            warn("Using \u201C" + actual.getCanonName()
-                    + "\u201D instead of the declared encoding \u201C"
-                    + encoding + "\u201D.");
-            return actual;
-        }
     }
 
     private boolean currentIsVoid() {
@@ -1582,7 +1244,18 @@ public final class Tokenizer implements Locator {
         return new String(b);
     }
 
-    private void runStates() throws SAXException, IOException {
+    protected void start() throws SAXException {
+        alreadyComplainedAboutNonAscii = false;
+        contentModelFlag = ContentModelFlag.PCDATA;
+        line = linePrev = 0;
+        col = colPrev = 1;
+        nextCharOnNewLine = true;
+        prev = '\u0000';
+        html4 = false;
+        alreadyWarnedAboutPrivateUseCharacters = false;
+        metaBoundaryPassed = false;
+        tokenHandler.start(this);
+        wantsComments = tokenHandler.wantsComments();
         switch (contentModelFlag) {
             case PCDATA:
                 stateSave = DATA;
@@ -1608,37 +1281,11 @@ public final class Tokenizer implements Locator {
         value = 0;
         inForeign = false; // XXX
         seenDigits = false;
-
-        char[] buffer = new char[2048];
-        UTF16Buffer bufr = new UTF16Buffer(buffer, 0, 0);
-        boolean lastWasCR = false;
-        int len = -1;
-        while ((len = reader.read(buffer)) != -1) {
-            assert len > 0;
-            int offset = 0;
-            int length = len;
-            if (swallowBom) {
-                swallowBom = false;
-                if (buffer[0] == '\uFEFF') {
-                    offset = 1;
-                    length--;
-                }
-            }
-            for (int i = 0; i < characterHandlers.length; i++) {
-                CharacterHandler ch = characterHandlers[i];
-                ch.characters(buffer, offset, length);
-            }
-            bufr.setOffset(offset);
-            bufr.setLength(length);
-            lastWasCR = normalizeLineBreaks(bufr, lastWasCR);
-            tokenizeBuffer(bufr);
-        }
-        eof();
     }
 
     // WARNING When editing this, makes sure the bytecode length shown by javap
     // stays under 8000 bytes!
-    private void tokenizeBuffer(UTF16Buffer buffer)
+    protected void tokenizeBuffer(UTF16Buffer buffer)
             throws SAXException, IOException {
         buf = buffer.getBuffer();
         int state = stateSave;
@@ -4702,7 +4349,7 @@ public final class Tokenizer implements Locator {
         }
     }
 
-    private void eof() throws SAXException, IOException {
+    protected void eof() throws SAXException, IOException {
         int state = stateSave;
         int returnState = returnStateSave;
 
@@ -5139,7 +4786,7 @@ public final class Tokenizer implements Locator {
         return; // eof() called in parent finally block
     }
 
-    private boolean normalizeLineBreaks(UTF16Buffer buffer, boolean lastWasCR) {
+    protected boolean normalizeLineBreaks(UTF16Buffer buffer, boolean lastWasCR) {
         char[] arr = buffer.getBuffer();
         int i = buffer.getOffset();
         int origEnd = buffer.getLength() + i;
@@ -5232,9 +4879,7 @@ public final class Tokenizer implements Locator {
         } else {
             if (confidence == Confidence.TENTATIVE
                     && !alreadyComplainedAboutNonAscii && c > '\u007F') {
-                err("The character encoding of the document was not explicit (assumed \u201C"
-                        + characterEncoding.getCanonName()
-                        + "\u201D) but the document contains non-ASCII.");
+                complainAboutNonAscii();
                 alreadyComplainedAboutNonAscii = true;
             }
             switch (c) {
@@ -5308,6 +4953,14 @@ public final class Tokenizer implements Locator {
         return c;
     }
 
+    protected void complainAboutNonAscii() throws SAXException {
+        err("The character encoding of the document was not explicit but the document contains non-ASCII.");
+    }
+    
+    public void internalEncodingDeclaration(String internalCharset) throws SAXException {
+        // XXX NOP
+    }
+
     /**
      * @param val
      * @throws SAXException
@@ -5318,107 +4971,5 @@ public final class Tokenizer implements Locator {
         } else {
             tokenHandler.characters(val, 0, val.length);
         }
-    }
-
-    /**
-     * Returns the mappingLangToXmlLang.
-     * 
-     * @return the mappingLangToXmlLang
-     */
-    public boolean isMappingLangToXmlLang() {
-        return mappingLangToXmlLang;
-    }
-
-    /**
-     * Sets the mappingLangToXmlLang.
-     * 
-     * @param mappingLangToXmlLang
-     *            the mappingLangToXmlLang to set
-     */
-    public void setMappingLangToXmlLang(boolean mappingLangToXmlLang) {
-        this.mappingLangToXmlLang = mappingLangToXmlLang;
-    }
-
-    public void setEncoding(Encoding encoding, Confidence confidence) {
-        this.characterEncoding = encoding;
-        if (confidence == Confidence.CERTAIN) {
-            becomeConfident();
-        }
-    }
-
-    void internalEncodingDeclaration(String internalCharset)
-            throws SAXException {
-        try {
-            internalCharset = Encoding.toAsciiLowerCase(internalCharset);
-            Encoding cs;
-            if ("utf-16".equals(internalCharset)
-                    || "utf-16be".equals(internalCharset)
-                    || "utf-16le".equals(internalCharset)) {
-                cs = Encoding.UTF8;
-                errTreeBuilder("Internal encoding declaration specified \u201C"
-                        + internalCharset
-                        + "\u201D which is not an ASCII superset. Continuing as if the encoding had been \u201Cutf-8\u201D.");
-            } else {
-                cs = Encoding.forName(internalCharset);
-            }
-            Encoding actual = cs.getActualHtmlEncoding();
-            if (actual == null) {
-                actual = cs;
-            }
-            if (!actual.isAsciiSuperset()) {
-                errTreeBuilder("Internal encoding declaration specified \u201C"
-                        + internalCharset
-                        + "\u201D which is not an ASCII superset. Not changing the encoding.");
-                return;
-            }
-            if (characterEncoding == null) {
-                // Reader case
-                return;
-            }
-            if (characterEncoding == actual) {
-                becomeConfident();
-                return;
-            }
-            if (confidence == Confidence.CERTAIN) {
-                errTreeBuilder("Internal encoding declaration \u201C"
-                        + internalCharset
-                        + "\u201D disagrees with the actual encoding of the document (\u201C"
-                        + characterEncoding.getCanonName() + "\u201D).");
-            } else {
-                Encoding newEnc = whineAboutEncodingAndReturnActual(
-                        internalCharset, cs);
-                errTreeBuilder("Changing character encoding \u201C"
-                        + internalCharset + "\u201D and reparsing.");
-                characterEncoding = newEnc;
-                throw new ReparseException();
-            }
-        } catch (UnsupportedCharsetException e) {
-            errTreeBuilder("Internal encoding declaration named an unsupported chararacter encoding \u201C"
-                    + internalCharset + "\u201D.");
-        }
-    }
-
-    /**
-     * 
-     */
-    private void becomeConfident() {
-        if (rewindableInputStream != null) {
-            rewindableInputStream.willNotRewind();
-        }
-        confidence = Confidence.CERTAIN;
-    }
-
-    private class ReparseException extends SAXException {
-
-    }
-
-    /**
-     * Sets the encoding sniffing heuristics.
-     * 
-     * @param heuristics
-     *            the heuristics to set
-     */
-    public void setHeuristics(Heuristics heuristics) {
-        this.heuristics = heuristics;
     }
 }

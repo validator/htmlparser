@@ -36,7 +36,7 @@ import nu.validator.htmlparser.common.DoctypeExpectation;
 import nu.validator.htmlparser.common.DocumentModeHandler;
 import nu.validator.htmlparser.common.Heuristics;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
-import nu.validator.htmlparser.impl.Tokenizer;
+import nu.validator.htmlparser.impl.Driver;
 import nu.xom.Builder;
 import nu.xom.Document;
 import nu.xom.Nodes;
@@ -80,7 +80,7 @@ import org.xml.sax.SAXParseException;
  */
 public class HtmlBuilder extends Builder {
 
-    private final Tokenizer tokenizer;
+    private final Driver tokenizer;
 
     private final XOMTreeBuilder xomTreeBuilder;
 
@@ -120,7 +120,7 @@ public class HtmlBuilder extends Builder {
         super();
         this.simpleNodeFactory = nodeFactory;
         this.xomTreeBuilder = new XOMTreeBuilder(nodeFactory);
-        this.tokenizer = new Tokenizer(xomTreeBuilder);
+        this.tokenizer = new Driver(xomTreeBuilder);
         this.tokenizer.setXmlnsPolicy(XmlViolationPolicy.ALTER_INFOSET);
         setXmlPolicy(xmlPolicy);
     }

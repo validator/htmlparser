@@ -35,7 +35,7 @@ import nu.validator.htmlparser.common.DoctypeExpectation;
 import nu.validator.htmlparser.common.DocumentModeHandler;
 import nu.validator.htmlparser.common.Heuristics;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
-import nu.validator.htmlparser.impl.Tokenizer;
+import nu.validator.htmlparser.impl.Driver;
 
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
@@ -91,7 +91,7 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
         return builder.getDOMImplementation();
     }
 
-    private final Tokenizer tokenizer;
+    private final Driver tokenizer;
 
     private final DOMTreeBuilder domTreeBuilder;
 
@@ -111,7 +111,7 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
             XmlViolationPolicy xmlPolicy) {
         this.implementation = implementation;
         this.domTreeBuilder = new DOMTreeBuilder(implementation);
-        this.tokenizer = new Tokenizer(domTreeBuilder);
+        this.tokenizer = new Driver(domTreeBuilder);
         this.tokenizer.setXmlnsPolicy(XmlViolationPolicy.ALTER_INFOSET);
         setXmlPolicy(xmlPolicy);
     }

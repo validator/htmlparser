@@ -29,7 +29,7 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 
 import nu.validator.htmlparser.common.Heuristics;
-import nu.validator.htmlparser.impl.HtmlInputStreamReader;
+import nu.validator.htmlparser.io.HtmlInputStreamReader;
 
 import org.xml.sax.SAXException;
 

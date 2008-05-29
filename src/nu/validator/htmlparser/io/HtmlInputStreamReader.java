@@ -32,12 +32,11 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
 import java.nio.charset.CodingErrorAction;
 
-
 import nu.validator.htmlparser.common.Heuristics;
 import nu.validator.htmlparser.extra.ChardetSniffer;
 import nu.validator.htmlparser.extra.IcuDetectorSniffer;
 import nu.validator.htmlparser.impl.Confidence;
-import nu.validator.htmlparser.impl.Tokenizer;
+import nu.validator.htmlparser.impl.Driver;
 
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.Locator;
@@ -67,7 +66,7 @@ public final class HtmlInputStreamReader extends Reader implements
 
     private final Locator locator;
 
-    private final Tokenizer tokenizer;
+    private final Driver tokenizer;
 
     private CharsetDecoder decoder = null;
 
@@ -109,7 +108,7 @@ public final class HtmlInputStreamReader extends Reader implements
      * @throws SAXException
      */
     public HtmlInputStreamReader(InputStream inputStream,
-            ErrorHandler errorHandler, Locator locator, Tokenizer tokenizer, Heuristics heuristics)
+            ErrorHandler errorHandler, Locator locator, Driver tokenizer, Heuristics heuristics)
             throws SAXException, IOException {
         this.inputStream = inputStream;
         this.errorHandler = errorHandler;
@@ -163,7 +162,7 @@ public final class HtmlInputStreamReader extends Reader implements
     }
 
     public HtmlInputStreamReader(InputStream inputStream,
-            ErrorHandler errorHandler, Locator locator, Tokenizer tokenizer,
+            ErrorHandler errorHandler, Locator locator, Driver tokenizer,
             Encoding encoding) throws SAXException, IOException {
         this.inputStream = inputStream;
         this.errorHandler = errorHandler;
@@ -181,7 +180,6 @@ public final class HtmlInputStreamReader extends Reader implements
 
     @Override
     public void close() throws IOException {
-        // TODO Auto-generated method stub
         inputStream.close();
     }
 

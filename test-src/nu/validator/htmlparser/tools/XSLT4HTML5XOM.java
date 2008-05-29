@@ -27,11 +27,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-import org.xml.sax.SAXException;
-
 import nu.validator.htmlparser.common.XmlViolationPolicy;
 import nu.validator.htmlparser.sax.HtmlSerializer;
-import nu.validator.htmlparser.test.SystemErrErrorHandler;
 import nu.validator.htmlparser.xom.HtmlBuilder;
 import nu.xom.Builder;
 import nu.xom.Document;
@@ -43,6 +40,8 @@ import nu.xom.ValidityException;
 import nu.xom.converters.SAXConverter;
 import nu.xom.xslt.XSLException;
 import nu.xom.xslt.XSLTransform;
+
+import org.xml.sax.SAXException;
 
 public class XSLT4HTML5XOM {
 

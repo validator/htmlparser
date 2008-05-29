@@ -25,8 +25,6 @@ package nu.validator.htmlparser.io;
 
 import java.io.IOException;
 import java.nio.charset.UnsupportedCharsetException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import nu.validator.htmlparser.impl.TreeBuilder;
 

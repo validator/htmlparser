@@ -34,7 +34,7 @@ import nu.validator.htmlparser.common.DocumentModeHandler;
 import nu.validator.htmlparser.common.Heuristics;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
 import nu.validator.htmlparser.impl.CharacterHandler;
-import nu.validator.htmlparser.impl.Tokenizer;
+import nu.validator.htmlparser.impl.Driver;
 import nu.validator.htmlparser.impl.TreeBuilder;
 import nu.validator.saxtree.Document;
 import nu.validator.saxtree.DocumentFragment;
@@ -86,7 +86,7 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 public class HtmlParser implements XMLReader {
 
-    private Tokenizer tokenizer = null;
+    private Driver tokenizer = null;
 
     private TreeBuilder<?> treeBuilder = null;
 
@@ -169,7 +169,7 @@ public class HtmlParser implements XMLReader {
                 this.treeBuilder = this.saxStreamer;
                 this.saxTreeBuilder = null;
             }
-            this.tokenizer = new Tokenizer(treeBuilder);
+            this.tokenizer = new Driver(treeBuilder);
             this.tokenizer.setErrorHandler(errorHandler);
             this.treeBuilder.setErrorHandler(treeBuilderErrorHandler);
             this.tokenizer.setCheckingNormalization(checkingNormalization);
