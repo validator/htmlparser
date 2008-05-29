@@ -107,10 +107,11 @@ private static String[] NOT_OBSCURE = { "big5", "big5hkscs", "eucjp",
         for (Map.Entry<String, Charset> entry : charsets.entrySet()) {
             Charset cs = entry.getValue();
             String name = toNameKey(cs.name());
+            String canonName = toAsciiLowerCase(cs.name());
             if (!isBanned(name)) {
                 name = name.intern();
                 boolean asciiSuperset = asciiMapsToBasicLatin(testBuf, cs);
-                Encoding enc = new Encoding(name, cs, asciiSuperset,
+                Encoding enc = new Encoding(canonName, cs, asciiSuperset,
                         isObscure(name), isShouldNot(name), isLikelyEbcdic(
                                 name, asciiSuperset));
                 encodings.add(enc);
