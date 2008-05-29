@@ -116,7 +116,7 @@ public class HtmlParser {
      */
     private void tokenize(String source, String context) throws SAXException {
         UTF16Buffer buffer = new UTF16Buffer(source.toCharArray(), 0, source.length());
-        tokenizer.normalizeLineBreaks(buffer, false);
+        tokenizer.normalizeLineBreaks(buffer, false); // XXX replace this with JS native call?
         domTreeBuilder.setFragmentContext(context);
         try {
             tokenizer.start();
