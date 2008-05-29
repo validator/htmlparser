@@ -451,12 +451,12 @@ public class Tokenizer implements Locator {
     /**
      * The current tag token name.
      */
-    protected ElementName tagName = null;
+    private ElementName tagName = null;
 
     /**
      * The current attribute name.
      */
-    protected String attributeName = null;
+    private String attributeName = null;
 
     /**
      * Whether comment tokens are emitted.
@@ -486,17 +486,17 @@ public class Tokenizer implements Locator {
     /**
      * The name of the current doctype token.
      */
-    protected String doctypeName;
+    private String doctypeName;
 
     /**
      * The public id of the current doctype token.
      */
-    protected String publicIdentifier;
+    private String publicIdentifier;
 
     /**
      * The system id of the current doctype token.
      */
-    protected String systemIdentifier;
+    private String systemIdentifier;
 
     /**
      * Used for NFC checking if non-<code>null</code>, source code capture,
@@ -525,7 +525,7 @@ public class Tokenizer implements Locator {
 
     private boolean html4ModeCompatibleWithXhtml1Schemata;
 
-    protected boolean mappingLangToXmlLang;
+    private boolean mappingLangToXmlLang;
 
     private XmlViolationPolicy bogusXmlnsPolicy;
 
@@ -540,7 +540,25 @@ public class Tokenizer implements Locator {
     public Tokenizer(TokenHandler tokenHandler) {
         this.tokenHandler = tokenHandler;
     }
+    
+    /**
+     * Returns the mappingLangToXmlLang.
+     * 
+     * @return the mappingLangToXmlLang
+     */
+    public boolean isMappingLangToXmlLang() {
+        return mappingLangToXmlLang;
+    }
 
+    /**
+     * Sets the mappingLangToXmlLang.
+     * 
+     * @param mappingLangToXmlLang
+     *            the mappingLangToXmlLang to set
+     */
+    public void setMappingLangToXmlLang(boolean mappingLangToXmlLang) {
+        this.mappingLangToXmlLang = mappingLangToXmlLang;
+    }
     /**
      * Sets the error handler.
      * 
@@ -1236,7 +1254,7 @@ public class Tokenizer implements Locator {
         return new String(b);
     }
 
-    protected void start() throws SAXException {
+    public void start() throws SAXException {
         alreadyComplainedAboutNonAscii = false;
         contentModelFlag = ContentModelFlag.PCDATA;
         line = linePrev = 0;
@@ -1277,7 +1295,7 @@ public class Tokenizer implements Locator {
 
     // WARNING When editing this, makes sure the bytecode length shown by javap
     // stays under 8000 bytes!
-    protected void tokenizeBuffer(UTF16Buffer buffer)
+    public void tokenizeBuffer(UTF16Buffer buffer)
             throws SAXException {
         buf = buffer.getBuffer();
         int state = stateSave;
@@ -4341,7 +4359,7 @@ public class Tokenizer implements Locator {
         }
     }
 
-    protected void eof() throws SAXException {
+    public void eof() throws SAXException {
         int state = stateSave;
         int returnState = returnStateSave;
 
@@ -4778,7 +4796,7 @@ public class Tokenizer implements Locator {
         return; // eof() called in parent finally block
     }
 
-    protected boolean normalizeLineBreaks(UTF16Buffer buffer, boolean lastWasCR) {
+    public boolean normalizeLineBreaks(UTF16Buffer buffer, boolean lastWasCR) {
         char[] arr = buffer.getBuffer();
         int i = buffer.getOffset();
         int origEnd = buffer.getLength() + i;
@@ -4963,5 +4981,14 @@ public class Tokenizer implements Locator {
         } else {
             tokenHandler.characters(val, 0, val.length);
         }
+    }
+
+    public void end() throws SAXException {
+        systemIdentifier = null;
+        publicIdentifier = null;
+        doctypeName = null;
+        tagName = null;
+        attributeName = null;
+        tokenHandler.eof();
     }
 }
