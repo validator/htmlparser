@@ -43,6 +43,8 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import nu.validator.htmlparser.common.CharacterHandler;
+import nu.validator.htmlparser.common.TokenHandler;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
 import nu.validator.htmlparser.extra.NormalizationChecker;
 

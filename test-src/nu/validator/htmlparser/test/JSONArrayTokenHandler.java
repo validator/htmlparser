@@ -23,9 +23,9 @@
 
 package nu.validator.htmlparser.test;
 
+import nu.validator.htmlparser.common.TokenHandler;
 import nu.validator.htmlparser.impl.ContentModelFlag;
 import nu.validator.htmlparser.impl.ElementName;
-import nu.validator.htmlparser.impl.TokenHandler;
 import nu.validator.htmlparser.impl.Tokenizer;
 
 import org.xml.sax.Attributes;
