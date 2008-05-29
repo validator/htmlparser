@@ -42,6 +42,7 @@ import java.util.regex.Pattern;
 import nu.validator.htmlparser.common.DoctypeExpectation;
 import nu.validator.htmlparser.common.DocumentMode;
 import nu.validator.htmlparser.common.DocumentModeHandler;
+import nu.validator.htmlparser.common.TokenHandler;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
 
 import org.xml.sax.Attributes;
@@ -756,7 +757,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     /**
-     * @see nu.validator.htmlparser.impl.TokenHandler#characters(char[], int,
+     * @see nu.validator.htmlparser.common.TokenHandler#characters(char[], int,
      *      int)
      */
     public final void characters(char[] buf, int start, int length)
@@ -4143,7 +4144,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     /**
-     * @see nu.validator.htmlparser.impl.TokenHandler#wantsComments()
+     * @see nu.validator.htmlparser.common.TokenHandler#wantsComments()
      */
     public boolean wantsComments() {
         return wantingComments;

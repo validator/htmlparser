@@ -21,7 +21,10 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-package nu.validator.htmlparser.impl;
+package nu.validator.htmlparser.common;
+
+import nu.validator.htmlparser.impl.ElementName;
+import nu.validator.htmlparser.impl.Tokenizer;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;

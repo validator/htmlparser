@@ -28,11 +28,11 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.UnsupportedCharsetException;
 
+import nu.validator.htmlparser.common.CharacterHandler;
 import nu.validator.htmlparser.common.Heuristics;
+import nu.validator.htmlparser.common.TokenHandler;
 import nu.validator.htmlparser.extra.NormalizationChecker;
-import nu.validator.htmlparser.impl.CharacterHandler;
 import nu.validator.htmlparser.impl.Confidence;
-import nu.validator.htmlparser.impl.TokenHandler;
 import nu.validator.htmlparser.impl.Tokenizer;
 import nu.validator.htmlparser.impl.TreeBuilder;
 import nu.validator.htmlparser.impl.UTF16Buffer;

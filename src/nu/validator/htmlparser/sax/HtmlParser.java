@@ -29,11 +29,11 @@ import java.net.URL;
 import java.util.LinkedList;
 import java.util.List;
 
+import nu.validator.htmlparser.common.CharacterHandler;
 import nu.validator.htmlparser.common.DoctypeExpectation;
 import nu.validator.htmlparser.common.DocumentModeHandler;
 import nu.validator.htmlparser.common.Heuristics;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
-import nu.validator.htmlparser.impl.CharacterHandler;
 import nu.validator.htmlparser.impl.TreeBuilder;
 import nu.validator.htmlparser.io.Driver;
 import nu.validator.saxtree.Document;
