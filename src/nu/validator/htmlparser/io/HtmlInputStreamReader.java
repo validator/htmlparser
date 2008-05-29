@@ -36,6 +36,7 @@ import nu.validator.htmlparser.common.Heuristics;
 import nu.validator.htmlparser.extra.ChardetSniffer;
 import nu.validator.htmlparser.extra.IcuDetectorSniffer;
 import nu.validator.htmlparser.impl.Confidence;
+import nu.validator.htmlparser.impl.Tokenizer;
 
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.Locator;
@@ -65,7 +66,7 @@ public final class HtmlInputStreamReader extends Reader implements
 
     private final Locator locator;
 
-    private final Driver tokenizer;
+    private final Tokenizer tokenizer;
 
     private CharsetDecoder decoder = null;
 
@@ -161,7 +162,7 @@ public final class HtmlInputStreamReader extends Reader implements
     }
 
     public HtmlInputStreamReader(InputStream inputStream,
-            ErrorHandler errorHandler, Locator locator, Driver tokenizer,
+            ErrorHandler errorHandler, Locator locator, Tokenizer tokenizer,
             Encoding encoding) throws SAXException, IOException {
         this.inputStream = inputStream;
         this.errorHandler = errorHandler;

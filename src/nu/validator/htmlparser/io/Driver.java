@@ -217,13 +217,8 @@ public class Driver extends Tokenizer {
             t = tr;
         } finally {
             try {
-                systemIdentifier = null;
-                publicIdentifier = null;
-                doctypeName = null;
-                tagName = null;
-                attributeName = null;
+                end();
                 characterEncoding = null;
-                tokenHandler.eof();
                 for (int i = 0; i < characterHandlers.length; i++) {
                     CharacterHandler ch = characterHandlers[i];
                     ch.end();
@@ -285,25 +280,6 @@ public class Driver extends Tokenizer {
             tokenizeBuffer(bufr);
         }
         eof();
-    }
-
-    /**
-     * Returns the mappingLangToXmlLang.
-     * 
-     * @return the mappingLangToXmlLang
-     */
-    public boolean isMappingLangToXmlLang() {
-        return mappingLangToXmlLang;
-    }
-
-    /**
-     * Sets the mappingLangToXmlLang.
-     * 
-     * @param mappingLangToXmlLang
-     *            the mappingLangToXmlLang to set
-     */
-    public void setMappingLangToXmlLang(boolean mappingLangToXmlLang) {
-        this.mappingLangToXmlLang = mappingLangToXmlLang;
     }
 
     public void setEncoding(Encoding encoding, Confidence confidence) {
