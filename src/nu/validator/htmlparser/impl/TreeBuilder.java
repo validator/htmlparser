@@ -4168,7 +4168,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
      * 
      * @return the errorHandler
      */
-    ErrorHandler getErrorHandler() {
+    public ErrorHandler getErrorHandler() {
         return errorHandler;
     }
 

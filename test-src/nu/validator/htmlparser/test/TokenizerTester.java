@@ -34,7 +34,7 @@ import java.io.Writer;
 
 import nu.validator.htmlparser.common.XmlViolationPolicy;
 import nu.validator.htmlparser.impl.ContentModelFlag;
-import nu.validator.htmlparser.impl.Driver;
+import nu.validator.htmlparser.io.Driver;
 
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;

@@ -21,7 +21,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-package nu.validator.htmlparser.impl;
+package nu.validator.htmlparser.io;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,8 +30,12 @@ import java.nio.charset.UnsupportedCharsetException;
 
 import nu.validator.htmlparser.common.Heuristics;
 import nu.validator.htmlparser.extra.NormalizationChecker;
-import nu.validator.htmlparser.io.Encoding;
-import nu.validator.htmlparser.io.HtmlInputStreamReader;
+import nu.validator.htmlparser.impl.CharacterHandler;
+import nu.validator.htmlparser.impl.Confidence;
+import nu.validator.htmlparser.impl.TokenHandler;
+import nu.validator.htmlparser.impl.Tokenizer;
+import nu.validator.htmlparser.impl.TreeBuilder;
+import nu.validator.htmlparser.impl.UTF16Buffer;
 import nu.validator.htmlparser.rewindable.RewindableInputStream;
 
 import org.xml.sax.ErrorHandler;

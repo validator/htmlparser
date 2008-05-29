@@ -36,7 +36,6 @@ import nu.validator.htmlparser.common.Heuristics;
 import nu.validator.htmlparser.extra.ChardetSniffer;
 import nu.validator.htmlparser.extra.IcuDetectorSniffer;
 import nu.validator.htmlparser.impl.Confidence;
-import nu.validator.htmlparser.impl.Driver;
 
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.Locator;

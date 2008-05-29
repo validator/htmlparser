@@ -29,10 +29,10 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 
-import nu.validator.htmlparser.impl.Driver;
 import nu.validator.htmlparser.impl.ElementName;
 import nu.validator.htmlparser.impl.TokenHandler;
 import nu.validator.htmlparser.impl.Tokenizer;
+import nu.validator.htmlparser.io.Driver;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.ErrorHandler;
