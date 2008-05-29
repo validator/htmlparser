@@ -35,7 +35,6 @@
 
 package nu.validator.htmlparser.impl;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.SortedSet;
@@ -1288,7 +1287,7 @@ public class Tokenizer implements Locator {
     // WARNING When editing this, makes sure the bytecode length shown by javap
     // stays under 8000 bytes!
     protected void tokenizeBuffer(UTF16Buffer buffer)
-            throws SAXException, IOException {
+            throws SAXException {
         buf = buffer.getBuffer();
         int state = stateSave;
         int returnState = returnStateSave;
@@ -4351,7 +4350,7 @@ public class Tokenizer implements Locator {
         }
     }
 
-    protected void eof() throws SAXException, IOException {
+    protected void eof() throws SAXException {
         int state = stateSave;
         int returnState = returnStateSave;
 
