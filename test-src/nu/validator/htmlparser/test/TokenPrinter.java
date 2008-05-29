@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 
+import nu.validator.htmlparser.impl.Driver;
 import nu.validator.htmlparser.impl.ElementName;
 import nu.validator.htmlparser.impl.TokenHandler;
 import nu.validator.htmlparser.impl.Tokenizer;
@@ -137,7 +138,7 @@ public class TokenPrinter implements TokenHandler, ErrorHandler {
 
     public static void main(String[] args) throws SAXException, IOException {
         TokenPrinter printer = new TokenPrinter(new OutputStreamWriter(System.out, "UTF-8")); 
-        Tokenizer tokenizer = new Tokenizer(printer);
+        Driver tokenizer = new Driver(printer);
         tokenizer.setErrorHandler(printer);
         File file = new File(args[0]);
         InputSource is = new InputSource(new FileInputStream(file));

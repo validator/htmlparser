@@ -34,7 +34,7 @@ import java.io.Writer;
 
 import nu.validator.htmlparser.common.XmlViolationPolicy;
 import nu.validator.htmlparser.impl.ContentModelFlag;
-import nu.validator.htmlparser.impl.Tokenizer;
+import nu.validator.htmlparser.impl.Driver;
 
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -86,14 +86,14 @@ public class TokenizerTester {
 
     private final JSONArrayTokenHandler tokenHandler;
 
-    private final Tokenizer tokenizer;
+    private final Driver tokenizer;
 
     private final Writer writer;
 
     private TokenizerTester(InputStream stream) throws TokenStreamException,
             RecognitionException, UnsupportedEncodingException {
         tokenHandler = new JSONArrayTokenHandler();
-        tokenizer = new Tokenizer(tokenHandler);
+        tokenizer = new Driver(tokenHandler);
         tokenizer.setErrorHandler(tokenHandler);
         writer = new OutputStreamWriter(System.out, "UTF-8");
         JSONParser jsonParser = new JSONParser(new InputStreamReader(stream,

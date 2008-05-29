@@ -23,6 +23,10 @@
 
 package nu.validator.htmlparser.dom;
 
+import nu.validator.htmlparser.common.DocumentMode;
+import nu.validator.htmlparser.common.XmlViolationPolicy;
+import nu.validator.htmlparser.impl.TreeBuilder;
+
 import org.w3c.dom.DOMException;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
@@ -31,12 +35,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
-
-import nu.validator.htmlparser.common.DocumentMode;
-import nu.validator.htmlparser.common.DocumentModeHandler;
-import nu.validator.htmlparser.common.XmlViolationPolicy;
-import nu.validator.htmlparser.impl.TreeBuilder;
 
 class DOMTreeBuilder extends TreeBuilder<Element> {
 

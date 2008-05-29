@@ -35,7 +35,6 @@ import nu.validator.htmlparser.common.XmlViolationPolicy;
 import nu.validator.htmlparser.sax.HtmlParser;
 
 import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 public class TreeTester {

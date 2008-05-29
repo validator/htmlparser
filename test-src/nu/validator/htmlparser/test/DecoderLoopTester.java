@@ -27,13 +27,12 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CodingErrorAction;
 
 import nu.validator.htmlparser.common.Heuristics;
-import nu.validator.htmlparser.impl.Encoding;
-import nu.validator.htmlparser.impl.HtmlInputStreamReader;
+import nu.validator.htmlparser.io.Encoding;
+import nu.validator.htmlparser.io.HtmlInputStreamReader;
 
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
