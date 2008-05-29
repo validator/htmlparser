@@ -35,7 +35,7 @@ import nu.validator.htmlparser.common.DoctypeExpectation;
 import nu.validator.htmlparser.common.DocumentModeHandler;
 import nu.validator.htmlparser.common.Heuristics;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
-import nu.validator.htmlparser.impl.Driver;
+import nu.validator.htmlparser.io.Driver;
 
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
