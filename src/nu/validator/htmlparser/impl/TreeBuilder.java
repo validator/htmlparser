@@ -36,8 +36,6 @@
 package nu.validator.htmlparser.impl;
 
 import java.util.Arrays;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import nu.validator.htmlparser.common.DoctypeExpectation;
 import nu.validator.htmlparser.common.DocumentMode;
@@ -2400,7 +2398,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         return true;
     }
     
-    private static final Pattern CONTENT = Pattern.compile("^[^;]*;[\\x09\\x0A\\x0B\\x0C\\x0D\\x20]*[cC][hH][aA][rR][sS][eE][tT][\\x09\\x0A\\x0B\\x0C\\x0D\\x20]*=[\\x09\\x0A\\x0B\\x0C\\x0D\\x20]*(?:(?:([^'\"\\x09\\x0A\\x0B\\x0C\\x0D\\x20][^\\x09\\x0A\\x0B\\x0C\\x0D\\x20]*)(?:[\\x09\\x0A\\x0B\\x0C\\x0D\\x20].*)?)|(?:\"([^\"]*)\".*)|(?:'([^']*)'.*))$", Pattern.DOTALL);
+    private enum CharsetState {
+        INITIAL, C, H, A, R, S, E, T, EQUALS, SINGLE_QUOTED, DOUBLE_QUOTED, UNQUOTED        
+    }
     
     /**
      * @return 
@@ -2408,17 +2408,155 @@ public abstract class TreeBuilder<T> implements TokenHandler {
      * @throws StopSniffingException
      */
     public static String extractCharsetFromContent(CharSequence attributeValue) {
-        Matcher m = CONTENT.matcher(attributeValue);
-        if (m.matches()) {
-            String value = null;
-            for (int i = 1; i < 4; i++) {
-                value = m.group(i);
-                if (value != null) {
-                    return value;
-                }
+        CharsetState charsetState = CharsetState.INITIAL;
+        StringBuilder sb = new StringBuilder();
+        boolean canReturn = false;
+        
+        for (int i = 0; i < attributeValue.length(); i++) {
+            char c = attributeValue.charAt(i);
+            switch (charsetState) {
+                case INITIAL:
+                    switch (c) {
+                        case 'c':
+                        case 'C':
+                            charsetState = CharsetState.C;
+                            continue;
+                        default:
+                            continue;
+                    }
+                case C:
+                    switch (c) {
+                        case 'h':
+                        case 'H':
+                            charsetState = CharsetState.H;
+                            continue;
+                        default:
+                            charsetState = CharsetState.INITIAL;
+                            continue;
+                    }
+                case H:
+                    switch (c) {
+                        case 'a':
+                        case 'A':
+                            charsetState = CharsetState.A;
+                            continue;
+                        default:
+                            charsetState = CharsetState.INITIAL;
+                            continue;
+                    }
+                case A:
+                    switch (c) {
+                        case 'r':
+                        case 'R':
+                            charsetState = CharsetState.R;
+                            continue;
+                        default:
+                            charsetState = CharsetState.INITIAL;
+                            continue;
+                    }
+                case R:
+                    switch (c) {
+                        case 's':
+                        case 'S':
+                            charsetState = CharsetState.S;
+                            continue;
+                        default:
+                            charsetState = CharsetState.INITIAL;
+                            continue;
+                    }
+                case S:
+                    switch (c) {
+                        case 'e':
+                        case 'E':
+                            charsetState = CharsetState.E;
+                            continue;
+                        default:
+                            charsetState = CharsetState.INITIAL;
+                            continue;
+                    }
+                case E:
+                    switch (c) {
+                        case 't':
+                        case 'T':
+                            charsetState = CharsetState.T;
+                            continue;
+                        default:
+                            charsetState = CharsetState.INITIAL;
+                            continue;
+                    }
+                case T:
+                    switch (c) {
+                        case '\t':
+                        case '\n':
+                        case '\u000B':
+                        case '\u000C':
+                        case '\r':
+                        case ' ':
+                            continue;
+                        case '=':
+                            charsetState = CharsetState.EQUALS;
+                            continue;
+                        default:
+                            return null;
+                    }
+                case EQUALS:
+                    switch (c) {
+                        case '\t':
+                        case '\n':
+                        case '\u000B':
+                        case '\u000C':
+                        case '\r':
+                        case ' ':
+                            continue;
+                        case '\'':
+                            charsetState = CharsetState.SINGLE_QUOTED;
+                            continue;
+                        case '\"':
+                            charsetState = CharsetState.DOUBLE_QUOTED;
+                            continue;
+                        default:
+                            sb.append(c);
+                            canReturn = true;
+                            charsetState = CharsetState.UNQUOTED;
+                            continue;
+                    }
+                case SINGLE_QUOTED:
+                    switch (c) {
+                        case '\'':
+                            return sb.toString();
+                        default:
+                            sb.append(c);
+                        continue;
+                    }
+                case DOUBLE_QUOTED:
+                    switch (c) {
+                        case '\"':
+                            return sb.toString();
+                        default:
+                            sb.append(c);
+                        continue;
+                    }
+                case UNQUOTED:
+                    switch (c) {
+                        case '\t':
+                        case '\n':
+                        case '\u000B':
+                        case '\u000C':
+                        case '\r':
+                        case ' ':
+                        case ';':
+                            return sb.toString();
+                        default:
+                            sb.append(c);
+                            continue;
+                    }
             }
         }
-        return null;
+        if (canReturn) {
+            return sb.toString();
+        } else {
+            return null;
+        }
     }
 
     private void checkMetaCharset(Attributes attributes) throws SAXException {
