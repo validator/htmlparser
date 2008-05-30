@@ -23,9 +23,6 @@
 
 package nu.validator.htmlparser.gwt;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-
 import nu.validator.htmlparser.impl.Tokenizer;
 import nu.validator.htmlparser.impl.UTF16Buffer;
 
