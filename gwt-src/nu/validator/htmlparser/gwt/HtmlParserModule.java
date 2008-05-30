@@ -50,8 +50,8 @@ public class HtmlParserModule implements EntryPoint {
     }
     
     private static native void exportEntryPoints() /*-{
-        $wnd.parseHtmlDocument = @nu.validator.htmlparser.gwt.HtmlParserModule::parseHtmlDocument(Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;Lcom/google/gwt/core/client/JavaScriptObject;)(source, document, errorHandler);
-        $wnd.parseHtmlFragment = @nu.validator.htmlparser.gwt.HtmlParserModule::parseHtmlFragment(Ljava/lang/String;Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;Lcom/google/gwt/core/client/JavaScriptObject;)(source, context, document, errorHandler);
+        $wnd.parseHtmlDocument = @nu.validator.htmlparser.gwt.HtmlParserModule::parseHtmlDocument(Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;Lcom/google/gwt/core/client/JavaScriptObject;);
+        $wnd.parseHtmlFragment = @nu.validator.htmlparser.gwt.HtmlParserModule::parseHtmlFragment(Ljava/lang/String;Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;Lcom/google/gwt/core/client/JavaScriptObject;);
     }-*/;
 
     
