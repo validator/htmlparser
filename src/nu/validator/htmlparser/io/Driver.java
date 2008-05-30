@@ -281,6 +281,16 @@ public class Driver extends Tokenizer {
         }
         eof();
     }
+    
+    protected void setCharacterHandlerErrorHandler(ErrorHandler eh) {
+        for (int i = 0; i < characterHandlers.length; i++) {
+            CharacterHandler ch = characterHandlers[i];
+            if (ch instanceof NormalizationChecker) {
+                NormalizationChecker nc = (NormalizationChecker) ch;
+                nc.setErrorHandler(eh);
+            }
+        }
+    }
 
     public void setEncoding(Encoding encoding, Confidence confidence) {
         this.characterEncoding = encoding;

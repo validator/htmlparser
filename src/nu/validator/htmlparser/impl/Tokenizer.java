@@ -43,7 +43,6 @@ import java.util.TreeSet;
 import nu.validator.htmlparser.common.CharacterHandler;
 import nu.validator.htmlparser.common.TokenHandler;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
-import nu.validator.htmlparser.extra.NormalizationChecker;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.ErrorHandler;
@@ -566,13 +565,11 @@ public class Tokenizer implements Locator {
      */
     public void setErrorHandler(ErrorHandler eh) {
         this.errorHandler = eh;
-        for (int i = 0; i < characterHandlers.length; i++) {
-            CharacterHandler ch = characterHandlers[i];
-            if (ch instanceof NormalizationChecker) {
-                NormalizationChecker nc = (NormalizationChecker) ch;
-                nc.setErrorHandler(eh);
-            }
-        }
+        setCharacterHandlerErrorHandler(eh);
+    }
+
+    protected void setCharacterHandlerErrorHandler(ErrorHandler eh) {
+
     }
 
     /**

@@ -1,0 +1,8 @@
+<module>
+	<inherits name="com.google.gwt.core.Core"/>
+	<source path="common"/>
+	<source path="impl"/>	
+	<source path="gwt"/>
+	<entry-point class="nu.validator.htmlparser.gwt.HtmlParserModule"/>
+	<add-linker name="sso"/>		
+</module>
