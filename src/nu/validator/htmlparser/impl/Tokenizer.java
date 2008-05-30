@@ -1337,6 +1337,15 @@ public class Tokenizer implements Locator {
         end = offset + buffer.getLength();
         boolean reconsume = false;
         stateLoop(state, c, reconsume, returnState);
+        if (pos == end) {
+            // exiting due to end of buffer
+            buffer.setOffset(end);
+            buffer.setLength(0);
+        } else {
+            offset = pos + 1;
+            buffer.setOffset(offset);
+            buffer.setLength(end - offset);            
+        }
     }
 
     private void stateLoop(int state, char c, boolean reconsume, int returnState)
