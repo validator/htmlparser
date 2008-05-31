@@ -4791,7 +4791,7 @@ public class Tokenizer implements Locator {
                     handleNcrValue(returnState);
                     state = returnState;
                     continue;
-                case DATA: // list explicitly due to GWT bug #2069
+                case DATA:
                 default:
                     break eofloop;
             }
