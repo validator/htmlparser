@@ -47,7 +47,7 @@ public interface TokenHandler {
      * @param self the <code>Tokenizer</code>.
      * @throws SAXException if something went wrong
      */
-    public void start(Tokenizer self) throws SAXException;
+    public void startTokenization(Tokenizer self) throws SAXException;
 
     /**
      * If this handler implementation cares about comments, return <code>true</code>.
@@ -115,5 +115,12 @@ public interface TokenHandler {
      * @throws SAXException if something went wrong
      */
     public void eof() throws SAXException;
+
+    /**
+     * The perform final cleanup.
+     * 
+     * @throws SAXException if something went wrong
+     */
+    public void endTokenization() throws SAXException;
     
 }

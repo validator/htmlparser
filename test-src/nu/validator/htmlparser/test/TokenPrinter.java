@@ -103,14 +103,12 @@ public class TokenPrinter implements TokenHandler, ErrorHandler {
     public void eof() throws SAXException {
     try {
         writer.write("E\n");
-        writer.flush();
-        writer.close();
     } catch (IOException e) {
         throw new SAXException(e);
     }        
     }
 
-    public void start(Tokenizer self) throws SAXException {
+    public void startTokenization(Tokenizer self) throws SAXException {
 
     }
 
@@ -178,6 +176,15 @@ public class TokenPrinter implements TokenHandler, ErrorHandler {
             writer.write("W ");
             writer.write(exception.getMessage());
             writer.write("\n");
+        } catch (IOException e) {
+            throw new SAXException(e);
+        }        
+    }
+
+    public void endTokenization() throws SAXException {
+        try {
+            writer.flush();
+            writer.close();
         } catch (IOException e) {
             throw new SAXException(e);
         }        

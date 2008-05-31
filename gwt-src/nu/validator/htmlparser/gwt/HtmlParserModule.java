@@ -34,12 +34,18 @@ public class HtmlParserModule implements EntryPoint {
             node.removeChild(node.lastChild);
         }
     }-*/;
+
+    private static native void alert(String str) /*-{
+        $wnd.alert(str);
+    }-*/;
     
     @SuppressWarnings("unused")
     private static JavaScriptObject parseHtmlDocument(String source, JavaScriptObject document, JavaScriptObject errorHandler) throws SAXException {
         zapChildren(document);
         HtmlParser parser = new HtmlParser(document);
-        return parser.parse(source);
+        JavaScriptObject rv = parser.parse(source);
+alert("Done");
+        return rv;
     }
 
     @SuppressWarnings("unused")

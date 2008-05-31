@@ -411,7 +411,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         errorHandler.warning(spe);
     }
 
-    public final void start(Tokenizer self) throws SAXException {
+    public final void startTokenization(Tokenizer self) throws SAXException {
         tokenizer = self;
         stack = new StackNode[64];
         listOfActiveFormattingElements = new StackNode[64];
@@ -1117,7 +1117,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     public final void eof() throws SAXException {
-        try {
             flushCharacters();
             switch (foreignFlag) {
                 case IN_FOREIGN:
@@ -1246,11 +1245,17 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 htmlClosed(stack[0].node);
             }
             /* Stop parsing. */
-        } finally {
-            stack = null;
-            listOfActiveFormattingElements = null;
-            end();
-        }
+    }
+
+    
+    
+    /**
+     * @see nu.validator.htmlparser.common.TokenHandler#endTokenization()
+     */
+    public final void endTokenization() throws SAXException {
+        stack = null;
+        listOfActiveFormattingElements = null;
+        end();
     }
 
     public final void startTag(ElementName elementName, Attributes attributes,
