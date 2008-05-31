@@ -113,7 +113,7 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
         flushCharacters();
     }
 
-    public void start(Tokenizer self) throws SAXException {
+    public void startTokenization(Tokenizer self) throws SAXException {
         array = new JSONArray();
         self.setContentModelFlag(contentModelFlag, contentModelElement);
     }
@@ -159,6 +159,10 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
      */
     public JSONArray getArray() {
         return array;
+    }
+
+    public void endTokenization() throws SAXException {
+        
     }
 
 }

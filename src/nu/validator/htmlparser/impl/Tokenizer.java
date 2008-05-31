@@ -1261,7 +1261,7 @@ public class Tokenizer implements Locator {
         html4 = false;
         alreadyWarnedAboutPrivateUseCharacters = false;
         metaBoundaryPassed = false;
-        tokenHandler.start(this);
+        tokenHandler.startTokenization(this);
         wantsComments = tokenHandler.wantsComments();
         switch (contentModelFlag) {
             case PCDATA:
@@ -4791,6 +4791,7 @@ public class Tokenizer implements Locator {
                     handleNcrValue(returnState);
                     state = returnState;
                     continue;
+                case DATA: // list explicitly due to GWT bug #2069
                 default:
                     break eofloop;
             }
@@ -4799,7 +4800,8 @@ public class Tokenizer implements Locator {
         /*
          * EOF Emit an end-of-file token.
          */
-        return; // eof() called in parent finally block
+        tokenHandler.eof();
+        return;
     }
 
     public boolean normalizeLineBreaks(UTF16Buffer buffer, boolean lastWasCR) {
@@ -4995,6 +4997,6 @@ public class Tokenizer implements Locator {
         doctypeName = null;
         tagName = null;
         attributeName = null;
-        tokenHandler.eof();
+        tokenHandler.endTokenization();
     }
 }
