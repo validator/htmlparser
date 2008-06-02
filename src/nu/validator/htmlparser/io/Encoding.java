@@ -123,7 +123,7 @@ private static String[] NOT_OBSCURE = { "big5", "big5hkscs", "eucjp",
         }
         // Overwrite possible overlapping aliases with the real things--just in case
         for (Encoding encoding : encodings) {
-            encodingByCookedName.put(encoding.getCanonName(), encoding);
+            encodingByCookedName.put(toNameKey(encoding.getCanonName()), encoding);
         }
         UTF8 = forName("utf-8");
         UTF16 = forName("utf-16");
@@ -227,7 +227,7 @@ private static String[] NOT_OBSCURE = { "big5", "big5hkscs", "eucjp",
     private static boolean isLikelyEbcdic(String canonName,
             boolean asciiSuperset) {
         if (!asciiSuperset) {
-            return (canonName.startsWith("cp") || canonName.startsWith("ibm") || canonName.startsWith("x-ibm"));
+            return (canonName.startsWith("cp") || canonName.startsWith("ibm") || canonName.startsWith("xibm"));
         } else {
             return false;
         }
