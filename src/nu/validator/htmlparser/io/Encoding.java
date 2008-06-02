@@ -111,7 +111,7 @@ private static String[] NOT_OBSCURE = { "big5", "big5hkscs", "eucjp",
             if (!isBanned(name)) {
                 name = name.intern();
                 boolean asciiSuperset = asciiMapsToBasicLatin(testBuf, cs);
-                Encoding enc = new Encoding(canonName, cs, asciiSuperset,
+                Encoding enc = new Encoding(canonName.intern(), cs, asciiSuperset,
                         isObscure(name), isShouldNot(name), isLikelyEbcdic(
                                 name, asciiSuperset));
                 encodings.add(enc);
@@ -184,6 +184,9 @@ private static String[] NOT_OBSCURE = { "big5", "big5hkscs", "eucjp",
     }
 
     private static boolean isBanned(String lowerCasePreferredIanaName) {
+        if (lowerCasePreferredIanaName.startsWith("xibm")) {
+            return true;
+        }
         return (Arrays.binarySearch(BANNED, lowerCasePreferredIanaName) > -1);
     }
 
