@@ -568,7 +568,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     } else {
                                         if ("-//W3C//DTD HTML 4.01//EN".equals(publicIdentifier)) {
                                             if (!"http://www.w3.org/TR/html4/strict.dtd".equals(systemIdentifier)) {
-                                                warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification (\u201Chttp://www.w3.org/TR/html4/strict.dtd\u201D).");
+                                                warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification. Expected \u201C<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\u201D.");
                                             }
                                         } else {
                                             err("The doctype was not the HTML 4.01 Strict doctype. Expected \u201C<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\u201D.");
@@ -594,7 +594,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         if ("-//W3C//DTD HTML 4.01 Transitional//EN".equals(publicIdentifier)
                                                 && systemIdentifier != null) {
                                             if (!"http://www.w3.org/TR/html4/loose.dtd".equals(systemIdentifier)) {
-                                                warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification (\u201Chttp://www.w3.org/TR/html4/loose.dtd\u201D).");
+                                                warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification. Expected \u201C<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\u201D.");
                                             }
                                         } else {
                                             err("The doctype was not a non-quirky HTML 4.01 Transitional doctype. Expected \u201C<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\u201D.");
@@ -629,7 +629,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         if ("-//W3C//DTD HTML 4.01 Transitional//EN".equals(publicIdentifier)) {
                                             tokenizer.turnOnAdditionalHtml4Errors();
                                             if (!"http://www.w3.org/TR/html4/loose.dtd".equals(systemIdentifier)) {
-                                                warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification (\u201Chttp://www.w3.org/TR/html4/loose.dtd\u201D).");
+                                                warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification. Expected \u201C<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\u201D.");
                                             }
                                         } else {
                                             err("Almost standards mode doctype. Expected e.g. \u201C<!DOCTYPE html>\u201D.");
@@ -642,7 +642,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         if ("-//W3C//DTD HTML 4.01//EN".equals(publicIdentifier)) {
                                             tokenizer.turnOnAdditionalHtml4Errors();
                                             if (!"http://www.w3.org/TR/html4/strict.dtd".equals(systemIdentifier)) {
-                                                warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification (\u201Chttp://www.w3.org/TR/html4/strict.dtd\u201D).");
+                                                warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification. Expected \u201C<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\u201D.");
                                             }
                                         } else {
                                             if (!(publicIdentifier == null && systemIdentifier == null)) {
