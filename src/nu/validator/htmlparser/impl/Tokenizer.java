@@ -2081,9 +2081,11 @@ public class Tokenizer implements Locator {
                                  * U+0022 QUOTATION MARK (") U+0027 APOSTROPHE
                                  * (') U+003D EQUALS SIGN (=) Parse error.
                                  */
-                                err("Saw \u201C"
-                                        + c
-                                        + "\u201D when expecting an attribute name. Probable cause: Attribute name missing.");
+                                if (c == '=') {
+                                    err("Saw \u201C=\u201D when expecting an attribute name. Probable cause: Attribute name missing.");
+                                } else {
+                                    err("Saw \u201C" + c + "\u201D when expecting an attribute name. Probable cause: \u201C=\u201D missing immediately before.");                                    
+                                }
                                 /*
                                  * Treat it as per the "anything else" entry
                                  * below.
@@ -2187,7 +2189,7 @@ public class Tokenizer implements Locator {
                                  * (') Parse error.
                                  */
                                 err("Quote \u201C" + c
-                                        + "\u201D in attribute name. Probable cause: \u201C=\u201D missing immediately before.");
+                                        + "\u201D in attribute name. Probable cause: Matching quote missing somewhere earlier.");
                                 /*
                                  * Treat it as per the "anything else" entry
                                  * below.
