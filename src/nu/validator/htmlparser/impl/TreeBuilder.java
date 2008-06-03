@@ -36,6 +36,9 @@
 package nu.validator.htmlparser.impl;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import nu.validator.htmlparser.common.DoctypeExpectation;
 import nu.validator.htmlparser.common.DocumentMode;
@@ -344,6 +347,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     private char[] charBuffer;
 
     private int charBufferLen = 0;
+    
+    private Map<String, LocatorImpl> idLocations = new HashMap<String, LocatorImpl>();
 
     protected TreeBuilder(XmlViolationPolicy streamabilityViolationPolicy,
             boolean coalescingText) {
@@ -1260,6 +1265,20 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     public final void startTag(ElementName elementName, Attributes attributes,
             boolean selfClosing) throws SAXException {
+        if (errorHandler != null) {
+            // ID uniqueness
+            String id = getIdValue(attributes);
+            if (id != null) {
+                LocatorImpl oldLoc = idLocations.get(id);
+                if (oldLoc != null) {
+                    err("Duplicate ID \u201C" + id + "\u201D.");
+                    errorHandler.warning(new SAXParseException("The first occurrence of ID \u201C" + id + "\u201D was here.", oldLoc));
+                } else {
+                    idLocations.put(id, new LocatorImpl(tokenizer));
+                }
+            }
+        }
+        
         int eltPos;
         needToDropLF = false;
         boolean needsPostProcessing = false;
@@ -2370,6 +2389,17 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (selfClosing) {
             err("Self-closing syntax (\u201C/>\u201D) used on a non-void HTML element.");
         }
+    }
+
+    private String getIdValue(Attributes attributes) {
+        int len = attributes.getLength();
+        for (int i = 0; i < len; i++) {
+            if (attributes.getType(i) == "ID") {
+                String rv = attributes.getValue(i);
+                return rv.length() == 0 ? null : rv;
+            }
+        }
+        return null;
     }
 
     private Attributes adjustForeignAttributes(Attributes attributes) {
