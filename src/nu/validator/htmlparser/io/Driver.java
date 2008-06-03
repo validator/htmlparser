@@ -306,10 +306,11 @@ public class Driver extends Tokenizer {
             if ("utf-16".equals(internalCharset)
                     || "utf-16be".equals(internalCharset)
                     || "utf-16le".equals(internalCharset)) {
-                cs = Encoding.UTF8;
                 errTreeBuilder("Internal encoding declaration specified \u201C"
                         + internalCharset
                         + "\u201D which is not an ASCII superset. Continuing as if the encoding had been \u201Cutf-8\u201D.");
+                cs = Encoding.UTF8;
+                internalCharset = "utf-8";
             } else {
                 cs = Encoding.forName(internalCharset);
             }
@@ -331,7 +332,7 @@ public class Driver extends Tokenizer {
                 becomeConfident();
                 return;
             }
-            if (confidence == Confidence.CERTAIN) {
+            if (confidence == Confidence.CERTAIN && actual != characterEncoding) {
                 errTreeBuilder("Internal encoding declaration \u201C"
                         + internalCharset
                         + "\u201D disagrees with the actual encoding of the document (\u201C"
