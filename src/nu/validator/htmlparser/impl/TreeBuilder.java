@@ -369,7 +369,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
      */
     protected final void fatal() throws SAXException {
         SAXParseException spe = new SAXParseException(
-                "Last error required non-streamable recovery.", tokenizer);
+                "Cannot recover after last error. Any further errors will be ignored.", tokenizer);
         if (errorHandler != null) {
             errorHandler.fatalError(spe);
         }
