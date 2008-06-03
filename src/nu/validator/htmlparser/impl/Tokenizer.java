@@ -1071,7 +1071,7 @@ public class Tokenizer implements Locator {
 
     private int emitCurrentTagToken(boolean selfClosing) throws SAXException {
         if (selfClosing && endTag) {
-            err("Stray \u201C/\u201D in an end tag.");
+            err("Stray \u201C/\u201D at the end of an end tag.");
         }
         if (namePolicy != XmlViolationPolicy.ALLOW) {
             if (tagName.custom && !NCName.isNCName(tagName.name)) {
@@ -1710,7 +1710,7 @@ public class Tokenizer implements Locator {
                         /*
                          * U+003E GREATER-THAN SIGN (>) Parse error.
                          */
-                        err("Bad character \u201C>\u201D in the tag open state.");
+                        err("Saw \u201C<>\u201D. Probable causes: Unescaped logical not (try \u201C&lt;&gt;\u201D) or mistyped start tag.");
                         /*
                          * Emit a U+003C LESS-THAN SIGN character token and a
                          * U+003E GREATER-THAN SIGN character token.
@@ -1724,7 +1724,7 @@ public class Tokenizer implements Locator {
                         /*
                          * U+003F QUESTION MARK (?) Parse error.
                          */
-                        err("Bad character \u201C?\u201D in the tag open state.");
+                        err("Saw \u201C<?\u201D. Probable cause: Attempt to use an XML processing instructions in HTML. (XML processing instructions are not supported in HTML.)");
                         /*
                          * Switch to the bogus comment state.
                          */
@@ -1737,7 +1737,7 @@ public class Tokenizer implements Locator {
                          * Anything else Parse error.
                          */
                         err("Bad character \u201C" + c
-                                + "\u201D in the tag open state.");
+                                + "\u201D after \u201C<\u201D. Probable cause: Unescaped \u201C<\u201D. Try escaping it as \u201C&lt;\u201D.");
                         /*
                          * Emit a U+003C LESS-THAN SIGN character token
                          */
@@ -1938,7 +1938,7 @@ public class Tokenizer implements Locator {
                         continue stateloop;
                     } else if (c == '>') {
                         /* U+003E GREATER-THAN SIGN (>) Parse error. */
-                        err("Saw \u201C</>\u201D.");
+                        err("Saw \u201C</>\u201D. Probable causes: Unescaped \u201C<\u201D (escaped as \u201C&lt;\u201D) or mistyped end tag.");
                         /*
                          * Switch to the data state.
                          */
@@ -2083,7 +2083,7 @@ public class Tokenizer implements Locator {
                                  */
                                 err("Saw \u201C"
                                         + c
-                                        + "\u201D when expecting an attribute name.");
+                                        + "\u201D when expecting an attribute name. Probable cause: Attribute name missing.");
                                 /*
                                  * Treat it as per the "anything else" entry
                                  * below.
@@ -2187,7 +2187,7 @@ public class Tokenizer implements Locator {
                                  * (') Parse error.
                                  */
                                 err("Quote \u201C" + c
-                                        + "\u201D in attribute name.");
+                                        + "\u201D in attribute name. Probable cause: \u201C=\u201D missing immediately before.");
                                 /*
                                  * Treat it as per the "anything else" entry
                                  * below.
@@ -2374,7 +2374,7 @@ public class Tokenizer implements Locator {
                                 /*
                                  * U+003D EQUALS SIGN (=) Parse error.
                                  */
-                                err("\u201C=\u201D in an unquoted attribute value.");
+                                err("\u201C=\u201D in an unquoted attribute value. Probable cause: Stray duplicate equals sign.");
                                 /*
                                  * Treat it as per the "anything else" entry
                                  * below.
@@ -2550,7 +2550,7 @@ public class Tokenizer implements Locator {
                             case '\'':
                             case '=':
                                 if (c == '<') {
-                                    warn("\u201C<\u201D in an unquoted attribute value. This does not end the tag.");
+                                    warn("\u201C<\u201D in an unquoted attribute value. This does not end the tag. Probable cause: Missing \u201C>\u201D immediately before.");
                                 } else {
                                     /*
                                      * U+0022 QUOTATION MARK (") U+0027
@@ -2559,7 +2559,7 @@ public class Tokenizer implements Locator {
                                      */
                                     err("\u201C"
                                             + c
-                                            + "\u201D in an unquoted attribute value.");
+                                            + "\u201D in an unquoted attribute value. Probable causes: Attributes running together or a URL query string in an unquoted attribute value.");
                                     /*
                                      * Treat it as per the "anything else" entry
                                      * below.
@@ -2838,7 +2838,7 @@ public class Tokenizer implements Locator {
                             /*
                              * U+003E GREATER-THAN SIGN (>) Parse error.
                              */
-                            err("Premature end of comment.");
+                            err("Premature end of comment. Use \u201C-->\u201D to end a comment properly.");
                             /* Emit the comment token. */
                             emitComment();
                             /*
@@ -2880,7 +2880,7 @@ public class Tokenizer implements Locator {
                             /*
                              * U+003E GREATER-THAN SIGN (>) Parse error.
                              */
-                            err("Premature end of comment.");
+                            err("Premature end of comment. Use \u201C-->\u201D to end a comment properly.");
                             /* Emit the comment token. */
                             emitComment();
                             /*
@@ -2984,7 +2984,7 @@ public class Tokenizer implements Locator {
                                 continue stateloop;
                             case '-':
                                 /* U+002D HYPHEN-MINUS (-) Parse error. */
-                                err("Consecutive hyphens did not terminate a comment.");
+                                err("Consecutive hyphens did not terminate a comment. \u201C--\u201D is not permitted inside a comment, but e.g. \u201C- -\u201D is.");
                                 /*
                                  * Append a U+002D HYPHEN-MINUS (-) character to
                                  * the comment token's data.
@@ -2998,7 +2998,7 @@ public class Tokenizer implements Locator {
                                 /*
                                  * Anything else Parse error.
                                  */
-                                err("Consecutive hyphens did not terminate a comment.");
+                                err("Consecutive hyphens did not terminate a comment. \u201C--\u201D is not permitted inside a comment, but e.g. \u201C- -\u201D is.");
                                 /*
                                  * Append two U+002D HYPHEN-MINUS (-) characters
                                  * and the input character to the comment
@@ -3995,7 +3995,7 @@ public class Tokenizer implements Locator {
                         /*
                          * If no match can be made, then this is a parse error.
                          */
-                        err("Text after \u201C&\u201D did not match an entity name.");
+                        err("Text after \u201C&\u201D did not match an entity name. Probable cause: \u201C&\u201D should have been escaped as \u201C&amp;\u201D.");
                         emitOrAppendStrBuf(returnState);
                         cstart = pos;
                         state = returnState;
@@ -4693,7 +4693,7 @@ public class Tokenizer implements Locator {
                         /*
                          * If no match can be made, then this is a parse error.
                          */
-                        err("Text after \u201C&\u201D did not match an entity name.");
+                        err("Text after \u201C&\u201D did not match an entity name. Probable cause: \u201C&\u201D should have been escaped as \u201C&amp;\201D.");
                         emitOrAppendStrBuf(returnState);
                         state = returnState;
                         continue eofloop;
