@@ -525,7 +525,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                 case HTML:
                                     if (isQuirky(name, publicIdentifierLC,
                                             systemIdentifierLC, forceQuirks)) {
-                                        err("Quirky doctype.");
+                                        err("Quirky doctype. Expected \u201C<!DOCTYPE html>\u201D.");
                                         documentModeInternal(
                                                 DocumentMode.QUIRKS_MODE,
                                                 publicIdentifier,
@@ -533,14 +533,14 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     } else if (isAlmostStandards(
                                             publicIdentifierLC,
                                             systemIdentifierLC)) {
-                                        err("Almost standards mode doctype.");
+                                        err("Almost standards mode doctype. Expected \u201C<!DOCTYPE html>\u201D.");
                                         documentModeInternal(
                                                 DocumentMode.ALMOST_STANDARDS_MODE,
                                                 publicIdentifier,
                                                 systemIdentifier, false);
                                     } else {
                                         if (!(publicIdentifier == null && systemIdentifier == null)) {
-                                            err("Legacy doctype.");
+                                            err("Legacy doctype. Expected \u201C<!DOCTYPE html>\u201D.");
                                         }
                                         documentModeInternal(
                                                 DocumentMode.STANDARDS_MODE,
@@ -552,7 +552,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     tokenizer.turnOnAdditionalHtml4Errors();
                                     if (isQuirky(name, publicIdentifierLC,
                                             systemIdentifierLC, forceQuirks)) {
-                                        err("Quirky doctype.");
+                                        err("Quirky doctype. Expected \u201C<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\u201D.");
                                         documentModeInternal(
                                                 DocumentMode.QUIRKS_MODE,
                                                 publicIdentifier,
@@ -560,7 +560,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     } else if (isAlmostStandards(
                                             publicIdentifierLC,
                                             systemIdentifierLC)) {
-                                        err("Almost standards mode doctype.");
+                                        err("Almost standards mode doctype. Expected \u201C<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\u201D.");
                                         documentModeInternal(
                                                 DocumentMode.ALMOST_STANDARDS_MODE,
                                                 publicIdentifier,
@@ -568,10 +568,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     } else {
                                         if ("-//W3C//DTD HTML 4.01//EN".equals(publicIdentifier)) {
                                             if (!"http://www.w3.org/TR/html4/strict.dtd".equals(systemIdentifier)) {
-                                                warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification.");
+                                                warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification (\u201Chttp://www.w3.org/TR/html4/strict.dtd\u201D).");
                                             }
                                         } else {
-                                            err("The doctype was not the HTML 4.01 Strict doctype.");
+                                            err("The doctype was not the HTML 4.01 Strict doctype. Expected \u201C<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\u201D.");
                                         }
                                         documentModeInternal(
                                                 DocumentMode.STANDARDS_MODE,
@@ -583,7 +583,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     tokenizer.turnOnAdditionalHtml4Errors();
                                     if (isQuirky(name, publicIdentifierLC,
                                             systemIdentifierLC, forceQuirks)) {
-                                        err("Quirky doctype.");
+                                        err("Quirky doctype. Expected \u201C<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\u201D.");
                                         documentModeInternal(
                                                 DocumentMode.QUIRKS_MODE,
                                                 publicIdentifier,
@@ -594,17 +594,17 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         if ("-//W3C//DTD HTML 4.01 Transitional//EN".equals(publicIdentifier)
                                                 && systemIdentifier != null) {
                                             if (!"http://www.w3.org/TR/html4/loose.dtd".equals(systemIdentifier)) {
-                                                warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification.");
+                                                warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification (\u201Chttp://www.w3.org/TR/html4/loose.dtd\u201D).");
                                             }
                                         } else {
-                                            err("The doctype was not a non-quirky HTML 4.01 Transitional doctype.");
+                                            err("The doctype was not a non-quirky HTML 4.01 Transitional doctype. Expected \u201C<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\u201D.");
                                         }
                                         documentModeInternal(
                                                 DocumentMode.ALMOST_STANDARDS_MODE,
                                                 publicIdentifier,
                                                 systemIdentifier, true);
                                     } else {
-                                        err("The doctype was not the HTML 4.01 Transitional doctype.");
+                                        err("The doctype was not the HTML 4.01 Transitional doctype. Expected \u201C<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\u201D.");
                                         documentModeInternal(
                                                 DocumentMode.STANDARDS_MODE,
                                                 publicIdentifier,
@@ -618,7 +618,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     }
                                     if (isQuirky(name, publicIdentifierLC,
                                             systemIdentifierLC, forceQuirks)) {
-                                        err("Quirky doctype.");
+                                        err("Quirky doctype. Expected e.g. \u201C<!DOCTYPE html>\u201D.");
                                         documentModeInternal(
                                                 DocumentMode.QUIRKS_MODE,
                                                 publicIdentifier,
@@ -629,10 +629,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         if ("-//W3C//DTD HTML 4.01 Transitional//EN".equals(publicIdentifier)) {
                                             tokenizer.turnOnAdditionalHtml4Errors();
                                             if (!"http://www.w3.org/TR/html4/loose.dtd".equals(systemIdentifier)) {
-                                                warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification.");
+                                                warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification (\u201Chttp://www.w3.org/TR/html4/loose.dtd\u201D).");
                                             }
                                         } else {
-                                            err("Almost standards mode doctype.");
+                                            err("Almost standards mode doctype. Expected e.g. \u201C<!DOCTYPE html>\u201D.");
                                         }
                                         documentModeInternal(
                                                 DocumentMode.ALMOST_STANDARDS_MODE,
@@ -642,11 +642,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         if ("-//W3C//DTD HTML 4.01//EN".equals(publicIdentifier)) {
                                             tokenizer.turnOnAdditionalHtml4Errors();
                                             if (!"http://www.w3.org/TR/html4/strict.dtd".equals(systemIdentifier)) {
-                                                warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification.");
+                                                warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification (\u201Chttp://www.w3.org/TR/html4/strict.dtd\u201D).");
                                             }
                                         } else {
                                             if (!(publicIdentifier == null && systemIdentifier == null)) {
-                                                err("Legacy doctype.");
+                                                err("Legacy doctype. Expected e.g. \u201C<!DOCTYPE html>\u201D.");
                                             }
                                         }
                                         documentModeInternal(
@@ -896,8 +896,20 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             /*
                              * Parse error.
                              */
-                            if (doctypeExpectation != DoctypeExpectation.NO_DOCTYPE_ERRORS) {
-                                err("Non-space characters found without seeing a doctype first.");
+                            switch (doctypeExpectation) {
+                                case AUTO:
+                                    err("Non-space characters found without seeing a doctype first. Expected e.g. \u201C<!DOCTYPE html>\u201D.");
+                                    break;
+                                case HTML:
+                                    err("Non-space characters found without seeing a doctype first. Expected \u201C<!DOCTYPE html>\u201D.");
+                                    break;
+                                case HTML401_STRICT:
+                                    err("Non-space characters found without seeing a doctype first. Expected \u201C<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\u201D.");
+                                    break;
+                                case HTML401_TRANSITIONAL:
+                                    err("Non-space characters found without seeing a doctype first. Expected \u201C<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\u201D.");
+                                    break;
+                                case NO_DOCTYPE_ERRORS:
                             }
                             /*
                              * 
@@ -1138,8 +1150,20 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         /*
                          * Parse error.
                          */
-                        if (doctypeExpectation != DoctypeExpectation.NO_DOCTYPE_ERRORS) {
-                            err("End of file seen without seeing a doctype first.");
+                        switch (doctypeExpectation) {
+                            case AUTO:
+                                err("End of file seen without seeing a doctype first. Expected e.g. \u201C<!DOCTYPE html>\u201D.");
+                                break;
+                            case HTML:
+                                err("End of file seen without seeing a doctype first. Expected \u201C<!DOCTYPE html>\u201D.");
+                                break;
+                            case HTML401_STRICT:
+                                err("End of file seen without seeing a doctype first. Expected \u201C<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\u201D.");
+                                break;
+                            case HTML401_TRANSITIONAL:
+                                err("End of file seen without seeing a doctype first. Expected \u201C<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\u201D.");
+                                break;
+                            case NO_DOCTYPE_ERRORS:
                         }
                         /*
                          * 
@@ -2146,8 +2170,20 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             /*
                              * Parse error.
                              */
-                            if (doctypeExpectation != DoctypeExpectation.NO_DOCTYPE_ERRORS) {
-                                err("Start tag seen without seeing a doctype first.");
+                            switch (doctypeExpectation) {
+                                case AUTO:
+                                    err("Start tag seen without seeing a doctype first. Expected e.g. \u201C<!DOCTYPE html>\u201D.");
+                                    break;
+                                case HTML:
+                                    err("Start tag seen without seeing a doctype first. Expected \u201C<!DOCTYPE html>\u201D.");
+                                    break;
+                                case HTML401_STRICT:
+                                    err("Start tag seen without seeing a doctype first. Expected \u201C<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\u201D.");
+                                    break;
+                                case HTML401_TRANSITIONAL:
+                                    err("Start tag seen without seeing a doctype first. Expected \u201C<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\u201D.");
+                                    break;
+                                case NO_DOCTYPE_ERRORS:
                             }
                             /*
                              * 
@@ -3160,8 +3196,20 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     /*
                      * Parse error.
                      */
-                    if (doctypeExpectation != DoctypeExpectation.NO_DOCTYPE_ERRORS) {
-                        err("End tag seen without seeing a doctype first.");
+                    switch (doctypeExpectation) {
+                        case AUTO:
+                            err("End tag seen without seeing a doctype first. Expected e.g. \u201C<!DOCTYPE html>\u201D.");
+                            break;
+                        case HTML:
+                            err("End tag seen without seeing a doctype first. Expected \u201C<!DOCTYPE html>\u201D.");
+                            break;
+                        case HTML401_STRICT:
+                            err("End tag seen without seeing a doctype first. Expected \u201C<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\u201D.");
+                            break;
+                        case HTML401_TRANSITIONAL:
+                            err("End tag seen without seeing a doctype first. Expected \u201C<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\u201D.");
+                            break;
+                        case NO_DOCTYPE_ERRORS:
                     }
                     /*
                      * 
