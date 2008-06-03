@@ -1710,7 +1710,7 @@ public class Tokenizer implements Locator {
                         /*
                          * U+003E GREATER-THAN SIGN (>) Parse error.
                          */
-                        err("Saw \u201C<>\u201D. Probable cause: Mistyped start tag.");
+                        err("Saw \u201C<>\u201D. Probable causes: Unescaped \u201C<\u201D (escape as \u201C&lt;\u201D) or mistyped start tag.");
                         /*
                          * Emit a U+003C LESS-THAN SIGN character token and a
                          * U+003E GREATER-THAN SIGN character token.
@@ -1938,7 +1938,7 @@ public class Tokenizer implements Locator {
                         continue stateloop;
                     } else if (c == '>') {
                         /* U+003E GREATER-THAN SIGN (>) Parse error. */
-                        err("Saw \u201C</>\u201D. Probable cause: Mistyped end tag.");
+                        err("Saw \u201C</>\u201D. Probable causes: Unescaped \u201C<\u201D (escape as \u201C&lt;\u201D) or mistyped end tag.");
                         /*
                          * Switch to the data state.
                          */
