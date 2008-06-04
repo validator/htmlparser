@@ -4974,7 +4974,7 @@ public class Tokenizer implements Locator {
     }
 
     protected void complainAboutNonAscii() throws SAXException {
-        err("No explicit character encoding declaration has been seen but non-ASCII content was seen.");
+        err("The character encoding of the document was not explicit but the document contains non-ASCII.");
     }
     
     public void internalEncodingDeclaration(String internalCharset) throws SAXException {
