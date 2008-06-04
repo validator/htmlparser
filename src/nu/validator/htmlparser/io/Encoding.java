@@ -51,29 +51,26 @@ public class Encoding {
 
     public static final Encoding WINDOWS1252;
 
-    private static String[] SHOULD_NOT = { "jisx02121990", "utf32",
-        "utf32be", "utf32le", "xjis0208" };
+    private static String[] SHOULD_NOT = { "jisx02121990", "xjis0208" };
 
-private static String[] BANNED = { "bocu1", "cesu8", "compoundtext",
-        "macarabic", "maccentraleurroman", "maccroatian", "maccyrillic",
-        "macdevanagari", "macfarsi", "macgreek", "macgujarati",
-        "macgurmukhi", "machebrew", "macicelandic", "macroman",
-        "macromanian", "macthai", "macturkish", "macukranian", "scsu",
-        "utf7", "ximapmailboxname", "xjisautodetect",
-        "xutf16bebom", "xutf16lebom", "xutf32bebom",
-        "xutf32lebom", "xutf16oppositeendian",
-        "xutf16platformendian", "xutf32oppositeendian",
-        "xutf32platformendian" };
+    private static String[] BANNED = { "bocu1", "cesu8", "compoundtext",
+            "macarabic", "maccentraleurroman", "maccroatian", "maccyrillic",
+            "macdevanagari", "macfarsi", "macgreek", "macgujarati",
+            "macgurmukhi", "machebrew", "macicelandic", "macroman",
+            "macromanian", "macthai", "macturkish", "macukranian", "scsu",
+            "utf32", "utf32be", "utf32le", "utf7", "ximapmailboxname",
+            "xjisautodetect", "xutf16bebom", "xutf16lebom", "xutf32bebom",
+            "xutf32lebom", "xutf16oppositeendian", "xutf16platformendian",
+            "xutf32oppositeendian", "xutf32platformendian" };
 
-private static String[] NOT_OBSCURE = { "big5", "big5hkscs", "eucjp",
-        "euckr", "gb18030", "gbk", "iso2022jp", "iso2022kr",
-        "iso88591", "iso885913", "iso885915", "iso88592",
-        "iso88593", "iso88594", "iso88595", "iso88596",
-        "iso88597", "iso88598", "iso88599", "koi8r", "shiftjis",
-        "tis620", "usascii", "utf16", "utf16be", "utf16le", "utf8",
-        "windows1250", "windows1251", "windows1252", "windows1253",
-        "windows1254", "windows1255", "windows1256", "windows1257",
-        "windows1258" };
+    private static String[] NOT_OBSCURE = { "big5", "big5hkscs", "eucjp",
+            "euckr", "gb18030", "gbk", "iso2022jp", "iso2022kr", "iso88591",
+            "iso885913", "iso885915", "iso88592", "iso88593", "iso88594",
+            "iso88595", "iso88596", "iso88597", "iso88598", "iso88599",
+            "koi8r", "shiftjis", "tis620", "usascii", "utf16", "utf16be",
+            "utf16le", "utf8", "windows1250", "windows1251", "windows1252",
+            "windows1253", "windows1254", "windows1255", "windows1256",
+            "windows1257", "windows1258" };
 
     private static Map<String, Encoding> encodingByCookedName = new HashMap<String, Encoding>();
 
@@ -111,9 +108,9 @@ private static String[] NOT_OBSCURE = { "big5", "big5hkscs", "eucjp",
             if (!isBanned(name)) {
                 name = name.intern();
                 boolean asciiSuperset = asciiMapsToBasicLatin(testBuf, cs);
-                Encoding enc = new Encoding(canonName.intern(), cs, asciiSuperset,
-                        isObscure(name), isShouldNot(name), isLikelyEbcdic(
-                                name, asciiSuperset));
+                Encoding enc = new Encoding(canonName.intern(), cs,
+                        asciiSuperset, isObscure(name), isShouldNot(name),
+                        isLikelyEbcdic(name, asciiSuperset));
                 encodings.add(enc);
                 Set<String> aliases = cs.aliases();
                 for (String alias : aliases) {
@@ -121,9 +118,11 @@ private static String[] NOT_OBSCURE = { "big5", "big5hkscs", "eucjp",
                 }
             }
         }
-        // Overwrite possible overlapping aliases with the real things--just in case
+        // Overwrite possible overlapping aliases with the real things--just in
+        // case
         for (Encoding encoding : encodings) {
-            encodingByCookedName.put(toNameKey(encoding.getCanonName()), encoding);
+            encodingByCookedName.put(toNameKey(encoding.getCanonName()),
+                    encoding);
         }
         UTF8 = forName("utf-8");
         UTF16 = forName("utf-16");
@@ -167,8 +166,7 @@ private static String[] NOT_OBSCURE = { "big5", "big5hkscs", "eucjp",
         } catch (UnsupportedCharsetException e) {
         }
         try {
-            encodingByCookedName.put("ks_c_5601-1987",
-                    forName("windows-949"));
+            encodingByCookedName.put("ks_c_5601-1987", forName("windows-949"));
         } catch (UnsupportedCharsetException e) {
         }
     }
