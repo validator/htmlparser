@@ -475,7 +475,7 @@ public class Driver extends Tokenizer {
             }
 
     protected void complainAboutNonAscii() throws SAXException {
-        err("The character encoding of the document was not explicit (assumed \u201C"
+        err("No explicit character encoding declaration has been seen yet (assumed \u201C"
                 + characterEncoding.getCanonName()
                 + "\u201D) but the document contains non-ASCII.");
     }
