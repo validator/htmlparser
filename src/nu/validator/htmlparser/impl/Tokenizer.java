@@ -1724,7 +1724,7 @@ public class Tokenizer implements Locator {
                         /*
                          * U+003F QUESTION MARK (?) Parse error.
                          */
-                        err("Saw \u201C<?\u201D. Probable cause: Attempt to use an XML processing instructions in HTML. (XML processing instructions are not supported in HTML.)");
+                        err("Saw \u201C<?\u201D. Probable cause: Attempt to use an XML processing instruction in HTML. (XML processing instructions are not supported in HTML.)");
                         /*
                          * Switch to the bogus comment state.
                          */
