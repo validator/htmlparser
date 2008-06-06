@@ -3632,7 +3632,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             stack = newStack;
         }
         stack[currentPtr] = node;
-        elementPushed("http://www.w3.org/1999/xhtml", node.name, node.node);
+        elementPushed(node.ns, node.name, node.node);
     }
 
     private void append(StackNode<T> node) {
@@ -4029,7 +4029,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         StackNode<T> node = stack[currentPtr];
         assert clearLastStackSlot();
         currentPtr--;
-        elementPopped("http://www.w3.org/1999/xhtml", node.name, node.node);
+        elementPopped(node.ns, node.name, node.node);
     }
 
     private void appendCharMayFoster(char[] buf, int i) throws SAXException {
@@ -4247,8 +4247,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         StackNode<T> current = stack[currentPtr];
         detachFromParentAndAppendToNewParent(elt, current.node);
         if (conformingAndStreaming || nonConformingAndStreaming) {
-            elementPushed("http://www.w3.org/1999/xhtml", name, (T) attributes);
-            elementPopped("http://www.w3.org/1999/xhtml", name, null);
+            elementPushed(ns, name, (T) attributes);
+            elementPopped(ns, name, null);
         }
     }
 
