@@ -3042,9 +3042,15 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         case SELECT:
                         case TABLE:
                         case TEXTAREA: // XXX??
-                        case NOSCRIPT: // XXX??
                             err("Stray end tag \u201C" + name + "\u201D.");
                             break endtagloop;
+                        case NOSCRIPT: 
+                            if (scriptingEnabled) {
+                                err("Stray end tag \u201Cnoscript\u201D.");
+                                break endtagloop;
+                            } else {
+                                // fall through
+                            }
                         default:
                             if (isCurrent(name)) {
                                 pop();
