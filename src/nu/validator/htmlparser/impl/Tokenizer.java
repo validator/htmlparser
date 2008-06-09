@@ -4433,7 +4433,7 @@ public class Tokenizer implements Locator {
                 case AFTER_ATTRIBUTE_VALUE_QUOTED:
                 case SELF_CLOSING_START_TAG:
                     /* EOF Parse error. */
-                    err("Saw end of file without the previous tag ending with \u201C>\u201C.");
+                    err("Saw end of file without the previous tag ending with \u201C>\u201D.");
                     /*
                      * Emit the current tag token.
                      */
@@ -4460,7 +4460,7 @@ public class Tokenizer implements Locator {
                 case AFTER_ATTRIBUTE_NAME:
                 case BEFORE_ATTRIBUTE_VALUE:
                     /* EOF Parse error. */
-                    err("Saw end of file without the previous tag ending with \u201C>\u201C.");
+                    err("Saw end of file without the previous tag ending with \u201C>\u201D.");
                     /*
                      * Emit the current tag token.
                      */
