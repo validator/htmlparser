@@ -22,7 +22,10 @@
 
 package nu.validator.htmlparser.impl;
 
+import nu.validator.htmlparser.annotation.Local;
+
 public class StringUtil {
+    
     public static boolean equalsIgnoreAsciiCase(CharSequence one, CharSequence other) {
         if (other == null && one == null) {
             return true;
@@ -62,5 +65,9 @@ public class StringUtil {
             buf[i] = c;
         }
         return new String(buf);
+    }
+    
+    public static @Local String localNameFromBuffer(char[] buf, int length) {
+        return new String(buf, 0, length).intern();
     }
 }
