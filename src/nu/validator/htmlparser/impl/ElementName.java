@@ -39,16 +39,16 @@ public class ElementName {
     public static final ElementName LABEL = new ElementName("label", TreeBuilder.OTHER, false, false, false);
     public final String name;   
     public final String camelCaseName;
-    public final int magic;
+    public final int group;
     public final boolean special;
     public final boolean scoping;
     public final boolean fosterParenting;
     public final boolean custom;
     
-    private ElementName(String camelCaseName, int magic, boolean special, boolean scoping, boolean fosterParenting) {
+    private ElementName(String camelCaseName, int group, boolean special, boolean scoping, boolean fosterParenting) {
         this.name = camelCaseName.toLowerCase().intern();
         this.camelCaseName = camelCaseName.intern();
-        this.magic = magic;
+        this.group = group;
         this.special = special;
         this.scoping = scoping;
         this.fosterParenting = fosterParenting;
@@ -58,7 +58,7 @@ public class ElementName {
     ElementName(String name) {
         this.name = name;
         this.camelCaseName = name;
-        this.magic = TreeBuilder.OTHER;
+        this.group = TreeBuilder.OTHER;
         this.special = false;
         this.scoping = false;
         this.fosterParenting = false;
@@ -463,6 +463,21 @@ public class ElementName {
      */
     @Override
     public String toString() {
-        return name;
+        return "new ElementName(\"" + name + "\", \"" + camelCaseName + "\", " + treeBuilderGroupToName();
+    }
+    
+    private String treeBuilderGroupToName() {
+        switch (group) {
+            
+        }
+        return null;
+    }
+
+    /**
+     * Regenerate self
+     * @param args
+     */
+    public static void main(String[] args) {
+        
     }
 }

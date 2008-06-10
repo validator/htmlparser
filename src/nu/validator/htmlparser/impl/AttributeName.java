@@ -22,27 +22,76 @@
 
 package nu.validator.htmlparser.impl;
 
-public class AttributeName {
+import nu.validator.htmlparser.annotation.IdType;
+import nu.validator.htmlparser.annotation.Local;
+import nu.validator.htmlparser.annotation.NsUri;
+import nu.validator.htmlparser.annotation.QName;
+
+public final class AttributeName {
+    
+    private static final @NsUri String[] ALL_NO_NS = {"", "", "", ""};
+
+    private static final boolean [] ALL_NCNAME = {true, true, true, true};
+
+    private static @Local String[] SAME_LOWER_CASE_LOCAL(@Local String name) {
+        @Local String[] rv = new String[4];
+        rv[0] = name;
+        rv[1] = name;
+        rv[2] = name;
+        rv[3] = name;
+        return rv;
+    }
+
+    private static @QName String[] SAME_LOWER_CASE_QNAME(@Local String name) {
+        @QName String[] rv = new String[4];
+        rv[0] = name;
+        rv[1] = name;
+        rv[2] = name;
+        rv[3] = name;
+        return rv;
+    }
+    
+    public static final AttributeName ID = new AttributeName("ID", ALL_NO_NS, SAME_LOWER_CASE_LOCAL("id"), SAME_LOWER_CASE_QNAME("id"), ALL_NCNAME, false);
+    
+    
     
     public static final int HTML = 0;
 
-    public static final int HTML_LANG = 1;
+    public static final int MATHML = 1;
+    
+    public static final int SVG = 2;
 
-    public static final int MATHML = 2;
+    public static final int HTML_LANG = 3;
     
-    public static final int SVG = 3;
+    private final @IdType String type;
     
-    private final String type;
+    private final @NsUri String[] uri;
     
-    private final String[] uri;
+    private final @Local String[] local;
     
-    private final String[] local;
-    
-    private final String[] qName;
+    private final @QName String[] qName;
     
     private final boolean[] ncname;
     
     private final boolean xmlns;
+    
+    /**
+     * @param type
+     * @param uri
+     * @param local
+     * @param name
+     * @param ncname
+     * @param xmlns
+     */
+    private AttributeName(@IdType String type, @NsUri String[] uri, @Local String[] local,
+            @QName String[] qName, boolean[] ncname, boolean xmlns) {
+        this.type = type;
+        this.uri = uri;
+        this.local = local;
+        this.qName = qName;
+        this.ncname = ncname;
+        this.xmlns = xmlns;
+    }
     
     public String getType(int mode) {
         return type;
@@ -59,81 +108,13 @@ public class AttributeName {
     public String getQName(int mode) {
         return qName[mode];
     }
+
+    public boolean isNcName(int mode) {
+        return ncname[mode];
+    }
     
     public boolean isXmlns() {
         return xmlns;
     }
     
-    private AttributeName(String camelCaseQname, boolean builtIn) {
-        this.xmlns = false;
-        this.ncname = new boolean[4];
-        this.uri = new String[4];
-        this.local = new String[4];
-        this.qName = new String[4];
-        this.type = ("id".equals(camelCaseQname)) ? "ID" : "CDATA";
-
-        String lowerCaseQname = camelCaseQname.toLowerCase().intern();
-        
-        for (int i = 0; i < 4; i++) {
-            ncname[i] = true;
-        }
-        for (int i = 0; i < 4; i++) {
-            uri[i] = "";
-        }
-        this.local[HTML] = lowerCaseQname;
-        this.local[HTML_LANG] = lowerCaseQname;
-        this.local[MATHML] = lowerCaseQname;
-        this.local[SVG] = camelCaseQname;
-        this.qName[HTML] = lowerCaseQname;
-        this.qName[HTML_LANG] = lowerCaseQname;
-        this.qName[MATHML] = lowerCaseQname;
-        this.qName[SVG] = camelCaseQname;
-    }
-    
-    private AttributeName() {
-        this.xmlns = false;
-        this.ncname = new boolean[4];
-        this.uri = new String[4];
-        this.local = new String[4];
-        this.qName = new String[4];
-        this.type = "CDATA";
-        
-        for (int i = 0; i < 4; i++) {
-            ncname[i] = true;
-        }
-        
-        this.uri[HTML] = "";
-        this.local[HTML_LANG] = "http://www.w3.org/XML/1998/namespace";
-        this.uri[MATHML] = "";
-        this.uri[SVG] = "";
-        this.local[HTML] = "lang";
-        this.local[HTML_LANG] = "lang";
-        this.local[MATHML] = "lang";
-        this.local[SVG] = "lang";
-        this.qName[HTML] = "lang";
-        this.qName[HTML_LANG] = "lang";
-        this.qName[MATHML] = "lang";
-        this.qName[SVG] = "lang";
-    }
-    
-    private AttributeName(String qualified, String prefix, String local, String ns) {
-        this.ncname = new boolean[4];
-        this.uri = new String[4];
-        this.local = new String[4];
-        this.qName = new String[4];
-        this.type = "CDATA";
-        this.xmlns = ("xmlns" == prefix || "xmlns" == local);
-        
-        for (int i = 0; i < 4; i++) {
-            qName[i] = qualified;
-        }
-        this.uri[HTML] = "";
-        this.uri[HTML_LANG] = "";
-        this.uri[MATHML] = ns;
-        this.uri[SVG] = ns;
-        this.local[HTML] = qualified;
-        this.local[HTML_LANG] = qualified;
-        this.local[MATHML] = local;
-        this.local[SVG] = local;        
-    }
 }
