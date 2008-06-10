@@ -40,6 +40,7 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import nu.validator.htmlparser.annotation.Local;
 import nu.validator.htmlparser.common.CharacterHandler;
 import nu.validator.htmlparser.common.TokenHandler;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
@@ -180,54 +181,6 @@ public class Tokenizer implements Locator {
     private static final int ESCAPE_HYPHEN = 55;
 
     private static final int ESCAPE_HYPHEN_HYPHEN = 56;
-
-    // String interning
-
-    static int stringToElementMagic(String string) {
-        string = string.toLowerCase();
-        char[] buf = string.toCharArray();
-        return bufToElementMagic(buf, buf.length);
-    }
-
-    private static int bufToElementMagic(char[] buf, int len) {
-        int magic = len;
-        magic <<= 5;
-        magic += buf[0] - 0x60;
-        int j = len;
-        for (int i = 0; i < 4 && j > 0; i++) {
-            j--;
-            magic <<= 5;
-            magic += buf[j] - 0x60;
-        }
-        return magic;
-    }
-
-    private static final int[] elementMagic;
-
-    private static final ElementName[] elements;
-
-    static {
-        SortedSet<SortStruct> set = new TreeSet<SortStruct>();
-        Set<ElementName> names = ElementName.buildSet();
-        for (ElementName eltName : names) {
-            SortStruct struct = new SortStruct(eltName);
-            if (set.contains(struct)) {
-                throw new RuntimeException(
-                        "String magic number function doesn't fit the data!");
-            }
-            set.add(struct);
-        }
-        elementMagic = new int[set.size()];
-        elements = new ElementName[set.size()];
-        int i = 0;
-        for (SortStruct sortStruct : set) {
-            elementMagic[i] = sortStruct.getMagic();
-            elements[i] = sortStruct.getEltName();
-            i++;
-        }
-    }
-
-    // end string interning
 
     /**
      * Magic value for UTF-16 operations.
@@ -678,10 +631,9 @@ public class Tokenizer implements Locator {
      *            the element causing the flag to be set
      */
     public void setContentModelFlag(ContentModelFlag contentModelFlag,
-            String contentModelElement) {
+            @Local String contentModelElement) {
         this.contentModelFlag = contentModelFlag;
-        int magic = bufToElementMagic(contentModelElement.toCharArray(), contentModelElement.length());
-        this.contentModelElement = elements[Arrays.binarySearch(elementMagic, magic)];
+        this.contentModelElement = ElementName.elementNameByLocalName(contentModelElement);
     }
 
     /**
@@ -784,7 +736,7 @@ public class Tokenizer implements Locator {
      * @return the smaller buffer as a string
      */
     private String strBufToString() {
-        return new String(strBuf, 0, strBufLen);
+        return StringUtil.localNameFromBuffer(strBuf, strBufLen);
     }
 
     /**
@@ -1050,23 +1002,7 @@ public class Tokenizer implements Locator {
     }
 
     private ElementName strBufToElementNameString() {
-        int magic = bufToElementMagic(strBuf, strBufLen);
-        int index = Arrays.binarySearch(elementMagic, magic);
-        if (index < 0) {
-            return new ElementName(strBufToString().intern());
-        } else {
-            ElementName rv = elements[index];
-            String name = rv.name;
-            if (name.length() != strBufLen) {
-                return new ElementName(strBufToString().intern());
-            }
-            for (int i = 0; i < strBufLen; i++) {
-                if (name.charAt(i) != strBuf[i]) {
-                    return new ElementName(strBufToString().intern());
-                }
-            }
-            return rv;
-        }
+        return ElementName.elementNameByBuffer(strBuf, strBufLen);
     }
 
     private int emitCurrentTagToken(boolean selfClosing) throws SAXException {
