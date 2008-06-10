@@ -161,7 +161,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     private class StackNode<S> {
-        final int magic;
+        final int group;
 
         final String name;
 
@@ -180,7 +180,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         boolean tainted = false;
 
         /**
-         * @param magic
+         * @param group
          *            TODO
          * @param name
          * @param node
@@ -189,10 +189,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
          * @param popName
          *            TODO
          */
-        StackNode(int magic, final String ns, final String name, final S node,
+        StackNode(int group, final String ns, final String name, final S node,
                 final boolean scoping, final boolean special,
                 final boolean fosterParenting, String popName) {
-            this.magic = magic;
+            this.group = group;
             this.name = name;
             this.ns = ns;
             this.node = node;
@@ -208,7 +208,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
          * @param node
          */
         StackNode(final String ns, ElementName elementName, final S node) {
-            this.magic = elementName.magic;
+            this.group = elementName.group;
             this.name = elementName.name;
             this.popName = elementName.name;
             this.ns = ns;
@@ -518,8 +518,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                              * given in the lists above in a case-insensitive
                              * manner.
                              */
-                            String publicIdentifierLC = toAsciiLowerCase(publicIdentifier);
-                            String systemIdentifierLC = toAsciiLowerCase(systemIdentifier);
+                            String publicIdentifierLC = StringUtil.toAsciiLowerCase(publicIdentifier);
+                            String systemIdentifierLC = StringUtil.toAsciiLowerCase(systemIdentifier);
                             switch (doctypeExpectation) {
                                 case HTML:
                                     if (isQuirky(name, publicIdentifierLC,
@@ -1306,7 +1306,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         needToDropLF = false;
         boolean needsPostProcessing = false;
         starttagloop: for (;;) {
-            int magic = elementName.magic;
+            int group = elementName.group;
             String name = elementName.name;
             switch (foreignFlag) {
                 case IN_FOREIGN:
@@ -1322,7 +1322,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         needsPostProcessing = true;
                         // fall through to normal stuff under default
                     } else {
-                        switch (magic) {
+                        switch (group) {
                             case B_OR_BIG_OR_EM_OR_FONT_OR_I_OR_S_OR_SMALL_OR_STRIKE_OR_STRONG_OR_TT_OR_U:
                             case DIV_OR_BLOCKQUOTE_OR_CENTER_OR_MENU:
                             case BODY:
@@ -1362,7 +1362,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 default:
                     switch (mode) {
                         case IN_TABLE_BODY:
-                            switch (magic) {
+                            switch (group) {
                                 case TR:
                                     clearStackBackTo(findLastInTableScopeOrRootTbodyTheadTfoot());
                                     appendToCurrentNodeAndPushElement(
@@ -1399,7 +1399,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     // fall through to IN_TABLE
                             }
                         case IN_ROW:
-                            switch (magic) {
+                            switch (group) {
                                 case TD_OR_TH:
                                     clearStackBackTo(findLastOrRoot(TR));
                                     appendToCurrentNodeAndPushElement(
@@ -1428,7 +1428,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             }
                         case IN_TABLE:
                             intableloop: for (;;) {
-                                switch (magic) {
+                                switch (group) {
                                     case CAPTION:
                                         clearStackBackTo(findLastOrRoot(TABLE));
                                         insertMarker();
@@ -1504,7 +1504,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         break starttagloop;
                                     case INPUT:
                                         if (isTainted()
-                                                || !equalsIgnoreAsciiCase(
+                                                || !StringUtil.equalsIgnoreAsciiCase(
                                                         "hidden",
                                                         attributes.getValue("",
                                                                 "type"))) {
@@ -1524,7 +1524,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                 }
                             }
                         case IN_CAPTION:
-                            switch (magic) {
+                            switch (group) {
                                 case CAPTION:
                                 case COL:
                                 case COLGROUP:
@@ -1552,7 +1552,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     // fall through to IN_BODY
                             }
                         case IN_CELL:
-                            switch (magic) {
+                            switch (group) {
                                 case CAPTION:
                                 case COL:
                                 case COLGROUP:
@@ -1572,7 +1572,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             }
                         case IN_BODY:
                             inbodyloop: for (;;) {
-                                switch (magic) {
+                                switch (group) {
                                     case HTML:
                                         err("Stray \u201Chtml\u201D start tag.");
                                         addAttributesToElement(stack[0].node,
@@ -1913,7 +1913,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             }
                         case IN_HEAD:
                             inheadloop: for (;;) {
-                                switch (magic) {
+                                switch (group) {
                                     case HTML:
                                         err("Stray \u201Chtml\u201D start tag.");
                                         addAttributesToElement(stack[0].node,
@@ -1981,7 +1981,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                 }
                             }
                         case IN_HEAD_NOSCRIPT:
-                            switch (magic) {
+                            switch (group) {
                                 case HTML:
                                     // XXX did Hixie really mean to omit "base"
                                     // here?
@@ -2024,7 +2024,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     continue;
                             }
                         case IN_COLUMN_GROUP:
-                            switch (magic) {
+                            switch (group) {
                                 case HTML:
                                     err("Stray \u201Chtml\u201D start tag.");
                                     addAttributesToElement(stack[0].node,
@@ -2047,7 +2047,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     continue;
                             }
                         case IN_SELECT_IN_TABLE:
-                            switch (magic) {
+                            switch (group) {
                                 case CAPTION:
                                 case TBODY_OR_THEAD_OR_TFOOT:
                                 case TR:
@@ -2062,7 +2062,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     // fall through to IN_SELECT
                             }
                         case IN_SELECT:
-                            switch (magic) {
+                            switch (group) {
                                 case HTML:
                                     err("Stray \u201Chtml\u201D start tag.");
                                     addAttributesToElement(stack[0].node,
@@ -2114,7 +2114,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     break starttagloop;
                             }
                         case AFTER_BODY:
-                            switch (magic) {
+                            switch (group) {
                                 case HTML:
                                     err("Stray \u201Chtml\u201D start tag.");
                                     addAttributesToElement(stack[0].node,
@@ -2130,7 +2130,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     continue;
                             }
                         case IN_FRAMESET:
-                            switch (magic) {
+                            switch (group) {
                                 case FRAMESET:
                                     appendToCurrentNodeAndPushElement(
                                             "http://www.w3.org/1999/xhtml",
@@ -2146,7 +2146,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     // fall through to AFTER_FRAMESET
                             }
                         case AFTER_FRAMESET:
-                            switch (magic) {
+                            switch (group) {
                                 case HTML:
                                     err("Stray \u201Chtml\u201D start tag.");
                                     addAttributesToElement(stack[0].node,
@@ -2200,7 +2200,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                              */
                             continue;
                         case BEFORE_HTML:
-                            switch (magic) {
+                            switch (group) {
                                 case HTML:
                                     // optimize error check and streaming SAX by
                                     // hoisting
@@ -2233,7 +2233,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     continue;
                             }
                         case BEFORE_HEAD:
-                            switch (magic) {
+                            switch (group) {
                                 case HTML:
                                     err("Stray \u201Chtml\u201D start tag.");
                                     addAttributesToElement(stack[0].node,
@@ -2284,7 +2284,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     continue;
                             }
                         case AFTER_HEAD:
-                            switch (magic) {
+                            switch (group) {
                                 case HTML:
                                     err("Stray \u201Chtml\u201D start tag.");
                                     addAttributesToElement(stack[0].node,
@@ -2440,32 +2440,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     private Attributes adjustForeignAttributes(Attributes attributes) {
         // TODO Auto-generated method stub
         return attributes;
-    }
-
-    private boolean equalsIgnoreAsciiCase(CharSequence one, CharSequence other) {
-        if (other == null && one == null) {
-            return true;
-        }
-        if (other == null || one == null) {
-            return false;
-        }
-        if (one.length() != other.length()) {
-            return false;
-        }
-        for (int i = 0; i < other.length(); i++) {
-            char c0 = one.charAt(i);
-            if (c0 >= 'A' && c0 <= 'Z') {
-                c0 += 0x20;
-            }
-            char c1 = other.charAt(i);
-            if (c1 >= 'A' && c1 <= 'Z') {
-                c1 += 0x20;
-            }
-            if (c0 != c1) {
-                return false;
-            }
-        }
-        return true;
     }
     
     private enum CharsetState {
@@ -2635,7 +2609,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (content != null) {
             internalCharset = extractCharsetFromContent(content);
             if (internalCharset != null) {
-                if (!equalsIgnoreAsciiCase("content-type", attributes.getValue(
+                if (!StringUtil.equalsIgnoreAsciiCase("content-type", attributes.getValue(
                         "", "http-equiv"))) {
                     warn("Attribute \u201Ccontent\u201D would be sniffed as an internal character encoding declaration but there was no matching \u201Chttp-equiv='Content-Type'\u201D attribute.");
                 }
@@ -2661,11 +2635,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
         int eltPos;
         endtagloop: for (;;) {
-            int magic = elementName.magic;
+            int group = elementName.group;
             String name = elementName.name;
             switch (mode) {
                 case IN_ROW:
-                    switch (magic) {
+                    switch (group) {
                         case TR:
                             eltPos = findLastOrRoot(TR);
                             if (eltPos == 0) {
@@ -2715,7 +2689,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             // fall through to IN_TABLE
                     }
                 case IN_TABLE_BODY:
-                    switch (magic) {
+                    switch (group) {
                         case TBODY_OR_THEAD_OR_TFOOT:
                             eltPos = findLastOrRoot(name);
                             if (eltPos == 0) {
@@ -2750,7 +2724,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             // fall through to IN_TABLE
                     }
                 case IN_TABLE:
-                    switch (magic) {
+                    switch (group) {
                         case TABLE:
                             eltPos = findLast("table");
                             if (eltPos == NOT_FOUND_ON_STACK) {
@@ -2778,7 +2752,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             // fall through to IN_BODY
                     }
                 case IN_CAPTION:
-                    switch (magic) {
+                    switch (group) {
                         case CAPTION:
                             eltPos = findLastInTableScope("caption");
                             if (eltPos == NOT_FOUND_ON_STACK) {
@@ -2823,7 +2797,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             // fall through to IN_BODY
                     }
                 case IN_CELL:
-                    switch (magic) {
+                    switch (group) {
                         case TD_OR_TH:
                             eltPos = findLastInTableScope(name);
                             if (eltPos == NOT_FOUND_ON_STACK) {
@@ -2860,7 +2834,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             // fall through to IN_BODY
                     }
                 case IN_BODY:
-                    switch (magic) {
+                    switch (group) {
                         case BODY:
                             if (!isSecondOnStackBody()) {
                                 assert context != null;
@@ -2869,7 +2843,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             }
                             assert currentPtr >= 1;
                             uncloseloop1: for (int i = 2; i <= currentPtr; i++) {
-                                switch (stack[i].magic) {
+                                switch (stack[i].group) {
                                     case DD_OR_DT:
                                     case LI:
                                     case P:
@@ -2897,7 +2871,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                 break endtagloop;
                             }
                             uncloseloop2: for (int i = 0; i <= currentPtr; i++) {
-                                switch (stack[i].magic) {
+                                switch (stack[i].group) {
                                     case DD_OR_DT:
                                     case LI:
                                     case P:
@@ -3075,7 +3049,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             }
                     }
                 case IN_COLUMN_GROUP:
-                    switch (magic) {
+                    switch (group) {
                         case COLGROUP:
                             if (currentPtr == 0) {
                                 assert context != null;
@@ -3099,7 +3073,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             continue;
                     }
                 case IN_SELECT_IN_TABLE:
-                    switch (magic) {
+                    switch (group) {
                         case CAPTION:
                         case TABLE:
                         case TBODY_OR_THEAD_OR_TFOOT:
@@ -3118,7 +3092,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             // fall through to IN_SELECT
                     }
                 case IN_SELECT:
-                    switch (magic) {
+                    switch (group) {
                         case OPTION:
                             if (isCurrent("option")) {
                                 pop();
@@ -3146,7 +3120,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             break endtagloop;
                     }
                 case AFTER_BODY:
-                    switch (magic) {
+                    switch (group) {
                         case HTML:
                             if (context != null) {
                                 err("Stray end tag \u201Chtml\u201D");
@@ -3168,7 +3142,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             continue;
                     }
                 case IN_FRAMESET:
-                    switch (magic) {
+                    switch (group) {
                         case FRAMESET:
                             if (currentPtr == 0) {
                                 assert context != null;
@@ -3185,7 +3159,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             break endtagloop;
                     }
                 case AFTER_FRAMESET:
-                    switch (magic) {
+                    switch (group) {
                         case HTML:
                             if (context == null) {
                                 htmlCloseReported = true;
@@ -3245,7 +3219,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                      */
                     continue;
                 case BEFORE_HEAD:
-                    switch (magic) {
+                    switch (group) {
                         case HEAD:
                         case BODY:
                         case HTML:
@@ -3259,7 +3233,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             break endtagloop;
                     }
                 case IN_HEAD:
-                    switch (magic) {
+                    switch (group) {
                         case HEAD:
                             pop();
                             mode = InsertionMode.AFTER_HEAD;
@@ -3276,7 +3250,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             break endtagloop;
                     }
                 case IN_HEAD_NOSCRIPT:
-                    switch (magic) {
+                    switch (group) {
                         case NOSCRIPT:
                             pop();
                             mode = InsertionMode.IN_HEAD;
@@ -3340,7 +3314,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private int findLastInTableScopeOrRootTbodyTheadTfoot() {
         for (int i = currentPtr; i > 0; i--) {
-            if (stack[i].magic == TBODY_OR_THEAD_OR_TFOOT) {
+            if (stack[i].group == TBODY_OR_THEAD_OR_TFOOT) {
                 return i;
             }
         }
@@ -3380,7 +3354,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private int findLastInScopeHn() {
         for (int i = currentPtr; i > 0; i--) {
-            if (stack[i].magic == H1_OR_H2_OR_H3_OR_H4_OR_H5_OR_H6) {
+            if (stack[i].group == H1_OR_H2_OR_H3_OR_H4_OR_H5_OR_H6) {
                 return i;
             } else if (stack[i].scoping) {
                 return NOT_FOUND_ON_STACK;
@@ -3427,7 +3401,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     private boolean isSecondOnStackBody() {
-        return currentPtr >= 1 && stack[1].magic == BODY;
+        return currentPtr >= 1 && stack[1].group == BODY;
     }
 
     private void documentModeInternal(DocumentMode mode,
@@ -3490,21 +3464,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             return true;
         }
         return false;
-    }
-
-    private String toAsciiLowerCase(String str) {
-        if (str == null) {
-            return null;
-        }
-        char[] buf = new char[str.length()];
-        for (int i = 0; i < str.length(); i++) {
-            char c = str.charAt(i);
-            if (c >= 'A' && c <= 'Z') {
-                c += 0x20;
-            }
-            buf[i] = c;
-        }
-        return new String(buf);
     }
 
     private void closeTheCell(int eltPos) throws SAXException {
@@ -3807,7 +3766,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     assert node == listOfActiveFormattingElements[nodeListPos];
                     assert node == stack[nodePos];
                     T clone = shallowClone(node.node);
-                    node = new StackNode<T>(node.magic, node.ns, node.name,
+                    node = new StackNode<T>(node.group, node.ns, node.name,
                             clone, node.scoping, node.special,
                             node.fosterParenting, node.popName);
                     listOfActiveFormattingElements[nodeListPos] = node;
@@ -3827,7 +3786,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             }
             T clone = shallowClone(formattingElt.node);
             StackNode<T> formattingClone = new StackNode<T>(
-                    formattingElt.magic, formattingElt.ns, formattingElt.name,
+                    formattingElt.group, formattingElt.ns, formattingElt.name,
                     clone, formattingElt.scoping, formattingElt.special,
                     formattingElt.fosterParenting, formattingElt.popName);
             appendChildrenToNewParent(furthestBlock.node, clone);
@@ -3894,7 +3853,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     private int findDdOrDtToPop() {
         for (int i = currentPtr; i >= 0; i--) {
             StackNode<T> node = stack[i];
-            if (DD_OR_DT == node.magic) {
+            if (DD_OR_DT == node.group) {
                 return i;
             } else if ((node.scoping || node.special)
                     && !("div" == node.name || "address" == node.name)) {
@@ -3907,7 +3866,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     private int findLiToPop() {
         for (int i = currentPtr; i >= 0; i--) {
             StackNode<T> node = stack[i];
-            if (LI == node.magic) {
+            if (LI == node.group) {
                 return i;
             } else if ((node.scoping || node.special)
                     && !("div" == node.name || "address" == node.name)) {
@@ -3926,9 +3885,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         return 0;
     }
 
-    private int findLastOrRoot(int magic) {
+    private int findLastOrRoot(int group) {
         for (int i = currentPtr; i > 0; i--) {
-            if (stack[i].magic == magic) {
+            if (stack[i].group == group) {
                 return i;
             }
         }
@@ -3938,7 +3897,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     private void addAttributesToBody(Attributes attributes) throws SAXException {
         if (currentPtr >= 1) {
             StackNode<T> body = stack[1];
-            if (body.magic == BODY) {
+            if (body.group == BODY) {
                 addAttributesToElement(body.node, attributes);
             }
         }
@@ -3990,7 +3949,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             entryPos++;
             StackNode<T> entry = listOfActiveFormattingElements[entryPos];
             T clone = shallowClone(entry.node);
-            StackNode<T> entryClone = new StackNode<T>(entry.magic, entry.ns,
+            StackNode<T> entryClone = new StackNode<T>(entry.group, entry.ns,
                     entry.name, clone, entry.scoping, entry.special,
                     entry.fosterParenting, entry.popName);
             StackNode<T> currentNode = stack[currentPtr];
