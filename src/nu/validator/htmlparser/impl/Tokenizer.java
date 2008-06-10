@@ -1229,26 +1229,11 @@ public class Tokenizer implements Locator {
                     }
                 } else if (html4 && html4ModeCompatibleWithXhtml1Schemata
                         && AttributeInfo.isCaseFolded(attributeName)) {
-                    value = toAsciiLowerCase(value);
+                    value = StringUtil.toAsciiLowerCase(value);
                 }
             }
             attributes.addAttribute(attributeName, value);
         }
-    }
-
-    private String toAsciiLowerCase(String str) {
-        if (str == null) {
-            return null;
-        }
-        char[] b = new char[str.length()];
-        for (int i = 0; i < str.length(); i++) {
-            char c = str.charAt(i);
-            if (c >= 'A' && c <= 'Z') {
-                c += 0x20;
-            }
-            b[i] = c;
-        }
-        return new String(b);
     }
 
     public void start() throws SAXException {
