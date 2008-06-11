@@ -951,7 +951,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                              * /*Act as if a start tag token with the tag name
                              * "head" and no attributes had been seen,
                              */
-                            appendToCurrentNodeAndPushHeadElement(EmptyAttributes.EMPTY_ATTRIBUTES);
+                            appendToCurrentNodeAndPushHeadElement(HtmlAttributes.EMPTY_ATTRIBUTES);
                             mode = InsertionMode.IN_HEAD;
                             /*
                              * then reprocess the current token.
@@ -1192,7 +1192,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                          */
                         continue;
                     case BEFORE_HEAD:
-                        appendToCurrentNodeAndPushHeadElement(EmptyAttributes.EMPTY_ATTRIBUTES);
+                        appendToCurrentNodeAndPushHeadElement(HtmlAttributes.EMPTY_ATTRIBUTES);
                         mode = InsertionMode.IN_HEAD;
                         continue;
                     case IN_HEAD:
@@ -1285,7 +1285,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         end();
     }
 
-    public final void startTag(ElementName elementName, Attributes attributes,
+    public final void startTag(ElementName elementName, HtmlAttributes attributes,
             boolean selfClosing) throws SAXException {
         if (errorHandler != null) {
             // ID uniqueness
@@ -1346,7 +1346,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                 foreignFlag = NOT_IN_FOREIGN;
                                 continue starttagloop;
                             default:
-                                attributes = adjustForeignAttributes(attributes);
+                                attributes.adjustForMath();
                                 if (selfClosing) {
                                     appendVoidElementToCurrentMayFoster(currNs,
                                             name, attributes);
@@ -1376,7 +1376,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     appendToCurrentNodeAndPushElement(
                                             "http://www.w3.org/1999/xhtml",
                                             ElementName.TR,
-                                            EmptyAttributes.EMPTY_ATTRIBUTES);
+                                            HtmlAttributes.EMPTY_ATTRIBUTES);
                                     mode = InsertionMode.IN_ROW;
                                     continue;
                                 case CAPTION:
@@ -1448,7 +1448,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         appendToCurrentNodeAndPushElement(
                                                 "http://www.w3.org/1999/xhtml",
                                                 ElementName.COLGROUP,
-                                                EmptyAttributes.EMPTY_ATTRIBUTES);
+                                                HtmlAttributes.EMPTY_ATTRIBUTES);
                                         mode = InsertionMode.IN_COLUMN_GROUP;
                                         continue starttagloop;
                                     case TBODY_OR_THEAD_OR_TFOOT:
@@ -1464,7 +1464,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         appendToCurrentNodeAndPushElement(
                                                 "http://www.w3.org/1999/xhtml",
                                                 ElementName.TBODY,
-                                                EmptyAttributes.EMPTY_ATTRIBUTES);
+                                                HtmlAttributes.EMPTY_ATTRIBUTES);
                                         mode = InsertionMode.IN_TABLE_BODY;
                                         continue starttagloop;
                                     case TABLE:
@@ -1763,26 +1763,26 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                             break starttagloop;
                                         }
                                         implicitlyCloseP();
-                                        AttributesImpl formAttrs = tokenizer.newAttributes();
+                                        HtmlAttributes formAttrs = tokenizer.newAttributes();
                                         int actionIndex = attributes.getIndex("action");
                                         if (actionIndex > -1) {
                                             formAttrs.addAttribute(
-                                                    "action",
+                                                    AttributeName.ACTION,
                                                     attributes.getValue(actionIndex));
                                         }
                                         appendToCurrentNodeAndPushFormElementMayFoster(formAttrs);
                                         appendVoidElementToCurrentMayFoster(
                                                 "http://www.w3.org/1999/xhtml",
                                                 "hr",
-                                                EmptyAttributes.EMPTY_ATTRIBUTES);
+                                                HtmlAttributes.EMPTY_ATTRIBUTES);
                                         appendToCurrentNodeAndPushElementMayFoster(
                                                 "http://www.w3.org/1999/xhtml",
                                                 ElementName.P,
-                                                EmptyAttributes.EMPTY_ATTRIBUTES);
+                                                HtmlAttributes.EMPTY_ATTRIBUTES);
                                         appendToCurrentNodeAndPushElementMayFoster(
                                                 "http://www.w3.org/1999/xhtml",
                                                 ElementName.LABEL,
-                                                EmptyAttributes.EMPTY_ATTRIBUTES);
+                                                HtmlAttributes.EMPTY_ATTRIBUTES);
                                         int promptIndex = attributes.getIndex("prompt");
                                         if (promptIndex > -1) {
                                             char[] prompt = attributes.getValue(
@@ -1797,12 +1797,12 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                                     ISINDEX_PROMPT, 0,
                                                     ISINDEX_PROMPT.length);
                                         }
-                                        AttributesImpl inputAttributes = tokenizer.newAttributes();
-                                        inputAttributes.addAttribute("name",
+                                        HtmlAttributes inputAttributes = tokenizer.newAttributes();
+                                        inputAttributes.addAttribute(AttributeName.NAME,
                                                 "isindex");
                                         for (int i = 0; i < attributes.getLength(); i++) {
-                                            String attributeQName = attributes.getQName(i);
-                                            if (!("name".equals(attributeQName)
+                                            AttributeName attributeQName = attributes.getAttributeName(i);
+                                            if (!(AttributeName.NAME == attributeQName
                                                     || "action".equals(attributeQName) || "prompt".equals(attributeQName))) {
                                                 inputAttributes.addAttribute(
                                                         attributeQName,
@@ -1819,7 +1819,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         appendVoidElementToCurrentMayFoster(
                                                 "http://www.w3.org/1999/xhtml",
                                                 "hr",
-                                                EmptyAttributes.EMPTY_ATTRIBUTES);
+                                                HtmlAttributes.EMPTY_ATTRIBUTES);
                                         pop(); // form
                                         selfClosing = false;
                                         break starttagloop;
@@ -1875,7 +1875,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         break starttagloop;
                                     case MATH:
                                         reconstructTheActiveFormattingElements();
-                                        attributes = adjustForeignAttributes(attributes);
+                                        attributes.adjustForMath();
                                         if (selfClosing) {
                                             appendVoidElementToCurrentMayFoster(
                                                     "http://www.w3.org/1998/Math/MathML",
@@ -2270,7 +2270,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                      * name "head" and no attributes had been
                                      * seen,
                                      */
-                                    appendToCurrentNodeAndPushHeadElement(EmptyAttributes.EMPTY_ATTRIBUTES);
+                                    appendToCurrentNodeAndPushHeadElement(HtmlAttributes.EMPTY_ATTRIBUTES);
                                     mode = InsertionMode.IN_HEAD;
                                     /*
                                      * then reprocess the current token.
@@ -2425,7 +2425,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
     }
 
-    private String getIdValue(Attributes attributes) {
+    private String getIdValue(HtmlAttributes attributes) {
         int len = attributes.getLength();
         for (int i = 0; i < len; i++) {
             if (attributes.getType(i) == "ID") {
@@ -2434,11 +2434,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             }
         }
         return null;
-    }
-
-    private Attributes adjustForeignAttributes(Attributes attributes) {
-        // TODO Auto-generated method stub
-        return attributes;
     }
     
     private enum CharsetState {
@@ -2602,7 +2597,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
     }
 
-    private void checkMetaCharset(Attributes attributes) throws SAXException {
+    private void checkMetaCharset(HtmlAttributes attributes) throws SAXException {
         String content = attributes.getValue("", "content");
         String internalCharset = null;
         if (content != null) {
@@ -2938,7 +2933,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             } else {
                                 appendVoidElementToCurrentMayFoster(
                                         "http://www.w3.org/1999/xhtml", name,
-                                        EmptyAttributes.EMPTY_ATTRIBUTES);
+                                        HtmlAttributes.EMPTY_ATTRIBUTES);
                             }
                             break endtagloop;
                         case DD_OR_DT:
@@ -3002,7 +2997,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             reconstructTheActiveFormattingElements();
                             appendVoidElementToCurrentMayFoster(
                                     "http://www.w3.org/1999/xhtml", name,
-                                    EmptyAttributes.EMPTY_ATTRIBUTES);
+                                    HtmlAttributes.EMPTY_ATTRIBUTES);
                             break endtagloop;
                         case AREA_OR_BASEFONT_OR_BGSOUND_OR_PARAM_OR_SPACER_OR_WBR:
                         case EMBED_OR_IMG:
@@ -3224,7 +3219,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         case HTML:
                         case P:
                         case BR:
-                            appendToCurrentNodeAndPushHeadElement(EmptyAttributes.EMPTY_ATTRIBUTES);
+                            appendToCurrentNodeAndPushHeadElement(HtmlAttributes.EMPTY_ATTRIBUTES);
                             mode = InsertionMode.IN_HEAD;
                             continue;
                         default:
@@ -3893,7 +3888,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         return 0;
     }
 
-    private void addAttributesToBody(Attributes attributes) throws SAXException {
+    private void addAttributesToBody(HtmlAttributes attributes) throws SAXException {
         if (currentPtr >= 1) {
             StackNode<T> body = stack[1];
             if (body.group == BODY) {
@@ -4030,7 +4025,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         return node.tainted;
     }
 
-    private void appendHtmlElementToDocumentAndPush(Attributes attributes)
+    private void appendHtmlElementToDocumentAndPush(HtmlAttributes attributes)
             throws SAXException {
         T elt = createHtmlElementSetAsRoot(attributes);
         StackNode<T> node = new StackNode<T>("http://www.w3.org/1999/xhtml",
@@ -4042,7 +4037,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         appendHtmlElementToDocumentAndPush(tokenizer.newAttributes());
     }
 
-    private void appendToCurrentNodeAndPushHeadElement(Attributes attributes)
+    private void appendToCurrentNodeAndPushHeadElement(HtmlAttributes attributes)
             throws SAXException {
         flushCharacters();
         T elt = createElement("http://www.w3.org/1999/xhtml", "head",
@@ -4054,7 +4049,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         push(node);
     }
 
-    private void appendToCurrentNodeAndPushBodyElement(Attributes attributes)
+    private void appendToCurrentNodeAndPushBodyElement(HtmlAttributes attributes)
             throws SAXException {
         appendToCurrentNodeAndPushElement("http://www.w3.org/1999/xhtml",
                 ElementName.BODY, attributes);
@@ -4065,7 +4060,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     private void appendToCurrentNodeAndPushFormElementMayFoster(
-            Attributes attributes) throws SAXException {
+            HtmlAttributes attributes) throws SAXException {
         flushCharacters();
         T elt = createElement("http://www.w3.org/1999/xhtml", "form",
                 attributes);
@@ -4088,7 +4083,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     private void appendToCurrentNodeAndPushFormattingElementMayFoster(
-            String ns, ElementName elementName, Attributes attributes)
+            String ns, ElementName elementName, HtmlAttributes attributes)
             throws SAXException {
         flushCharacters();
         T elt = createElement(ns, elementName.name, attributes, formPointer);
@@ -4110,7 +4105,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     private void appendToCurrentNodeAndPushElement(String ns,
-            ElementName elementName, Attributes attributes) throws SAXException {
+            ElementName elementName, HtmlAttributes attributes) throws SAXException {
         flushCharacters();
         T elt = createElement(ns, elementName.name, attributes);
         detachFromParentAndAppendToNewParent(elt, stack[currentPtr].node);
@@ -4119,7 +4114,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     private void appendToCurrentNodeAndPushElementMayFoster(String ns,
-            ElementName elementName, Attributes attributes) throws SAXException {
+            ElementName elementName, HtmlAttributes attributes) throws SAXException {
         flushCharacters();
         T elt = createElement(ns, elementName.name, attributes);
         StackNode<T> current = stack[currentPtr];
@@ -4139,7 +4134,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     private void appendToCurrentNodeAndPushElementMayFoster(String ns,
-            ElementName elementName, Attributes attributes, T form)
+            ElementName elementName, HtmlAttributes attributes, T form)
             throws SAXException {
         flushCharacters();
         T elt = createElement(ns, elementName.name, attributes, formPointer);
@@ -4160,7 +4155,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     private void appendVoidElementToCurrentMayFoster(String ns, String name,
-            Attributes attributes, T form) throws SAXException {
+            HtmlAttributes attributes, T form) throws SAXException {
         flushCharacters();
         T elt = createElement(ns, name, attributes, formPointer);
         StackNode<T> current = stack[currentPtr];
@@ -4182,7 +4177,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     private void appendVoidElementToCurrentMayFoster(String ns, String name,
-            Attributes attributes) throws SAXException {
+            HtmlAttributes attributes) throws SAXException {
         flushCharacters();
         T elt = createElement(ns, name, attributes);
         StackNode<T> current = stack[currentPtr];
@@ -4204,7 +4199,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     private void appendVoidElementToCurrent(String ns, String name,
-            Attributes attributes, T form) throws SAXException {
+            HtmlAttributes attributes, T form) throws SAXException {
         flushCharacters();
         T elt = createElement("http://www.w3.org/1999/xhtml", name, attributes,
                 formPointer);
@@ -4243,14 +4238,14 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     // ------------------------------- //
 
     protected abstract T createElement(String ns, String name,
-            Attributes attributes) throws SAXException;
+            HtmlAttributes attributes) throws SAXException;
 
-    protected T createElement(String ns, String name, Attributes attributes,
+    protected T createElement(String ns, String name, HtmlAttributes attributes,
             T form) throws SAXException {
         return createElement("http://www.w3.org/1999/xhtml", name, attributes);
     }
 
-    protected abstract T createHtmlElementSetAsRoot(Attributes attributes)
+    protected abstract T createHtmlElementSetAsRoot(HtmlAttributes attributes)
             throws SAXException;
 
     protected abstract void detachFromParent(T element) throws SAXException;
@@ -4287,7 +4282,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             int length) throws SAXException;
 
     protected abstract void addAttributesToElement(T element,
-            Attributes attributes) throws SAXException;
+            HtmlAttributes attributes) throws SAXException;
 
     protected void start(boolean fragment) throws SAXException {
 

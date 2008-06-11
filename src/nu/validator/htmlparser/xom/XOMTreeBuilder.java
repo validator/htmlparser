@@ -25,6 +25,7 @@ package nu.validator.htmlparser.xom;
 
 import nu.validator.htmlparser.common.DocumentMode;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
+import nu.validator.htmlparser.impl.HtmlAttributes;
 import nu.validator.htmlparser.impl.TreeBuilder;
 import nu.xom.Attribute;
 import nu.xom.Document;
@@ -33,7 +34,6 @@ import nu.xom.Nodes;
 import nu.xom.ParentNode;
 import nu.xom.XMLException;
 
-import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
 class XOMTreeBuilder extends TreeBuilder<Element> {
@@ -48,7 +48,7 @@ class XOMTreeBuilder extends TreeBuilder<Element> {
     }
 
     @Override
-    protected void addAttributesToElement(Element element, Attributes attributes)
+    protected void addAttributesToElement(Element element, HtmlAttributes attributes)
             throws SAXException {
         try {
             for (int i = 0; i < attributes.getLength(); i++) {
@@ -119,7 +119,7 @@ class XOMTreeBuilder extends TreeBuilder<Element> {
     }
 
     @Override
-    protected Element createElement(String ns, String name, Attributes attributes)
+    protected Element createElement(String ns, String name, HtmlAttributes attributes)
             throws SAXException {
         try {
             Element rv = nodeFactory.makeElement(name,
@@ -139,7 +139,7 @@ class XOMTreeBuilder extends TreeBuilder<Element> {
     }
 
     @Override
-    protected Element createHtmlElementSetAsRoot(Attributes attributes)
+    protected Element createHtmlElementSetAsRoot(HtmlAttributes attributes)
             throws SAXException {
         try {
             Element rv = nodeFactory.makeElement("html",
@@ -267,7 +267,7 @@ class XOMTreeBuilder extends TreeBuilder<Element> {
      */
     @Override
     protected Element createElement(String ns, String name,
-            Attributes attributes, Element form) throws SAXException {
+            HtmlAttributes attributes, Element form) throws SAXException {
         try {
             Element rv = nodeFactory.makeElement(name,
                     ns, form);

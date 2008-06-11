@@ -24,6 +24,7 @@
 package nu.validator.htmlparser.sax;
 
 import nu.validator.htmlparser.common.XmlViolationPolicy;
+import nu.validator.htmlparser.impl.HtmlAttributes;
 import nu.validator.htmlparser.impl.TreeBuilder;
 
 import org.xml.sax.Attributes;
@@ -42,7 +43,7 @@ class SAXStreamer extends TreeBuilder<Attributes>{
     }
     
     @Override
-    protected void addAttributesToElement(Attributes element, Attributes attributes) throws SAXException {
+    protected void addAttributesToElement(Attributes element, HtmlAttributes attributes) throws SAXException {
         Attributes existingAttrs = element;
         for (int i = 0; i < attributes.getLength(); i++) {
             String qName = attributes.getQName(i);
@@ -82,12 +83,12 @@ class SAXStreamer extends TreeBuilder<Attributes>{
     }
 
     @Override
-    protected Attributes createElement(String ns, String name, Attributes attributes) throws SAXException {
+    protected Attributes createElement(String ns, String name, HtmlAttributes attributes) throws SAXException {
         return attributes;
     }
 
     @Override
-    protected Attributes createHtmlElementSetAsRoot(Attributes attributes) throws SAXException {
+    protected Attributes createHtmlElementSetAsRoot(HtmlAttributes attributes) throws SAXException {
         return attributes;
     }
 

@@ -368,7 +368,7 @@ public class Tokenizer implements Locator {
     /**
      * The attribute holder.
      */
-    private AttributesImpl attributes;
+    private HtmlAttributes attributes;
 
     /**
      * Buffer for expanding NCRs falling into the Basic Multilingual Plane.
@@ -408,7 +408,7 @@ public class Tokenizer implements Locator {
     /**
      * The current attribute name.
      */
-    private String attributeName = null;
+    private AttributeName attributeName = null;
 
     /**
      * Whether comment tokens are emitted.
@@ -477,7 +477,7 @@ public class Tokenizer implements Locator {
 
     private boolean html4ModeCompatibleWithXhtml1Schemata;
 
-    private boolean mappingLangToXmlLang;
+    private int mappingLangToXmlLang;
 
     private XmlViolationPolicy bogusXmlnsPolicy;
 
@@ -499,7 +499,7 @@ public class Tokenizer implements Locator {
      * @return the mappingLangToXmlLang
      */
     public boolean isMappingLangToXmlLang() {
-        return mappingLangToXmlLang;
+        return mappingLangToXmlLang == AttributeName.HTML_LANG;
     }
 
     /**
@@ -509,7 +509,7 @@ public class Tokenizer implements Locator {
      *            the mappingLangToXmlLang to set
      */
     public void setMappingLangToXmlLang(boolean mappingLangToXmlLang) {
-        this.mappingLangToXmlLang = mappingLangToXmlLang;
+        this.mappingLangToXmlLang = mappingLangToXmlLang ? AttributeName.HTML_LANG : AttributeName.HTML;
     }
     /**
      * Sets the error handler.
@@ -700,12 +700,8 @@ public class Tokenizer implements Locator {
         html4 = true;
     }
 
-    AttributesImpl newAttributes() {
-        if (mappingLangToXmlLang) {
-            return new XmlLangAttributesImpl();
-        } else {
-            return new AttributesImpl();
-        }
+    HtmlAttributes newAttributes() {
+        return new HtmlAttributes(mappingLangToXmlLang);
     }
 
     /**
@@ -1022,7 +1018,7 @@ public class Tokenizer implements Locator {
             }
         }
         int rv = DATA;
-        Attributes attrs = (attributes == null ? EmptyAttributes.EMPTY_ATTRIBUTES
+        HtmlAttributes attrs = (attributes == null ? HtmlAttributes.EMPTY_ATTRIBUTES
                 : attributes);
         if (endTag) {
             /*
@@ -1058,7 +1054,7 @@ public class Tokenizer implements Locator {
     }
 
     private void attributeNameComplete() throws SAXException {
-        attributeName = strBufToString().intern();
+        attributeName = AttributeName.nameByBuffer(strBuf, strBufLen);
         if (attributes == null) {
             attributes = newAttributes();
         }
@@ -1070,27 +1066,28 @@ public class Tokenizer implements Locator {
          * then this is a parse error and the new attribute must be dropped,
          * along with the value that gets associated with it (if any).
          */
-        if (attributes.getIndex(attributeName) == -1) {
-            if (namePolicy == XmlViolationPolicy.ALLOW) {
-                shouldAddAttributes = true;
-            } else {
-                if (NCName.isNCName(attributeName)) {
-                    shouldAddAttributes = true;
-                } else {
-                    if (namePolicy == XmlViolationPolicy.FATAL) {
-                        fatal("Attribute name \u201C" + attributeName
-                                + "\u201D is not an NCName.");
-                    } else {
-                        shouldAddAttributes = false;
-                        warn("Attribute name \u201C"
-                                + attributeName
-                                + "\u201D is not an NCName. Ignoring the attribute.");
-                    }
-                }
-            }
-        } else {
+        if (attributes.contains(attributeName)) {
             shouldAddAttributes = false;
-            err("Duplicate attribute \u201C" + attributeName + "\u201D.");
+            err("Duplicate attribute \u201C" + attributeName + "\u201D.");            
+        } else {
+            shouldAddAttributes = true;
+//            if (namePolicy == XmlViolationPolicy.ALLOW) {
+//                shouldAddAttributes = true;
+//            } else {
+//                if (NCName.isNCName(attributeName)) {
+//                    shouldAddAttributes = true;
+//                } else {
+//                    if (namePolicy == XmlViolationPolicy.FATAL) {
+//                        fatal("Attribute name \u201C" + attributeName
+//                                + "\u201D is not an NCName.");
+//                    } else {
+//                        shouldAddAttributes = false;
+//                        warn("Attribute name \u201C"
+//                                + attributeName
+//                                + "\u201D is not an NCName. Ignoring the attribute.");
+//                    }
+//                }
+//            }
         }
     }
 
@@ -1101,9 +1098,9 @@ public class Tokenizer implements Locator {
         }
         if (shouldAddAttributes) {
             if (html4) {
-                if (AttributeInfo.isBoolean(attributeName)) {
+                if (attributeName.isBoolean()) {
                     if (html4ModeCompatibleWithXhtml1Schemata) {
-                        attributes.addAttribute(attributeName, attributeName);
+                        attributes.addAttribute(attributeName, attributeName.getLocal(AttributeName.HTML));
                     } else {
                         attributes.addAttribute(attributeName, "");
                     }
@@ -1112,9 +1109,9 @@ public class Tokenizer implements Locator {
                     attributes.addAttribute(attributeName, "");
                 }
             } else {
-                if ("src".equals(attributeName) || "href".equals(attributeName)) {
+                if (AttributeName.SRC == attributeName || AttributeName.HREF == attributeName) {
                     warn("Attribute \u201C"
-                            + attributeName
+                            + attributeName.getLocal(AttributeName.HTML)
                             + "\u201D without an explicit value seen. The attribute may be dropped by IE7.");
                 }
                 attributes.addAttribute(attributeName, "");
@@ -1130,41 +1127,42 @@ public class Tokenizer implements Locator {
         if (shouldAddAttributes) {
             String value = longStrBufToString();
             if (!endTag) {
-                if ("xmlns".equals(attributeName)) {
-                    if ("html" == tagName.name
-                            && "http://www.w3.org/1999/xhtml".equals(value)) {
-                        if (xmlnsPolicy == XmlViolationPolicy.ALTER_INFOSET) {
-                            return;
-                        }
-                    } else {
-                        if (bogusXmlnsPolicy == XmlViolationPolicy.FATAL) {
-                            fatal("Forbidden attribute \u201C"
-                                    + attributeName
-                                    + "\u201D is not mappable to namespace-aware XML 1.0.");
-                        } else {
-                            warn("Forbidden attribute \u201C"
-                                    + attributeName
-                                    + "\u201D is not mappable to namespace-aware XML 1.0.");
-                            if (bogusXmlnsPolicy == XmlViolationPolicy.ALTER_INFOSET) {
-                                return;
-                            }
-                        }
-                    }
-                } else if (attributeName.startsWith("xmlns:")) {
-                    if (bogusXmlnsPolicy == XmlViolationPolicy.FATAL) {
-                        fatal("Forbidden attribute \u201C"
-                                + attributeName
-                                + "\u201D is not mappable to namespace-aware XML 1.0.");
-                    } else {
-                        warn("Forbidden attribute \u201C"
-                                + attributeName
-                                + "\u201D is not mappable to namespace-aware XML 1.0.");
-                        if (bogusXmlnsPolicy == XmlViolationPolicy.ALTER_INFOSET) {
-                            return;
-                        }
-                    }
-                } else if (html4 && html4ModeCompatibleWithXhtml1Schemata
-                        && AttributeInfo.isCaseFolded(attributeName)) {
+//                if ("xmlns".equals(attributeName)) {
+//                    if ("html" == tagName.name
+//                            && "http://www.w3.org/1999/xhtml".equals(value)) {
+//                        if (xmlnsPolicy == XmlViolationPolicy.ALTER_INFOSET) {
+//                            return;
+//                        }
+//                    } else {
+//                        if (bogusXmlnsPolicy == XmlViolationPolicy.FATAL) {
+//                            fatal("Forbidden attribute \u201C"
+//                                    + attributeName
+//                                    + "\u201D is not mappable to namespace-aware XML 1.0.");
+//                        } else {
+//                            warn("Forbidden attribute \u201C"
+//                                    + attributeName
+//                                    + "\u201D is not mappable to namespace-aware XML 1.0.");
+//                            if (bogusXmlnsPolicy == XmlViolationPolicy.ALTER_INFOSET) {
+//                                return;
+//                            }
+//                        }
+//                    }
+//                } else if (attributeName.startsWith("xmlns:")) {
+//                    if (bogusXmlnsPolicy == XmlViolationPolicy.FATAL) {
+//                        fatal("Forbidden attribute \u201C"
+//                                + attributeName
+//                                + "\u201D is not mappable to namespace-aware XML 1.0.");
+//                    } else {
+//                        warn("Forbidden attribute \u201C"
+//                                + attributeName
+//                                + "\u201D is not mappable to namespace-aware XML 1.0.");
+//                        if (bogusXmlnsPolicy == XmlViolationPolicy.ALTER_INFOSET) {
+//                            return;
+//                        }
+//                    }
+//                } else 
+                if (html4 && html4ModeCompatibleWithXhtml1Schemata
+                        && attributeName.isCaseFolded()) {
                     value = StringUtil.toAsciiLowerCase(value);
                 }
             }

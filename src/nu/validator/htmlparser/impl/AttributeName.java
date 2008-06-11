@@ -55,7 +55,7 @@ public final class AttributeName implements Comparable<AttributeName> {
         return new String[]{name, name, name, name};
     }
     
-    static AttributeName elementNameByBuffer(char[] buf, int length) {
+    static AttributeName nameByBuffer(char[] buf, int length) {
         int hash = bufToHash(buf, length);
         int index = Arrays.binarySearch(ATTRIBUTE_HASHES, hash);
         if (index < 0) {
@@ -175,6 +175,16 @@ public final class AttributeName implements Comparable<AttributeName> {
     
     public boolean isXmlns() {
         return xmlns;
+    }
+    
+    boolean isBoolean() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    boolean isCaseFolded() {
+        // TODO Auto-generated method stub
+        return false;
     }
     
     // START CODE ONLY USED FOR GENERATING CODE

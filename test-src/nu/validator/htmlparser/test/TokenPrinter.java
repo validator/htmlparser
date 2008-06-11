@@ -31,10 +31,10 @@ import java.io.Writer;
 
 import nu.validator.htmlparser.common.TokenHandler;
 import nu.validator.htmlparser.impl.ElementName;
+import nu.validator.htmlparser.impl.HtmlAttributes;
 import nu.validator.htmlparser.impl.Tokenizer;
 import nu.validator.htmlparser.io.Driver;
 
-import org.xml.sax.Attributes;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -112,7 +112,7 @@ public class TokenPrinter implements TokenHandler, ErrorHandler {
 
     }
 
-    public void startTag(ElementName eltName, Attributes attributes, boolean selfClosing)
+    public void startTag(ElementName eltName, HtmlAttributes attributes, boolean selfClosing)
             throws SAXException {
         try {
             writer.write('(');

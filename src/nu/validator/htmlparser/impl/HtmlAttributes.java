@@ -128,6 +128,14 @@ public final class HtmlAttributes implements Attributes {
         }
     }
 
+    AttributeName getAttributeName(int index) {
+        if (index < length) {
+            return names[index];
+        } else {
+            return null;
+        }
+    }
+    
     public @IdType String getType(int index) {
         if (index < length) {
             return names[index].getType(mode);
@@ -272,6 +280,22 @@ public final class HtmlAttributes implements Attributes {
         length = 0;
         idValue = null;
     }
+    
+    boolean contains(AttributeName name) {
+        for (int i = 0; i < names.length; i++) {
+            if (name == names[i]) {
+                return true;
+            }
+        }
+        // [NOCPP[
+        for (int i = 0; i < xmlnsNames.length; i++) {
+            if (name == xmlnsNames[i]) {
+                return true;
+            }
+        }        
+        // ]NOCPP]
+        return false;
+    }
 
     public void adjustForMath() {
         mode = AttributeName.MATHML;
@@ -279,5 +303,10 @@ public final class HtmlAttributes implements Attributes {
 
     public void adjustForSvg() {
         mode = AttributeName.SVG;
+    }
+
+    public void merge(HtmlAttributes attributes) {
+        // TODO Auto-generated method stub
+        
     }
 }
