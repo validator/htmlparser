@@ -68,6 +68,13 @@ public class ElementName implements Comparable<ElementName> {
         return elementNameByBuffer(name.toCharArray(), name.length());
     }
 
+    /**
+     * This method has to return a unique integer for each well-known lower-cased element name.
+     * 
+     * @param buf
+     * @param len
+     * @return
+     */
     private static int bufToElementHash(char[] buf, int len) {
         int hash = len;
         hash <<= 5;
@@ -263,6 +270,9 @@ public class ElementName implements Comparable<ElementName> {
      */
     public static void main(String[] args) {
         Arrays.sort(ELEMENT_NAMES);
+        for (int i = 1; i < ELEMENT_NAMES.length; i++) {
+            
+        }        
         for (int i = 0; i < ELEMENT_NAMES.length; i++) {
             ElementName el = ELEMENT_NAMES[i];
             System.out.println("public static final ElementName "
