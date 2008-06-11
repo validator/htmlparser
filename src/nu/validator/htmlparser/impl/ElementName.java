@@ -28,6 +28,8 @@ import nu.validator.htmlparser.annotation.Local;
 
 public class ElementName implements Comparable<ElementName> {
 
+    public final static ElementName NULL_ELEMENT_NAME = new ElementName(null);
+    
     public final String name;
 
     public final String camelCaseName;
@@ -43,13 +45,13 @@ public class ElementName implements Comparable<ElementName> {
     public final boolean custom;
 
     static ElementName elementNameByBuffer(char[] buf, int length) {
-        int hash = bufToElementHash(buf, length);
+        int hash = bufToHash(buf, length);
         int index = Arrays.binarySearch(ELEMENT_HASHES, hash);
         if (index < 0) {
             return new ElementName(StringUtil.localNameFromBuffer(buf, length));
         } else {
             ElementName rv = ELEMENT_NAMES[index];
-            String name = rv.name;
+            @Local String name = rv.name;
             if (name.length() != length) {
                 return new ElementName(StringUtil.localNameFromBuffer(buf,
                         length));
@@ -69,13 +71,14 @@ public class ElementName implements Comparable<ElementName> {
     }
 
     /**
-     * This method has to return a unique integer for each well-known lower-cased element name.
+     * This method has to return a unique integer for each well-known
+     * lower-cased element name.
      * 
      * @param buf
      * @param len
      * @return
      */
-    private static int bufToElementHash(char[] buf, int len) {
+    private static int bufToHash(char[] buf, int len) {
         int hash = len;
         hash <<= 5;
         hash += buf[0] - 0x60;
@@ -99,7 +102,7 @@ public class ElementName implements Comparable<ElementName> {
         this.custom = false;
     }
 
-    ElementName(String name) {
+    private ElementName(String name) {
         this.name = name;
         this.camelCaseName = name;
         this.group = TreeBuilder.OTHER;
@@ -109,8 +112,8 @@ public class ElementName implements Comparable<ElementName> {
         this.custom = true;
     }
 
-    // START CODE ONLY USED FOR GENERATING CODE    
-    
+    // START CODE ONLY USED FOR GENERATING CODE
+
     /**
      * @see java.lang.Object#toString()
      */
@@ -138,7 +141,7 @@ public class ElementName implements Comparable<ElementName> {
     }
 
     private int hash() {
-        return bufToElementHash(name.toCharArray(), name.length());
+        return bufToHash(name.toCharArray(), name.length());
     }
 
     public int compareTo(ElementName other) {
@@ -272,23 +275,24 @@ public class ElementName implements Comparable<ElementName> {
         Arrays.sort(ELEMENT_NAMES);
         for (int i = 1; i < ELEMENT_NAMES.length; i++) {
             if (ELEMENT_NAMES[i].hash() == ELEMENT_NAMES[i - 1].hash()) {
-                System.err.println("Hash collision: " + ELEMENT_NAMES[i].name + ", " + ELEMENT_NAMES[i - 1].name);
+                System.err.println("Hash collision: " + ELEMENT_NAMES[i].name
+                        + ", " + ELEMENT_NAMES[i - 1].name);
                 return;
             }
-        }        
+        }
         for (int i = 0; i < ELEMENT_NAMES.length; i++) {
             ElementName el = ELEMENT_NAMES[i];
             System.out.println("public static final ElementName "
                     + el.constName() + " = new ElementName" + el.toString()
                     + ";");
         }
-        System.out.println("private static ElementName[] ELEMENT_NAMES = {");
+        System.out.println("private final static ElementName[] ELEMENT_NAMES = {");
         for (int i = 0; i < ELEMENT_NAMES.length; i++) {
             ElementName el = ELEMENT_NAMES[i];
             System.out.println(el.constName() + ",");
         }
         System.out.println("};");
-        System.out.println("private static int[] ELEMENT_HASHES = {");
+        System.out.println("private final static int[] ELEMENT_HASHES = {");
         for (int i = 0; i < ELEMENT_NAMES.length; i++) {
             ElementName el = ELEMENT_NAMES[i];
             System.out.println(Integer.toString(el.hash()) + ",");
@@ -297,7 +301,6 @@ public class ElementName implements Comparable<ElementName> {
     }
 
     // START GENERATED CODE
-    
     public static final ElementName A = new ElementName("a", "a",
             TreeBuilder.A, false, false, false);
 
@@ -960,6 +963,9 @@ public class ElementName implements Comparable<ElementName> {
     public static final ElementName IFRAME = new ElementName("iframe",
             "iframe", TreeBuilder.IFRAME_OR_NOEMBED, true, false, false);
 
+    public static final ElementName KEYGEN = new ElementName("keygen",
+            "keygen", TreeBuilder.OTHER, false, false, false);
+
     public static final ElementName LAMBDA = new ElementName("lambda",
             "lambda", TreeBuilder.OTHER, false, false, false);
 
@@ -1563,7 +1569,7 @@ public class ElementName implements Comparable<ElementName> {
             "fecomponenttransfer", "feComponentTransfer", TreeBuilder.OTHER,
             false, false, false);
 
-    private static ElementName[] ELEMENT_NAMES = { A, B, G, I, P, Q, S, U, BR,
+    private final static ElementName[] ELEMENT_NAMES = { A, B, G, I, P, Q, S, U, BR,
             CI, CN, DD, DL, DT, EM, EQ, FN, H1, H2, H3, H4, H5, H6, GT, HR, IN,
             LI, LN, LT, MI, MN, MO, MS, OL, OR, PI, TD, TH, TR, TT, UL, AND,
             ARG, ABS, BIG, BDO, CSC, COL, COS, COT, DEL, DFN, DIR, DIV, EXP,
@@ -1582,17 +1588,17 @@ public class ElementName implements Comparable<ElementName> {
             ARCSEC, ARCCSC, ARCTAN, ARCSIN, ARCCOS, APPLET, ARCCOT, APPROX,
             BUTTON, CIRCLE, CENTER, CURSOR, CANVAS, DIVIDE, DEGREE, DIALOG,
             DOMAIN, EXISTS, FETILE, FIGURE, FORALL, FILTER, FOOTER, HEADER,
-            IFRAME, LAMBDA, LEGEND, MSPACE, MTABLE, MSTYLE, MGLYPH, MEDIAN,
-            MUNDER, MARKER, MERROR, MOMENT, MATRIX, OPTION, OBJECT, OUTPUT,
-            PRIMES, SOURCE, STRIKE, STRONG, SWITCH, SYMBOL, SPACER, SELECT,
-            SUBSET, SCRIPT, TBREAK, VECTOR, ARTICLE, ANIMATE, ARCSECH, ARCCSCH,
-            ARCTANH, ARCSINH, ARCCOSH, ARCCOTH, ACRONYM, ADDRESS, BGSOUND,
-            COMMAND, COMPOSE, CEILING, CSYMBOL, CAPTION, DISCARD, DECLARE,
-            DETAILS, ELLIPSE, FEFUNCA, FEFUNCB, FEBLEND, FEFLOOD, FEIMAGE,
-            FEMERGE, FEFUNCG, FEFUNCR, HANDLER, INVERSE, IMPLIES, ISINDEX,
-            LOGBASE, LISTING, MFENCED, MPADDED, MARQUEE, MACTION, MSUBSUP,
-            NOEMBED, POLYGON, PATTERN, PRODUCT, SETDIFF, SECTION, TENDSTO,
-            UPLIMIT, ALTGLYPH, BASEFONT, CLIPPATH, CODOMAIN, COLGROUP,
+            IFRAME, KEYGEN, LAMBDA, LEGEND, MSPACE, MTABLE, MSTYLE, MGLYPH,
+            MEDIAN, MUNDER, MARKER, MERROR, MOMENT, MATRIX, OPTION, OBJECT,
+            OUTPUT, PRIMES, SOURCE, STRIKE, STRONG, SWITCH, SYMBOL, SPACER,
+            SELECT, SUBSET, SCRIPT, TBREAK, VECTOR, ARTICLE, ANIMATE, ARCSECH,
+            ARCCSCH, ARCTANH, ARCSINH, ARCCOSH, ARCCOTH, ACRONYM, ADDRESS,
+            BGSOUND, COMMAND, COMPOSE, CEILING, CSYMBOL, CAPTION, DISCARD,
+            DECLARE, DETAILS, ELLIPSE, FEFUNCA, FEFUNCB, FEBLEND, FEFLOOD,
+            FEIMAGE, FEMERGE, FEFUNCG, FEFUNCR, HANDLER, INVERSE, IMPLIES,
+            ISINDEX, LOGBASE, LISTING, MFENCED, MPADDED, MARQUEE, MACTION,
+            MSUBSUP, NOEMBED, POLYGON, PATTERN, PRODUCT, SETDIFF, SECTION,
+            TENDSTO, UPLIMIT, ALTGLYPH, BASEFONT, CLIPPATH, CODOMAIN, COLGROUP,
             DATAGRID, EMPTYSET, FACTOROF, FIELDSET, FRAMESET, FEOFFSET,
             GLYPHREF, INTERVAL, INTEGERS, INFINITY, LISTENER, LOWLIMIT,
             METADATA, MENCLOSE, MPHANTOM, NOFRAMES, NOSCRIPT, OPTGROUP,
@@ -1616,7 +1622,7 @@ public class ElementName implements Comparable<ElementName> {
             FEDISPLACEMENTMAP, FESPECULARLIGHTING, DOMAINOFAPPLICATION,
             FECOMPONENTTRANSFER, };
 
-    private static int[] ELEMENT_HASHES = { 1057, 1090, 1255, 1321, 1552, 1585,
+    private final static int[] ELEMENT_HASHES = { 1057, 1090, 1255, 1321, 1552, 1585,
             1651, 1717, 68162, 68899, 69059, 69764, 70020, 70276, 71077, 71205,
             72134, 72232, 72264, 72296, 72328, 72360, 72392, 73351, 74312,
             75209, 78124, 78284, 78476, 79149, 79309, 79341, 79469, 81295,
@@ -1647,36 +1653,36 @@ public class ElementName implements Comparable<ElementName> {
             203013219, 203036048, 203045987, 203177552, 203898516, 204648562,
             205067918, 205078130, 205096654, 205689142, 205690439, 205766017,
             205988909, 207213161, 207794484, 207800999, 208023602, 208213644,
-            208213647, 210310273, 210940978, 213946445, 214055079, 215125040,
-            215134273, 215135028, 215237420, 215418148, 215553166, 215553394,
-            215563858, 215627949, 215754324, 217529652, 217713834, 217732628,
-            218731945, 221417045, 221424946, 221493746, 221515401, 221658189,
-            221844577, 221908140, 221910626, 221921586, 222659762, 225001091,
-            236105833, 236113965, 236194995, 236195427, 236206132, 236206387,
-            236211683, 236212707, 236381647, 236571826, 237124271, 238172205,
-            238210544, 238270764, 238435405, 238501172, 239224867, 239257644,
-            239710497, 240307721, 241208789, 241241557, 241318060, 241319404,
-            241343533, 241344069, 241405397, 241765845, 243864964, 244502085,
-            244946220, 245109902, 247647266, 247707956, 248648814, 248648836,
-            248682161, 248986932, 249058914, 249697357, 252132601, 252135604,
-            252317348, 255007012, 255278388, 256365156, 257566121, 269763372,
-            271202790, 271863856, 272049197, 272127474, 272770631, 274339449,
-            274939471, 275388004, 275388005, 275388006, 275977800, 278267602,
-            278513831, 278712622, 281613765, 281683369, 282120228, 282250732,
-            282508942, 283743649, 283787570, 284710386, 285391148, 285478533,
-            285854898, 285873762, 286931113, 288964227, 289445441, 289689648,
-            291671489, 303512884, 305319975, 305610036, 305764101, 308448294,
-            308675890, 312085683, 312264750, 315032867, 316391000, 317331042,
-            317902135, 318950711, 319447220, 321499182, 322538804, 323145200,
-            337067316, 337826293, 339905989, 340833697, 341457068, 345302593,
-            349554733, 349771471, 349786245, 350819405, 356072847, 370349192,
-            373962798, 375558638, 375574835, 376053993, 383276530, 383373833,
-            383407586, 384439906, 386079012, 404133513, 404307343, 407031852,
-            408063573, 408072233, 409112005, 409608425, 409771500, 419040932,
-            437730612, 439529766, 442616365, 442813037, 443157674, 443295316,
-            450118444, 450482697, 456789668, 459935396, 471217869, 474073645,
-            476230702, 476665218, 476717289, 483014825, 485083298, 489306281,
-            538364390, 540675748, 543819186, 543958612, 576960820, 577242548,
-            610515252, 642202932, 644420819, };
+            208213647, 210310273, 210940978, 213325049, 213946445, 214055079,
+            215125040, 215134273, 215135028, 215237420, 215418148, 215553166,
+            215553394, 215563858, 215627949, 215754324, 217529652, 217713834,
+            217732628, 218731945, 221417045, 221424946, 221493746, 221515401,
+            221658189, 221844577, 221908140, 221910626, 221921586, 222659762,
+            225001091, 236105833, 236113965, 236194995, 236195427, 236206132,
+            236206387, 236211683, 236212707, 236381647, 236571826, 237124271,
+            238172205, 238210544, 238270764, 238435405, 238501172, 239224867,
+            239257644, 239710497, 240307721, 241208789, 241241557, 241318060,
+            241319404, 241343533, 241344069, 241405397, 241765845, 243864964,
+            244502085, 244946220, 245109902, 247647266, 247707956, 248648814,
+            248648836, 248682161, 248986932, 249058914, 249697357, 252132601,
+            252135604, 252317348, 255007012, 255278388, 256365156, 257566121,
+            269763372, 271202790, 271863856, 272049197, 272127474, 272770631,
+            274339449, 274939471, 275388004, 275388005, 275388006, 275977800,
+            278267602, 278513831, 278712622, 281613765, 281683369, 282120228,
+            282250732, 282508942, 283743649, 283787570, 284710386, 285391148,
+            285478533, 285854898, 285873762, 286931113, 288964227, 289445441,
+            289689648, 291671489, 303512884, 305319975, 305610036, 305764101,
+            308448294, 308675890, 312085683, 312264750, 315032867, 316391000,
+            317331042, 317902135, 318950711, 319447220, 321499182, 322538804,
+            323145200, 337067316, 337826293, 339905989, 340833697, 341457068,
+            345302593, 349554733, 349771471, 349786245, 350819405, 356072847,
+            370349192, 373962798, 375558638, 375574835, 376053993, 383276530,
+            383373833, 383407586, 384439906, 386079012, 404133513, 404307343,
+            407031852, 408063573, 408072233, 409112005, 409608425, 409771500,
+            419040932, 437730612, 439529766, 442616365, 442813037, 443157674,
+            443295316, 450118444, 450482697, 456789668, 459935396, 471217869,
+            474073645, 476230702, 476665218, 476717289, 483014825, 485083298,
+            489306281, 538364390, 540675748, 543819186, 543958612, 576960820,
+            577242548, 610515252, 642202932, 644420819, };
 
 }
