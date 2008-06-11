@@ -294,8 +294,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private static final int NOT_IN_FOREIGN = 1;
 
-    private final StackNode<T> MARKER = new StackNode<T>(null, new ElementName(
-            null), null);
+    private final StackNode<T> MARKER = new StackNode<T>(null, ElementName.NULL_ELEMENT_NAME, null);
 
     private final boolean nonConformingAndStreaming;
 
