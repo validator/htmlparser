@@ -271,7 +271,10 @@ public class ElementName implements Comparable<ElementName> {
     public static void main(String[] args) {
         Arrays.sort(ELEMENT_NAMES);
         for (int i = 1; i < ELEMENT_NAMES.length; i++) {
-            
+            if (ELEMENT_NAMES[i].hash() == ELEMENT_NAMES[i - 1].hash()) {
+                System.err.println("Hash collision: " + ELEMENT_NAMES[i].name + ", " + ELEMENT_NAMES[i - 1].name);
+                return;
+            }
         }        
         for (int i = 0; i < ELEMENT_NAMES.length; i++) {
             ElementName el = ELEMENT_NAMES[i];
