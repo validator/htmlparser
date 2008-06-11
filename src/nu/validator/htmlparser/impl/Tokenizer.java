@@ -1054,7 +1054,7 @@ public class Tokenizer implements Locator {
     }
 
     private void attributeNameComplete() throws SAXException {
-        attributeName = AttributeName.nameByBuffer(strBuf, strBufLen);
+        attributeName = AttributeName.nameByBuffer(strBuf, strBufLen, namePolicy != XmlViolationPolicy.ALLOW);
         if (attributes == null) {
             attributes = newAttributes();
         }

@@ -35,6 +35,8 @@ public final class AttributeName implements Comparable<AttributeName> {
 
     private static final boolean [] ALL_NCNAME = {true, true, true, true};
 
+    private static final boolean [] ALL_NO_NCNAME = {false, false, false, false};
+    
     private static @NsUri String[] NAMESPACE(@Local String ns) {
         return new String[]{"", ns, ns, ""};
     }
@@ -55,22 +57,22 @@ public final class AttributeName implements Comparable<AttributeName> {
         return new String[]{name, name, name, name};
     }
     
-    static AttributeName nameByBuffer(char[] buf, int length) {
+    static AttributeName nameByBuffer(char[] buf, int length, boolean checkNcName) {
         int hash = bufToHash(buf, length);
         int index = Arrays.binarySearch(ATTRIBUTE_HASHES, hash);
         if (index < 0) {
-            return create(StringUtil.localNameFromBuffer(buf, length));
+            return create(StringUtil.localNameFromBuffer(buf, length), checkNcName);
         } else {
             AttributeName rv = ATTRIBUTE_NAMES[index];
             @Local String name = rv.getQName(HTML);
             if (name.length() != length) {
                 return create(StringUtil.localNameFromBuffer(buf,
-                        length));
+                        length), checkNcName);
             }
             for (int i = 0; i < length; i++) {
                 if (name.charAt(i) != buf[i]) {
                     return create(StringUtil.localNameFromBuffer(buf,
-                            length));
+                            length), checkNcName);
                 }
             }
             return rv;
@@ -149,8 +151,17 @@ public final class AttributeName implements Comparable<AttributeName> {
         this.xmlns = xmlns;
     }
     
-    private static AttributeName create(@IdType String type) {
-        return null;
+    private static AttributeName create(@Local String name, boolean checkNcName) {
+        boolean ncName = true;
+        boolean xmlns = name.startsWith("xmlns:");
+        if (checkNcName) {
+            if (xmlns) {
+                ncName = false;
+            } else {
+                ncName = NCName.isNCName(name);
+            }
+        }
+        return new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL(name), SAME_LOWER_CASE_QNAME(name), (ncName ? ALL_NCNAME : ALL_NO_NCNAME), xmlns);
     }
     
     public String getType(int mode) {
