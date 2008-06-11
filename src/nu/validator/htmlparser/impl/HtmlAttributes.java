@@ -39,6 +39,16 @@ import org.xml.sax.Attributes;
  */
 public final class HtmlAttributes implements Attributes {
 
+    // [NOCPP[
+
+    private static final AttributeName[] EMPTY_ATTRIBUTENAMES = new AttributeName[0];
+
+    private static final String[] EMPTY_STRINGS = new String[0];
+    
+    // ]NOCPP]
+    
+    public static final HtmlAttributes EMPTY_ATTRIBUTES = new HtmlAttributes(AttributeName.HTML);
+    
     private int mode;
 
     private int length;
@@ -46,8 +56,18 @@ public final class HtmlAttributes implements Attributes {
     private AttributeName[] names;
 
     private String[] values;
-    
+
+    // [NOCPP[
+
     private String idValue;
+
+    private int xmlnsLength;
+
+    private AttributeName[] xmlnsNames;
+
+    private String[] xmlnsValues;
+
+    // ]NOCPP]
 
     public HtmlAttributes(int mode) {
         this.mode = mode;
@@ -55,7 +75,18 @@ public final class HtmlAttributes implements Attributes {
         this.names = new AttributeName[5]; // covers 98.3% of elements according to
         // Hixie
         this.values = new String[5];
+        
+        // [NOCPP[
+        
         this.idValue = null;
+        
+        this.xmlnsLength = 0;
+        
+        this.xmlnsNames = EMPTY_ATTRIBUTENAMES;
+        
+        this.xmlnsValues = EMPTY_STRINGS;
+        
+        // ]NOCPP]
     }
 
     public int getIndex(@QName String qName) {
@@ -139,7 +170,7 @@ public final class HtmlAttributes implements Attributes {
         }
     }
 
-    public final String getValue(String qName) {
+    public String getValue(String qName) {
         int index = getIndex(qName);
         if (index == -1) {
             return null;
@@ -156,15 +187,67 @@ public final class HtmlAttributes implements Attributes {
             return getValue(index);
         }
     }
-    
+
+    // [NOCPP[
+
     public String getId() {
         return idValue;
     }
 
+    public int getXmlnsLength() {
+        return xmlnsLength;
+    }
+    
+    public @Local String getXmlnsLocalName(int index) {
+        if (index < xmlnsLength) {
+            return xmlnsNames[index].getLocal(mode);
+        } else {
+            return null;
+        }
+    }
+    
+    public @NsUri String getXmlnsURI(int index) {
+        if (index < xmlnsLength) {
+            return xmlnsNames[index].getUri(mode);
+        } else {
+            return null;
+        }
+    }    
+    
+    public String getXmlnsValue(int index) {
+        if (index < xmlnsLength) {
+            return xmlnsValues[index];
+        } else {
+            return null;
+        }
+    }
+    
+    // ]NOCPP]
+
     void addAttribute(AttributeName name, String value) {
+        // [NOCPP[
         if (name == AttributeName.ID) {
             idValue = value;
         }
+        
+        if (name.isXmlns()) {
+            if (xmlnsNames.length == xmlnsLength) {
+                int newLen = xmlnsNames.length + 2;
+                AttributeName[] newNames = new AttributeName[newLen];
+                System.arraycopy(xmlnsNames, 0, newNames, 0, names.length);
+                xmlnsNames = newNames;
+                String[] newValues = new String[newLen];
+                System.arraycopy(xmlnsValues, 0, newValues, 0, values.length);
+                xmlnsValues = newValues;
+            }
+            xmlnsNames[xmlnsLength] = name;
+            xmlnsValues[xmlnsLength] = value;
+            xmlnsLength++;
+            return;
+        }
+        
+        // ]NOCPP]
+        
         if (names.length == length) {
             int newLen = names.length + 10; // The first growth covers virtually
             // 100% of elements according to
@@ -189,12 +272,12 @@ public final class HtmlAttributes implements Attributes {
         length = 0;
         idValue = null;
     }
-    
-    void adjustForMath() {
+
+    public void adjustForMath() {
         mode = AttributeName.MATHML;
     }
-    
-    void adjustForSvg() {
+
+    public void adjustForSvg() {
         mode = AttributeName.SVG;
     }
 }
