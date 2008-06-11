@@ -26,9 +26,9 @@ package nu.validator.htmlparser.test;
 import nu.validator.htmlparser.common.TokenHandler;
 import nu.validator.htmlparser.impl.ContentModelFlag;
 import nu.validator.htmlparser.impl.ElementName;
+import nu.validator.htmlparser.impl.HtmlAttributes;
 import nu.validator.htmlparser.impl.Tokenizer;
 
-import org.xml.sax.Attributes;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -118,7 +118,7 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
         self.setContentModelFlag(contentModelFlag, contentModelElement);
     }
 
-    public void startTag(ElementName eltName, Attributes attributes, boolean selfClosing)
+    public void startTag(ElementName eltName, HtmlAttributes attributes, boolean selfClosing)
             throws SAXException {
         String name = eltName.name;
         flushCharacters();

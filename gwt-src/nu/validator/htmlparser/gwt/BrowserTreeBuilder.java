@@ -25,9 +25,9 @@ package nu.validator.htmlparser.gwt;
 
 import nu.validator.htmlparser.common.DocumentMode;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
+import nu.validator.htmlparser.impl.HtmlAttributes;
 import nu.validator.htmlparser.impl.TreeBuilder;
 
-import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
 import com.google.gwt.core.client.JavaScriptException;
@@ -52,7 +52,7 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
     
     
     @Override
-    protected void addAttributesToElement(JavaScriptObject element, Attributes attributes)
+    protected void addAttributesToElement(JavaScriptObject element, HtmlAttributes attributes)
             throws SAXException {
         try {
             for (int i = 0; i < attributes.getLength(); i++) {
@@ -138,7 +138,7 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
     }-*/;
     
     @Override
-    protected JavaScriptObject createElement(String ns, String name, Attributes attributes)
+    protected JavaScriptObject createElement(String ns, String name, HtmlAttributes attributes)
             throws SAXException {
         try {
             JavaScriptObject rv = createElementNS(document,
@@ -155,7 +155,7 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
     }
 
     @Override
-    protected JavaScriptObject createHtmlElementSetAsRoot(Attributes attributes)
+    protected JavaScriptObject createHtmlElementSetAsRoot(HtmlAttributes attributes)
             throws SAXException {
         try {
             JavaScriptObject rv = createElementNS(document,
@@ -300,7 +300,7 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
      */
     @Override
     protected JavaScriptObject createElement(String ns, String name,
-            Attributes attributes, JavaScriptObject form) throws SAXException {
+            HtmlAttributes attributes, JavaScriptObject form) throws SAXException {
         try {
             JavaScriptObject rv = createElement(ns, name, attributes);
 //            rv.setUserData("nu.validator.form-pointer", form, null);

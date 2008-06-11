@@ -24,9 +24,9 @@
 package nu.validator.htmlparser.common;
 
 import nu.validator.htmlparser.impl.ElementName;
+import nu.validator.htmlparser.impl.HtmlAttributes;
 import nu.validator.htmlparser.impl.Tokenizer;
 
-import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
 /**
@@ -77,7 +77,7 @@ public interface TokenHandler {
      * @param selfClosing TODO
      * @throws SAXException if something went wrong
      */
-    public void startTag(ElementName eltName, Attributes attributes, boolean selfClosing) throws SAXException;
+    public void startTag(ElementName eltName, HtmlAttributes attributes, boolean selfClosing) throws SAXException;
     
     /**
      * Receive an end tag token.

@@ -24,7 +24,7 @@
 package nu.validator.htmlparser.sax;
 
 import nu.validator.htmlparser.common.XmlViolationPolicy;
-import nu.validator.htmlparser.impl.AttributesImpl;
+import nu.validator.htmlparser.impl.HtmlAttributes;
 import nu.validator.htmlparser.impl.TreeBuilder;
 import nu.validator.saxtree.Characters;
 import nu.validator.saxtree.Comment;
@@ -35,8 +35,8 @@ import nu.validator.saxtree.Element;
 import nu.validator.saxtree.NodeType;
 import nu.validator.saxtree.ParentNode;
 
-import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
+import org.xml.sax.helpers.AttributesImpl;
 
 class SAXTreeBuilder extends TreeBuilder<Element> {
     
@@ -84,7 +84,7 @@ class SAXTreeBuilder extends TreeBuilder<Element> {
     }
 
     @Override
-    protected Element createHtmlElementSetAsRoot(Attributes attributes) {
+    protected Element createHtmlElementSetAsRoot(HtmlAttributes attributes) {
         Element newElt = new Element(tokenizer, "http://www.w3.org/1999/xhtml", "html", "html", attributes, true, null);
         document.appendChild(newElt);
         return newElt;
@@ -108,14 +108,9 @@ class SAXTreeBuilder extends TreeBuilder<Element> {
     }
 
     @Override
-    protected void addAttributesToElement(Element element, Attributes attributes) {
-        AttributesImpl existingAttrs = (AttributesImpl) element.getAttributes();
-        for (int i = 0; i < attributes.getLength(); i++) {
-            String qName = attributes.getQName(i);
-            if (existingAttrs.getIndex(qName) < 0) {
-                existingAttrs.addAttribute(qName, attributes.getValue(i));
-            }
-        }
+    protected void addAttributesToElement(Element element, HtmlAttributes attributes) {
+        HtmlAttributes existingAttrs = (HtmlAttributes) element.getAttributes();
+        existingAttrs.merge(attributes);
     }
 
     /**
@@ -169,7 +164,7 @@ class SAXTreeBuilder extends TreeBuilder<Element> {
     }
 
     @Override
-    protected Element createElement(String ns, String name, Attributes attributes) throws SAXException {
+    protected Element createElement(String ns, String name, HtmlAttributes attributes) throws SAXException {
         return new Element(tokenizer, ns, name, name, attributes, true, null);
     }
 
