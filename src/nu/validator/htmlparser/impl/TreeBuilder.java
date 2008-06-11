@@ -1289,7 +1289,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             boolean selfClosing) throws SAXException {
         if (errorHandler != null) {
             // ID uniqueness
-            String id = getIdValue(attributes);
+            String id = attributes.getId();
             if (id != null) {
                 LocatorImpl oldLoc = idLocations.get(id);
                 if (oldLoc != null) {
@@ -2423,17 +2423,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (selfClosing) {
             err("Self-closing syntax (\u201C/>\u201D) used on a non-void HTML element.");
         }
-    }
-
-    private String getIdValue(HtmlAttributes attributes) {
-        int len = attributes.getLength();
-        for (int i = 0; i < len; i++) {
-            if (attributes.getType(i) == "ID") {
-                String rv = attributes.getValue(i);
-                return rv.length() == 0 ? null : rv;
-            }
-        }
-        return null;
     }
     
     private enum CharsetState {
