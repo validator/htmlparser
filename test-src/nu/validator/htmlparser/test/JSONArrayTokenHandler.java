@@ -115,7 +115,9 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
 
     public void startTokenization(Tokenizer self) throws SAXException {
         array = new JSONArray();
-        self.setContentModelFlag(contentModelFlag, contentModelElement);
+        if (contentModelElement != null) {
+            self.setContentModelFlag(contentModelFlag, contentModelElement);
+        }
     }
 
     public void startTag(ElementName eltName, HtmlAttributes attributes, boolean selfClosing)
