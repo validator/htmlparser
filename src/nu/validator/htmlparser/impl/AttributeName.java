@@ -195,11 +195,6 @@ public final class AttributeName implements Comparable<AttributeName> {
         return xmlns;
     }
 
-    private static final String[] BOOLEAN_ATTRIBUTES = { "active", "async",
-            "autofocus", "autosubmit", "checked", "compact", "declare",
-            "default", "defer", "disabled", "ismap", "multiple", "nohref",
-            "noresize", "noshade", "nowrap", "readonly", "required", "selected" };
-
     boolean isBoolean() {
         return this == AttributeName.ACTIVE || this == AttributeName.ASYNC
                 || this == AttributeName.AUTOFOCUS
