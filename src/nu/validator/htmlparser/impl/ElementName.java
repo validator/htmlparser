@@ -26,7 +26,7 @@ import java.util.Arrays;
 
 import nu.validator.htmlparser.annotation.Local;
 
-public class ElementName
+public final class ElementName
 // uncomment when regenating self
 // implements Comparable<ElementName>
 {

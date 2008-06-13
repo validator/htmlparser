@@ -23,7 +23,7 @@
 
 package nu.validator.htmlparser.impl;
 
-class StackNode<T> {
+final class StackNode<T> {
     final int group;
 
     final String name;
