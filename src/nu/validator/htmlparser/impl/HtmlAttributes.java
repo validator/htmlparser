@@ -44,11 +44,12 @@ public final class HtmlAttributes implements Attributes {
     private static final AttributeName[] EMPTY_ATTRIBUTENAMES = new AttributeName[0];
 
     private static final String[] EMPTY_STRINGS = new String[0];
-    
+
     // ]NOCPP]
-    
-    public static final HtmlAttributes EMPTY_ATTRIBUTES = new HtmlAttributes(AttributeName.HTML);
-    
+
+    public static final HtmlAttributes EMPTY_ATTRIBUTES = new HtmlAttributes(
+            AttributeName.HTML);
+
     private int mode;
 
     private int length;
@@ -72,20 +73,21 @@ public final class HtmlAttributes implements Attributes {
     public HtmlAttributes(int mode) {
         this.mode = mode;
         this.length = 0;
-        this.names = new AttributeName[5]; // covers 98.3% of elements according to
+        this.names = new AttributeName[5]; // covers 98.3% of elements
+                                            // according to
         // Hixie
         this.values = new String[5];
-        
+
         // [NOCPP[
-        
+
         this.idValue = null;
-        
+
         this.xmlnsLength = 0;
-        
-        this.xmlnsNames = EMPTY_ATTRIBUTENAMES;
-        
-        this.xmlnsValues = EMPTY_STRINGS;
-        
+
+        this.xmlnsNames = HtmlAttributes.EMPTY_ATTRIBUTENAMES;
+
+        this.xmlnsValues = HtmlAttributes.EMPTY_STRINGS;
+
         // ]NOCPP]
     }
 
@@ -135,7 +137,7 @@ public final class HtmlAttributes implements Attributes {
             return null;
         }
     }
-    
+
     public @IdType String getType(int index) {
         if (index < length) {
             return names[index].getType(mode);
@@ -205,7 +207,7 @@ public final class HtmlAttributes implements Attributes {
     public int getXmlnsLength() {
         return xmlnsLength;
     }
-    
+
     public @Local String getXmlnsLocalName(int index) {
         if (index < xmlnsLength) {
             return xmlnsNames[index].getLocal(mode);
@@ -213,15 +215,15 @@ public final class HtmlAttributes implements Attributes {
             return null;
         }
     }
-    
+
     public @NsUri String getXmlnsURI(int index) {
         if (index < xmlnsLength) {
             return xmlnsNames[index].getUri(mode);
         } else {
             return null;
         }
-    }    
-    
+    }
+
     public String getXmlnsValue(int index) {
         if (index < xmlnsLength) {
             return xmlnsValues[index];
@@ -229,7 +231,7 @@ public final class HtmlAttributes implements Attributes {
             return null;
         }
     }
-    
+
     // ]NOCPP]
 
     void addAttribute(AttributeName name, String value) {
@@ -237,7 +239,7 @@ public final class HtmlAttributes implements Attributes {
         if (name == AttributeName.ID) {
             idValue = value;
         }
-        
+
         if (name.isXmlns()) {
             if (xmlnsNames.length == xmlnsLength) {
                 int newLen = xmlnsNames.length + 2;
@@ -253,9 +255,9 @@ public final class HtmlAttributes implements Attributes {
             xmlnsLength++;
             return;
         }
-        
+
         // ]NOCPP]
-        
+
         if (names.length == length) {
             int newLen = names.length + 10; // The first growth covers virtually
             // 100% of elements according to
@@ -287,7 +289,7 @@ public final class HtmlAttributes implements Attributes {
         xmlnsLength = 0;
         // ]NOCPP]
     }
-    
+
     boolean contains(AttributeName name) {
         for (int i = 0; i < length; i++) {
             if (name.equalsAnother(names[i])) {
@@ -299,7 +301,7 @@ public final class HtmlAttributes implements Attributes {
             if (name.equalsAnother(xmlnsNames[i])) {
                 return true;
             }
-        }        
+        }
         // ]NOCPP]
         return false;
     }
@@ -314,7 +316,7 @@ public final class HtmlAttributes implements Attributes {
 
     public void merge(HtmlAttributes attributes) {
         // TODO Auto-generated method stub
-        
+
     }
 
 }
