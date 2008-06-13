@@ -26,13 +26,13 @@ import java.util.Arrays;
 
 import nu.validator.htmlparser.annotation.Local;
 
-public class ElementName 
+public class ElementName
 // uncomment when regenating self
-//implements Comparable<ElementName> 
+// implements Comparable<ElementName>
 {
 
     public final static ElementName NULL_ELEMENT_NAME = new ElementName(null);
-    
+
     public final String name;
 
     public final String camelCaseName;
@@ -48,12 +48,12 @@ public class ElementName
     public final boolean custom;
 
     static ElementName elementNameByBuffer(char[] buf, int length) {
-        int hash = bufToHash(buf, length);
-        int index = Arrays.binarySearch(ELEMENT_HASHES, hash);
+        int hash = ElementName.bufToHash(buf, length);
+        int index = Arrays.binarySearch(ElementName.ELEMENT_HASHES, hash);
         if (index < 0) {
             return new ElementName(StringUtil.localNameFromBuffer(buf, length));
         } else {
-            ElementName rv = ELEMENT_NAMES[index];
+            ElementName rv = ElementName.ELEMENT_NAMES[index];
             @Local String name = rv.name;
             if (name.length() != length) {
                 return new ElementName(StringUtil.localNameFromBuffer(buf,
@@ -70,7 +70,8 @@ public class ElementName
     }
 
     static ElementName elementNameByLocalName(@Local String name) {
-        return elementNameByBuffer(name.toCharArray(), name.length());
+        return ElementName.elementNameByBuffer(name.toCharArray(),
+                name.length());
     }
 
     /**
@@ -117,192 +118,195 @@ public class ElementName
 
     // START CODE ONLY USED FOR GENERATING CODE uncomment and run to regenerate
 
-//    
-//    /**
-//     * @see java.lang.Object#toString()
-//     */
-//    @Override public String toString() {
-//        return "(\"" + name + "\", \"" + camelCaseName + "\", TreeBuilder."
-//                + treeBuilderGroupToName() + ", "
-//                + (special ? "true" : "false") + ", "
-//                + (scoping ? "true" : "false") + ", "
-//                + (fosterParenting ? "true" : "false") + ")";
-//    }
-//
-//    private String constName() {
-//        char[] buf = new char[name.length()];
-//        for (int i = 0; i < name.length(); i++) {
-//            char c = name.charAt(i);
-//            if (c == '-') {
-//                buf[i] = '_';
-//            } else if (c >= '0' && c <= '9') {
-//                buf[i] = c;
-//            } else {
-//                buf[i] = (char) (c - 0x20);
-//            }
-//        }
-//        return new String(buf);
-//    }
-//
-//    private int hash() {
-//        return bufToHash(name.toCharArray(), name.length());
-//    }
-//
-//    public int compareTo(ElementName other) {
-//        int thisHash = this.hash();
-//        int otherHash = other.hash();
-//        if (thisHash < otherHash) {
-//            return -1;
-//        } else if (thisHash == otherHash) {
-//            return 0;
-//        } else {
-//            return 1;
-//        }
-//    }
-//
-//    private String treeBuilderGroupToName() {
-//        switch (group) {
-//            case TreeBuilder.OTHER:
-//                return "OTHER";
-//            case TreeBuilder.A:
-//                return "A";
-//            case TreeBuilder.BASE:
-//                return "BASE";
-//            case TreeBuilder.BODY:
-//                return "BODY";
-//            case TreeBuilder.BR:
-//                return "BR";
-//            case TreeBuilder.BUTTON:
-//                return "BUTTON";
-//            case TreeBuilder.CAPTION:
-//                return "CAPTION";
-//            case TreeBuilder.COL:
-//                return "COL";
-//            case TreeBuilder.COLGROUP:
-//                return "COLGROUP";
-//            case TreeBuilder.FORM:
-//                return "FORM";
-//            case TreeBuilder.FRAME:
-//                return "FRAME";
-//            case TreeBuilder.FRAMESET:
-//                return "FRAMESET";
-//            case TreeBuilder.IMAGE:
-//                return "IMAGE";
-//            case TreeBuilder.INPUT:
-//                return "INPUT";
-//            case TreeBuilder.ISINDEX:
-//                return "ISINDEX";
-//            case TreeBuilder.LI:
-//                return "LI";
-//            case TreeBuilder.LINK:
-//                return "LINK";
-//            case TreeBuilder.MATH:
-//                return "MATH";
-//            case TreeBuilder.META:
-//                return "META";
-//            case TreeBuilder.SVG:
-//                return "SVG";
-//            case TreeBuilder.HEAD:
-//                return "HEAD";
-//            case TreeBuilder.HR:
-//                return "HR";
-//            case TreeBuilder.HTML:
-//                return "HTML";
-//            case TreeBuilder.NOBR:
-//                return "NOBR";
-//            case TreeBuilder.NOFRAMES:
-//                return "NOFRAMES";
-//            case TreeBuilder.NOSCRIPT:
-//                return "NOSCRIPT";
-//            case TreeBuilder.OPTGROUP:
-//                return "OPTGROUP";
-//            case TreeBuilder.OPTION:
-//                return "OPTION";
-//            case TreeBuilder.P:
-//                return "P";
-//            case TreeBuilder.PLAINTEXT:
-//                return "PLAINTEXT";
-//            case TreeBuilder.SCRIPT:
-//                return "SCRIPT";
-//            case TreeBuilder.SELECT:
-//                return "SELECT";
-//            case TreeBuilder.STYLE:
-//                return "STYLE";
-//            case TreeBuilder.TABLE:
-//                return "TABLE";
-//            case TreeBuilder.TEXTAREA:
-//                return "TEXTAREA";
-//            case TreeBuilder.TITLE:
-//                return "TITLE";
-//            case TreeBuilder.TR:
-//                return "TR";
-//            case TreeBuilder.XMP:
-//                return "XMP";
-//            case TreeBuilder.TBODY_OR_THEAD_OR_TFOOT:
-//                return "TBODY_OR_THEAD_OR_TFOOT";
-//            case TreeBuilder.TD_OR_TH:
-//                return "TD_OR_TH";
-//            case TreeBuilder.DD_OR_DT:
-//                return "DD_OR_DT";
-//            case TreeBuilder.H1_OR_H2_OR_H3_OR_H4_OR_H5_OR_H6:
-//                return "H1_OR_H2_OR_H3_OR_H4_OR_H5_OR_H6";
-//            case TreeBuilder.OBJECT_OR_MARQUEE_OR_APPLET:
-//                return "OBJECT_OR_MARQUEE_OR_APPLET";
-//            case TreeBuilder.PRE_OR_LISTING:
-//                return "PRE_OR_LISTING";
-//            case TreeBuilder.B_OR_BIG_OR_EM_OR_FONT_OR_I_OR_S_OR_SMALL_OR_STRIKE_OR_STRONG_OR_TT_OR_U:
-//                return "B_OR_BIG_OR_EM_OR_FONT_OR_I_OR_S_OR_SMALL_OR_STRIKE_OR_STRONG_OR_TT_OR_U";
-//            case TreeBuilder.UL_OR_OL_OR_DL:
-//                return "UL_OR_OL_OR_DL";
-//            case TreeBuilder.IFRAME_OR_NOEMBED:
-//                return "IFRAME_OR_NOEMBED";
-//            case TreeBuilder.EMBED_OR_IMG:
-//                return "EMBED_OR_IMG";
-//            case TreeBuilder.AREA_OR_BASEFONT_OR_BGSOUND_OR_PARAM_OR_SPACER_OR_WBR:
-//                return "AREA_OR_BASEFONT_OR_BGSOUND_OR_PARAM_OR_SPACER_OR_WBR";
-//            case TreeBuilder.DIV_OR_BLOCKQUOTE_OR_CENTER_OR_MENU:
-//                return "DIV_OR_BLOCKQUOTE_OR_CENTER_OR_MENU";
-//            case TreeBuilder.FIELDSET_OR_ADDRESS_OR_DIR:
-//                return "FIELDSET_OR_ADDRESS_OR_DIR";
-//            case TreeBuilder.CODE_OR_RUBY_OR_SPAN_OR_SUB_OR_SUP_OR_VAR:
-//                return "CODE_OR_RUBY_OR_SPAN_OR_SUB_OR_SUP_OR_VAR";
-//        }
-//        return null;
-//    }
-//
-//    /**
-//     * Regenerate self
-//     * 
-//     * @param args
-//     */
-//    public static void main(String[] args) {
-//        Arrays.sort(ELEMENT_NAMES);
-//        for (int i = 1; i < ELEMENT_NAMES.length; i++) {
-//            if (ELEMENT_NAMES[i].hash() == ELEMENT_NAMES[i - 1].hash()) {
-//                System.err.println("Hash collision: " + ELEMENT_NAMES[i].name
-//                        + ", " + ELEMENT_NAMES[i - 1].name);
-//                return;
-//            }
-//        }
-//        for (int i = 0; i < ELEMENT_NAMES.length; i++) {
-//            ElementName el = ELEMENT_NAMES[i];
-//            System.out.println("public static final ElementName "
-//                    + el.constName() + " = new ElementName" + el.toString()
-//                    + ";");
-//        }
-//        System.out.println("private final static ElementName[] ELEMENT_NAMES = {");
-//        for (int i = 0; i < ELEMENT_NAMES.length; i++) {
-//            ElementName el = ELEMENT_NAMES[i];
-//            System.out.println(el.constName() + ",");
-//        }
-//        System.out.println("};");
-//        System.out.println("private final static int[] ELEMENT_HASHES = {");
-//        for (int i = 0; i < ELEMENT_NAMES.length; i++) {
-//            ElementName el = ELEMENT_NAMES[i];
-//            System.out.println(Integer.toString(el.hash()) + ",");
-//        }
-//        System.out.println("};");
-//    }
+    //    
+    // /**
+    // * @see java.lang.Object#toString()
+    // */
+    // @Override public String toString() {
+    // return "(\"" + name + "\", \"" + camelCaseName + "\", TreeBuilder."
+    // + treeBuilderGroupToName() + ", "
+    // + (special ? "true" : "false") + ", "
+    // + (scoping ? "true" : "false") + ", "
+    // + (fosterParenting ? "true" : "false") + ")";
+    // }
+    //
+    // private String constName() {
+    // char[] buf = new char[name.length()];
+    // for (int i = 0; i < name.length(); i++) {
+    // char c = name.charAt(i);
+    // if (c == '-') {
+    // buf[i] = '_';
+    // } else if (c >= '0' && c <= '9') {
+    // buf[i] = c;
+    // } else {
+    // buf[i] = (char) (c - 0x20);
+    // }
+    // }
+    // return new String(buf);
+    // }
+    //
+    // private int hash() {
+    // return bufToHash(name.toCharArray(), name.length());
+    // }
+    //
+    // public int compareTo(ElementName other) {
+    // int thisHash = this.hash();
+    // int otherHash = other.hash();
+    // if (thisHash < otherHash) {
+    // return -1;
+    // } else if (thisHash == otherHash) {
+    // return 0;
+    // } else {
+    // return 1;
+    // }
+    // }
+    //
+    // private String treeBuilderGroupToName() {
+    // switch (group) {
+    // case TreeBuilder.OTHER:
+    // return "OTHER";
+    // case TreeBuilder.A:
+    // return "A";
+    // case TreeBuilder.BASE:
+    // return "BASE";
+    // case TreeBuilder.BODY:
+    // return "BODY";
+    // case TreeBuilder.BR:
+    // return "BR";
+    // case TreeBuilder.BUTTON:
+    // return "BUTTON";
+    // case TreeBuilder.CAPTION:
+    // return "CAPTION";
+    // case TreeBuilder.COL:
+    // return "COL";
+    // case TreeBuilder.COLGROUP:
+    // return "COLGROUP";
+    // case TreeBuilder.FORM:
+    // return "FORM";
+    // case TreeBuilder.FRAME:
+    // return "FRAME";
+    // case TreeBuilder.FRAMESET:
+    // return "FRAMESET";
+    // case TreeBuilder.IMAGE:
+    // return "IMAGE";
+    // case TreeBuilder.INPUT:
+    // return "INPUT";
+    // case TreeBuilder.ISINDEX:
+    // return "ISINDEX";
+    // case TreeBuilder.LI:
+    // return "LI";
+    // case TreeBuilder.LINK:
+    // return "LINK";
+    // case TreeBuilder.MATH:
+    // return "MATH";
+    // case TreeBuilder.META:
+    // return "META";
+    // case TreeBuilder.SVG:
+    // return "SVG";
+    // case TreeBuilder.HEAD:
+    // return "HEAD";
+    // case TreeBuilder.HR:
+    // return "HR";
+    // case TreeBuilder.HTML:
+    // return "HTML";
+    // case TreeBuilder.NOBR:
+    // return "NOBR";
+    // case TreeBuilder.NOFRAMES:
+    // return "NOFRAMES";
+    // case TreeBuilder.NOSCRIPT:
+    // return "NOSCRIPT";
+    // case TreeBuilder.OPTGROUP:
+    // return "OPTGROUP";
+    // case TreeBuilder.OPTION:
+    // return "OPTION";
+    // case TreeBuilder.P:
+    // return "P";
+    // case TreeBuilder.PLAINTEXT:
+    // return "PLAINTEXT";
+    // case TreeBuilder.SCRIPT:
+    // return "SCRIPT";
+    // case TreeBuilder.SELECT:
+    // return "SELECT";
+    // case TreeBuilder.STYLE:
+    // return "STYLE";
+    // case TreeBuilder.TABLE:
+    // return "TABLE";
+    // case TreeBuilder.TEXTAREA:
+    // return "TEXTAREA";
+    // case TreeBuilder.TITLE:
+    // return "TITLE";
+    // case TreeBuilder.TR:
+    // return "TR";
+    // case TreeBuilder.XMP:
+    // return "XMP";
+    // case TreeBuilder.TBODY_OR_THEAD_OR_TFOOT:
+    // return "TBODY_OR_THEAD_OR_TFOOT";
+    // case TreeBuilder.TD_OR_TH:
+    // return "TD_OR_TH";
+    // case TreeBuilder.DD_OR_DT:
+    // return "DD_OR_DT";
+    // case TreeBuilder.H1_OR_H2_OR_H3_OR_H4_OR_H5_OR_H6:
+    // return "H1_OR_H2_OR_H3_OR_H4_OR_H5_OR_H6";
+    // case TreeBuilder.OBJECT_OR_MARQUEE_OR_APPLET:
+    // return "OBJECT_OR_MARQUEE_OR_APPLET";
+    // case TreeBuilder.PRE_OR_LISTING:
+    // return "PRE_OR_LISTING";
+    // case
+    // TreeBuilder.B_OR_BIG_OR_EM_OR_FONT_OR_I_OR_S_OR_SMALL_OR_STRIKE_OR_STRONG_OR_TT_OR_U:
+    // return
+    // "B_OR_BIG_OR_EM_OR_FONT_OR_I_OR_S_OR_SMALL_OR_STRIKE_OR_STRONG_OR_TT_OR_U";
+    // case TreeBuilder.UL_OR_OL_OR_DL:
+    // return "UL_OR_OL_OR_DL";
+    // case TreeBuilder.IFRAME_OR_NOEMBED:
+    // return "IFRAME_OR_NOEMBED";
+    // case TreeBuilder.EMBED_OR_IMG:
+    // return "EMBED_OR_IMG";
+    // case TreeBuilder.AREA_OR_BASEFONT_OR_BGSOUND_OR_PARAM_OR_SPACER_OR_WBR:
+    // return "AREA_OR_BASEFONT_OR_BGSOUND_OR_PARAM_OR_SPACER_OR_WBR";
+    // case TreeBuilder.DIV_OR_BLOCKQUOTE_OR_CENTER_OR_MENU:
+    // return "DIV_OR_BLOCKQUOTE_OR_CENTER_OR_MENU";
+    // case TreeBuilder.FIELDSET_OR_ADDRESS_OR_DIR:
+    // return "FIELDSET_OR_ADDRESS_OR_DIR";
+    // case TreeBuilder.CODE_OR_RUBY_OR_SPAN_OR_SUB_OR_SUP_OR_VAR:
+    // return "CODE_OR_RUBY_OR_SPAN_OR_SUB_OR_SUP_OR_VAR";
+    // }
+    // return null;
+    // }
+    //
+    // /**
+    // * Regenerate self
+    // *
+    // * @param args
+    // */
+    // public static void main(String[] args) {
+    // Arrays.sort(ELEMENT_NAMES);
+    // for (int i = 1; i < ELEMENT_NAMES.length; i++) {
+    // if (ELEMENT_NAMES[i].hash() == ELEMENT_NAMES[i - 1].hash()) {
+    // System.err.println("Hash collision: " + ELEMENT_NAMES[i].name
+    // + ", " + ELEMENT_NAMES[i - 1].name);
+    // return;
+    // }
+    // }
+    // for (int i = 0; i < ELEMENT_NAMES.length; i++) {
+    // ElementName el = ELEMENT_NAMES[i];
+    // System.out.println("public static final ElementName "
+    // + el.constName() + " = new ElementName" + el.toString()
+    // + ";");
+    // }
+    // System.out.println("private final static ElementName[] ELEMENT_NAMES =
+    // {");
+    // for (int i = 0; i < ELEMENT_NAMES.length; i++) {
+    // ElementName el = ELEMENT_NAMES[i];
+    // System.out.println(el.constName() + ",");
+    // }
+    // System.out.println("};");
+    // System.out.println("private final static int[] ELEMENT_HASHES = {");
+    // for (int i = 0; i < ELEMENT_NAMES.length; i++) {
+    // ElementName el = ELEMENT_NAMES[i];
+    // System.out.println(Integer.toString(el.hash()) + ",");
+    // }
+    // System.out.println("};");
+    // }
 
     // START GENERATED CODE
     public static final ElementName A = new ElementName("a", "a",
@@ -1573,120 +1577,204 @@ public class ElementName
             "fecomponenttransfer", "feComponentTransfer", TreeBuilder.OTHER,
             false, false, false);
 
-    private final static ElementName[] ELEMENT_NAMES = { A, B, G, I, P, Q, S, U, BR,
-            CI, CN, DD, DL, DT, EM, EQ, FN, H1, H2, H3, H4, H5, H6, GT, HR, IN,
-            LI, LN, LT, MI, MN, MO, MS, OL, OR, PI, TD, TH, TR, TT, UL, AND,
-            ARG, ABS, BIG, BDO, CSC, COL, COS, COT, DEL, DFN, DIR, DIV, EXP,
-            GCD, GEQ, IMG, INS, INT, KBD, LOG, LCM, LEQ, MTD, MIN, MAP, MTR,
-            MAX, NEQ, NOT, NAV, PRE, REM, SUB, SEC, SVG, SUM, SIN, SEP, SUP,
-            SET, TAN, USE, VAR, WBR, XMP, XOR, AREA, ABBR, BASE, BVAR, BODY,
-            CARD, CODE, CITE, CSCH, COSH, COTH, CURL, DESC, DIFF, DEFS, FORM,
-            FONT, GRAD, HEAD, HTML, LINE, LINK, LIST, META, MSUB, MODE, MATH,
-            MARK, MASK, MEAN, MSUP, MENU, MROW, NONE, NOBR, NEST, PATH, PLUS,
-            RULE, REAL, RELN, RECT, ROOT, RUBY, SECH, SINH, SPAN, SAMP, STOP,
-            SDEV, TIME, TRUE, TREF, TANH, TEXT, VIEW, ASIDE, AUDIO, APPLY,
-            EMBED, FRAME, FALSE, FLOOR, GLYPH, HKERN, IMAGE, IDENT, INPUT,
-            LABEL, LIMIT, MFRAC, MPATH, METER, MOVER, MINUS, MROOT, MSQRT,
-            MTEXT, NOTIN, PIECE, PARAM, POWER, REALS, STYLE, SMALL, THEAD,
-            TABLE, TITLE, TSPAN, TIMES, TFOOT, TBODY, UNION, VKERN, VIDEO,
-            ARCSEC, ARCCSC, ARCTAN, ARCSIN, ARCCOS, APPLET, ARCCOT, APPROX,
-            BUTTON, CIRCLE, CENTER, CURSOR, CANVAS, DIVIDE, DEGREE, DIALOG,
-            DOMAIN, EXISTS, FETILE, FIGURE, FORALL, FILTER, FOOTER, HEADER,
-            IFRAME, KEYGEN, LAMBDA, LEGEND, MSPACE, MTABLE, MSTYLE, MGLYPH,
-            MEDIAN, MUNDER, MARKER, MERROR, MOMENT, MATRIX, OPTION, OBJECT,
-            OUTPUT, PRIMES, SOURCE, STRIKE, STRONG, SWITCH, SYMBOL, SPACER,
-            SELECT, SUBSET, SCRIPT, TBREAK, VECTOR, ARTICLE, ANIMATE, ARCSECH,
-            ARCCSCH, ARCTANH, ARCSINH, ARCCOSH, ARCCOTH, ACRONYM, ADDRESS,
-            BGSOUND, COMMAND, COMPOSE, CEILING, CSYMBOL, CAPTION, DISCARD,
-            DECLARE, DETAILS, ELLIPSE, FEFUNCA, FEFUNCB, FEBLEND, FEFLOOD,
-            FEIMAGE, FEMERGE, FEFUNCG, FEFUNCR, HANDLER, INVERSE, IMPLIES,
-            ISINDEX, LOGBASE, LISTING, MFENCED, MPADDED, MARQUEE, MACTION,
-            MSUBSUP, NOEMBED, POLYGON, PATTERN, PRODUCT, SETDIFF, SECTION,
-            TENDSTO, UPLIMIT, ALTGLYPH, BASEFONT, CLIPPATH, CODOMAIN, COLGROUP,
-            DATAGRID, EMPTYSET, FACTOROF, FIELDSET, FRAMESET, FEOFFSET,
-            GLYPHREF, INTERVAL, INTEGERS, INFINITY, LISTENER, LOWLIMIT,
-            METADATA, MENCLOSE, MPHANTOM, NOFRAMES, NOSCRIPT, OPTGROUP,
-            POLYLINE, PREFETCH, PROGRESS, PRSUBSET, QUOTIENT, SELECTOR,
-            TEXTAREA, TEXTPATH, VARIANCE, ANIMATION, CONJUGATE, CONDITION,
-            COMPLEXES, FONT_FACE, FACTORIAL, INTERSECT, IMAGINARY, LAPLACIAN,
-            MATRIXROW, NOTSUBSET, OTHERWISE, PIECEWISE, PLAINTEXT, RATIONALS,
-            SEMANTICS, TRANSPOSE, ANNOTATION, BLOCKQUOTE, DIVERGENCE,
-            EULERGAMMA, EQUIVALENT, IMAGINARYI, MALIGNMARK, MUNDEROVER,
-            MLABELEDTR, NOTANUMBER, SOLIDCOLOR, ALTGLYPHDEF, DETERMINANT,
-            FEMERGENODE, FECOMPOSITE, FESPOTLIGHT, MALIGNGROUP, MPRESCRIPTS,
-            MOMENTABOUT, NOTPRSUBSET, PARTIALDIFF, ALTGLYPHITEM, ANIMATECOLOR,
-            DATATEMPLATE, EVENT_SOURCE, EXPONENTIALE, FETURBULENCE,
-            FEPOINTLIGHT, FEMORPHOLOGY, OUTERPRODUCT, ANIMATEMOTION,
-            COLOR_PROFILE, FONT_FACE_SRC, FONT_FACE_URI, FOREIGNOBJECT,
-            FECOLORMATRIX, MISSING_GLYPH, MMULTISCRIPTS, SCALARPRODUCT,
-            VECTORPRODUCT, ANNOTATION_XML, DEFINITION_SRC, FONT_FACE_NAME,
-            FEGAUSSIANBLUR, FEDISTANTLIGHT, LINEARGRADIENT, NATURALNUMBERS,
-            RADIALGRADIENT, ANIMATETRANSFORM, CARTESIANPRODUCT,
-            FONT_FACE_FORMAT, FECONVOLVEMATRIX, FEDIFFUSELIGHTING,
-            FEDISPLACEMENTMAP, FESPECULARLIGHTING, DOMAINOFAPPLICATION,
-            FECOMPONENTTRANSFER, };
+    private final static ElementName[] ELEMENT_NAMES = { ElementName.A,
+            ElementName.B, ElementName.G, ElementName.I, ElementName.P,
+            ElementName.Q, ElementName.S, ElementName.U, ElementName.BR,
+            ElementName.CI, ElementName.CN, ElementName.DD, ElementName.DL,
+            ElementName.DT, ElementName.EM, ElementName.EQ, ElementName.FN,
+            ElementName.H1, ElementName.H2, ElementName.H3, ElementName.H4,
+            ElementName.H5, ElementName.H6, ElementName.GT, ElementName.HR,
+            ElementName.IN, ElementName.LI, ElementName.LN, ElementName.LT,
+            ElementName.MI, ElementName.MN, ElementName.MO, ElementName.MS,
+            ElementName.OL, ElementName.OR, ElementName.PI, ElementName.TD,
+            ElementName.TH, ElementName.TR, ElementName.TT, ElementName.UL,
+            ElementName.AND, ElementName.ARG, ElementName.ABS, ElementName.BIG,
+            ElementName.BDO, ElementName.CSC, ElementName.COL, ElementName.COS,
+            ElementName.COT, ElementName.DEL, ElementName.DFN, ElementName.DIR,
+            ElementName.DIV, ElementName.EXP, ElementName.GCD, ElementName.GEQ,
+            ElementName.IMG, ElementName.INS, ElementName.INT, ElementName.KBD,
+            ElementName.LOG, ElementName.LCM, ElementName.LEQ, ElementName.MTD,
+            ElementName.MIN, ElementName.MAP, ElementName.MTR, ElementName.MAX,
+            ElementName.NEQ, ElementName.NOT, ElementName.NAV, ElementName.PRE,
+            ElementName.REM, ElementName.SUB, ElementName.SEC, ElementName.SVG,
+            ElementName.SUM, ElementName.SIN, ElementName.SEP, ElementName.SUP,
+            ElementName.SET, ElementName.TAN, ElementName.USE, ElementName.VAR,
+            ElementName.WBR, ElementName.XMP, ElementName.XOR,
+            ElementName.AREA, ElementName.ABBR, ElementName.BASE,
+            ElementName.BVAR, ElementName.BODY, ElementName.CARD,
+            ElementName.CODE, ElementName.CITE, ElementName.CSCH,
+            ElementName.COSH, ElementName.COTH, ElementName.CURL,
+            ElementName.DESC, ElementName.DIFF, ElementName.DEFS,
+            ElementName.FORM, ElementName.FONT, ElementName.GRAD,
+            ElementName.HEAD, ElementName.HTML, ElementName.LINE,
+            ElementName.LINK, ElementName.LIST, ElementName.META,
+            ElementName.MSUB, ElementName.MODE, ElementName.MATH,
+            ElementName.MARK, ElementName.MASK, ElementName.MEAN,
+            ElementName.MSUP, ElementName.MENU, ElementName.MROW,
+            ElementName.NONE, ElementName.NOBR, ElementName.NEST,
+            ElementName.PATH, ElementName.PLUS, ElementName.RULE,
+            ElementName.REAL, ElementName.RELN, ElementName.RECT,
+            ElementName.ROOT, ElementName.RUBY, ElementName.SECH,
+            ElementName.SINH, ElementName.SPAN, ElementName.SAMP,
+            ElementName.STOP, ElementName.SDEV, ElementName.TIME,
+            ElementName.TRUE, ElementName.TREF, ElementName.TANH,
+            ElementName.TEXT, ElementName.VIEW, ElementName.ASIDE,
+            ElementName.AUDIO, ElementName.APPLY, ElementName.EMBED,
+            ElementName.FRAME, ElementName.FALSE, ElementName.FLOOR,
+            ElementName.GLYPH, ElementName.HKERN, ElementName.IMAGE,
+            ElementName.IDENT, ElementName.INPUT, ElementName.LABEL,
+            ElementName.LIMIT, ElementName.MFRAC, ElementName.MPATH,
+            ElementName.METER, ElementName.MOVER, ElementName.MINUS,
+            ElementName.MROOT, ElementName.MSQRT, ElementName.MTEXT,
+            ElementName.NOTIN, ElementName.PIECE, ElementName.PARAM,
+            ElementName.POWER, ElementName.REALS, ElementName.STYLE,
+            ElementName.SMALL, ElementName.THEAD, ElementName.TABLE,
+            ElementName.TITLE, ElementName.TSPAN, ElementName.TIMES,
+            ElementName.TFOOT, ElementName.TBODY, ElementName.UNION,
+            ElementName.VKERN, ElementName.VIDEO, ElementName.ARCSEC,
+            ElementName.ARCCSC, ElementName.ARCTAN, ElementName.ARCSIN,
+            ElementName.ARCCOS, ElementName.APPLET, ElementName.ARCCOT,
+            ElementName.APPROX, ElementName.BUTTON, ElementName.CIRCLE,
+            ElementName.CENTER, ElementName.CURSOR, ElementName.CANVAS,
+            ElementName.DIVIDE, ElementName.DEGREE, ElementName.DIALOG,
+            ElementName.DOMAIN, ElementName.EXISTS, ElementName.FETILE,
+            ElementName.FIGURE, ElementName.FORALL, ElementName.FILTER,
+            ElementName.FOOTER, ElementName.HEADER, ElementName.IFRAME,
+            ElementName.KEYGEN, ElementName.LAMBDA, ElementName.LEGEND,
+            ElementName.MSPACE, ElementName.MTABLE, ElementName.MSTYLE,
+            ElementName.MGLYPH, ElementName.MEDIAN, ElementName.MUNDER,
+            ElementName.MARKER, ElementName.MERROR, ElementName.MOMENT,
+            ElementName.MATRIX, ElementName.OPTION, ElementName.OBJECT,
+            ElementName.OUTPUT, ElementName.PRIMES, ElementName.SOURCE,
+            ElementName.STRIKE, ElementName.STRONG, ElementName.SWITCH,
+            ElementName.SYMBOL, ElementName.SPACER, ElementName.SELECT,
+            ElementName.SUBSET, ElementName.SCRIPT, ElementName.TBREAK,
+            ElementName.VECTOR, ElementName.ARTICLE, ElementName.ANIMATE,
+            ElementName.ARCSECH, ElementName.ARCCSCH, ElementName.ARCTANH,
+            ElementName.ARCSINH, ElementName.ARCCOSH, ElementName.ARCCOTH,
+            ElementName.ACRONYM, ElementName.ADDRESS, ElementName.BGSOUND,
+            ElementName.COMMAND, ElementName.COMPOSE, ElementName.CEILING,
+            ElementName.CSYMBOL, ElementName.CAPTION, ElementName.DISCARD,
+            ElementName.DECLARE, ElementName.DETAILS, ElementName.ELLIPSE,
+            ElementName.FEFUNCA, ElementName.FEFUNCB, ElementName.FEBLEND,
+            ElementName.FEFLOOD, ElementName.FEIMAGE, ElementName.FEMERGE,
+            ElementName.FEFUNCG, ElementName.FEFUNCR, ElementName.HANDLER,
+            ElementName.INVERSE, ElementName.IMPLIES, ElementName.ISINDEX,
+            ElementName.LOGBASE, ElementName.LISTING, ElementName.MFENCED,
+            ElementName.MPADDED, ElementName.MARQUEE, ElementName.MACTION,
+            ElementName.MSUBSUP, ElementName.NOEMBED, ElementName.POLYGON,
+            ElementName.PATTERN, ElementName.PRODUCT, ElementName.SETDIFF,
+            ElementName.SECTION, ElementName.TENDSTO, ElementName.UPLIMIT,
+            ElementName.ALTGLYPH, ElementName.BASEFONT, ElementName.CLIPPATH,
+            ElementName.CODOMAIN, ElementName.COLGROUP, ElementName.DATAGRID,
+            ElementName.EMPTYSET, ElementName.FACTOROF, ElementName.FIELDSET,
+            ElementName.FRAMESET, ElementName.FEOFFSET, ElementName.GLYPHREF,
+            ElementName.INTERVAL, ElementName.INTEGERS, ElementName.INFINITY,
+            ElementName.LISTENER, ElementName.LOWLIMIT, ElementName.METADATA,
+            ElementName.MENCLOSE, ElementName.MPHANTOM, ElementName.NOFRAMES,
+            ElementName.NOSCRIPT, ElementName.OPTGROUP, ElementName.POLYLINE,
+            ElementName.PREFETCH, ElementName.PROGRESS, ElementName.PRSUBSET,
+            ElementName.QUOTIENT, ElementName.SELECTOR, ElementName.TEXTAREA,
+            ElementName.TEXTPATH, ElementName.VARIANCE, ElementName.ANIMATION,
+            ElementName.CONJUGATE, ElementName.CONDITION,
+            ElementName.COMPLEXES, ElementName.FONT_FACE,
+            ElementName.FACTORIAL, ElementName.INTERSECT,
+            ElementName.IMAGINARY, ElementName.LAPLACIAN,
+            ElementName.MATRIXROW, ElementName.NOTSUBSET,
+            ElementName.OTHERWISE, ElementName.PIECEWISE,
+            ElementName.PLAINTEXT, ElementName.RATIONALS,
+            ElementName.SEMANTICS, ElementName.TRANSPOSE,
+            ElementName.ANNOTATION, ElementName.BLOCKQUOTE,
+            ElementName.DIVERGENCE, ElementName.EULERGAMMA,
+            ElementName.EQUIVALENT, ElementName.IMAGINARYI,
+            ElementName.MALIGNMARK, ElementName.MUNDEROVER,
+            ElementName.MLABELEDTR, ElementName.NOTANUMBER,
+            ElementName.SOLIDCOLOR, ElementName.ALTGLYPHDEF,
+            ElementName.DETERMINANT, ElementName.FEMERGENODE,
+            ElementName.FECOMPOSITE, ElementName.FESPOTLIGHT,
+            ElementName.MALIGNGROUP, ElementName.MPRESCRIPTS,
+            ElementName.MOMENTABOUT, ElementName.NOTPRSUBSET,
+            ElementName.PARTIALDIFF, ElementName.ALTGLYPHITEM,
+            ElementName.ANIMATECOLOR, ElementName.DATATEMPLATE,
+            ElementName.EVENT_SOURCE, ElementName.EXPONENTIALE,
+            ElementName.FETURBULENCE, ElementName.FEPOINTLIGHT,
+            ElementName.FEMORPHOLOGY, ElementName.OUTERPRODUCT,
+            ElementName.ANIMATEMOTION, ElementName.COLOR_PROFILE,
+            ElementName.FONT_FACE_SRC, ElementName.FONT_FACE_URI,
+            ElementName.FOREIGNOBJECT, ElementName.FECOLORMATRIX,
+            ElementName.MISSING_GLYPH, ElementName.MMULTISCRIPTS,
+            ElementName.SCALARPRODUCT, ElementName.VECTORPRODUCT,
+            ElementName.ANNOTATION_XML, ElementName.DEFINITION_SRC,
+            ElementName.FONT_FACE_NAME, ElementName.FEGAUSSIANBLUR,
+            ElementName.FEDISTANTLIGHT, ElementName.LINEARGRADIENT,
+            ElementName.NATURALNUMBERS, ElementName.RADIALGRADIENT,
+            ElementName.ANIMATETRANSFORM, ElementName.CARTESIANPRODUCT,
+            ElementName.FONT_FACE_FORMAT, ElementName.FECONVOLVEMATRIX,
+            ElementName.FEDIFFUSELIGHTING, ElementName.FEDISPLACEMENTMAP,
+            ElementName.FESPECULARLIGHTING, ElementName.DOMAINOFAPPLICATION,
+            ElementName.FECOMPONENTTRANSFER, };
 
-    private final static int[] ELEMENT_HASHES = { 1057, 1090, 1255, 1321, 1552, 1585,
-            1651, 1717, 68162, 68899, 69059, 69764, 70020, 70276, 71077, 71205,
-            72134, 72232, 72264, 72296, 72328, 72360, 72392, 73351, 74312,
-            75209, 78124, 78284, 78476, 79149, 79309, 79341, 79469, 81295,
-            81487, 82224, 86164, 86292, 86612, 86676, 87445, 3183041, 3186241,
-            3198017, 3218722, 3226754, 3247715, 3256803, 3263971, 3264995,
-            3289252, 3291332, 3295524, 3299620, 3326725, 3379303, 3392679,
-            3448233, 3460553, 3461577, 3510347, 3546604, 3552364, 3556524,
-            3576461, 3586349, 3588141, 3590797, 3596333, 3622062, 3625454,
-            3627054, 3675728, 3749042, 3771059, 3771571, 3776211, 3782323,
-            3782963, 3784883, 3785395, 3788979, 3815476, 3839605, 3885110,
-            3917911, 3948984, 3951096, 135304769, 135858241, 136498210,
-            136906434, 137138658, 137512995, 137531875, 137548067, 137629283,
-            137645539, 137646563, 137775779, 138529956, 138615076, 139040932,
-            140954086, 141179366, 141690439, 142738600, 143013512, 146979116,
-            147175724, 147475756, 147902637, 147936877, 148017645, 148131885,
-            148228141, 148229165, 148309165, 148395629, 148551853, 148618829,
-            149076462, 149490158, 149572782, 151277616, 151639440, 153268914,
-            153486514, 153563314, 153750706, 153763314, 153914034, 154406067,
-            154417459, 154600979, 154678323, 154680979, 154866835, 155366708,
-            155375188, 155391572, 155465780, 155869364, 158045494, 168988979,
-            169321621, 169652752, 173151309, 174240818, 174247297, 174669292,
-            175391532, 176638123, 177380397, 177879204, 177886734, 180753473,
-            181020073, 181503558, 181686320, 181999237, 181999311, 182048201,
-            182074866, 182078003, 182083764, 182920847, 184716457, 184976961,
-            185145071, 187281445, 187872052, 188100653, 188875944, 188919873,
-            188920457, 189203987, 189371817, 189414886, 189567458, 190266670,
-            191318187, 191337609, 202479203, 202493027, 202835587, 202843747,
-            203013219, 203036048, 203045987, 203177552, 203898516, 204648562,
-            205067918, 205078130, 205096654, 205689142, 205690439, 205766017,
-            205988909, 207213161, 207794484, 207800999, 208023602, 208213644,
-            208213647, 210310273, 210940978, 213325049, 213946445, 214055079,
-            215125040, 215134273, 215135028, 215237420, 215418148, 215553166,
-            215553394, 215563858, 215627949, 215754324, 217529652, 217713834,
-            217732628, 218731945, 221417045, 221424946, 221493746, 221515401,
-            221658189, 221844577, 221908140, 221910626, 221921586, 222659762,
-            225001091, 236105833, 236113965, 236194995, 236195427, 236206132,
-            236206387, 236211683, 236212707, 236381647, 236571826, 237124271,
-            238172205, 238210544, 238270764, 238435405, 238501172, 239224867,
-            239257644, 239710497, 240307721, 241208789, 241241557, 241318060,
-            241319404, 241343533, 241344069, 241405397, 241765845, 243864964,
-            244502085, 244946220, 245109902, 247647266, 247707956, 248648814,
-            248648836, 248682161, 248986932, 249058914, 249697357, 252132601,
-            252135604, 252317348, 255007012, 255278388, 256365156, 257566121,
-            269763372, 271202790, 271863856, 272049197, 272127474, 272770631,
-            274339449, 274939471, 275388004, 275388005, 275388006, 275977800,
-            278267602, 278513831, 278712622, 281613765, 281683369, 282120228,
-            282250732, 282508942, 283743649, 283787570, 284710386, 285391148,
-            285478533, 285854898, 285873762, 286931113, 288964227, 289445441,
-            289689648, 291671489, 303512884, 305319975, 305610036, 305764101,
-            308448294, 308675890, 312085683, 312264750, 315032867, 316391000,
-            317331042, 317902135, 318950711, 319447220, 321499182, 322538804,
-            323145200, 337067316, 337826293, 339905989, 340833697, 341457068,
-            345302593, 349554733, 349771471, 349786245, 350819405, 356072847,
-            370349192, 373962798, 375558638, 375574835, 376053993, 383276530,
-            383373833, 383407586, 384439906, 386079012, 404133513, 404307343,
-            407031852, 408063573, 408072233, 409112005, 409608425, 409771500,
-            419040932, 437730612, 439529766, 442616365, 442813037, 443157674,
-            443295316, 450118444, 450482697, 456789668, 459935396, 471217869,
-            474073645, 476230702, 476665218, 476717289, 483014825, 485083298,
-            489306281, 538364390, 540675748, 543819186, 543958612, 576960820,
-            577242548, 610515252, 642202932, 644420819, };
+    private final static int[] ELEMENT_HASHES = { 1057, 1090, 1255, 1321, 1552,
+            1585, 1651, 1717, 68162, 68899, 69059, 69764, 70020, 70276, 71077,
+            71205, 72134, 72232, 72264, 72296, 72328, 72360, 72392, 73351,
+            74312, 75209, 78124, 78284, 78476, 79149, 79309, 79341, 79469,
+            81295, 81487, 82224, 86164, 86292, 86612, 86676, 87445, 3183041,
+            3186241, 3198017, 3218722, 3226754, 3247715, 3256803, 3263971,
+            3264995, 3289252, 3291332, 3295524, 3299620, 3326725, 3379303,
+            3392679, 3448233, 3460553, 3461577, 3510347, 3546604, 3552364,
+            3556524, 3576461, 3586349, 3588141, 3590797, 3596333, 3622062,
+            3625454, 3627054, 3675728, 3749042, 3771059, 3771571, 3776211,
+            3782323, 3782963, 3784883, 3785395, 3788979, 3815476, 3839605,
+            3885110, 3917911, 3948984, 3951096, 135304769, 135858241,
+            136498210, 136906434, 137138658, 137512995, 137531875, 137548067,
+            137629283, 137645539, 137646563, 137775779, 138529956, 138615076,
+            139040932, 140954086, 141179366, 141690439, 142738600, 143013512,
+            146979116, 147175724, 147475756, 147902637, 147936877, 148017645,
+            148131885, 148228141, 148229165, 148309165, 148395629, 148551853,
+            148618829, 149076462, 149490158, 149572782, 151277616, 151639440,
+            153268914, 153486514, 153563314, 153750706, 153763314, 153914034,
+            154406067, 154417459, 154600979, 154678323, 154680979, 154866835,
+            155366708, 155375188, 155391572, 155465780, 155869364, 158045494,
+            168988979, 169321621, 169652752, 173151309, 174240818, 174247297,
+            174669292, 175391532, 176638123, 177380397, 177879204, 177886734,
+            180753473, 181020073, 181503558, 181686320, 181999237, 181999311,
+            182048201, 182074866, 182078003, 182083764, 182920847, 184716457,
+            184976961, 185145071, 187281445, 187872052, 188100653, 188875944,
+            188919873, 188920457, 189203987, 189371817, 189414886, 189567458,
+            190266670, 191318187, 191337609, 202479203, 202493027, 202835587,
+            202843747, 203013219, 203036048, 203045987, 203177552, 203898516,
+            204648562, 205067918, 205078130, 205096654, 205689142, 205690439,
+            205766017, 205988909, 207213161, 207794484, 207800999, 208023602,
+            208213644, 208213647, 210310273, 210940978, 213325049, 213946445,
+            214055079, 215125040, 215134273, 215135028, 215237420, 215418148,
+            215553166, 215553394, 215563858, 215627949, 215754324, 217529652,
+            217713834, 217732628, 218731945, 221417045, 221424946, 221493746,
+            221515401, 221658189, 221844577, 221908140, 221910626, 221921586,
+            222659762, 225001091, 236105833, 236113965, 236194995, 236195427,
+            236206132, 236206387, 236211683, 236212707, 236381647, 236571826,
+            237124271, 238172205, 238210544, 238270764, 238435405, 238501172,
+            239224867, 239257644, 239710497, 240307721, 241208789, 241241557,
+            241318060, 241319404, 241343533, 241344069, 241405397, 241765845,
+            243864964, 244502085, 244946220, 245109902, 247647266, 247707956,
+            248648814, 248648836, 248682161, 248986932, 249058914, 249697357,
+            252132601, 252135604, 252317348, 255007012, 255278388, 256365156,
+            257566121, 269763372, 271202790, 271863856, 272049197, 272127474,
+            272770631, 274339449, 274939471, 275388004, 275388005, 275388006,
+            275977800, 278267602, 278513831, 278712622, 281613765, 281683369,
+            282120228, 282250732, 282508942, 283743649, 283787570, 284710386,
+            285391148, 285478533, 285854898, 285873762, 286931113, 288964227,
+            289445441, 289689648, 291671489, 303512884, 305319975, 305610036,
+            305764101, 308448294, 308675890, 312085683, 312264750, 315032867,
+            316391000, 317331042, 317902135, 318950711, 319447220, 321499182,
+            322538804, 323145200, 337067316, 337826293, 339905989, 340833697,
+            341457068, 345302593, 349554733, 349771471, 349786245, 350819405,
+            356072847, 370349192, 373962798, 375558638, 375574835, 376053993,
+            383276530, 383373833, 383407586, 384439906, 386079012, 404133513,
+            404307343, 407031852, 408063573, 408072233, 409112005, 409608425,
+            409771500, 419040932, 437730612, 439529766, 442616365, 442813037,
+            443157674, 443295316, 450118444, 450482697, 456789668, 459935396,
+            471217869, 474073645, 476230702, 476665218, 476717289, 483014825,
+            485083298, 489306281, 538364390, 540675748, 543819186, 543958612,
+            576960820, 577242548, 610515252, 642202932, 644420819, };
 
 }

@@ -29,9 +29,9 @@ import nu.validator.htmlparser.annotation.Local;
 import nu.validator.htmlparser.annotation.NsUri;
 import nu.validator.htmlparser.annotation.QName;
 
-public final class AttributeName 
+public final class AttributeName
 // Uncomment to regenerate
-// implements Comparable<AttributeName> 
+// implements Comparable<AttributeName>
 {
 
     private static final @NsUri String[] ALL_NO_NS = { "", "", "", "" };
@@ -64,22 +64,22 @@ public final class AttributeName
 
     static AttributeName nameByBuffer(char[] buf, int length,
             boolean checkNcName) {
-        int hash = bufToHash(buf, length);
-        int index = Arrays.binarySearch(ATTRIBUTE_HASHES, hash);
+        int hash = AttributeName.bufToHash(buf, length);
+        int index = Arrays.binarySearch(AttributeName.ATTRIBUTE_HASHES, hash);
         if (index < 0) {
-            return create(StringUtil.localNameFromBuffer(buf, length),
-                    checkNcName);
+            return AttributeName.create(StringUtil.localNameFromBuffer(buf,
+                    length), checkNcName);
         } else {
-            AttributeName rv = ATTRIBUTE_NAMES[index];
-            @Local String name = rv.getQName(HTML);
+            AttributeName rv = AttributeName.ATTRIBUTE_NAMES[index];
+            @Local String name = rv.getQName(AttributeName.HTML);
             if (name.length() != length) {
-                return create(StringUtil.localNameFromBuffer(buf, length),
-                        checkNcName);
+                return AttributeName.create(StringUtil.localNameFromBuffer(buf,
+                        length), checkNcName);
             }
             for (int i = 0; i < length; i++) {
                 if (name.charAt(i) != buf[i]) {
-                    return create(StringUtil.localNameFromBuffer(buf, length),
-                            checkNcName);
+                    return AttributeName.create(StringUtil.localNameFromBuffer(
+                            buf, length), checkNcName);
                 }
             }
             return rv;
@@ -169,9 +169,11 @@ public final class AttributeName
                 ncName = NCName.isNCName(name);
             }
         }
-        return new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL(name),
-                SAME_LOWER_CASE_QNAME(name), (ncName ? ALL_NCNAME
-                        : ALL_NO_NCNAME), xmlns);
+        return new AttributeName(AttributeName.ALL_NO_NS,
+                AttributeName.SAME_LOWER_CASE_LOCAL(name),
+                AttributeName.SAME_LOWER_CASE_QNAME(name),
+                (ncName ? AttributeName.ALL_NCNAME
+                        : AttributeName.ALL_NO_NCNAME), xmlns);
     }
 
     public String getType(int mode) {
@@ -218,11 +220,10 @@ public final class AttributeName
                 || this == AttributeName.SELECTED;
     }
 
-
     boolean equalsAnother(AttributeName another) {
-        return this.getLocal(HTML) == another.getLocal(HTML);
+        return this.getLocal(AttributeName.HTML) == another.getLocal(AttributeName.HTML);
     }
-    
+
     boolean isCaseFolded() {
         return this == AttributeName.ACTIVE || this == AttributeName.ALIGN
                 || this == AttributeName.ASYNC
@@ -254,2624 +255,3880 @@ public final class AttributeName
     }
 
     // START CODE ONLY USED FOR GENERATING CODE uncomment to regenerate
-    
-//    
-//  public int compareTo(AttributeName other) {
-//      int thisHash = this.hash();
-//      int otherHash = other.hash();
-//      if (thisHash < otherHash) {
-//          return -1;
-//      } else if (thisHash == otherHash) {
-//          return 0;
-//      } else {
-//          return 1;
-//      }
-//  }
 
-    
-//
-//    /**
-//     * @see java.lang.Object#toString()
-//     */
-//    @Override public String toString() {
-//        return "(" + ("ID" == type ? "\"ID\", " : "") + formatNs() + ", "
-//                + formatLocal() + ", " + formatQname() + ", " + formatNcname()
-//                + ", " + (xmlns ? "true" : "false") + ")";
-//    }
-//
-//    private String formatQname() {
-//        for (int i = 1; i < qName.length; i++) {
-//            if (qName[0] != qName[i]) {
-//                return "new String[]{\"" + qName[0] + "\", \"" + qName[1]
-//                        + "\", \"" + qName[2] + "\", \"" + qName[3] + "\"}";
-//            }
-//        }
-//        return "SAME_LOWER_CASE_QNAME(\"" + qName[0] + "\")";
-//    }
-//
-//    private String formatLocal() {
-//        if (local[0] == local[1] && local[0] == local[3]
-//                && local[0] != local[2]) {
-//            return "CAMEL_CASE_LOCAL(\"" + local[0] + "\", \"" + local[2]
-//                    + "\")";
-//        }
-//        if (local[0] == local[3] && local[1] == local[2]
-//                && local[0] != local[1]) {
-//            return "COLONIFIED_LOCAL(\"" + local[0] + "\", \"" + local[1]
-//                    + "\")";
-//        }
-//        for (int i = 1; i < local.length; i++) {
-//            if (local[0] != local[i]) {
-//                return "new String[]{\"" + local[0] + "\", \"" + local[1]
-//                        + "\", \"" + local[2] + "\", \"" + local[3] + "\"}";
-//            }
-//        }
-//        return "SAME_LOWER_CASE_LOCAL(\"" + local[0] + "\")";
-//    }
-//
-//    private String formatNs() {
-//        if (uri[1] != "" && uri[0] == "" && uri[3] == "" && uri[1] == uri[2]) {
-//            return "NAMESPACE(\"" + uri[1] + "\")";
-//        }
-//        for (int i = 0; i < uri.length; i++) {
-//            if ("" != uri[i]) {
-//                return "new String[]{\"" + uri[0] + "\", \"" + uri[1]
-//                        + "\", \"" + uri[2] + "\", \"" + uri[3] + "\"}";
-//            }
-//        }
-//        return "ALL_NO_NS";
-//    }
-//
-//    private String formatNcname() {
-//        for (int i = 0; i < ncname.length; i++) {
-//            if (!ncname[i]) {
-//                return "new boolean[]{" + ncname[0] + ", " + ncname[1] + ", "
-//                        + ncname[2] + ", " + ncname[3] + "}";
-//            }
-//        }
-//        return "ALL_NCNAME";
-//    }
-//
-//    private String constName() {
-//        String name = getLocal(HTML);
-//        char[] buf = new char[name.length()];
-//        for (int i = 0; i < name.length(); i++) {
-//            char c = name.charAt(i);
-//            if (c == '-' || c == ':') {
-//                buf[i] = '_';
-//            } else if (c >= '0' && c <= '9') {
-//                buf[i] = c;
-//            } else {
-//                buf[i] = (char) (c - 0x20);
-//            }
-//        }
-//        return new String(buf);
-//    }
-//
-//    private int hash() {
-//        String name = getLocal(HTML);
-//        return bufToHash(name.toCharArray(), name.length());
-//    }
-//
-//    /**
-//     * Regenerate self
-//     * 
-//     * @param args
-//     */
-//    public static void main(String[] args) {
-//        Arrays.sort(ATTRIBUTE_NAMES);
-//        for (int i = 1; i < ATTRIBUTE_NAMES.length; i++) {
-//            if (ATTRIBUTE_NAMES[i].hash() == ATTRIBUTE_NAMES[i - 1].hash()) {
-//                System.err.println("Hash collision: "
-//                        + ATTRIBUTE_NAMES[i].getLocal(HTML) + ", "
-//                        + ATTRIBUTE_NAMES[i - 1].getLocal(HTML));
-//                return;
-//            }
-//        }
-//        for (int i = 0; i < ATTRIBUTE_NAMES.length; i++) {
-//            AttributeName att = ATTRIBUTE_NAMES[i];
-//            System.out.println("public static final AttributeName "
-//                    + att.constName() + " = new AttributeName" + att.toString()
-//                    + ";");
-//        }
-//        System.out.println("private final static AttributeName[] ATTRIBUTE_NAMES = {");
-//        for (int i = 0; i < ATTRIBUTE_NAMES.length; i++) {
-//            AttributeName att = ATTRIBUTE_NAMES[i];
-//            System.out.println(att.constName() + ",");
-//        }
-//        System.out.println("};");
-//        System.out.println("private final static int[] ATTRIBUTE_HASHES = {");
-//        for (int i = 0; i < ATTRIBUTE_NAMES.length; i++) {
-//            AttributeName att = ATTRIBUTE_NAMES[i];
-//            System.out.println(Integer.toString(att.hash()) + ",");
-//        }
-//        System.out.println("};");
-//    }
+    //    
+    // public int compareTo(AttributeName other) {
+    // int thisHash = this.hash();
+    // int otherHash = other.hash();
+    // if (thisHash < otherHash) {
+    // return -1;
+    // } else if (thisHash == otherHash) {
+    // return 0;
+    // } else {
+    // return 1;
+    // }
+    // }
+
+    //
+    // /**
+    // * @see java.lang.Object#toString()
+    // */
+    // @Override public String toString() {
+    // return "(" + ("ID" == type ? "\"ID\", " : "") + formatNs() + ", "
+    // + formatLocal() + ", " + formatQname() + ", " + formatNcname()
+    // + ", " + (xmlns ? "true" : "false") + ")";
+    // }
+    //
+    // private String formatQname() {
+    // for (int i = 1; i < qName.length; i++) {
+    // if (qName[0] != qName[i]) {
+    // return "new String[]{\"" + qName[0] + "\", \"" + qName[1]
+    // + "\", \"" + qName[2] + "\", \"" + qName[3] + "\"}";
+    // }
+    // }
+    // return "SAME_LOWER_CASE_QNAME(\"" + qName[0] + "\")";
+    // }
+    //
+    // private String formatLocal() {
+    // if (local[0] == local[1] && local[0] == local[3]
+    // && local[0] != local[2]) {
+    // return "CAMEL_CASE_LOCAL(\"" + local[0] + "\", \"" + local[2]
+    // + "\")";
+    // }
+    // if (local[0] == local[3] && local[1] == local[2]
+    // && local[0] != local[1]) {
+    // return "COLONIFIED_LOCAL(\"" + local[0] + "\", \"" + local[1]
+    // + "\")";
+    // }
+    // for (int i = 1; i < local.length; i++) {
+    // if (local[0] != local[i]) {
+    // return "new String[]{\"" + local[0] + "\", \"" + local[1]
+    // + "\", \"" + local[2] + "\", \"" + local[3] + "\"}";
+    // }
+    // }
+    // return "SAME_LOWER_CASE_LOCAL(\"" + local[0] + "\")";
+    // }
+    //
+    // private String formatNs() {
+    // if (uri[1] != "" && uri[0] == "" && uri[3] == "" && uri[1] == uri[2]) {
+    // return "NAMESPACE(\"" + uri[1] + "\")";
+    // }
+    // for (int i = 0; i < uri.length; i++) {
+    // if ("" != uri[i]) {
+    // return "new String[]{\"" + uri[0] + "\", \"" + uri[1]
+    // + "\", \"" + uri[2] + "\", \"" + uri[3] + "\"}";
+    // }
+    // }
+    // return "ALL_NO_NS";
+    // }
+    //
+    // private String formatNcname() {
+    // for (int i = 0; i < ncname.length; i++) {
+    // if (!ncname[i]) {
+    // return "new boolean[]{" + ncname[0] + ", " + ncname[1] + ", "
+    // + ncname[2] + ", " + ncname[3] + "}";
+    // }
+    // }
+    // return "ALL_NCNAME";
+    // }
+    //
+    // private String constName() {
+    // String name = getLocal(HTML);
+    // char[] buf = new char[name.length()];
+    // for (int i = 0; i < name.length(); i++) {
+    // char c = name.charAt(i);
+    // if (c == '-' || c == ':') {
+    // buf[i] = '_';
+    // } else if (c >= '0' && c <= '9') {
+    // buf[i] = c;
+    // } else {
+    // buf[i] = (char) (c - 0x20);
+    // }
+    // }
+    // return new String(buf);
+    // }
+    //
+    // private int hash() {
+    // String name = getLocal(HTML);
+    // return bufToHash(name.toCharArray(), name.length());
+    // }
+    //
+    // /**
+    // * Regenerate self
+    // *
+    // * @param args
+    // */
+    // public static void main(String[] args) {
+    // Arrays.sort(ATTRIBUTE_NAMES);
+    // for (int i = 1; i < ATTRIBUTE_NAMES.length; i++) {
+    // if (ATTRIBUTE_NAMES[i].hash() == ATTRIBUTE_NAMES[i - 1].hash()) {
+    // System.err.println("Hash collision: "
+    // + ATTRIBUTE_NAMES[i].getLocal(HTML) + ", "
+    // + ATTRIBUTE_NAMES[i - 1].getLocal(HTML));
+    // return;
+    // }
+    // }
+    // for (int i = 0; i < ATTRIBUTE_NAMES.length; i++) {
+    // AttributeName att = ATTRIBUTE_NAMES[i];
+    // System.out.println("public static final AttributeName "
+    // + att.constName() + " = new AttributeName" + att.toString()
+    // + ";");
+    // }
+    // System.out.println("private final static AttributeName[] ATTRIBUTE_NAMES
+    // = {");
+    // for (int i = 0; i < ATTRIBUTE_NAMES.length; i++) {
+    // AttributeName att = ATTRIBUTE_NAMES[i];
+    // System.out.println(att.constName() + ",");
+    // }
+    // System.out.println("};");
+    // System.out.println("private final static int[] ATTRIBUTE_HASHES = {");
+    // for (int i = 0; i < ATTRIBUTE_NAMES.length; i++) {
+    // AttributeName att = ATTRIBUTE_NAMES[i];
+    // System.out.println(Integer.toString(att.hash()) + ",");
+    // }
+    // System.out.println("};");
+    // }
 
     // START GENERATED CODE
-    public static final AttributeName D = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("d"), SAME_LOWER_CASE_QNAME("d"), ALL_NCNAME,
+    public static final AttributeName D = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.SAME_LOWER_CASE_LOCAL("d"),
+            AttributeName.SAME_LOWER_CASE_QNAME("d"), AttributeName.ALL_NCNAME,
             false);
 
-    public static final AttributeName K = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("k"), SAME_LOWER_CASE_QNAME("k"), ALL_NCNAME,
+    public static final AttributeName K = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.SAME_LOWER_CASE_LOCAL("k"),
+            AttributeName.SAME_LOWER_CASE_QNAME("k"), AttributeName.ALL_NCNAME,
             false);
 
-    public static final AttributeName R = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("r"), SAME_LOWER_CASE_QNAME("r"), ALL_NCNAME,
+    public static final AttributeName R = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.SAME_LOWER_CASE_LOCAL("r"),
+            AttributeName.SAME_LOWER_CASE_QNAME("r"), AttributeName.ALL_NCNAME,
             false);
 
-    public static final AttributeName X = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("x"), SAME_LOWER_CASE_QNAME("x"), ALL_NCNAME,
+    public static final AttributeName X = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.SAME_LOWER_CASE_LOCAL("x"),
+            AttributeName.SAME_LOWER_CASE_QNAME("x"), AttributeName.ALL_NCNAME,
             false);
 
-    public static final AttributeName Y = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("y"), SAME_LOWER_CASE_QNAME("y"), ALL_NCNAME,
+    public static final AttributeName Y = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.SAME_LOWER_CASE_LOCAL("y"),
+            AttributeName.SAME_LOWER_CASE_QNAME("y"), AttributeName.ALL_NCNAME,
             false);
 
-    public static final AttributeName Z = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("z"), SAME_LOWER_CASE_QNAME("z"), ALL_NCNAME,
+    public static final AttributeName Z = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.SAME_LOWER_CASE_LOCAL("z"),
+            AttributeName.SAME_LOWER_CASE_QNAME("z"), AttributeName.ALL_NCNAME,
             false);
 
-    public static final AttributeName BY = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("by"), SAME_LOWER_CASE_QNAME("by"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName CX = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("cx"), SAME_LOWER_CASE_QNAME("cx"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName CY = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("cy"), SAME_LOWER_CASE_QNAME("cy"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName DX = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("dx"), SAME_LOWER_CASE_QNAME("dx"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName DY = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("dy"), SAME_LOWER_CASE_QNAME("dy"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName G2 = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("g2"), SAME_LOWER_CASE_QNAME("g2"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName G1 = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("g1"), SAME_LOWER_CASE_QNAME("g1"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName FX = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("fx"), SAME_LOWER_CASE_QNAME("fx"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName FY = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("fy"), SAME_LOWER_CASE_QNAME("fy"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName K4 = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("k4"), SAME_LOWER_CASE_QNAME("k4"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName K2 = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("k2"), SAME_LOWER_CASE_QNAME("k2"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName K3 = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("k3"), SAME_LOWER_CASE_QNAME("k3"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName K1 = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("k1"), SAME_LOWER_CASE_QNAME("k1"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ID = new AttributeName("ID", ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("id"), SAME_LOWER_CASE_QNAME("id"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName IN = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("in"), SAME_LOWER_CASE_QNAME("in"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName U2 = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("u2"), SAME_LOWER_CASE_QNAME("u2"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName U1 = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("u1"), SAME_LOWER_CASE_QNAME("u1"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName RT = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("rt"), SAME_LOWER_CASE_QNAME("rt"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName RX = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("rx"), SAME_LOWER_CASE_QNAME("rx"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName RY = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("ry"), SAME_LOWER_CASE_QNAME("ry"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName TO = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("to"), SAME_LOWER_CASE_QNAME("to"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName Y2 = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("y2"), SAME_LOWER_CASE_QNAME("y2"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName Y1 = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("y1"), SAME_LOWER_CASE_QNAME("y1"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName X1 = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("x1"), SAME_LOWER_CASE_QNAME("x1"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName X2 = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("x2"), SAME_LOWER_CASE_QNAME("x2"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ALT = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("alt"), SAME_LOWER_CASE_QNAME("alt"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName DIR = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("dir"), SAME_LOWER_CASE_QNAME("dir"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName DUR = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("dur"), SAME_LOWER_CASE_QNAME("dur"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName END = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("end"), SAME_LOWER_CASE_QNAME("end"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName FOR = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("for"), SAME_LOWER_CASE_QNAME("for"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName IN2 = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("in2"), SAME_LOWER_CASE_QNAME("in2"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName MAX = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("max"), SAME_LOWER_CASE_QNAME("max"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName MIN = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("min"), SAME_LOWER_CASE_QNAME("min"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName LOW = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("low"), SAME_LOWER_CASE_QNAME("low"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName REL = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("rel"), SAME_LOWER_CASE_QNAME("rel"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName REV = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("rev"), SAME_LOWER_CASE_QNAME("rev"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName SRC = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("src"), SAME_LOWER_CASE_QNAME("src"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName AXIS = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("axis"), SAME_LOWER_CASE_QNAME("axis"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ABBR = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("abbr"), SAME_LOWER_CASE_QNAME("abbr"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName BBOX = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("bbox"), SAME_LOWER_CASE_QNAME("bbox"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName CITE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("cite"), SAME_LOWER_CASE_QNAME("cite"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName CODE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("code"), SAME_LOWER_CASE_QNAME("code"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName BIAS = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("bias"), SAME_LOWER_CASE_QNAME("bias"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName COLS = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("cols"), SAME_LOWER_CASE_QNAME("cols"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName END  = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("end "), SAME_LOWER_CASE_QNAME("end "),
-            ALL_NCNAME, false);
-
-    public static final AttributeName CLIP = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("clip"), SAME_LOWER_CASE_QNAME("clip"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName CHAR = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("char"), SAME_LOWER_CASE_QNAME("char"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName BASE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("base"), SAME_LOWER_CASE_QNAME("base"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName EDGE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("edge"), SAME_LOWER_CASE_QNAME("edge"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName DATA = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("data"), SAME_LOWER_CASE_QNAME("data"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName FILL = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("fill"), SAME_LOWER_CASE_QNAME("fill"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName FROM = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("from"), SAME_LOWER_CASE_QNAME("from"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName FORM = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("form"), SAME_LOWER_CASE_QNAME("form"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName FACE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("face"), SAME_LOWER_CASE_QNAME("face"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName HIGH = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("high"), SAME_LOWER_CASE_QNAME("high"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName HREF = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("href"), SAME_LOWER_CASE_QNAME("href"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName OPEN = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("open"), SAME_LOWER_CASE_QNAME("open"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ICON = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("icon"), SAME_LOWER_CASE_QNAME("icon"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName NAME = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("name"), SAME_LOWER_CASE_QNAME("name"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName MODE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("mode"), SAME_LOWER_CASE_QNAME("mode"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName MASK = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("mask"), SAME_LOWER_CASE_QNAME("mask"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName LINK = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("link"), SAME_LOWER_CASE_QNAME("link"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName LANG = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("lang"), SAME_LOWER_CASE_QNAME("lang"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName LIST = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("list"), SAME_LOWER_CASE_QNAME("list"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName TYPE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("type"), SAME_LOWER_CASE_QNAME("type"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName WHEN = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("when"), SAME_LOWER_CASE_QNAME("when"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName WRAP = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("wrap"), SAME_LOWER_CASE_QNAME("wrap"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName TEXT = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("text"), SAME_LOWER_CASE_QNAME("text"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName PATH = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("path"), SAME_LOWER_CASE_QNAME("path"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName PING = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("ping"), SAME_LOWER_CASE_QNAME("ping"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName REFX = new AttributeName(ALL_NO_NS,
-            CAMEL_CASE_LOCAL("refx", "refX"), SAME_LOWER_CASE_QNAME("refX"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName REFY = new AttributeName(ALL_NO_NS,
-            CAMEL_CASE_LOCAL("refy", "refY"), SAME_LOWER_CASE_QNAME("refY"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName SIZE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("size"), SAME_LOWER_CASE_QNAME("size"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName SEED = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("seed"), SAME_LOWER_CASE_QNAME("seed"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ROWS = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("rows"), SAME_LOWER_CASE_QNAME("rows"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName SPAN = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("span"), SAME_LOWER_CASE_QNAME("span"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName STEP = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("step"), SAME_LOWER_CASE_QNAME("step"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ROLE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("role"), SAME_LOWER_CASE_QNAME("role"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName XREF = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("xref"), SAME_LOWER_CASE_QNAME("xref"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ASYNC = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("async"), SAME_LOWER_CASE_QNAME("async"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ALINK = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("alink"), SAME_LOWER_CASE_QNAME("alink"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ALIGN = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("align"), SAME_LOWER_CASE_QNAME("align"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName CLOSE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("close"), SAME_LOWER_CASE_QNAME("close"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName COLOR = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("color"), SAME_LOWER_CASE_QNAME("color"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName CLASS = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("class"), SAME_LOWER_CASE_QNAME("class"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName CLEAR = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("clear"), SAME_LOWER_CASE_QNAME("clear"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName BEGIN = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("begin"), SAME_LOWER_CASE_QNAME("begin"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName DEPTH = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("depth"), SAME_LOWER_CASE_QNAME("depth"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName DEFER = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("defer"), SAME_LOWER_CASE_QNAME("defer"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName FENCE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("fence"), SAME_LOWER_CASE_QNAME("fence"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName FRAME = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("frame"), SAME_LOWER_CASE_QNAME("frame"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ISMAP = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("ismap"), SAME_LOWER_CASE_QNAME("ismap"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ONEND = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("onend"), SAME_LOWER_CASE_QNAME("onend"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName INDEX = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("index"), SAME_LOWER_CASE_QNAME("index"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ORDER = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("order"), SAME_LOWER_CASE_QNAME("order"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName OTHER = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("other"), SAME_LOWER_CASE_QNAME("other"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ONCUT = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("oncut"), SAME_LOWER_CASE_QNAME("oncut"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName NARGS = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("nargs"), SAME_LOWER_CASE_QNAME("nargs"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName MEDIA = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("media"), SAME_LOWER_CASE_QNAME("media"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName LABEL = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("label"), SAME_LOWER_CASE_QNAME("label"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName LOCAL = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("local"), SAME_LOWER_CASE_QNAME("local"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName WIDTH = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("width"), SAME_LOWER_CASE_QNAME("width"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName TITLE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("title"), SAME_LOWER_CASE_QNAME("title"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName VLINK = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("vlink"), SAME_LOWER_CASE_QNAME("vlink"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName VALUE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("value"), SAME_LOWER_CASE_QNAME("value"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName SLOPE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("slope"), SAME_LOWER_CASE_QNAME("slope"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName SHAPE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("shape"), SAME_LOWER_CASE_QNAME("shape"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName SCOPE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("scope"), SAME_LOWER_CASE_QNAME("scope"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName SCALE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("scale"), SAME_LOWER_CASE_QNAME("scale"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName SPEED = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("speed"), SAME_LOWER_CASE_QNAME("speed"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName STYLE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("style"), SAME_LOWER_CASE_QNAME("style"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName RULES = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("rules"), SAME_LOWER_CASE_QNAME("rules"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName STEMH = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("stemh"), SAME_LOWER_CASE_QNAME("stemh"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName STEMV = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("stemv"), SAME_LOWER_CASE_QNAME("stemv"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName START = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("start"), SAME_LOWER_CASE_QNAME("start"),
-            ALL_NCNAME, false);
+    public static final AttributeName BY = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.SAME_LOWER_CASE_LOCAL("by"),
+            AttributeName.SAME_LOWER_CASE_QNAME("by"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName CX = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.SAME_LOWER_CASE_LOCAL("cx"),
+            AttributeName.SAME_LOWER_CASE_QNAME("cx"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName CY = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.SAME_LOWER_CASE_LOCAL("cy"),
+            AttributeName.SAME_LOWER_CASE_QNAME("cy"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName DX = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.SAME_LOWER_CASE_LOCAL("dx"),
+            AttributeName.SAME_LOWER_CASE_QNAME("dx"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName DY = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.SAME_LOWER_CASE_LOCAL("dy"),
+            AttributeName.SAME_LOWER_CASE_QNAME("dy"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName G2 = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.SAME_LOWER_CASE_LOCAL("g2"),
+            AttributeName.SAME_LOWER_CASE_QNAME("g2"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName G1 = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.SAME_LOWER_CASE_LOCAL("g1"),
+            AttributeName.SAME_LOWER_CASE_QNAME("g1"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName FX = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.SAME_LOWER_CASE_LOCAL("fx"),
+            AttributeName.SAME_LOWER_CASE_QNAME("fx"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName FY = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.SAME_LOWER_CASE_LOCAL("fy"),
+            AttributeName.SAME_LOWER_CASE_QNAME("fy"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName K4 = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.SAME_LOWER_CASE_LOCAL("k4"),
+            AttributeName.SAME_LOWER_CASE_QNAME("k4"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName K2 = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.SAME_LOWER_CASE_LOCAL("k2"),
+            AttributeName.SAME_LOWER_CASE_QNAME("k2"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName K3 = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.SAME_LOWER_CASE_LOCAL("k3"),
+            AttributeName.SAME_LOWER_CASE_QNAME("k3"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName K1 = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.SAME_LOWER_CASE_LOCAL("k1"),
+            AttributeName.SAME_LOWER_CASE_QNAME("k1"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ID = new AttributeName("ID",
+            AttributeName.ALL_NO_NS, AttributeName.SAME_LOWER_CASE_LOCAL("id"),
+            AttributeName.SAME_LOWER_CASE_QNAME("id"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName IN = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.SAME_LOWER_CASE_LOCAL("in"),
+            AttributeName.SAME_LOWER_CASE_QNAME("in"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName U2 = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.SAME_LOWER_CASE_LOCAL("u2"),
+            AttributeName.SAME_LOWER_CASE_QNAME("u2"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName U1 = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.SAME_LOWER_CASE_LOCAL("u1"),
+            AttributeName.SAME_LOWER_CASE_QNAME("u1"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName RT = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.SAME_LOWER_CASE_LOCAL("rt"),
+            AttributeName.SAME_LOWER_CASE_QNAME("rt"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName RX = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.SAME_LOWER_CASE_LOCAL("rx"),
+            AttributeName.SAME_LOWER_CASE_QNAME("rx"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName RY = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.SAME_LOWER_CASE_LOCAL("ry"),
+            AttributeName.SAME_LOWER_CASE_QNAME("ry"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName TO = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.SAME_LOWER_CASE_LOCAL("to"),
+            AttributeName.SAME_LOWER_CASE_QNAME("to"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName Y2 = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.SAME_LOWER_CASE_LOCAL("y2"),
+            AttributeName.SAME_LOWER_CASE_QNAME("y2"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName Y1 = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.SAME_LOWER_CASE_LOCAL("y1"),
+            AttributeName.SAME_LOWER_CASE_QNAME("y1"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName X1 = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.SAME_LOWER_CASE_LOCAL("x1"),
+            AttributeName.SAME_LOWER_CASE_QNAME("x1"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName X2 = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.SAME_LOWER_CASE_LOCAL("x2"),
+            AttributeName.SAME_LOWER_CASE_QNAME("x2"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ALT = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("alt"),
+            AttributeName.SAME_LOWER_CASE_QNAME("alt"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName DIR = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("dir"),
+            AttributeName.SAME_LOWER_CASE_QNAME("dir"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName DUR = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("dur"),
+            AttributeName.SAME_LOWER_CASE_QNAME("dur"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName END = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("end"),
+            AttributeName.SAME_LOWER_CASE_QNAME("end"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName FOR = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("for"),
+            AttributeName.SAME_LOWER_CASE_QNAME("for"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName IN2 = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("in2"),
+            AttributeName.SAME_LOWER_CASE_QNAME("in2"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName MAX = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("max"),
+            AttributeName.SAME_LOWER_CASE_QNAME("max"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName MIN = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("min"),
+            AttributeName.SAME_LOWER_CASE_QNAME("min"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName LOW = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("low"),
+            AttributeName.SAME_LOWER_CASE_QNAME("low"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName REL = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("rel"),
+            AttributeName.SAME_LOWER_CASE_QNAME("rel"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName REV = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("rev"),
+            AttributeName.SAME_LOWER_CASE_QNAME("rev"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName SRC = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("src"),
+            AttributeName.SAME_LOWER_CASE_QNAME("src"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName AXIS = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("axis"),
+            AttributeName.SAME_LOWER_CASE_QNAME("axis"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ABBR = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("abbr"),
+            AttributeName.SAME_LOWER_CASE_QNAME("abbr"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName BBOX = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("bbox"),
+            AttributeName.SAME_LOWER_CASE_QNAME("bbox"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName CITE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("cite"),
+            AttributeName.SAME_LOWER_CASE_QNAME("cite"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName CODE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("code"),
+            AttributeName.SAME_LOWER_CASE_QNAME("code"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName BIAS = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("bias"),
+            AttributeName.SAME_LOWER_CASE_QNAME("bias"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName COLS = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("cols"),
+            AttributeName.SAME_LOWER_CASE_QNAME("cols"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName END  = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("end "),
+            AttributeName.SAME_LOWER_CASE_QNAME("end "),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName CLIP = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("clip"),
+            AttributeName.SAME_LOWER_CASE_QNAME("clip"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName CHAR = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("char"),
+            AttributeName.SAME_LOWER_CASE_QNAME("char"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName BASE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("base"),
+            AttributeName.SAME_LOWER_CASE_QNAME("base"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName EDGE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("edge"),
+            AttributeName.SAME_LOWER_CASE_QNAME("edge"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName DATA = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("data"),
+            AttributeName.SAME_LOWER_CASE_QNAME("data"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName FILL = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("fill"),
+            AttributeName.SAME_LOWER_CASE_QNAME("fill"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName FROM = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("from"),
+            AttributeName.SAME_LOWER_CASE_QNAME("from"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName FORM = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("form"),
+            AttributeName.SAME_LOWER_CASE_QNAME("form"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName FACE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("face"),
+            AttributeName.SAME_LOWER_CASE_QNAME("face"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName HIGH = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("high"),
+            AttributeName.SAME_LOWER_CASE_QNAME("high"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName HREF = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("href"),
+            AttributeName.SAME_LOWER_CASE_QNAME("href"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName OPEN = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("open"),
+            AttributeName.SAME_LOWER_CASE_QNAME("open"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ICON = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("icon"),
+            AttributeName.SAME_LOWER_CASE_QNAME("icon"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName NAME = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("name"),
+            AttributeName.SAME_LOWER_CASE_QNAME("name"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName MODE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("mode"),
+            AttributeName.SAME_LOWER_CASE_QNAME("mode"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName MASK = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("mask"),
+            AttributeName.SAME_LOWER_CASE_QNAME("mask"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName LINK = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("link"),
+            AttributeName.SAME_LOWER_CASE_QNAME("link"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName LANG = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("lang"),
+            AttributeName.SAME_LOWER_CASE_QNAME("lang"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName LIST = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("list"),
+            AttributeName.SAME_LOWER_CASE_QNAME("list"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName TYPE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("type"),
+            AttributeName.SAME_LOWER_CASE_QNAME("type"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName WHEN = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("when"),
+            AttributeName.SAME_LOWER_CASE_QNAME("when"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName WRAP = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("wrap"),
+            AttributeName.SAME_LOWER_CASE_QNAME("wrap"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName TEXT = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("text"),
+            AttributeName.SAME_LOWER_CASE_QNAME("text"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName PATH = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("path"),
+            AttributeName.SAME_LOWER_CASE_QNAME("path"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName PING = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("ping"),
+            AttributeName.SAME_LOWER_CASE_QNAME("ping"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName REFX = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL("refx",
+                    "refX"), AttributeName.SAME_LOWER_CASE_QNAME("refX"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName REFY = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL("refy",
+                    "refY"), AttributeName.SAME_LOWER_CASE_QNAME("refY"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName SIZE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("size"),
+            AttributeName.SAME_LOWER_CASE_QNAME("size"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName SEED = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("seed"),
+            AttributeName.SAME_LOWER_CASE_QNAME("seed"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ROWS = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("rows"),
+            AttributeName.SAME_LOWER_CASE_QNAME("rows"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName SPAN = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("span"),
+            AttributeName.SAME_LOWER_CASE_QNAME("span"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName STEP = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("step"),
+            AttributeName.SAME_LOWER_CASE_QNAME("step"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ROLE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("role"),
+            AttributeName.SAME_LOWER_CASE_QNAME("role"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName XREF = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("xref"),
+            AttributeName.SAME_LOWER_CASE_QNAME("xref"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ASYNC = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("async"),
+            AttributeName.SAME_LOWER_CASE_QNAME("async"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ALINK = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("alink"),
+            AttributeName.SAME_LOWER_CASE_QNAME("alink"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ALIGN = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("align"),
+            AttributeName.SAME_LOWER_CASE_QNAME("align"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName CLOSE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("close"),
+            AttributeName.SAME_LOWER_CASE_QNAME("close"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName COLOR = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("color"),
+            AttributeName.SAME_LOWER_CASE_QNAME("color"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName CLASS = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("class"),
+            AttributeName.SAME_LOWER_CASE_QNAME("class"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName CLEAR = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("clear"),
+            AttributeName.SAME_LOWER_CASE_QNAME("clear"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName BEGIN = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("begin"),
+            AttributeName.SAME_LOWER_CASE_QNAME("begin"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName DEPTH = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("depth"),
+            AttributeName.SAME_LOWER_CASE_QNAME("depth"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName DEFER = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("defer"),
+            AttributeName.SAME_LOWER_CASE_QNAME("defer"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName FENCE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("fence"),
+            AttributeName.SAME_LOWER_CASE_QNAME("fence"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName FRAME = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("frame"),
+            AttributeName.SAME_LOWER_CASE_QNAME("frame"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ISMAP = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("ismap"),
+            AttributeName.SAME_LOWER_CASE_QNAME("ismap"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ONEND = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onend"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onend"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName INDEX = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("index"),
+            AttributeName.SAME_LOWER_CASE_QNAME("index"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ORDER = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("order"),
+            AttributeName.SAME_LOWER_CASE_QNAME("order"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName OTHER = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("other"),
+            AttributeName.SAME_LOWER_CASE_QNAME("other"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ONCUT = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("oncut"),
+            AttributeName.SAME_LOWER_CASE_QNAME("oncut"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName NARGS = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("nargs"),
+            AttributeName.SAME_LOWER_CASE_QNAME("nargs"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName MEDIA = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("media"),
+            AttributeName.SAME_LOWER_CASE_QNAME("media"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName LABEL = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("label"),
+            AttributeName.SAME_LOWER_CASE_QNAME("label"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName LOCAL = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("local"),
+            AttributeName.SAME_LOWER_CASE_QNAME("local"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName WIDTH = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("width"),
+            AttributeName.SAME_LOWER_CASE_QNAME("width"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName TITLE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("title"),
+            AttributeName.SAME_LOWER_CASE_QNAME("title"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName VLINK = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("vlink"),
+            AttributeName.SAME_LOWER_CASE_QNAME("vlink"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName VALUE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("value"),
+            AttributeName.SAME_LOWER_CASE_QNAME("value"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName SLOPE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("slope"),
+            AttributeName.SAME_LOWER_CASE_QNAME("slope"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName SHAPE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("shape"),
+            AttributeName.SAME_LOWER_CASE_QNAME("shape"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName SCOPE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("scope"),
+            AttributeName.SAME_LOWER_CASE_QNAME("scope"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName SCALE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("scale"),
+            AttributeName.SAME_LOWER_CASE_QNAME("scale"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName SPEED = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("speed"),
+            AttributeName.SAME_LOWER_CASE_QNAME("speed"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName STYLE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("style"),
+            AttributeName.SAME_LOWER_CASE_QNAME("style"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName RULES = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("rules"),
+            AttributeName.SAME_LOWER_CASE_QNAME("rules"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName STEMH = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("stemh"),
+            AttributeName.SAME_LOWER_CASE_QNAME("stemh"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName STEMV = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("stemv"),
+            AttributeName.SAME_LOWER_CASE_QNAME("stemv"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName START = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("start"),
+            AttributeName.SAME_LOWER_CASE_QNAME("start"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName XMLNS = new AttributeName(
-            NAMESPACE("http://www.w3.org/2000/xmlns/"),
-            SAME_LOWER_CASE_LOCAL("xmlns"), SAME_LOWER_CASE_QNAME("xmlns"),
-            new boolean[] { false, false, false, false }, true);
-
-    public static final AttributeName ACCEPT = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("accept"), SAME_LOWER_CASE_QNAME("accept"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ACCENT = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("accent"), SAME_LOWER_CASE_QNAME("accent"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ASCENT = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("ascent"), SAME_LOWER_CASE_QNAME("ascent"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ACTIVE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("active"), SAME_LOWER_CASE_QNAME("active"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ALTIMG = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("altimg"), SAME_LOWER_CASE_QNAME("altimg"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ACTION = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("action"), SAME_LOWER_CASE_QNAME("action"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName BORDER = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("border"), SAME_LOWER_CASE_QNAME("border"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName CURSOR = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("cursor"), SAME_LOWER_CASE_QNAME("cursor"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName COORDS = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("coords"), SAME_LOWER_CASE_QNAME("coords"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName FILTER = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("filter"), SAME_LOWER_CASE_QNAME("filter"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName FORMAT = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("format"), SAME_LOWER_CASE_QNAME("format"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName HIDDEN = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("hidden"), SAME_LOWER_CASE_QNAME("hidden"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName HSPACE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("hspace"), SAME_LOWER_CASE_QNAME("hspace"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName HEIGHT = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("height"), SAME_LOWER_CASE_QNAME("height"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ONMOVE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("onmove"), SAME_LOWER_CASE_QNAME("onmove"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ONLOAD = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("onload"), SAME_LOWER_CASE_QNAME("onload"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ONDRAG = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("ondrag"), SAME_LOWER_CASE_QNAME("ondrag"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ORIGIN = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("origin"), SAME_LOWER_CASE_QNAME("origin"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ONZOOM = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("onzoom"), SAME_LOWER_CASE_QNAME("onzoom"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ONHELP = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("onhelp"), SAME_LOWER_CASE_QNAME("onhelp"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ONSTOP = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("onstop"), SAME_LOWER_CASE_QNAME("onstop"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ONDROP = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("ondrop"), SAME_LOWER_CASE_QNAME("ondrop"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ONBLUR = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("onblur"), SAME_LOWER_CASE_QNAME("onblur"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName OBJECT = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("object"), SAME_LOWER_CASE_QNAME("object"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName OFFSET = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("offset"), SAME_LOWER_CASE_QNAME("offset"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ORIENT = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("orient"), SAME_LOWER_CASE_QNAME("orient"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ONCOPY = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("oncopy"), SAME_LOWER_CASE_QNAME("oncopy"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName NOWRAP = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("nowrap"), SAME_LOWER_CASE_QNAME("nowrap"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName NOHREF = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("nohref"), SAME_LOWER_CASE_QNAME("nohref"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName MACROS = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("macros"), SAME_LOWER_CASE_QNAME("macros"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName METHOD = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("method"), SAME_LOWER_CASE_QNAME("method"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName LOWSRC = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("lowsrc"), SAME_LOWER_CASE_QNAME("lowsrc"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName LSPACE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("lspace"), SAME_LOWER_CASE_QNAME("lspace"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName LQUOTE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("lquote"), SAME_LOWER_CASE_QNAME("lquote"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName USEMAP = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("usemap"), SAME_LOWER_CASE_QNAME("usemap"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName VALUE_ = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("value:"), SAME_LOWER_CASE_QNAME("value:"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName WIDTHS = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("widths"), SAME_LOWER_CASE_QNAME("widths"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName TARGET = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("target"), SAME_LOWER_CASE_QNAME("target"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName VALUES = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("values"), SAME_LOWER_CASE_QNAME("values"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName VALIGN = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("valign"), SAME_LOWER_CASE_QNAME("valign"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName VSPACE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("vspace"), SAME_LOWER_CASE_QNAME("vspace"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName POSTER = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("poster"), SAME_LOWER_CASE_QNAME("poster"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName POINTS = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("points"), SAME_LOWER_CASE_QNAME("points"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName PROMPT = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("prompt"), SAME_LOWER_CASE_QNAME("prompt"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName SCOPED = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("scoped"), SAME_LOWER_CASE_QNAME("scoped"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName STRING = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("string"), SAME_LOWER_CASE_QNAME("string"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName SCHEME = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("scheme"), SAME_LOWER_CASE_QNAME("scheme"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName STROKE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("stroke"), SAME_LOWER_CASE_QNAME("stroke"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName RADIUS = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("radius"), SAME_LOWER_CASE_QNAME("radius"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName RESULT = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("result"), SAME_LOWER_CASE_QNAME("result"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName REPEAT = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("repeat"), SAME_LOWER_CASE_QNAME("repeat"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName RSPACE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("rspace"), SAME_LOWER_CASE_QNAME("rspace"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ROTATE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("rotate"), SAME_LOWER_CASE_QNAME("rotate"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName RQUOTE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("rquote"), SAME_LOWER_CASE_QNAME("rquote"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ALTTEXT = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("alttext"), SAME_LOWER_CASE_QNAME("alttext"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ARCHIVE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("archive"), SAME_LOWER_CASE_QNAME("archive"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName AZIMUTH = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("azimuth"), SAME_LOWER_CASE_QNAME("azimuth"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName CLOSURE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("closure"), SAME_LOWER_CASE_QNAME("closure"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName CHECKED = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("checked"), SAME_LOWER_CASE_QNAME("checked"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName CLASSID = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("classid"), SAME_LOWER_CASE_QNAME("classid"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName CHAROFF = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("charoff"), SAME_LOWER_CASE_QNAME("charoff"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName BGCOLOR = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("bgcolor"), SAME_LOWER_CASE_QNAME("bgcolor"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName COLSPAN = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("colspan"), SAME_LOWER_CASE_QNAME("colspan"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName CHARSET = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("charset"), SAME_LOWER_CASE_QNAME("charset"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName COMPACT = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("compact"), SAME_LOWER_CASE_QNAME("compact"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName CONTENT = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("content"), SAME_LOWER_CASE_QNAME("content"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ENCTYPE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("enctype"), SAME_LOWER_CASE_QNAME("enctype"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName DATASRC = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("datasrc"), SAME_LOWER_CASE_QNAME("datasrc"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName DATAFLD = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("datafld"), SAME_LOWER_CASE_QNAME("datafld"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName DECLARE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("declare"), SAME_LOWER_CASE_QNAME("declare"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName DISPLAY = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("display"), SAME_LOWER_CASE_QNAME("display"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName DIVISOR = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("divisor"), SAME_LOWER_CASE_QNAME("divisor"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName DEFAULT = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("default"), SAME_LOWER_CASE_QNAME("default"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName DESCENT = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("descent"), SAME_LOWER_CASE_QNAME("descent"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName KERNING = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("kerning"), SAME_LOWER_CASE_QNAME("kerning"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName HANGING = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("hanging"), SAME_LOWER_CASE_QNAME("hanging"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName HEADERS = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("headers"), SAME_LOWER_CASE_QNAME("headers"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ONPASTE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("onpaste"), SAME_LOWER_CASE_QNAME("onpaste"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ONCLICK = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("onclick"), SAME_LOWER_CASE_QNAME("onclick"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName OPTIMUM = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("optimum"), SAME_LOWER_CASE_QNAME("optimum"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ONBEGIN = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("onbegin"), SAME_LOWER_CASE_QNAME("onbegin"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ONKEYUP = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("onkeyup"), SAME_LOWER_CASE_QNAME("onkeyup"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ONFOCUS = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("onfocus"), SAME_LOWER_CASE_QNAME("onfocus"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ONERROR = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("onerror"), SAME_LOWER_CASE_QNAME("onerror"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ONINPUT = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("oninput"), SAME_LOWER_CASE_QNAME("oninput"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ONABORT = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("onabort"), SAME_LOWER_CASE_QNAME("onabort"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ONSTART = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("onstart"), SAME_LOWER_CASE_QNAME("onstart"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ONRESET = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("onreset"), SAME_LOWER_CASE_QNAME("onreset"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName OPACITY = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("opacity"), SAME_LOWER_CASE_QNAME("opacity"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName NOSHADE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("noshade"), SAME_LOWER_CASE_QNAME("noshade"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName MINSIZE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("minsize"), SAME_LOWER_CASE_QNAME("minsize"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName MAXSIZE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("maxsize"), SAME_LOWER_CASE_QNAME("maxsize"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName LARGEOP = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("largeop"), SAME_LOWER_CASE_QNAME("largeop"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName UNICODE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("unicode"), SAME_LOWER_CASE_QNAME("unicode"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName TARGETX = new AttributeName(ALL_NO_NS,
-            CAMEL_CASE_LOCAL("targetx", "targetX"),
-            SAME_LOWER_CASE_QNAME("targetX"), ALL_NCNAME, false);
-
-    public static final AttributeName TARGETY = new AttributeName(ALL_NO_NS,
-            CAMEL_CASE_LOCAL("targety", "targetY"),
-            SAME_LOWER_CASE_QNAME("targetY"), ALL_NCNAME, false);
-
-    public static final AttributeName VIEWBOX = new AttributeName(ALL_NO_NS,
-            CAMEL_CASE_LOCAL("viewbox", "viewBox"),
-            SAME_LOWER_CASE_QNAME("viewBox"), ALL_NCNAME, false);
-
-    public static final AttributeName VERSION = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("version"), SAME_LOWER_CASE_QNAME("version"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName PATTERN = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("pattern"), SAME_LOWER_CASE_QNAME("pattern"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName PROFILE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("profile"), SAME_LOWER_CASE_QNAME("profile"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName START   = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("start  "), SAME_LOWER_CASE_QNAME("start  "),
-            ALL_NCNAME, false);
-
-    public static final AttributeName SPACING = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("spacing"), SAME_LOWER_CASE_QNAME("spacing"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName RESTART = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("restart"), SAME_LOWER_CASE_QNAME("restart"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ROWSPAN = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("rowspan"), SAME_LOWER_CASE_QNAME("rowspan"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName SANDBOX = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("sandbox"), SAME_LOWER_CASE_QNAME("sandbox"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName SUMMARY = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("summary"), SAME_LOWER_CASE_QNAME("summary"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName STANDBY = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("standby"), SAME_LOWER_CASE_QNAME("standby"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName REPLACE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("replace"), SAME_LOWER_CASE_QNAME("replace"),
-            ALL_NCNAME, false);
-
-    public static final AttributeName ADDITIVE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("additive"),
-            SAME_LOWER_CASE_QNAME("additive"), ALL_NCNAME, false);
-
-    public static final AttributeName CALCMODE = new AttributeName(ALL_NO_NS,
-            CAMEL_CASE_LOCAL("calcmode", "calcMode"),
-            SAME_LOWER_CASE_QNAME("calcMode"), ALL_NCNAME, false);
-
-    public static final AttributeName CODETYPE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("codetype"),
-            SAME_LOWER_CASE_QNAME("codetype"), ALL_NCNAME, false);
-
-    public static final AttributeName CODEBASE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("codebase"),
-            SAME_LOWER_CASE_QNAME("codebase"), ALL_NCNAME, false);
-
-    public static final AttributeName BEVELLED = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("bevelled"),
-            SAME_LOWER_CASE_QNAME("bevelled"), ALL_NCNAME, false);
-
-    public static final AttributeName BASELINE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("baseline"),
-            SAME_LOWER_CASE_QNAME("baseline"), ALL_NCNAME, false);
-
-    public static final AttributeName EXPONENT = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("exponent"),
-            SAME_LOWER_CASE_QNAME("exponent"), ALL_NCNAME, false);
-
-    public static final AttributeName EDGEMODE = new AttributeName(ALL_NO_NS,
-            CAMEL_CASE_LOCAL("edgemode", "edgeMode"),
-            SAME_LOWER_CASE_QNAME("edgeMode"), ALL_NCNAME, false);
-
-    public static final AttributeName ENCODING = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("encoding"),
-            SAME_LOWER_CASE_QNAME("encoding"), ALL_NCNAME, false);
-
-    public static final AttributeName GLYPHREF = new AttributeName(ALL_NO_NS,
-            CAMEL_CASE_LOCAL("glyphref", "glyphRef"),
-            SAME_LOWER_CASE_QNAME("glyphRef"), ALL_NCNAME, false);
-
-    public static final AttributeName DATETIME = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("datetime"),
-            SAME_LOWER_CASE_QNAME("datetime"), ALL_NCNAME, false);
-
-    public static final AttributeName DISABLED = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("disabled"),
-            SAME_LOWER_CASE_QNAME("disabled"), ALL_NCNAME, false);
-
-    public static final AttributeName FONTSIZE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("fontsize"),
-            SAME_LOWER_CASE_QNAME("fontsize"), ALL_NCNAME, false);
-
-    public static final AttributeName KEYTIMES = new AttributeName(ALL_NO_NS,
-            CAMEL_CASE_LOCAL("keytimes", "keyTimes"),
-            SAME_LOWER_CASE_QNAME("keyTimes"), ALL_NCNAME, false);
-
-    public static final AttributeName LOOPEND  = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("loopend "),
-            SAME_LOWER_CASE_QNAME("loopend "), ALL_NCNAME, false);
-
-    public static final AttributeName PANOSE_1 = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("panose-1"),
-            SAME_LOWER_CASE_QNAME("panose-1"), ALL_NCNAME, false);
-
-    public static final AttributeName HREFLANG = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("hreflang"),
-            SAME_LOWER_CASE_QNAME("hreflang"), ALL_NCNAME, false);
-
-    public static final AttributeName ONRESIZE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("onresize"),
-            SAME_LOWER_CASE_QNAME("onresize"), ALL_NCNAME, false);
-
-    public static final AttributeName ONCHANGE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("onchange"),
-            SAME_LOWER_CASE_QNAME("onchange"), ALL_NCNAME, false);
-
-    public static final AttributeName ONBOUNCE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("onbounce"),
-            SAME_LOWER_CASE_QNAME("onbounce"), ALL_NCNAME, false);
-
-    public static final AttributeName ONUNLOAD = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("onunload"),
-            SAME_LOWER_CASE_QNAME("onunload"), ALL_NCNAME, false);
-
-    public static final AttributeName ONFINISH = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("onfinish"),
-            SAME_LOWER_CASE_QNAME("onfinish"), ALL_NCNAME, false);
-
-    public static final AttributeName ONSCROLL = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("onscroll"),
-            SAME_LOWER_CASE_QNAME("onscroll"), ALL_NCNAME, false);
-
-    public static final AttributeName OPERATOR = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("operator"),
-            SAME_LOWER_CASE_QNAME("operator"), ALL_NCNAME, false);
-
-    public static final AttributeName OVERFLOW = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("overflow"),
-            SAME_LOWER_CASE_QNAME("overflow"), ALL_NCNAME, false);
-
-    public static final AttributeName ONSUBMIT = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("onsubmit"),
-            SAME_LOWER_CASE_QNAME("onsubmit"), ALL_NCNAME, false);
-
-    public static final AttributeName ONREPEAT = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("onrepeat"),
-            SAME_LOWER_CASE_QNAME("onrepeat"), ALL_NCNAME, false);
-
-    public static final AttributeName ONSELECT = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("onselect"),
-            SAME_LOWER_CASE_QNAME("onselect"), ALL_NCNAME, false);
-
-    public static final AttributeName NOTATION = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("notation"),
-            SAME_LOWER_CASE_QNAME("notation"), ALL_NCNAME, false);
-
-    public static final AttributeName NORESIZE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("noresize"),
-            SAME_LOWER_CASE_QNAME("noresize"), ALL_NCNAME, false);
-
-    public static final AttributeName MANIFEST = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("manifest"),
-            SAME_LOWER_CASE_QNAME("manifest"), ALL_NCNAME, false);
-
-    public static final AttributeName MATHSIZE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("mathsize"),
-            SAME_LOWER_CASE_QNAME("mathsize"), ALL_NCNAME, false);
-
-    public static final AttributeName MULTIPLE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("multiple"),
-            SAME_LOWER_CASE_QNAME("multiple"), ALL_NCNAME, false);
-
-    public static final AttributeName LONGDESC = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("longdesc"),
-            SAME_LOWER_CASE_QNAME("longdesc"), ALL_NCNAME, false);
-
-    public static final AttributeName LANGUAGE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("language"),
-            SAME_LOWER_CASE_QNAME("language"), ALL_NCNAME, false);
-
-    public static final AttributeName TEMPLATE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("template"),
-            SAME_LOWER_CASE_QNAME("template"), ALL_NCNAME, false);
-
-    public static final AttributeName TABINDEX = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("tabindex"),
-            SAME_LOWER_CASE_QNAME("tabindex"), ALL_NCNAME, false);
-
-    public static final AttributeName READONLY = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("readonly"),
-            SAME_LOWER_CASE_QNAME("readonly"), ALL_NCNAME, false);
-
-    public static final AttributeName SELECTED = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("selected"),
-            SAME_LOWER_CASE_QNAME("selected"), ALL_NCNAME, false);
-
-    public static final AttributeName ROWLINES = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("rowlines"),
-            SAME_LOWER_CASE_QNAME("rowlines"), ALL_NCNAME, false);
-
-    public static final AttributeName SEAMLESS = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("seamless"),
-            SAME_LOWER_CASE_QNAME("seamless"), ALL_NCNAME, false);
-
-    public static final AttributeName ROWALIGN = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("rowalign"),
-            SAME_LOWER_CASE_QNAME("rowalign"), ALL_NCNAME, false);
-
-    public static final AttributeName STRETCHY = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("stretchy"),
-            SAME_LOWER_CASE_QNAME("stretchy"), ALL_NCNAME, false);
-
-    public static final AttributeName REQUIRED = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("required"),
-            SAME_LOWER_CASE_QNAME("required"), ALL_NCNAME, false);
+            AttributeName.NAMESPACE("http://www.w3.org/2000/xmlns/"),
+            AttributeName.SAME_LOWER_CASE_LOCAL("xmlns"),
+            AttributeName.SAME_LOWER_CASE_QNAME("xmlns"), new boolean[] {
+                    false, false, false, false }, true);
+
+    public static final AttributeName ACCEPT = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("accept"),
+            AttributeName.SAME_LOWER_CASE_QNAME("accept"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ACCENT = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("accent"),
+            AttributeName.SAME_LOWER_CASE_QNAME("accent"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ASCENT = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("ascent"),
+            AttributeName.SAME_LOWER_CASE_QNAME("ascent"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ACTIVE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("active"),
+            AttributeName.SAME_LOWER_CASE_QNAME("active"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ALTIMG = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("altimg"),
+            AttributeName.SAME_LOWER_CASE_QNAME("altimg"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ACTION = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("action"),
+            AttributeName.SAME_LOWER_CASE_QNAME("action"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName BORDER = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("border"),
+            AttributeName.SAME_LOWER_CASE_QNAME("border"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName CURSOR = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("cursor"),
+            AttributeName.SAME_LOWER_CASE_QNAME("cursor"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName COORDS = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("coords"),
+            AttributeName.SAME_LOWER_CASE_QNAME("coords"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName FILTER = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("filter"),
+            AttributeName.SAME_LOWER_CASE_QNAME("filter"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName FORMAT = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("format"),
+            AttributeName.SAME_LOWER_CASE_QNAME("format"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName HIDDEN = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("hidden"),
+            AttributeName.SAME_LOWER_CASE_QNAME("hidden"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName HSPACE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("hspace"),
+            AttributeName.SAME_LOWER_CASE_QNAME("hspace"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName HEIGHT = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("height"),
+            AttributeName.SAME_LOWER_CASE_QNAME("height"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ONMOVE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onmove"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onmove"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ONLOAD = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onload"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onload"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ONDRAG = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("ondrag"),
+            AttributeName.SAME_LOWER_CASE_QNAME("ondrag"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ORIGIN = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("origin"),
+            AttributeName.SAME_LOWER_CASE_QNAME("origin"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ONZOOM = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onzoom"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onzoom"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ONHELP = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onhelp"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onhelp"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ONSTOP = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onstop"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onstop"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ONDROP = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("ondrop"),
+            AttributeName.SAME_LOWER_CASE_QNAME("ondrop"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ONBLUR = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onblur"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onblur"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName OBJECT = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("object"),
+            AttributeName.SAME_LOWER_CASE_QNAME("object"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName OFFSET = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("offset"),
+            AttributeName.SAME_LOWER_CASE_QNAME("offset"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ORIENT = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("orient"),
+            AttributeName.SAME_LOWER_CASE_QNAME("orient"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ONCOPY = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("oncopy"),
+            AttributeName.SAME_LOWER_CASE_QNAME("oncopy"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName NOWRAP = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("nowrap"),
+            AttributeName.SAME_LOWER_CASE_QNAME("nowrap"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName NOHREF = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("nohref"),
+            AttributeName.SAME_LOWER_CASE_QNAME("nohref"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName MACROS = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("macros"),
+            AttributeName.SAME_LOWER_CASE_QNAME("macros"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName METHOD = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("method"),
+            AttributeName.SAME_LOWER_CASE_QNAME("method"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName LOWSRC = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("lowsrc"),
+            AttributeName.SAME_LOWER_CASE_QNAME("lowsrc"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName LSPACE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("lspace"),
+            AttributeName.SAME_LOWER_CASE_QNAME("lspace"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName LQUOTE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("lquote"),
+            AttributeName.SAME_LOWER_CASE_QNAME("lquote"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName USEMAP = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("usemap"),
+            AttributeName.SAME_LOWER_CASE_QNAME("usemap"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName VALUE_ = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("value:"),
+            AttributeName.SAME_LOWER_CASE_QNAME("value:"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName WIDTHS = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("widths"),
+            AttributeName.SAME_LOWER_CASE_QNAME("widths"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName TARGET = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("target"),
+            AttributeName.SAME_LOWER_CASE_QNAME("target"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName VALUES = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("values"),
+            AttributeName.SAME_LOWER_CASE_QNAME("values"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName VALIGN = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("valign"),
+            AttributeName.SAME_LOWER_CASE_QNAME("valign"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName VSPACE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("vspace"),
+            AttributeName.SAME_LOWER_CASE_QNAME("vspace"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName POSTER = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("poster"),
+            AttributeName.SAME_LOWER_CASE_QNAME("poster"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName POINTS = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("points"),
+            AttributeName.SAME_LOWER_CASE_QNAME("points"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName PROMPT = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("prompt"),
+            AttributeName.SAME_LOWER_CASE_QNAME("prompt"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName SCOPED = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("scoped"),
+            AttributeName.SAME_LOWER_CASE_QNAME("scoped"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName STRING = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("string"),
+            AttributeName.SAME_LOWER_CASE_QNAME("string"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName SCHEME = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("scheme"),
+            AttributeName.SAME_LOWER_CASE_QNAME("scheme"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName STROKE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("stroke"),
+            AttributeName.SAME_LOWER_CASE_QNAME("stroke"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName RADIUS = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("radius"),
+            AttributeName.SAME_LOWER_CASE_QNAME("radius"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName RESULT = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("result"),
+            AttributeName.SAME_LOWER_CASE_QNAME("result"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName REPEAT = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("repeat"),
+            AttributeName.SAME_LOWER_CASE_QNAME("repeat"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName RSPACE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("rspace"),
+            AttributeName.SAME_LOWER_CASE_QNAME("rspace"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ROTATE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("rotate"),
+            AttributeName.SAME_LOWER_CASE_QNAME("rotate"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName RQUOTE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("rquote"),
+            AttributeName.SAME_LOWER_CASE_QNAME("rquote"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ALTTEXT = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("alttext"),
+            AttributeName.SAME_LOWER_CASE_QNAME("alttext"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ARCHIVE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("archive"),
+            AttributeName.SAME_LOWER_CASE_QNAME("archive"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName AZIMUTH = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("azimuth"),
+            AttributeName.SAME_LOWER_CASE_QNAME("azimuth"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName CLOSURE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("closure"),
+            AttributeName.SAME_LOWER_CASE_QNAME("closure"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName CHECKED = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("checked"),
+            AttributeName.SAME_LOWER_CASE_QNAME("checked"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName CLASSID = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("classid"),
+            AttributeName.SAME_LOWER_CASE_QNAME("classid"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName CHAROFF = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("charoff"),
+            AttributeName.SAME_LOWER_CASE_QNAME("charoff"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName BGCOLOR = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("bgcolor"),
+            AttributeName.SAME_LOWER_CASE_QNAME("bgcolor"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName COLSPAN = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("colspan"),
+            AttributeName.SAME_LOWER_CASE_QNAME("colspan"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName CHARSET = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("charset"),
+            AttributeName.SAME_LOWER_CASE_QNAME("charset"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName COMPACT = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("compact"),
+            AttributeName.SAME_LOWER_CASE_QNAME("compact"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName CONTENT = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("content"),
+            AttributeName.SAME_LOWER_CASE_QNAME("content"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ENCTYPE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("enctype"),
+            AttributeName.SAME_LOWER_CASE_QNAME("enctype"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName DATASRC = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("datasrc"),
+            AttributeName.SAME_LOWER_CASE_QNAME("datasrc"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName DATAFLD = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("datafld"),
+            AttributeName.SAME_LOWER_CASE_QNAME("datafld"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName DECLARE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("declare"),
+            AttributeName.SAME_LOWER_CASE_QNAME("declare"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName DISPLAY = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("display"),
+            AttributeName.SAME_LOWER_CASE_QNAME("display"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName DIVISOR = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("divisor"),
+            AttributeName.SAME_LOWER_CASE_QNAME("divisor"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName DEFAULT = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("default"),
+            AttributeName.SAME_LOWER_CASE_QNAME("default"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName DESCENT = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("descent"),
+            AttributeName.SAME_LOWER_CASE_QNAME("descent"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName KERNING = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("kerning"),
+            AttributeName.SAME_LOWER_CASE_QNAME("kerning"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName HANGING = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("hanging"),
+            AttributeName.SAME_LOWER_CASE_QNAME("hanging"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName HEADERS = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("headers"),
+            AttributeName.SAME_LOWER_CASE_QNAME("headers"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ONPASTE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onpaste"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onpaste"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ONCLICK = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onclick"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onclick"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName OPTIMUM = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("optimum"),
+            AttributeName.SAME_LOWER_CASE_QNAME("optimum"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ONBEGIN = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onbegin"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onbegin"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ONKEYUP = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onkeyup"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onkeyup"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ONFOCUS = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onfocus"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onfocus"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ONERROR = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onerror"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onerror"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ONINPUT = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("oninput"),
+            AttributeName.SAME_LOWER_CASE_QNAME("oninput"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ONABORT = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onabort"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onabort"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ONSTART = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onstart"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onstart"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ONRESET = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onreset"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onreset"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName OPACITY = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("opacity"),
+            AttributeName.SAME_LOWER_CASE_QNAME("opacity"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName NOSHADE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("noshade"),
+            AttributeName.SAME_LOWER_CASE_QNAME("noshade"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName MINSIZE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("minsize"),
+            AttributeName.SAME_LOWER_CASE_QNAME("minsize"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName MAXSIZE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("maxsize"),
+            AttributeName.SAME_LOWER_CASE_QNAME("maxsize"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName LARGEOP = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("largeop"),
+            AttributeName.SAME_LOWER_CASE_QNAME("largeop"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName UNICODE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("unicode"),
+            AttributeName.SAME_LOWER_CASE_QNAME("unicode"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName TARGETX = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL("targetx",
+                    "targetX"), AttributeName.SAME_LOWER_CASE_QNAME("targetX"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName TARGETY = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL("targety",
+                    "targetY"), AttributeName.SAME_LOWER_CASE_QNAME("targetY"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName VIEWBOX = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL("viewbox",
+                    "viewBox"), AttributeName.SAME_LOWER_CASE_QNAME("viewBox"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName VERSION = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("version"),
+            AttributeName.SAME_LOWER_CASE_QNAME("version"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName PATTERN = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("pattern"),
+            AttributeName.SAME_LOWER_CASE_QNAME("pattern"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName PROFILE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("profile"),
+            AttributeName.SAME_LOWER_CASE_QNAME("profile"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName START   = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("start  "),
+            AttributeName.SAME_LOWER_CASE_QNAME("start  "),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName SPACING = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("spacing"),
+            AttributeName.SAME_LOWER_CASE_QNAME("spacing"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName RESTART = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("restart"),
+            AttributeName.SAME_LOWER_CASE_QNAME("restart"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ROWSPAN = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("rowspan"),
+            AttributeName.SAME_LOWER_CASE_QNAME("rowspan"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName SANDBOX = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("sandbox"),
+            AttributeName.SAME_LOWER_CASE_QNAME("sandbox"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName SUMMARY = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("summary"),
+            AttributeName.SAME_LOWER_CASE_QNAME("summary"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName STANDBY = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("standby"),
+            AttributeName.SAME_LOWER_CASE_QNAME("standby"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName REPLACE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("replace"),
+            AttributeName.SAME_LOWER_CASE_QNAME("replace"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ADDITIVE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("additive"),
+            AttributeName.SAME_LOWER_CASE_QNAME("additive"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName CALCMODE = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL("calcmode",
+                    "calcMode"),
+            AttributeName.SAME_LOWER_CASE_QNAME("calcMode"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName CODETYPE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("codetype"),
+            AttributeName.SAME_LOWER_CASE_QNAME("codetype"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName CODEBASE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("codebase"),
+            AttributeName.SAME_LOWER_CASE_QNAME("codebase"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName BEVELLED = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("bevelled"),
+            AttributeName.SAME_LOWER_CASE_QNAME("bevelled"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName BASELINE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("baseline"),
+            AttributeName.SAME_LOWER_CASE_QNAME("baseline"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName EXPONENT = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("exponent"),
+            AttributeName.SAME_LOWER_CASE_QNAME("exponent"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName EDGEMODE = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL("edgemode",
+                    "edgeMode"),
+            AttributeName.SAME_LOWER_CASE_QNAME("edgeMode"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ENCODING = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("encoding"),
+            AttributeName.SAME_LOWER_CASE_QNAME("encoding"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName GLYPHREF = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL("glyphref",
+                    "glyphRef"),
+            AttributeName.SAME_LOWER_CASE_QNAME("glyphRef"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName DATETIME = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("datetime"),
+            AttributeName.SAME_LOWER_CASE_QNAME("datetime"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName DISABLED = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("disabled"),
+            AttributeName.SAME_LOWER_CASE_QNAME("disabled"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName FONTSIZE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("fontsize"),
+            AttributeName.SAME_LOWER_CASE_QNAME("fontsize"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName KEYTIMES = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL("keytimes",
+                    "keyTimes"),
+            AttributeName.SAME_LOWER_CASE_QNAME("keyTimes"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName LOOPEND  = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("loopend "),
+            AttributeName.SAME_LOWER_CASE_QNAME("loopend "),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName PANOSE_1 = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("panose-1"),
+            AttributeName.SAME_LOWER_CASE_QNAME("panose-1"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName HREFLANG = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("hreflang"),
+            AttributeName.SAME_LOWER_CASE_QNAME("hreflang"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ONRESIZE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onresize"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onresize"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ONCHANGE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onchange"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onchange"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ONBOUNCE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onbounce"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onbounce"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ONUNLOAD = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onunload"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onunload"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ONFINISH = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onfinish"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onfinish"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ONSCROLL = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onscroll"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onscroll"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName OPERATOR = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("operator"),
+            AttributeName.SAME_LOWER_CASE_QNAME("operator"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName OVERFLOW = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("overflow"),
+            AttributeName.SAME_LOWER_CASE_QNAME("overflow"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ONSUBMIT = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onsubmit"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onsubmit"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ONREPEAT = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onrepeat"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onrepeat"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ONSELECT = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onselect"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onselect"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName NOTATION = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("notation"),
+            AttributeName.SAME_LOWER_CASE_QNAME("notation"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName NORESIZE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("noresize"),
+            AttributeName.SAME_LOWER_CASE_QNAME("noresize"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName MANIFEST = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("manifest"),
+            AttributeName.SAME_LOWER_CASE_QNAME("manifest"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName MATHSIZE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("mathsize"),
+            AttributeName.SAME_LOWER_CASE_QNAME("mathsize"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName MULTIPLE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("multiple"),
+            AttributeName.SAME_LOWER_CASE_QNAME("multiple"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName LONGDESC = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("longdesc"),
+            AttributeName.SAME_LOWER_CASE_QNAME("longdesc"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName LANGUAGE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("language"),
+            AttributeName.SAME_LOWER_CASE_QNAME("language"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName TEMPLATE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("template"),
+            AttributeName.SAME_LOWER_CASE_QNAME("template"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName TABINDEX = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("tabindex"),
+            AttributeName.SAME_LOWER_CASE_QNAME("tabindex"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName READONLY = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("readonly"),
+            AttributeName.SAME_LOWER_CASE_QNAME("readonly"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName SELECTED = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("selected"),
+            AttributeName.SAME_LOWER_CASE_QNAME("selected"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ROWLINES = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("rowlines"),
+            AttributeName.SAME_LOWER_CASE_QNAME("rowlines"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName SEAMLESS = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("seamless"),
+            AttributeName.SAME_LOWER_CASE_QNAME("seamless"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName ROWALIGN = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("rowalign"),
+            AttributeName.SAME_LOWER_CASE_QNAME("rowalign"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName STRETCHY = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("stretchy"),
+            AttributeName.SAME_LOWER_CASE_QNAME("stretchy"),
+            AttributeName.ALL_NCNAME, false);
+
+    public static final AttributeName REQUIRED = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("required"),
+            AttributeName.SAME_LOWER_CASE_QNAME("required"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName XML_BASE = new AttributeName(
-            NAMESPACE("http://www.w3.org/XML/1998/namespace"),
-            COLONIFIED_LOCAL("xml:base", "base"),
-            SAME_LOWER_CASE_QNAME("xml:base"), new boolean[] { false, true,
-                    true, false }, false);
+            AttributeName.NAMESPACE("http://www.w3.org/XML/1998/namespace"),
+            AttributeName.COLONIFIED_LOCAL("xml:base", "base"),
+            AttributeName.SAME_LOWER_CASE_QNAME("xml:base"), new boolean[] {
+                    false, true, true, false }, false);
 
     public static final AttributeName XML_LANG = new AttributeName(
-            NAMESPACE("http://www.w3.org/XML/1998/namespace"),
-            COLONIFIED_LOCAL("xml:lang", "lang"),
-            SAME_LOWER_CASE_QNAME("xml:lang"), new boolean[] { false, true,
-                    true, false }, false);
+            AttributeName.NAMESPACE("http://www.w3.org/XML/1998/namespace"),
+            AttributeName.COLONIFIED_LOCAL("xml:lang", "lang"),
+            AttributeName.SAME_LOWER_CASE_QNAME("xml:lang"), new boolean[] {
+                    false, true, true, false }, false);
 
-    public static final AttributeName X_HEIGHT = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("x-height"),
-            SAME_LOWER_CASE_QNAME("x-height"), ALL_NCNAME, false);
+    public static final AttributeName X_HEIGHT = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("x-height"),
+            AttributeName.SAME_LOWER_CASE_QNAME("x-height"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName CONTROLS  = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("controls "),
-            SAME_LOWER_CASE_QNAME("controls "), ALL_NCNAME, false);
+    public static final AttributeName CONTROLS  = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("controls "),
+            AttributeName.SAME_LOWER_CASE_QNAME("controls "),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName ARIA_OWNS = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("aria-owns"),
-            SAME_LOWER_CASE_QNAME("aria-owns"), ALL_NCNAME, false);
+    public static final AttributeName ARIA_OWNS = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("aria-owns"),
+            AttributeName.SAME_LOWER_CASE_QNAME("aria-owns"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName AUTOFOCUS = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("autofocus"),
-            SAME_LOWER_CASE_QNAME("autofocus"), ALL_NCNAME, false);
+    public static final AttributeName AUTOFOCUS = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("autofocus"),
+            AttributeName.SAME_LOWER_CASE_QNAME("autofocus"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName ARIA_SORT = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("aria-sort"),
-            SAME_LOWER_CASE_QNAME("aria-sort"), ALL_NCNAME, false);
+    public static final AttributeName ARIA_SORT = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("aria-sort"),
+            AttributeName.SAME_LOWER_CASE_QNAME("aria-sort"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName ACCESSKEY = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("accesskey"),
-            SAME_LOWER_CASE_QNAME("accesskey"), ALL_NCNAME, false);
+    public static final AttributeName ACCESSKEY = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("accesskey"),
+            AttributeName.SAME_LOWER_CASE_QNAME("accesskey"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName AMPLITUDE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("amplitude"),
-            SAME_LOWER_CASE_QNAME("amplitude"), ALL_NCNAME, false);
+    public static final AttributeName AMPLITUDE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("amplitude"),
+            AttributeName.SAME_LOWER_CASE_QNAME("amplitude"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName ARIA_LIVE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("aria-live"),
-            SAME_LOWER_CASE_QNAME("aria-live"), ALL_NCNAME, false);
+    public static final AttributeName ARIA_LIVE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("aria-live"),
+            AttributeName.SAME_LOWER_CASE_QNAME("aria-live"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName CLIP_RULE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("clip-rule"),
-            SAME_LOWER_CASE_QNAME("clip-rule"), ALL_NCNAME, false);
+    public static final AttributeName CLIP_RULE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("clip-rule"),
+            AttributeName.SAME_LOWER_CASE_QNAME("clip-rule"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName CLIP_PATH = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("clip-path"),
-            SAME_LOWER_CASE_QNAME("clip-path"), ALL_NCNAME, false);
+    public static final AttributeName CLIP_PATH = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("clip-path"),
+            AttributeName.SAME_LOWER_CASE_QNAME("clip-path"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName EQUALROWS = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("equalrows"),
-            SAME_LOWER_CASE_QNAME("equalrows"), ALL_NCNAME, false);
+    public static final AttributeName EQUALROWS = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("equalrows"),
+            AttributeName.SAME_LOWER_CASE_QNAME("equalrows"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName ELEVATION = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("elevation"),
-            SAME_LOWER_CASE_QNAME("elevation"), ALL_NCNAME, false);
+    public static final AttributeName ELEVATION = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("elevation"),
+            AttributeName.SAME_LOWER_CASE_QNAME("elevation"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName DIRECTION = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("direction"),
-            SAME_LOWER_CASE_QNAME("direction"), ALL_NCNAME, false);
+    public static final AttributeName DIRECTION = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("direction"),
+            AttributeName.SAME_LOWER_CASE_QNAME("direction"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName DRAGGABLE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("draggable"),
-            SAME_LOWER_CASE_QNAME("draggable"), ALL_NCNAME, false);
+    public static final AttributeName DRAGGABLE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("draggable"),
+            AttributeName.SAME_LOWER_CASE_QNAME("draggable"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName FILTERRES = new AttributeName(ALL_NO_NS,
-            CAMEL_CASE_LOCAL("filterres", "filterRes"),
-            SAME_LOWER_CASE_QNAME("filterRes"), ALL_NCNAME, false);
+    public static final AttributeName FILTERRES = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "filterres", "filterRes"),
+            AttributeName.SAME_LOWER_CASE_QNAME("filterRes"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName FILL_RULE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("fill-rule"),
-            SAME_LOWER_CASE_QNAME("fill-rule"), ALL_NCNAME, false);
+    public static final AttributeName FILL_RULE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("fill-rule"),
+            AttributeName.SAME_LOWER_CASE_QNAME("fill-rule"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName FONTSTYLE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("fontstyle"),
-            SAME_LOWER_CASE_QNAME("fontstyle"), ALL_NCNAME, false);
+    public static final AttributeName FONTSTYLE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("fontstyle"),
+            AttributeName.SAME_LOWER_CASE_QNAME("fontstyle"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName FONT_SIZE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("font-size"),
-            SAME_LOWER_CASE_QNAME("font-size"), ALL_NCNAME, false);
+    public static final AttributeName FONT_SIZE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("font-size"),
+            AttributeName.SAME_LOWER_CASE_QNAME("font-size"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName KEYPOINTS = new AttributeName(ALL_NO_NS,
-            CAMEL_CASE_LOCAL("keypoints", "keyPoints"),
-            SAME_LOWER_CASE_QNAME("keyPoints"), ALL_NCNAME, false);
+    public static final AttributeName KEYPOINTS = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "keypoints", "keyPoints"),
+            AttributeName.SAME_LOWER_CASE_QNAME("keyPoints"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName HIDEFOCUS = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("hidefocus"),
-            SAME_LOWER_CASE_QNAME("hidefocus"), ALL_NCNAME, false);
+    public static final AttributeName HIDEFOCUS = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("hidefocus"),
+            AttributeName.SAME_LOWER_CASE_QNAME("hidefocus"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName ONMESSAGE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("onmessage"),
-            SAME_LOWER_CASE_QNAME("onmessage"), ALL_NCNAME, false);
+    public static final AttributeName ONMESSAGE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onmessage"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onmessage"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName INTERCEPT = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("intercept"),
-            SAME_LOWER_CASE_QNAME("intercept"), ALL_NCNAME, false);
+    public static final AttributeName INTERCEPT = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("intercept"),
+            AttributeName.SAME_LOWER_CASE_QNAME("intercept"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName ONDRAGEND = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("ondragend"),
-            SAME_LOWER_CASE_QNAME("ondragend"), ALL_NCNAME, false);
+    public static final AttributeName ONDRAGEND = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("ondragend"),
+            AttributeName.SAME_LOWER_CASE_QNAME("ondragend"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName ONMOVEEND = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("onmoveend"),
-            SAME_LOWER_CASE_QNAME("onmoveend"), ALL_NCNAME, false);
+    public static final AttributeName ONMOVEEND = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onmoveend"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onmoveend"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName ONINVALID = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("oninvalid"),
-            SAME_LOWER_CASE_QNAME("oninvalid"), ALL_NCNAME, false);
+    public static final AttributeName ONINVALID = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("oninvalid"),
+            AttributeName.SAME_LOWER_CASE_QNAME("oninvalid"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName ONKEYDOWN = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("onkeydown"),
-            SAME_LOWER_CASE_QNAME("onkeydown"), ALL_NCNAME, false);
+    public static final AttributeName ONKEYDOWN = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onkeydown"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onkeydown"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName ONFOCUSIN = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("onfocusin"),
-            SAME_LOWER_CASE_QNAME("onfocusin"), ALL_NCNAME, false);
+    public static final AttributeName ONFOCUSIN = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onfocusin"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onfocusin"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName ONMOUSEUP = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("onmouseup"),
-            SAME_LOWER_CASE_QNAME("onmouseup"), ALL_NCNAME, false);
+    public static final AttributeName ONMOUSEUP = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onmouseup"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onmouseup"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName INPUTMODE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("inputmode"),
-            SAME_LOWER_CASE_QNAME("inputmode"), ALL_NCNAME, false);
+    public static final AttributeName INPUTMODE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("inputmode"),
+            AttributeName.SAME_LOWER_CASE_QNAME("inputmode"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName ONROWEXIT = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("onrowexit"),
-            SAME_LOWER_CASE_QNAME("onrowexit"), ALL_NCNAME, false);
+    public static final AttributeName ONROWEXIT = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onrowexit"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onrowexit"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName MATHCOLOR = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("mathcolor"),
-            SAME_LOWER_CASE_QNAME("mathcolor"), ALL_NCNAME, false);
+    public static final AttributeName MATHCOLOR = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("mathcolor"),
+            AttributeName.SAME_LOWER_CASE_QNAME("mathcolor"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName MASKUNITS = new AttributeName(ALL_NO_NS,
-            CAMEL_CASE_LOCAL("maskunits", "maskUnits"),
-            SAME_LOWER_CASE_QNAME("maskUnits"), ALL_NCNAME, false);
+    public static final AttributeName MASKUNITS = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "maskunits", "maskUnits"),
+            AttributeName.SAME_LOWER_CASE_QNAME("maskUnits"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName MAXLENGTH = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("maxlength"),
-            SAME_LOWER_CASE_QNAME("maxlength"), ALL_NCNAME, false);
+    public static final AttributeName MAXLENGTH = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("maxlength"),
+            AttributeName.SAME_LOWER_CASE_QNAME("maxlength"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName LINEBREAK = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("linebreak"),
-            SAME_LOWER_CASE_QNAME("linebreak"), ALL_NCNAME, false);
+    public static final AttributeName LINEBREAK = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("linebreak"),
+            AttributeName.SAME_LOWER_CASE_QNAME("linebreak"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName TRANSFORM = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("transform"),
-            SAME_LOWER_CASE_QNAME("transform"), ALL_NCNAME, false);
+    public static final AttributeName TRANSFORM = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("transform"),
+            AttributeName.SAME_LOWER_CASE_QNAME("transform"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName V_HANGING = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("v-hanging"),
-            SAME_LOWER_CASE_QNAME("v-hanging"), ALL_NCNAME, false);
+    public static final AttributeName V_HANGING = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("v-hanging"),
+            AttributeName.SAME_LOWER_CASE_QNAME("v-hanging"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName VALUETYPE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("valuetype"),
-            SAME_LOWER_CASE_QNAME("valuetype"), ALL_NCNAME, false);
+    public static final AttributeName VALUETYPE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("valuetype"),
+            AttributeName.SAME_LOWER_CASE_QNAME("valuetype"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName POINTSATZ = new AttributeName(ALL_NO_NS,
-            CAMEL_CASE_LOCAL("pointsatz", "pointsAtZ"),
-            SAME_LOWER_CASE_QNAME("pointsAtZ"), ALL_NCNAME, false);
+    public static final AttributeName POINTSATZ = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "pointsatz", "pointsAtZ"),
+            AttributeName.SAME_LOWER_CASE_QNAME("pointsAtZ"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName POINTSATX = new AttributeName(ALL_NO_NS,
-            CAMEL_CASE_LOCAL("pointsatx", "pointsAtX"),
-            SAME_LOWER_CASE_QNAME("pointsAtX"), ALL_NCNAME, false);
+    public static final AttributeName POINTSATX = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "pointsatx", "pointsAtX"),
+            AttributeName.SAME_LOWER_CASE_QNAME("pointsAtX"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName POINTSATY = new AttributeName(ALL_NO_NS,
-            CAMEL_CASE_LOCAL("pointsaty", "pointsAtY"),
-            SAME_LOWER_CASE_QNAME("pointsAtY"), ALL_NCNAME, false);
+    public static final AttributeName POINTSATY = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "pointsaty", "pointsAtY"),
+            AttributeName.SAME_LOWER_CASE_QNAME("pointsAtY"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName SYMMETRIC = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("symmetric"),
-            SAME_LOWER_CASE_QNAME("symmetric"), ALL_NCNAME, false);
+    public static final AttributeName SYMMETRIC = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("symmetric"),
+            AttributeName.SAME_LOWER_CASE_QNAME("symmetric"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName SCROLLING = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("scrolling"),
-            SAME_LOWER_CASE_QNAME("scrolling"), ALL_NCNAME, false);
+    public static final AttributeName SCROLLING = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("scrolling"),
+            AttributeName.SAME_LOWER_CASE_QNAME("scrolling"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName REPEATDUR = new AttributeName(ALL_NO_NS,
-            CAMEL_CASE_LOCAL("repeatdur", "repeatDur"),
-            SAME_LOWER_CASE_QNAME("repeatDur"), ALL_NCNAME, false);
+    public static final AttributeName REPEATDUR = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "repeatdur", "repeatDur"),
+            AttributeName.SAME_LOWER_CASE_QNAME("repeatDur"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName SELECTION = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("selection"),
-            SAME_LOWER_CASE_QNAME("selection"), ALL_NCNAME, false);
+    public static final AttributeName SELECTION = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("selection"),
+            AttributeName.SAME_LOWER_CASE_QNAME("selection"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName SEPARATOR = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("separator"),
-            SAME_LOWER_CASE_QNAME("separator"), ALL_NCNAME, false);
+    public static final AttributeName SEPARATOR = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("separator"),
+            AttributeName.SAME_LOWER_CASE_QNAME("separator"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName AUTOPLAY   = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("autoplay  "),
-            SAME_LOWER_CASE_QNAME("autoplay  "), ALL_NCNAME, false);
+    public static final AttributeName AUTOPLAY   = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("autoplay  "),
+            AttributeName.SAME_LOWER_CASE_QNAME("autoplay  "),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName XML_SPACE = new AttributeName(
-            NAMESPACE("http://www.w3.org/XML/1998/namespace"),
-            COLONIFIED_LOCAL("xml:space", "space"),
-            SAME_LOWER_CASE_QNAME("xml:space"), new boolean[] { false, true,
-                    true, false }, false);
+            AttributeName.NAMESPACE("http://www.w3.org/XML/1998/namespace"),
+            AttributeName.COLONIFIED_LOCAL("xml:space", "space"),
+            AttributeName.SAME_LOWER_CASE_QNAME("xml:space"), new boolean[] {
+                    false, true, true, false }, false);
 
-    public static final AttributeName ARIA_GRAB  = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("aria-grab "),
-            SAME_LOWER_CASE_QNAME("aria-grab "), ALL_NCNAME, false);
+    public static final AttributeName ARIA_GRAB  = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("aria-grab "),
+            AttributeName.SAME_LOWER_CASE_QNAME("aria-grab "),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName ARIA_BUSY  = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("aria-busy "),
-            SAME_LOWER_CASE_QNAME("aria-busy "), ALL_NCNAME, false);
+    public static final AttributeName ARIA_BUSY  = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("aria-busy "),
+            AttributeName.SAME_LOWER_CASE_QNAME("aria-busy "),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName AUTOSUBMIT = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("autosubmit"),
-            SAME_LOWER_CASE_QNAME("autosubmit"), ALL_NCNAME, false);
+    public static final AttributeName AUTOSUBMIT = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("autosubmit"),
+            AttributeName.SAME_LOWER_CASE_QNAME("autosubmit"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName ALPHABETIC = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("alphabetic"),
-            SAME_LOWER_CASE_QNAME("alphabetic"), ALL_NCNAME, false);
+    public static final AttributeName ALPHABETIC = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("alphabetic"),
+            AttributeName.SAME_LOWER_CASE_QNAME("alphabetic"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName ACTIONTYPE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("actiontype"),
-            SAME_LOWER_CASE_QNAME("actiontype"), ALL_NCNAME, false);
+    public static final AttributeName ACTIONTYPE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("actiontype"),
+            AttributeName.SAME_LOWER_CASE_QNAME("actiontype"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName ACCUMULATE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("accumulate"),
-            SAME_LOWER_CASE_QNAME("accumulate"), ALL_NCNAME, false);
+    public static final AttributeName ACCUMULATE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("accumulate"),
+            AttributeName.SAME_LOWER_CASE_QNAME("accumulate"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName ARIA_LEVEL = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("aria-level"),
-            SAME_LOWER_CASE_QNAME("aria-level"), ALL_NCNAME, false);
+    public static final AttributeName ARIA_LEVEL = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("aria-level"),
+            AttributeName.SAME_LOWER_CASE_QNAME("aria-level"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName COLUMNSPAN = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("columnspan"),
-            SAME_LOWER_CASE_QNAME("columnspan"), ALL_NCNAME, false);
+    public static final AttributeName COLUMNSPAN = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("columnspan"),
+            AttributeName.SAME_LOWER_CASE_QNAME("columnspan"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName CAP_HEIGHT = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("cap-height"),
-            SAME_LOWER_CASE_QNAME("cap-height"), ALL_NCNAME, false);
+    public static final AttributeName CAP_HEIGHT = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("cap-height"),
+            AttributeName.SAME_LOWER_CASE_QNAME("cap-height"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName BACKGROUND = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("background"),
-            SAME_LOWER_CASE_QNAME("background"), ALL_NCNAME, false);
+    public static final AttributeName BACKGROUND = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("background"),
+            AttributeName.SAME_LOWER_CASE_QNAME("background"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName GLYPH_NAME = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("glyph-name"),
-            SAME_LOWER_CASE_QNAME("glyph-name"), ALL_NCNAME, false);
+    public static final AttributeName GLYPH_NAME = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("glyph-name"),
+            AttributeName.SAME_LOWER_CASE_QNAME("glyph-name"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName GROUPALIGN = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("groupalign"),
-            SAME_LOWER_CASE_QNAME("groupalign"), ALL_NCNAME, false);
+    public static final AttributeName GROUPALIGN = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("groupalign"),
+            AttributeName.SAME_LOWER_CASE_QNAME("groupalign"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName FONTFAMILY = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("fontfamily"),
-            SAME_LOWER_CASE_QNAME("fontfamily"), ALL_NCNAME, false);
+    public static final AttributeName FONTFAMILY = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("fontfamily"),
+            AttributeName.SAME_LOWER_CASE_QNAME("fontfamily"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName FONTWEIGHT = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("fontweight"),
-            SAME_LOWER_CASE_QNAME("fontweight"), ALL_NCNAME, false);
+    public static final AttributeName FONTWEIGHT = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("fontweight"),
+            AttributeName.SAME_LOWER_CASE_QNAME("fontweight"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName FONT_STYLE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("font-style"),
-            SAME_LOWER_CASE_QNAME("font-style"), ALL_NCNAME, false);
+    public static final AttributeName FONT_STYLE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("font-style"),
+            AttributeName.SAME_LOWER_CASE_QNAME("font-style"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName KEYSPLINES = new AttributeName(ALL_NO_NS,
-            CAMEL_CASE_LOCAL("keysplines", "keySplines"),
-            SAME_LOWER_CASE_QNAME("keySplines"), ALL_NCNAME, false);
+    public static final AttributeName KEYSPLINES = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "keysplines", "keySplines"),
+            AttributeName.SAME_LOWER_CASE_QNAME("keySplines"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName LOOPSTART  = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("loopstart "),
-            SAME_LOWER_CASE_QNAME("loopstart "), ALL_NCNAME, false);
+    public static final AttributeName LOOPSTART  = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("loopstart "),
+            AttributeName.SAME_LOWER_CASE_QNAME("loopstart "),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName PLAYCOUNT  = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("playcount "),
-            SAME_LOWER_CASE_QNAME("playcount "), ALL_NCNAME, false);
+    public static final AttributeName PLAYCOUNT  = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("playcount "),
+            AttributeName.SAME_LOWER_CASE_QNAME("playcount "),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName HTTP_EQUIV = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("http-equiv"),
-            SAME_LOWER_CASE_QNAME("http-equiv"), ALL_NCNAME, false);
+    public static final AttributeName HTTP_EQUIV = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("http-equiv"),
+            AttributeName.SAME_LOWER_CASE_QNAME("http-equiv"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName ONACTIVATE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("onactivate"),
-            SAME_LOWER_CASE_QNAME("onactivate"), ALL_NCNAME, false);
+    public static final AttributeName ONACTIVATE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onactivate"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onactivate"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName OCCURRENCE = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("occurrence"),
-            SAME_LOWER_CASE_QNAME("occurrence"), ALL_NCNAME, false);
+    public static final AttributeName OCCURRENCE = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("occurrence"),
+            AttributeName.SAME_LOWER_CASE_QNAME("occurrence"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName IRRELEVANT = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("irrelevant"),
-            SAME_LOWER_CASE_QNAME("irrelevant"), ALL_NCNAME, false);
+    public static final AttributeName IRRELEVANT = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("irrelevant"),
+            AttributeName.SAME_LOWER_CASE_QNAME("irrelevant"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName ONDBLCLICK = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("ondblclick"),
-            SAME_LOWER_CASE_QNAME("ondblclick"), ALL_NCNAME, false);
+    public static final AttributeName ONDBLCLICK = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("ondblclick"),
+            AttributeName.SAME_LOWER_CASE_QNAME("ondblclick"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName ONDRAGDROP = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("ondragdrop"),
-            SAME_LOWER_CASE_QNAME("ondragdrop"), ALL_NCNAME, false);
+    public static final AttributeName ONDRAGDROP = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("ondragdrop"),
+            AttributeName.SAME_LOWER_CASE_QNAME("ondragdrop"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName ONKEYPRESS = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("onkeypress"),
-            SAME_LOWER_CASE_QNAME("onkeypress"), ALL_NCNAME, false);
+    public static final AttributeName ONKEYPRESS = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onkeypress"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onkeypress"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName ONROWENTER = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("onrowenter"),
-            SAME_LOWER_CASE_QNAME("onrowenter"), ALL_NCNAME, false);
+    public static final AttributeName ONROWENTER = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onrowenter"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onrowenter"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName ONDRAGOVER = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("ondragover"),
-            SAME_LOWER_CASE_QNAME("ondragover"), ALL_NCNAME, false);
+    public static final AttributeName ONDRAGOVER = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("ondragover"),
+            AttributeName.SAME_LOWER_CASE_QNAME("ondragover"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName ONFOCUSOUT = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("onfocusout"),
-            SAME_LOWER_CASE_QNAME("onfocusout"), ALL_NCNAME, false);
+    public static final AttributeName ONFOCUSOUT = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onfocusout"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onfocusout"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName ONMOUSEOUT = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("onmouseout"),
-            SAME_LOWER_CASE_QNAME("onmouseout"), ALL_NCNAME, false);
+    public static final AttributeName ONMOUSEOUT = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onmouseout"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onmouseout"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName NUMOCTAVES = new AttributeName(ALL_NO_NS,
-            CAMEL_CASE_LOCAL("numoctaves", "numOctaves"),
-            SAME_LOWER_CASE_QNAME("numOctaves"), ALL_NCNAME, false);
+    public static final AttributeName NUMOCTAVES = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "numoctaves", "numOctaves"),
+            AttributeName.SAME_LOWER_CASE_QNAME("numOctaves"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName MARKER_MID = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("marker-mid"),
-            SAME_LOWER_CASE_QNAME("marker-mid"), ALL_NCNAME, false);
+    public static final AttributeName MARKER_MID = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("marker-mid"),
+            AttributeName.SAME_LOWER_CASE_QNAME("marker-mid"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName MARKER_END = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("marker-end"),
-            SAME_LOWER_CASE_QNAME("marker-end"), ALL_NCNAME, false);
+    public static final AttributeName MARKER_END = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("marker-end"),
+            AttributeName.SAME_LOWER_CASE_QNAME("marker-end"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName TEXTLENGTH = new AttributeName(ALL_NO_NS,
-            CAMEL_CASE_LOCAL("textlength", "textLength"),
-            SAME_LOWER_CASE_QNAME("textLength"), ALL_NCNAME, false);
+    public static final AttributeName TEXTLENGTH = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "textlength", "textLength"),
+            AttributeName.SAME_LOWER_CASE_QNAME("textLength"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName VISIBILITY = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("visibility"),
-            SAME_LOWER_CASE_QNAME("visibility"), ALL_NCNAME, false);
+    public static final AttributeName VISIBILITY = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("visibility"),
+            AttributeName.SAME_LOWER_CASE_QNAME("visibility"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName VIEWTARGET = new AttributeName(ALL_NO_NS,
-            CAMEL_CASE_LOCAL("viewtarget", "viewTarget"),
-            SAME_LOWER_CASE_QNAME("viewTarget"), ALL_NCNAME, false);
+    public static final AttributeName VIEWTARGET = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "viewtarget", "viewTarget"),
+            AttributeName.SAME_LOWER_CASE_QNAME("viewTarget"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName VERT_ADV_Y = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("vert-adv-y"),
-            SAME_LOWER_CASE_QNAME("vert-adv-y"), ALL_NCNAME, false);
+    public static final AttributeName VERT_ADV_Y = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("vert-adv-y"),
+            AttributeName.SAME_LOWER_CASE_QNAME("vert-adv-y"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName PATHLENGTH = new AttributeName(ALL_NO_NS,
-            CAMEL_CASE_LOCAL("pathlength", "pathLength"),
-            SAME_LOWER_CASE_QNAME("pathLength"), ALL_NCNAME, false);
+    public static final AttributeName PATHLENGTH = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "pathlength", "pathLength"),
+            AttributeName.SAME_LOWER_CASE_QNAME("pathLength"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName REPEAT_MAX = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("repeat-max"),
-            SAME_LOWER_CASE_QNAME("repeat-max"), ALL_NCNAME, false);
+    public static final AttributeName REPEAT_MAX = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("repeat-max"),
+            AttributeName.SAME_LOWER_CASE_QNAME("repeat-max"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName RADIOGROUP = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("radiogroup"),
-            SAME_LOWER_CASE_QNAME("radiogroup"), ALL_NCNAME, false);
+    public static final AttributeName RADIOGROUP = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("radiogroup"),
+            AttributeName.SAME_LOWER_CASE_QNAME("radiogroup"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName STOP_COLOR = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("stop-color"),
-            SAME_LOWER_CASE_QNAME("stop-color"), ALL_NCNAME, false);
+    public static final AttributeName STOP_COLOR = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("stop-color"),
+            AttributeName.SAME_LOWER_CASE_QNAME("stop-color"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName SEPARATORS = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("separators"),
-            SAME_LOWER_CASE_QNAME("separators"), ALL_NCNAME, false);
+    public static final AttributeName SEPARATORS = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("separators"),
+            AttributeName.SAME_LOWER_CASE_QNAME("separators"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName REPEAT_MIN = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("repeat-min"),
-            SAME_LOWER_CASE_QNAME("repeat-min"), ALL_NCNAME, false);
+    public static final AttributeName REPEAT_MIN = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("repeat-min"),
+            AttributeName.SAME_LOWER_CASE_QNAME("repeat-min"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName ROWSPACING = new AttributeName(ALL_NO_NS,
-            SAME_LOWER_CASE_LOCAL("rowspacing"),
-            SAME_LOWER_CASE_QNAME("rowspacing"), ALL_NCNAME, false);
+    public static final AttributeName ROWSPACING = new AttributeName(
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("rowspacing"),
+            AttributeName.SAME_LOWER_CASE_QNAME("rowspacing"),
+            AttributeName.ALL_NCNAME, false);
 
-    public static final AttributeName ZOOMANDPAN = new AttributeName(ALL_NO_NS,
-            CAMEL_CASE_LOCAL("zoomandpan", "zoomAndPan"),
-            SAME_LOWER_CASE_QNAME("zoomAndPan"), ALL_NCNAME, false);
+    public static final AttributeName ZOOMANDPAN = new AttributeName(
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "zoomandpan", "zoomAndPan"),
+            AttributeName.SAME_LOWER_CASE_QNAME("zoomAndPan"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName XLINK_TYPE = new AttributeName(
-            NAMESPACE("http://www.w3.org/1999/xlink"), COLONIFIED_LOCAL(
-                    "xlink:type", "type"), SAME_LOWER_CASE_QNAME("xlink:type"),
-            new boolean[] { false, true, true, false }, false);
+            AttributeName.NAMESPACE("http://www.w3.org/1999/xlink"),
+            AttributeName.COLONIFIED_LOCAL("xlink:type", "type"),
+            AttributeName.SAME_LOWER_CASE_QNAME("xlink:type"), new boolean[] {
+                    false, true, true, false }, false);
 
     public static final AttributeName XLINK_ROLE = new AttributeName(
-            NAMESPACE("http://www.w3.org/1999/xlink"), COLONIFIED_LOCAL(
-                    "xlink:role", "role"), SAME_LOWER_CASE_QNAME("xlink:role"),
-            new boolean[] { false, true, true, false }, false);
+            AttributeName.NAMESPACE("http://www.w3.org/1999/xlink"),
+            AttributeName.COLONIFIED_LOCAL("xlink:role", "role"),
+            AttributeName.SAME_LOWER_CASE_QNAME("xlink:role"), new boolean[] {
+                    false, true, true, false }, false);
 
     public static final AttributeName XLINK_HREF = new AttributeName(
-            NAMESPACE("http://www.w3.org/1999/xlink"), COLONIFIED_LOCAL(
-                    "xlink:href", "href"), SAME_LOWER_CASE_QNAME("xlink:href"),
-            new boolean[] { false, true, true, false }, false);
+            AttributeName.NAMESPACE("http://www.w3.org/1999/xlink"),
+            AttributeName.COLONIFIED_LOCAL("xlink:href", "href"),
+            AttributeName.SAME_LOWER_CASE_QNAME("xlink:href"), new boolean[] {
+                    false, true, true, false }, false);
 
     public static final AttributeName XLINK_SHOW = new AttributeName(
-            NAMESPACE("http://www.w3.org/1999/xlink"), COLONIFIED_LOCAL(
-                    "xlink:show", "show"), SAME_LOWER_CASE_QNAME("xlink:show"),
-            new boolean[] { false, true, true, false }, false);
+            AttributeName.NAMESPACE("http://www.w3.org/1999/xlink"),
+            AttributeName.COLONIFIED_LOCAL("xlink:show", "show"),
+            AttributeName.SAME_LOWER_CASE_QNAME("xlink:show"), new boolean[] {
+                    false, true, true, false }, false);
 
     public static final AttributeName ACCENTUNDER = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("accentunder"),
-            SAME_LOWER_CASE_QNAME("accentunder"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("accentunder"),
+            AttributeName.SAME_LOWER_CASE_QNAME("accentunder"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ARIA_SECRET = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-secret"),
-            SAME_LOWER_CASE_QNAME("aria-secret"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("aria-secret"),
+            AttributeName.SAME_LOWER_CASE_QNAME("aria-secret"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ARIA_ATOMIC = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-atomic"),
-            SAME_LOWER_CASE_QNAME("aria-atomic"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("aria-atomic"),
+            AttributeName.SAME_LOWER_CASE_QNAME("aria-atomic"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ARIA_FLOWTO = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-flowto"),
-            SAME_LOWER_CASE_QNAME("aria-flowto"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("aria-flowto"),
+            AttributeName.SAME_LOWER_CASE_QNAME("aria-flowto"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ARABIC_FORM = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("arabic-form"),
-            SAME_LOWER_CASE_QNAME("arabic-form"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("arabic-form"),
+            AttributeName.SAME_LOWER_CASE_QNAME("arabic-form"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName CELLPADDING = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("cellpadding"),
-            SAME_LOWER_CASE_QNAME("cellpadding"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("cellpadding"),
+            AttributeName.SAME_LOWER_CASE_QNAME("cellpadding"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName CELLSPACING = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("cellspacing"),
-            SAME_LOWER_CASE_QNAME("cellspacing"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("cellspacing"),
+            AttributeName.SAME_LOWER_CASE_QNAME("cellspacing"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName COLUMNWIDTH = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("columnwidth"),
-            SAME_LOWER_CASE_QNAME("columnwidth"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("columnwidth"),
+            AttributeName.SAME_LOWER_CASE_QNAME("columnwidth"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName COLUMNALIGN = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("columnalign"),
-            SAME_LOWER_CASE_QNAME("columnalign"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("columnalign"),
+            AttributeName.SAME_LOWER_CASE_QNAME("columnalign"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName COLUMNLINES = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("columnlines"),
-            SAME_LOWER_CASE_QNAME("columnlines"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("columnlines"),
+            AttributeName.SAME_LOWER_CASE_QNAME("columnlines"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName CONTEXTMENU = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("contextmenu"),
-            SAME_LOWER_CASE_QNAME("contextmenu"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("contextmenu"),
+            AttributeName.SAME_LOWER_CASE_QNAME("contextmenu"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName BASEPROFILE = new AttributeName(
-            ALL_NO_NS, CAMEL_CASE_LOCAL("baseprofile", "baseProfile"),
-            SAME_LOWER_CASE_QNAME("baseProfile"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "baseprofile", "baseProfile"),
+            AttributeName.SAME_LOWER_CASE_QNAME("baseProfile"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName FONT_FAMILY = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("font-family"),
-            SAME_LOWER_CASE_QNAME("font-family"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("font-family"),
+            AttributeName.SAME_LOWER_CASE_QNAME("font-family"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName FRAMEBORDER = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("frameborder"),
-            SAME_LOWER_CASE_QNAME("frameborder"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("frameborder"),
+            AttributeName.SAME_LOWER_CASE_QNAME("frameborder"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName FILTERUNITS = new AttributeName(
-            ALL_NO_NS, CAMEL_CASE_LOCAL("filterunits", "filterUnits"),
-            SAME_LOWER_CASE_QNAME("filterUnits"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "filterunits", "filterUnits"),
+            AttributeName.SAME_LOWER_CASE_QNAME("filterUnits"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName FLOOD_COLOR = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("flood-color"),
-            SAME_LOWER_CASE_QNAME("flood-color"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("flood-color"),
+            AttributeName.SAME_LOWER_CASE_QNAME("flood-color"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName FONT_WEIGHT = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("font-weight"),
-            SAME_LOWER_CASE_QNAME("font-weight"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("font-weight"),
+            AttributeName.SAME_LOWER_CASE_QNAME("font-weight"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName HORIZ_ADV_X = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("horiz-adv-x"),
-            SAME_LOWER_CASE_QNAME("horiz-adv-x"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("horiz-adv-x"),
+            AttributeName.SAME_LOWER_CASE_QNAME("horiz-adv-x"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONDRAGLEAVE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("ondragleave"),
-            SAME_LOWER_CASE_QNAME("ondragleave"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("ondragleave"),
+            AttributeName.SAME_LOWER_CASE_QNAME("ondragleave"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONMOUSEMOVE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onmousemove"),
-            SAME_LOWER_CASE_QNAME("onmousemove"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onmousemove"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onmousemove"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ORIENTATION = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("orientation"),
-            SAME_LOWER_CASE_QNAME("orientation"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("orientation"),
+            AttributeName.SAME_LOWER_CASE_QNAME("orientation"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONMOUSEDOWN = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onmousedown"),
-            SAME_LOWER_CASE_QNAME("onmousedown"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onmousedown"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onmousedown"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONMOUSEOVER = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onmouseover"),
-            SAME_LOWER_CASE_QNAME("onmouseover"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onmouseover"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onmouseover"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONDRAGENTER = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("ondragenter"),
-            SAME_LOWER_CASE_QNAME("ondragenter"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("ondragenter"),
+            AttributeName.SAME_LOWER_CASE_QNAME("ondragenter"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName IDEOGRAPHIC = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("ideographic"),
-            SAME_LOWER_CASE_QNAME("ideographic"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("ideographic"),
+            AttributeName.SAME_LOWER_CASE_QNAME("ideographic"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONBEFORECUT = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onbeforecut"),
-            SAME_LOWER_CASE_QNAME("onbeforecut"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onbeforecut"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onbeforecut"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONFORMINPUT = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onforminput"),
-            SAME_LOWER_CASE_QNAME("onforminput"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onforminput"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onforminput"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONDRAGSTART = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("ondragstart"),
-            SAME_LOWER_CASE_QNAME("ondragstart"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("ondragstart"),
+            AttributeName.SAME_LOWER_CASE_QNAME("ondragstart"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONMOVESTART = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onmovestart"),
-            SAME_LOWER_CASE_QNAME("onmovestart"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onmovestart"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onmovestart"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName MARKERUNITS = new AttributeName(
-            ALL_NO_NS, CAMEL_CASE_LOCAL("markerunits", "markerUnits"),
-            SAME_LOWER_CASE_QNAME("markerUnits"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "markerunits", "markerUnits"),
+            AttributeName.SAME_LOWER_CASE_QNAME("markerUnits"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName MATHVARIANT = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("mathvariant"),
-            SAME_LOWER_CASE_QNAME("mathvariant"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("mathvariant"),
+            AttributeName.SAME_LOWER_CASE_QNAME("mathvariant"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName MARGINWIDTH = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("marginwidth"),
-            SAME_LOWER_CASE_QNAME("marginwidth"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("marginwidth"),
+            AttributeName.SAME_LOWER_CASE_QNAME("marginwidth"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName MARKERWIDTH = new AttributeName(
-            ALL_NO_NS, CAMEL_CASE_LOCAL("markerwidth", "markerWidth"),
-            SAME_LOWER_CASE_QNAME("markerWidth"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "markerwidth", "markerWidth"),
+            AttributeName.SAME_LOWER_CASE_QNAME("markerWidth"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName TEXT_ANCHOR = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("text-anchor"),
-            SAME_LOWER_CASE_QNAME("text-anchor"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("text-anchor"),
+            AttributeName.SAME_LOWER_CASE_QNAME("text-anchor"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName TABLEVALUES = new AttributeName(
-            ALL_NO_NS, CAMEL_CASE_LOCAL("tablevalues", "tableValues"),
-            SAME_LOWER_CASE_QNAME("tableValues"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "tablevalues", "tableValues"),
+            AttributeName.SAME_LOWER_CASE_QNAME("tableValues"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName SCRIPTLEVEL = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("scriptlevel"),
-            SAME_LOWER_CASE_QNAME("scriptlevel"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("scriptlevel"),
+            AttributeName.SAME_LOWER_CASE_QNAME("scriptlevel"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName REPEATCOUNT = new AttributeName(
-            ALL_NO_NS, CAMEL_CASE_LOCAL("repeatcount", "repeatCount"),
-            SAME_LOWER_CASE_QNAME("repeatCount"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "repeatcount", "repeatCount"),
+            AttributeName.SAME_LOWER_CASE_QNAME("repeatCount"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName STITCHTILES = new AttributeName(
-            ALL_NO_NS, CAMEL_CASE_LOCAL("stitchtiles", "stitchTiles"),
-            SAME_LOWER_CASE_QNAME("stitchTiles"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "stitchtiles", "stitchTiles"),
+            AttributeName.SAME_LOWER_CASE_QNAME("stitchTiles"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName STARTOFFSET = new AttributeName(
-            ALL_NO_NS, CAMEL_CASE_LOCAL("startoffset", "startOffset"),
-            SAME_LOWER_CASE_QNAME("startOffset"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "startoffset", "startOffset"),
+            AttributeName.SAME_LOWER_CASE_QNAME("startOffset"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName SCROLLDELAY = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("scrolldelay"),
-            SAME_LOWER_CASE_QNAME("scrolldelay"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("scrolldelay"),
+            AttributeName.SAME_LOWER_CASE_QNAME("scrolldelay"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName XMLNS_XLINK = new AttributeName(
-            NAMESPACE("http://www.w3.org/2000/xmlns/"), COLONIFIED_LOCAL(
-                    "xmlns:xlink", "xlink"),
-            SAME_LOWER_CASE_QNAME("xmlns:xlink"), new boolean[] { false, false,
-                    false, false }, true);
+            AttributeName.NAMESPACE("http://www.w3.org/2000/xmlns/"),
+            AttributeName.COLONIFIED_LOCAL("xmlns:xlink", "xlink"),
+            AttributeName.SAME_LOWER_CASE_QNAME("xmlns:xlink"), new boolean[] {
+                    false, false, false, false }, true);
 
     public static final AttributeName XLINK_TITLE = new AttributeName(
-            NAMESPACE("http://www.w3.org/1999/xlink"), COLONIFIED_LOCAL(
-                    "xlink:title", "title"),
-            SAME_LOWER_CASE_QNAME("xlink:title"), new boolean[] { false, true,
-                    true, false }, false);
+            AttributeName.NAMESPACE("http://www.w3.org/1999/xlink"),
+            AttributeName.COLONIFIED_LOCAL("xlink:title", "title"),
+            AttributeName.SAME_LOWER_CASE_QNAME("xlink:title"), new boolean[] {
+                    false, true, true, false }, false);
 
     public static final AttributeName ARIA_HIDDEN  = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-hidden "),
-            SAME_LOWER_CASE_QNAME("aria-hidden "), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("aria-hidden "),
+            AttributeName.SAME_LOWER_CASE_QNAME("aria-hidden "),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName AUTOCOMPLETE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("autocomplete"),
-            SAME_LOWER_CASE_QNAME("autocomplete"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("autocomplete"),
+            AttributeName.SAME_LOWER_CASE_QNAME("autocomplete"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ARIA_SETSIZE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-setsize"),
-            SAME_LOWER_CASE_QNAME("aria-setsize"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("aria-setsize"),
+            AttributeName.SAME_LOWER_CASE_QNAME("aria-setsize"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ARIA_CHANNEL = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-channel"),
-            SAME_LOWER_CASE_QNAME("aria-channel"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("aria-channel"),
+            AttributeName.SAME_LOWER_CASE_QNAME("aria-channel"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName EQUALCOLUMNS = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("equalcolumns"),
-            SAME_LOWER_CASE_QNAME("equalcolumns"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("equalcolumns"),
+            AttributeName.SAME_LOWER_CASE_QNAME("equalcolumns"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName DISPLAYSTYLE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("displaystyle"),
-            SAME_LOWER_CASE_QNAME("displaystyle"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("displaystyle"),
+            AttributeName.SAME_LOWER_CASE_QNAME("displaystyle"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName DATAFORMATAS = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("dataformatas"),
-            SAME_LOWER_CASE_QNAME("dataformatas"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("dataformatas"),
+            AttributeName.SAME_LOWER_CASE_QNAME("dataformatas"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName FILL_OPACITY = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("fill-opacity"),
-            SAME_LOWER_CASE_QNAME("fill-opacity"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("fill-opacity"),
+            AttributeName.SAME_LOWER_CASE_QNAME("fill-opacity"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName FONT_VARIANT = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("font-variant"),
-            SAME_LOWER_CASE_QNAME("font-variant"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("font-variant"),
+            AttributeName.SAME_LOWER_CASE_QNAME("font-variant"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName FONT_STRETCH = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("font-stretch"),
-            SAME_LOWER_CASE_QNAME("font-stretch"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("font-stretch"),
+            AttributeName.SAME_LOWER_CASE_QNAME("font-stretch"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName FRAMESPACING = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("framespacing"),
-            SAME_LOWER_CASE_QNAME("framespacing"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("framespacing"),
+            AttributeName.SAME_LOWER_CASE_QNAME("framespacing"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName KERNELMATRIX = new AttributeName(
-            ALL_NO_NS, CAMEL_CASE_LOCAL("kernelmatrix", "kernelMatrix"),
-            SAME_LOWER_CASE_QNAME("kernelMatrix"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "kernelmatrix", "kernelMatrix"),
+            AttributeName.SAME_LOWER_CASE_QNAME("kernelMatrix"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONDEACTIVATE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("ondeactivate"),
-            SAME_LOWER_CASE_QNAME("ondeactivate"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("ondeactivate"),
+            AttributeName.SAME_LOWER_CASE_QNAME("ondeactivate"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONROWSDELETE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onrowsdelete"),
-            SAME_LOWER_CASE_QNAME("onrowsdelete"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onrowsdelete"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onrowsdelete"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONMOUSELEAVE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onmouseleave"),
-            SAME_LOWER_CASE_QNAME("onmouseleave"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onmouseleave"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onmouseleave"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONFORMCHANGE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onformchange"),
-            SAME_LOWER_CASE_QNAME("onformchange"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onformchange"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onformchange"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONCELLCHANGE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("oncellchange"),
-            SAME_LOWER_CASE_QNAME("oncellchange"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("oncellchange"),
+            AttributeName.SAME_LOWER_CASE_QNAME("oncellchange"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONMOUSEWHEEL = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onmousewheel"),
-            SAME_LOWER_CASE_QNAME("onmousewheel"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onmousewheel"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onmousewheel"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONMOUSEENTER = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onmouseenter"),
-            SAME_LOWER_CASE_QNAME("onmouseenter"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onmouseenter"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onmouseenter"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONAFTERPRINT = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onafterprint"),
-            SAME_LOWER_CASE_QNAME("onafterprint"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onafterprint"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onafterprint"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONBEFORECOPY = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onbeforecopy"),
-            SAME_LOWER_CASE_QNAME("onbeforecopy"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onbeforecopy"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onbeforecopy"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName MARGINHEIGHT = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("marginheight"),
-            SAME_LOWER_CASE_QNAME("marginheight"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("marginheight"),
+            AttributeName.SAME_LOWER_CASE_QNAME("marginheight"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName MARKERHEIGHT = new AttributeName(
-            ALL_NO_NS, CAMEL_CASE_LOCAL("markerheight", "markerHeight"),
-            SAME_LOWER_CASE_QNAME("markerHeight"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "markerheight", "markerHeight"),
+            AttributeName.SAME_LOWER_CASE_QNAME("markerHeight"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName MARKER_START = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("marker-start"),
-            SAME_LOWER_CASE_QNAME("marker-start"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("marker-start"),
+            AttributeName.SAME_LOWER_CASE_QNAME("marker-start"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName MATHEMATICAL = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("mathematical"),
-            SAME_LOWER_CASE_QNAME("mathematical"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("mathematical"),
+            AttributeName.SAME_LOWER_CASE_QNAME("mathematical"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName LENGTHADJUST = new AttributeName(
-            ALL_NO_NS, CAMEL_CASE_LOCAL("lengthadjust", "lengthAdjust"),
-            SAME_LOWER_CASE_QNAME("lengthAdjust"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "lengthadjust", "lengthAdjust"),
+            AttributeName.SAME_LOWER_CASE_QNAME("lengthAdjust"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName UNSELECTABLE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("unselectable"),
-            SAME_LOWER_CASE_QNAME("unselectable"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("unselectable"),
+            AttributeName.SAME_LOWER_CASE_QNAME("unselectable"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName UNICODE_BIDI = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("unicode-bidi"),
-            SAME_LOWER_CASE_QNAME("unicode-bidi"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("unicode-bidi"),
+            AttributeName.SAME_LOWER_CASE_QNAME("unicode-bidi"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName UNITS_PER_EM = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("units-per-em"),
-            SAME_LOWER_CASE_QNAME("units-per-em"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("units-per-em"),
+            AttributeName.SAME_LOWER_CASE_QNAME("units-per-em"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName WORD_SPACING = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("word-spacing"),
-            SAME_LOWER_CASE_QNAME("word-spacing"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("word-spacing"),
+            AttributeName.SAME_LOWER_CASE_QNAME("word-spacing"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName WRITING_MODE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("writing-mode"),
-            SAME_LOWER_CASE_QNAME("writing-mode"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("writing-mode"),
+            AttributeName.SAME_LOWER_CASE_QNAME("writing-mode"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName V_ALPHABETIC = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("v-alphabetic"),
-            SAME_LOWER_CASE_QNAME("v-alphabetic"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("v-alphabetic"),
+            AttributeName.SAME_LOWER_CASE_QNAME("v-alphabetic"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName PATTERNUNITS = new AttributeName(
-            ALL_NO_NS, CAMEL_CASE_LOCAL("patternunits", "patternUnits"),
-            SAME_LOWER_CASE_QNAME("patternUnits"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "patternunits", "patternUnits"),
+            AttributeName.SAME_LOWER_CASE_QNAME("patternUnits"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName SPREADMETHOD = new AttributeName(
-            ALL_NO_NS, CAMEL_CASE_LOCAL("spreadmethod", "spreadMethod"),
-            SAME_LOWER_CASE_QNAME("spreadMethod"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "spreadmethod", "spreadMethod"),
+            AttributeName.SAME_LOWER_CASE_QNAME("spreadMethod"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName SURFACESCALE = new AttributeName(
-            ALL_NO_NS, CAMEL_CASE_LOCAL("surfacescale", "surfaceScale"),
-            SAME_LOWER_CASE_QNAME("surfaceScale"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "surfacescale", "surfaceScale"),
+            AttributeName.SAME_LOWER_CASE_QNAME("surfaceScale"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName STROKE_WIDTH = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("stroke-width"),
-            SAME_LOWER_CASE_QNAME("stroke-width"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("stroke-width"),
+            AttributeName.SAME_LOWER_CASE_QNAME("stroke-width"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName REPEAT_START = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("repeat-start"),
-            SAME_LOWER_CASE_QNAME("repeat-start"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("repeat-start"),
+            AttributeName.SAME_LOWER_CASE_QNAME("repeat-start"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName STDDEVIATION = new AttributeName(
-            ALL_NO_NS, CAMEL_CASE_LOCAL("stddeviation", "stdDeviation"),
-            SAME_LOWER_CASE_QNAME("stdDeviation"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "stddeviation", "stdDeviation"),
+            AttributeName.SAME_LOWER_CASE_QNAME("stdDeviation"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName STOP_OPACITY = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("stop-opacity"),
-            SAME_LOWER_CASE_QNAME("stop-opacity"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("stop-opacity"),
+            AttributeName.SAME_LOWER_CASE_QNAME("stop-opacity"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ARIA_CHECKED  = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-checked "),
-            SAME_LOWER_CASE_QNAME("aria-checked "), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("aria-checked "),
+            AttributeName.SAME_LOWER_CASE_QNAME("aria-checked "),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ARIA_PRESSED  = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-pressed "),
-            SAME_LOWER_CASE_QNAME("aria-pressed "), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("aria-pressed "),
+            AttributeName.SAME_LOWER_CASE_QNAME("aria-pressed "),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ARIA_INVALID  = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-invalid "),
-            SAME_LOWER_CASE_QNAME("aria-invalid "), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("aria-invalid "),
+            AttributeName.SAME_LOWER_CASE_QNAME("aria-invalid "),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ARIA_CONTROLS = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-controls"),
-            SAME_LOWER_CASE_QNAME("aria-controls"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("aria-controls"),
+            AttributeName.SAME_LOWER_CASE_QNAME("aria-controls"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ARIA_HASPOPUP = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-haspopup"),
-            SAME_LOWER_CASE_QNAME("aria-haspopup"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("aria-haspopup"),
+            AttributeName.SAME_LOWER_CASE_QNAME("aria-haspopup"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ACCENT_HEIGHT = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("accent-height"),
-            SAME_LOWER_CASE_QNAME("accent-height"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("accent-height"),
+            AttributeName.SAME_LOWER_CASE_QNAME("accent-height"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ARIA_VALUENOW = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-valuenow"),
-            SAME_LOWER_CASE_QNAME("aria-valuenow"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("aria-valuenow"),
+            AttributeName.SAME_LOWER_CASE_QNAME("aria-valuenow"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ARIA_RELEVANT = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-relevant"),
-            SAME_LOWER_CASE_QNAME("aria-relevant"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("aria-relevant"),
+            AttributeName.SAME_LOWER_CASE_QNAME("aria-relevant"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ARIA_POSINSET = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-posinset"),
-            SAME_LOWER_CASE_QNAME("aria-posinset"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("aria-posinset"),
+            AttributeName.SAME_LOWER_CASE_QNAME("aria-posinset"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ARIA_VALUEMAX = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-valuemax"),
-            SAME_LOWER_CASE_QNAME("aria-valuemax"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("aria-valuemax"),
+            AttributeName.SAME_LOWER_CASE_QNAME("aria-valuemax"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ARIA_READONLY = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-readonly"),
-            SAME_LOWER_CASE_QNAME("aria-readonly"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("aria-readonly"),
+            AttributeName.SAME_LOWER_CASE_QNAME("aria-readonly"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ARIA_REQUIRED = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-required"),
-            SAME_LOWER_CASE_QNAME("aria-required"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("aria-required"),
+            AttributeName.SAME_LOWER_CASE_QNAME("aria-required"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ATTRIBUTETYPE = new AttributeName(
-            ALL_NO_NS, CAMEL_CASE_LOCAL("attributetype", "attributeType"),
-            SAME_LOWER_CASE_QNAME("attributeType"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "attributetype", "attributeType"),
+            AttributeName.SAME_LOWER_CASE_QNAME("attributeType"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ATTRIBUTENAME = new AttributeName(
-            ALL_NO_NS, CAMEL_CASE_LOCAL("attributename", "attributeName"),
-            SAME_LOWER_CASE_QNAME("attributeName"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "attributename", "attributeName"),
+            AttributeName.SAME_LOWER_CASE_QNAME("attributeName"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ARIA_DATATYPE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-datatype"),
-            SAME_LOWER_CASE_QNAME("aria-datatype"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("aria-datatype"),
+            AttributeName.SAME_LOWER_CASE_QNAME("aria-datatype"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ARIA_VALUEMIN = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-valuemin"),
-            SAME_LOWER_CASE_QNAME("aria-valuemin"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("aria-valuemin"),
+            AttributeName.SAME_LOWER_CASE_QNAME("aria-valuemin"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName BASEFREQUENCY = new AttributeName(
-            ALL_NO_NS, CAMEL_CASE_LOCAL("basefrequency", "baseFrequency"),
-            SAME_LOWER_CASE_QNAME("baseFrequency"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "basefrequency", "baseFrequency"),
+            AttributeName.SAME_LOWER_CASE_QNAME("baseFrequency"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName COLUMNSPACING = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("columnspacing"),
-            SAME_LOWER_CASE_QNAME("columnspacing"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("columnspacing"),
+            AttributeName.SAME_LOWER_CASE_QNAME("columnspacing"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName COLOR_PROFILE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("color-profile"),
-            SAME_LOWER_CASE_QNAME("color-profile"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("color-profile"),
+            AttributeName.SAME_LOWER_CASE_QNAME("color-profile"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName CLIPPATHUNITS = new AttributeName(
-            ALL_NO_NS, CAMEL_CASE_LOCAL("clippathunits", "clipPathUnits"),
-            SAME_LOWER_CASE_QNAME("clipPathUnits"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "clippathunits", "clipPathUnits"),
+            AttributeName.SAME_LOWER_CASE_QNAME("clipPathUnits"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName DEFINITIONURL = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("definitionurl"),
-            SAME_LOWER_CASE_QNAME("definitionurl"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("definitionurl"),
+            AttributeName.SAME_LOWER_CASE_QNAME("definitionurl"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName GRADIENTUNITS = new AttributeName(
-            ALL_NO_NS, CAMEL_CASE_LOCAL("gradientunits", "gradientUnits"),
-            SAME_LOWER_CASE_QNAME("gradientUnits"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "gradientunits", "gradientUnits"),
+            AttributeName.SAME_LOWER_CASE_QNAME("gradientUnits"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName FLOOD_OPACITY = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("flood-opacity"),
-            SAME_LOWER_CASE_QNAME("flood-opacity"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("flood-opacity"),
+            AttributeName.SAME_LOWER_CASE_QNAME("flood-opacity"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONAFTERUPDATE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onafterupdate"),
-            SAME_LOWER_CASE_QNAME("onafterupdate"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onafterupdate"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onafterupdate"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONERRORUPDATE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onerrorupdate"),
-            SAME_LOWER_CASE_QNAME("onerrorupdate"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onerrorupdate"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onerrorupdate"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONBEFOREPASTE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onbeforepaste"),
-            SAME_LOWER_CASE_QNAME("onbeforepaste"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onbeforepaste"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onbeforepaste"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONLOSECAPTURE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onlosecapture"),
-            SAME_LOWER_CASE_QNAME("onlosecapture"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onlosecapture"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onlosecapture"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONCONTEXTMENU = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("oncontextmenu"),
-            SAME_LOWER_CASE_QNAME("oncontextmenu"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("oncontextmenu"),
+            AttributeName.SAME_LOWER_CASE_QNAME("oncontextmenu"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONSELECTSTART = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onselectstart"),
-            SAME_LOWER_CASE_QNAME("onselectstart"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onselectstart"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onselectstart"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONBEFOREPRINT = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onbeforeprint"),
-            SAME_LOWER_CASE_QNAME("onbeforeprint"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onbeforeprint"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onbeforeprint"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName MOVABLELIMITS = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("movablelimits"),
-            SAME_LOWER_CASE_QNAME("movablelimits"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("movablelimits"),
+            AttributeName.SAME_LOWER_CASE_QNAME("movablelimits"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName LINETHICKNESS = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("linethickness"),
-            SAME_LOWER_CASE_QNAME("linethickness"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("linethickness"),
+            AttributeName.SAME_LOWER_CASE_QNAME("linethickness"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName UNICODE_RANGE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("unicode-range"),
-            SAME_LOWER_CASE_QNAME("unicode-range"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("unicode-range"),
+            AttributeName.SAME_LOWER_CASE_QNAME("unicode-range"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName THINMATHSPACE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("thinmathspace"),
-            SAME_LOWER_CASE_QNAME("thinmathspace"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("thinmathspace"),
+            AttributeName.SAME_LOWER_CASE_QNAME("thinmathspace"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName VERT_ORIGIN_X = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("vert-origin-x"),
-            SAME_LOWER_CASE_QNAME("vert-origin-x"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("vert-origin-x"),
+            AttributeName.SAME_LOWER_CASE_QNAME("vert-origin-x"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName VERT_ORIGIN_Y = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("vert-origin-y"),
-            SAME_LOWER_CASE_QNAME("vert-origin-y"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("vert-origin-y"),
+            AttributeName.SAME_LOWER_CASE_QNAME("vert-origin-y"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName V_IDEOGRAPHIC = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("v-ideographic"),
-            SAME_LOWER_CASE_QNAME("v-ideographic"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("v-ideographic"),
+            AttributeName.SAME_LOWER_CASE_QNAME("v-ideographic"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName PRESERVEALPHA = new AttributeName(
-            ALL_NO_NS, CAMEL_CASE_LOCAL("preservealpha", "preserveAlpha"),
-            SAME_LOWER_CASE_QNAME("preserveAlpha"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "preservealpha", "preserveAlpha"),
+            AttributeName.SAME_LOWER_CASE_QNAME("preserveAlpha"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName SCRIPTMINSIZE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("scriptminsize"),
-            SAME_LOWER_CASE_QNAME("scriptminsize"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("scriptminsize"),
+            AttributeName.SAME_LOWER_CASE_QNAME("scriptminsize"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName SPECIFICATION = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("specification"),
-            SAME_LOWER_CASE_QNAME("specification"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("specification"),
+            AttributeName.SAME_LOWER_CASE_QNAME("specification"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName XLINK_ACTUATE = new AttributeName(
-            NAMESPACE("http://www.w3.org/1999/xlink"), COLONIFIED_LOCAL(
-                    "xlink:actuate", "actuate"),
-            SAME_LOWER_CASE_QNAME("xlink:actuate"), new boolean[] { false,
-                    true, true, false }, false);
+            AttributeName.NAMESPACE("http://www.w3.org/1999/xlink"),
+            AttributeName.COLONIFIED_LOCAL("xlink:actuate", "actuate"),
+            AttributeName.SAME_LOWER_CASE_QNAME("xlink:actuate"),
+            new boolean[] { false, true, true, false }, false);
 
     public static final AttributeName XLINK_ARCROLE = new AttributeName(
-            NAMESPACE("http://www.w3.org/1999/xlink"), COLONIFIED_LOCAL(
-                    "xlink:arcrole", "arcrole"),
-            SAME_LOWER_CASE_QNAME("xlink:arcrole"), new boolean[] { false,
-                    true, true, false }, false);
+            AttributeName.NAMESPACE("http://www.w3.org/1999/xlink"),
+            AttributeName.COLONIFIED_LOCAL("xlink:arcrole", "arcrole"),
+            AttributeName.SAME_LOWER_CASE_QNAME("xlink:arcrole"),
+            new boolean[] { false, true, true, false }, false);
 
     public static final AttributeName ARIA_EXPANDED  = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-expanded "),
-            SAME_LOWER_CASE_QNAME("aria-expanded "), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("aria-expanded "),
+            AttributeName.SAME_LOWER_CASE_QNAME("aria-expanded "),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ARIA_DISABLED  = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-disabled "),
-            SAME_LOWER_CASE_QNAME("aria-disabled "), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("aria-disabled "),
+            AttributeName.SAME_LOWER_CASE_QNAME("aria-disabled "),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ARIA_SELECTED  = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-selected "),
-            SAME_LOWER_CASE_QNAME("aria-selected "), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("aria-selected "),
+            AttributeName.SAME_LOWER_CASE_QNAME("aria-selected "),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ACCEPT_CHARSET = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("accept-charset"),
-            SAME_LOWER_CASE_QNAME("accept-charset"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("accept-charset"),
+            AttributeName.SAME_LOWER_CASE_QNAME("accept-charset"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ALIGNMENTSCOPE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("alignmentscope"),
-            SAME_LOWER_CASE_QNAME("alignmentscope"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("alignmentscope"),
+            AttributeName.SAME_LOWER_CASE_QNAME("alignmentscope"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ARIA_MULTILINE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-multiline"),
-            SAME_LOWER_CASE_QNAME("aria-multiline"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("aria-multiline"),
+            AttributeName.SAME_LOWER_CASE_QNAME("aria-multiline"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName BASELINE_SHIFT = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("baseline-shift"),
-            SAME_LOWER_CASE_QNAME("baseline-shift"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("baseline-shift"),
+            AttributeName.SAME_LOWER_CASE_QNAME("baseline-shift"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName HORIZ_ORIGIN_X = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("horiz-origin-x"),
-            SAME_LOWER_CASE_QNAME("horiz-origin-x"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("horiz-origin-x"),
+            AttributeName.SAME_LOWER_CASE_QNAME("horiz-origin-x"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName HORIZ_ORIGIN_Y = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("horiz-origin-y"),
-            SAME_LOWER_CASE_QNAME("horiz-origin-y"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("horiz-origin-y"),
+            AttributeName.SAME_LOWER_CASE_QNAME("horiz-origin-y"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONBEFOREUPDATE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onbeforeupdate"),
-            SAME_LOWER_CASE_QNAME("onbeforeupdate"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onbeforeupdate"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onbeforeupdate"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONFILTERCHANGE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onfilterchange"),
-            SAME_LOWER_CASE_QNAME("onfilterchange"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onfilterchange"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onfilterchange"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONROWSINSERTED = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onrowsinserted"),
-            SAME_LOWER_CASE_QNAME("onrowsinserted"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onrowsinserted"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onrowsinserted"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONBEFOREUNLOAD = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onbeforeunload"),
-            SAME_LOWER_CASE_QNAME("onbeforeunload"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onbeforeunload"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onbeforeunload"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName MATHBACKGROUND = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("mathbackground"),
-            SAME_LOWER_CASE_QNAME("mathbackground"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("mathbackground"),
+            AttributeName.SAME_LOWER_CASE_QNAME("mathbackground"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName LETTER_SPACING = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("letter-spacing"),
-            SAME_LOWER_CASE_QNAME("letter-spacing"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("letter-spacing"),
+            AttributeName.SAME_LOWER_CASE_QNAME("letter-spacing"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName LIGHTING_COLOR = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("lighting-color"),
-            SAME_LOWER_CASE_QNAME("lighting-color"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("lighting-color"),
+            AttributeName.SAME_LOWER_CASE_QNAME("lighting-color"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName THICKMATHSPACE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("thickmathspace"),
-            SAME_LOWER_CASE_QNAME("thickmathspace"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("thickmathspace"),
+            AttributeName.SAME_LOWER_CASE_QNAME("thickmathspace"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName TEXT_RENDERING = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("text-rendering"),
-            SAME_LOWER_CASE_QNAME("text-rendering"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("text-rendering"),
+            AttributeName.SAME_LOWER_CASE_QNAME("text-rendering"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName V_MATHEMATICAL = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("v-mathematical"),
-            SAME_LOWER_CASE_QNAME("v-mathematical"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("v-mathematical"),
+            AttributeName.SAME_LOWER_CASE_QNAME("v-mathematical"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName POINTER_EVENTS = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("pointer-events"),
-            SAME_LOWER_CASE_QNAME("pointer-events"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("pointer-events"),
+            AttributeName.SAME_LOWER_CASE_QNAME("pointer-events"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName PRIMITIVEUNITS = new AttributeName(
-            ALL_NO_NS, CAMEL_CASE_LOCAL("primitiveunits", "primitiveUnits"),
-            SAME_LOWER_CASE_QNAME("primitiveUnits"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "primitiveunits", "primitiveUnits"),
+            AttributeName.SAME_LOWER_CASE_QNAME("primitiveUnits"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName SYSTEMLANGUAGE = new AttributeName(
-            ALL_NO_NS, CAMEL_CASE_LOCAL("systemlanguage", "systemLanguage"),
-            SAME_LOWER_CASE_QNAME("systemLanguage"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "systemlanguage", "systemLanguage"),
+            AttributeName.SAME_LOWER_CASE_QNAME("systemLanguage"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName STROKE_LINECAP = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("stroke-linecap"),
-            SAME_LOWER_CASE_QNAME("stroke-linecap"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("stroke-linecap"),
+            AttributeName.SAME_LOWER_CASE_QNAME("stroke-linecap"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName SUBSCRIPTSHIFT = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("subscriptshift"),
-            SAME_LOWER_CASE_QNAME("subscriptshift"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("subscriptshift"),
+            AttributeName.SAME_LOWER_CASE_QNAME("subscriptshift"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName STROKE_OPACITY = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("stroke-opacity"),
-            SAME_LOWER_CASE_QNAME("stroke-opacity"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("stroke-opacity"),
+            AttributeName.SAME_LOWER_CASE_QNAME("stroke-opacity"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ARIA_DROPEFFECT = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-dropeffect"),
-            SAME_LOWER_CASE_QNAME("aria-dropeffect"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("aria-dropeffect"),
+            AttributeName.SAME_LOWER_CASE_QNAME("aria-dropeffect"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ARIA_LABELLEDBY = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-labelledby"),
-            SAME_LOWER_CASE_QNAME("aria-labelledby"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("aria-labelledby"),
+            AttributeName.SAME_LOWER_CASE_QNAME("aria-labelledby"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ARIA_TEMPLATEID = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-templateid"),
-            SAME_LOWER_CASE_QNAME("aria-templateid"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("aria-templateid"),
+            AttributeName.SAME_LOWER_CASE_QNAME("aria-templateid"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName COLOR_RENDERING = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("color-rendering"),
-            SAME_LOWER_CASE_QNAME("color-rendering"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("color-rendering"),
+            AttributeName.SAME_LOWER_CASE_QNAME("color-rendering"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName CONTENTEDITABLE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("contenteditable"),
-            SAME_LOWER_CASE_QNAME("contenteditable"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("contenteditable"),
+            AttributeName.SAME_LOWER_CASE_QNAME("contenteditable"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName DIFFUSECONSTANT = new AttributeName(
-            ALL_NO_NS, CAMEL_CASE_LOCAL("diffuseconstant", "diffuseConstant"),
-            SAME_LOWER_CASE_QNAME("diffuseConstant"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "diffuseconstant", "diffuseConstant"),
+            AttributeName.SAME_LOWER_CASE_QNAME("diffuseConstant"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONDATAAVAILABLE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("ondataavailable"),
-            SAME_LOWER_CASE_QNAME("ondataavailable"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("ondataavailable"),
+            AttributeName.SAME_LOWER_CASE_QNAME("ondataavailable"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONCONTROLSELECT = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("oncontrolselect"),
-            SAME_LOWER_CASE_QNAME("oncontrolselect"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("oncontrolselect"),
+            AttributeName.SAME_LOWER_CASE_QNAME("oncontrolselect"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName IMAGE_RENDERING = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("image-rendering"),
-            SAME_LOWER_CASE_QNAME("image-rendering"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("image-rendering"),
+            AttributeName.SAME_LOWER_CASE_QNAME("image-rendering"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName MEDIUMMATHSPACE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("mediummathspace"),
-            SAME_LOWER_CASE_QNAME("mediummathspace"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("mediummathspace"),
+            AttributeName.SAME_LOWER_CASE_QNAME("mediummathspace"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName TEXT_DECORATION = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("text-decoration"),
-            SAME_LOWER_CASE_QNAME("text-decoration"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("text-decoration"),
+            AttributeName.SAME_LOWER_CASE_QNAME("text-decoration"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName SHAPE_RENDERING = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("shape-rendering"),
-            SAME_LOWER_CASE_QNAME("shape-rendering"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("shape-rendering"),
+            AttributeName.SAME_LOWER_CASE_QNAME("shape-rendering"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName STROKE_LINEJOIN = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("stroke-linejoin"),
-            SAME_LOWER_CASE_QNAME("stroke-linejoin"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("stroke-linejoin"),
+            AttributeName.SAME_LOWER_CASE_QNAME("stroke-linejoin"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName REPEAT_TEMPLATE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("repeat-template"),
-            SAME_LOWER_CASE_QNAME("repeat-template"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("repeat-template"),
+            AttributeName.SAME_LOWER_CASE_QNAME("repeat-template"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ARIA_DESCRIBEDBY = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-describedby"),
-            SAME_LOWER_CASE_QNAME("aria-describedby"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("aria-describedby"),
+            AttributeName.SAME_LOWER_CASE_QNAME("aria-describedby"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName CONTENTSTYLETYPE = new AttributeName(
-            ALL_NO_NS,
-            CAMEL_CASE_LOCAL("contentstyletype", "contentStyleType"),
-            SAME_LOWER_CASE_QNAME("contentStyleType"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "contentstyletype", "contentStyleType"),
+            AttributeName.SAME_LOWER_CASE_QNAME("contentStyleType"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName FONT_SIZE_ADJUST = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("font-size-adjust"),
-            SAME_LOWER_CASE_QNAME("font-size-adjust"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("font-size-adjust"),
+            AttributeName.SAME_LOWER_CASE_QNAME("font-size-adjust"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName KERNELUNITLENGTH = new AttributeName(
-            ALL_NO_NS,
-            CAMEL_CASE_LOCAL("kernelunitlength", "kernelUnitLength"),
-            SAME_LOWER_CASE_QNAME("kernelUnitLength"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "kernelunitlength", "kernelUnitLength"),
+            AttributeName.SAME_LOWER_CASE_QNAME("kernelUnitLength"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONBEFOREACTIVATE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onbeforeactivate"),
-            SAME_LOWER_CASE_QNAME("onbeforeactivate"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onbeforeactivate"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onbeforeactivate"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONPROPERTYCHANGE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onpropertychange"),
-            SAME_LOWER_CASE_QNAME("onpropertychange"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onpropertychange"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onpropertychange"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONDATASETCHANGED = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("ondatasetchanged"),
-            SAME_LOWER_CASE_QNAME("ondatasetchanged"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("ondatasetchanged"),
+            AttributeName.SAME_LOWER_CASE_QNAME("ondatasetchanged"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName MASKCONTENTUNITS = new AttributeName(
-            ALL_NO_NS,
-            CAMEL_CASE_LOCAL("maskcontentunits", "maskContentUnits"),
-            SAME_LOWER_CASE_QNAME("maskContentUnits"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "maskcontentunits", "maskContentUnits"),
+            AttributeName.SAME_LOWER_CASE_QNAME("maskContentUnits"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName PATTERNTRANSFORM = new AttributeName(
-            ALL_NO_NS,
-            CAMEL_CASE_LOCAL("patterntransform", "patternTransform"),
-            SAME_LOWER_CASE_QNAME("patternTransform"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "patterntransform", "patternTransform"),
+            AttributeName.SAME_LOWER_CASE_QNAME("patternTransform"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName REQUIREDFEATURES = new AttributeName(
-            ALL_NO_NS,
-            CAMEL_CASE_LOCAL("requiredfeatures", "requiredFeatures"),
-            SAME_LOWER_CASE_QNAME("requiredFeatures"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "requiredfeatures", "requiredFeatures"),
+            AttributeName.SAME_LOWER_CASE_QNAME("requiredFeatures"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName RENDERING_INTENT = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("rendering-intent"),
-            SAME_LOWER_CASE_QNAME("rendering-intent"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("rendering-intent"),
+            AttributeName.SAME_LOWER_CASE_QNAME("rendering-intent"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName SPECULAREXPONENT = new AttributeName(
-            ALL_NO_NS,
-            CAMEL_CASE_LOCAL("specularexponent", "specularExponent"),
-            SAME_LOWER_CASE_QNAME("specularExponent"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "specularexponent", "specularExponent"),
+            AttributeName.SAME_LOWER_CASE_QNAME("specularExponent"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName SPECULARCONSTANT = new AttributeName(
-            ALL_NO_NS,
-            CAMEL_CASE_LOCAL("specularconstant", "specularConstant"),
-            SAME_LOWER_CASE_QNAME("specularConstant"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "specularconstant", "specularConstant"),
+            AttributeName.SAME_LOWER_CASE_QNAME("specularConstant"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName SUPERSCRIPTSHIFT = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("superscriptshift"),
-            SAME_LOWER_CASE_QNAME("superscriptshift"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("superscriptshift"),
+            AttributeName.SAME_LOWER_CASE_QNAME("superscriptshift"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName STROKE_DASHARRAY = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("stroke-dasharray"),
-            SAME_LOWER_CASE_QNAME("stroke-dasharray"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("stroke-dasharray"),
+            AttributeName.SAME_LOWER_CASE_QNAME("stroke-dasharray"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName XCHANNELSELECTOR = new AttributeName(
-            ALL_NO_NS,
-            CAMEL_CASE_LOCAL("xchannelselector", "xChannelSelector"),
-            SAME_LOWER_CASE_QNAME("xChannelSelector"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "xchannelselector", "xChannelSelector"),
+            AttributeName.SAME_LOWER_CASE_QNAME("xChannelSelector"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName YCHANNELSELECTOR = new AttributeName(
-            ALL_NO_NS,
-            CAMEL_CASE_LOCAL("ychannelselector", "yChannelSelector"),
-            SAME_LOWER_CASE_QNAME("yChannelSelector"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "ychannelselector", "yChannelSelector"),
+            AttributeName.SAME_LOWER_CASE_QNAME("yChannelSelector"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ARIA_AUTOCOMPLETE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-autocomplete"),
-            SAME_LOWER_CASE_QNAME("aria-autocomplete"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("aria-autocomplete"),
+            AttributeName.SAME_LOWER_CASE_QNAME("aria-autocomplete"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName CONTENTSCRIPTTYPE = new AttributeName(
-            ALL_NO_NS, CAMEL_CASE_LOCAL("contentscripttype",
-                    "contentScriptType"),
-            SAME_LOWER_CASE_QNAME("contentScriptType"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "contentscripttype", "contentScriptType"),
+            AttributeName.SAME_LOWER_CASE_QNAME("contentScriptType"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ENABLE_BACKGROUND = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("enable-background"),
-            SAME_LOWER_CASE_QNAME("enable-background"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("enable-background"),
+            AttributeName.SAME_LOWER_CASE_QNAME("enable-background"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName DOMINANT_BASELINE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("dominant-baseline"),
-            SAME_LOWER_CASE_QNAME("dominant-baseline"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("dominant-baseline"),
+            AttributeName.SAME_LOWER_CASE_QNAME("dominant-baseline"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName GRADIENTTRANSFORM = new AttributeName(
-            ALL_NO_NS, CAMEL_CASE_LOCAL("gradienttransform",
-                    "gradientTransform"),
-            SAME_LOWER_CASE_QNAME("gradientTransform"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "gradienttransform", "gradientTransform"),
+            AttributeName.SAME_LOWER_CASE_QNAME("gradientTransform"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONBEFORDEACTIVATE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onbefordeactivate"),
-            SAME_LOWER_CASE_QNAME("onbefordeactivate"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onbefordeactivate"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onbefordeactivate"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONDATASETCOMPLETE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("ondatasetcomplete"),
-            SAME_LOWER_CASE_QNAME("ondatasetcomplete"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("ondatasetcomplete"),
+            AttributeName.SAME_LOWER_CASE_QNAME("ondatasetcomplete"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName OVERLINE_POSITION = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("overline-position"),
-            SAME_LOWER_CASE_QNAME("overline-position"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("overline-position"),
+            AttributeName.SAME_LOWER_CASE_QNAME("overline-position"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONBEFOREEDITFOCUS = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onbeforeeditfocus"),
-            SAME_LOWER_CASE_QNAME("onbeforeeditfocus"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onbeforeeditfocus"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onbeforeeditfocus"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName LIMITINGCONEANGLE = new AttributeName(
-            ALL_NO_NS, CAMEL_CASE_LOCAL("limitingconeangle",
-                    "limitingConeAngle"),
-            SAME_LOWER_CASE_QNAME("limitingConeAngle"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "limitingconeangle", "limitingConeAngle"),
+            AttributeName.SAME_LOWER_CASE_QNAME("limitingConeAngle"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName VERYTHINMATHSPACE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("verythinmathspace"),
-            SAME_LOWER_CASE_QNAME("verythinmathspace"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("verythinmathspace"),
+            AttributeName.SAME_LOWER_CASE_QNAME("verythinmathspace"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName STROKE_DASHOFFSET = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("stroke-dashoffset"),
-            SAME_LOWER_CASE_QNAME("stroke-dashoffset"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("stroke-dashoffset"),
+            AttributeName.SAME_LOWER_CASE_QNAME("stroke-dashoffset"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName STROKE_MITERLIMIT = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("stroke-miterlimit"),
-            SAME_LOWER_CASE_QNAME("stroke-miterlimit"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("stroke-miterlimit"),
+            AttributeName.SAME_LOWER_CASE_QNAME("stroke-miterlimit"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ALIGNMENT_BASELINE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("alignment-baseline"),
-            SAME_LOWER_CASE_QNAME("alignment-baseline"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("alignment-baseline"),
+            AttributeName.SAME_LOWER_CASE_QNAME("alignment-baseline"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ONREADYSTATECHANGE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onreadystatechange"),
-            SAME_LOWER_CASE_QNAME("onreadystatechange"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("onreadystatechange"),
+            AttributeName.SAME_LOWER_CASE_QNAME("onreadystatechange"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName OVERLINE_THICKNESS = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("overline-thickness"),
-            SAME_LOWER_CASE_QNAME("overline-thickness"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("overline-thickness"),
+            AttributeName.SAME_LOWER_CASE_QNAME("overline-thickness"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName UNDERLINE_POSITION = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("underline-position"),
-            SAME_LOWER_CASE_QNAME("underline-position"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("underline-position"),
+            AttributeName.SAME_LOWER_CASE_QNAME("underline-position"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName VERYTHICKMATHSPACE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("verythickmathspace"),
-            SAME_LOWER_CASE_QNAME("verythickmathspace"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("verythickmathspace"),
+            AttributeName.SAME_LOWER_CASE_QNAME("verythickmathspace"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName REQUIREDEXTENSIONS = new AttributeName(
-            ALL_NO_NS, CAMEL_CASE_LOCAL("requiredextensions",
-                    "requiredExtensions"),
-            SAME_LOWER_CASE_QNAME("requiredExtensions"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "requiredextensions", "requiredExtensions"),
+            AttributeName.SAME_LOWER_CASE_QNAME("requiredExtensions"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName COLOR_INTERPOLATION = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("color-interpolation"),
-            SAME_LOWER_CASE_QNAME("color-interpolation"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("color-interpolation"),
+            AttributeName.SAME_LOWER_CASE_QNAME("color-interpolation"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName UNDERLINE_THICKNESS = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("underline-thickness"),
-            SAME_LOWER_CASE_QNAME("underline-thickness"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("underline-thickness"),
+            AttributeName.SAME_LOWER_CASE_QNAME("underline-thickness"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName PRESERVEASPECTRATIO = new AttributeName(
-            ALL_NO_NS, CAMEL_CASE_LOCAL("preserveaspectratio",
-                    "preserveAspectRatio"),
-            SAME_LOWER_CASE_QNAME("preserveAspectRatio"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "preserveaspectratio", "preserveAspectRatio"),
+            AttributeName.SAME_LOWER_CASE_QNAME("preserveAspectRatio"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName PATTERNCONTENTUNITS = new AttributeName(
-            ALL_NO_NS, CAMEL_CASE_LOCAL("patterncontentunits",
-                    "patternContentUnits"),
-            SAME_LOWER_CASE_QNAME("patternContentUnits"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "patterncontentunits", "patternContentUnits"),
+            AttributeName.SAME_LOWER_CASE_QNAME("patternContentUnits"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ARIA_MULTISELECTABLE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-multiselectable"),
-            SAME_LOWER_CASE_QNAME("aria-multiselectable"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("aria-multiselectable"),
+            AttributeName.SAME_LOWER_CASE_QNAME("aria-multiselectable"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName SCRIPTSIZEMULTIPLIER = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("scriptsizemultiplier"),
-            SAME_LOWER_CASE_QNAME("scriptsizemultiplier"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("scriptsizemultiplier"),
+            AttributeName.SAME_LOWER_CASE_QNAME("scriptsizemultiplier"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName ARIA_ACTIVEDESCENDANT = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-activedescendant"),
-            SAME_LOWER_CASE_QNAME("aria-activedescendant"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("aria-activedescendant"),
+            AttributeName.SAME_LOWER_CASE_QNAME("aria-activedescendant"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName VERYVERYTHINMATHSPACE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("veryverythinmathspace"),
-            SAME_LOWER_CASE_QNAME("veryverythinmathspace"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("veryverythinmathspace"),
+            AttributeName.SAME_LOWER_CASE_QNAME("veryverythinmathspace"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName VERYVERYTHICKMATHSPACE = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("veryverythickmathspace"),
-            SAME_LOWER_CASE_QNAME("veryverythickmathspace"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("veryverythickmathspace"),
+            AttributeName.SAME_LOWER_CASE_QNAME("veryverythickmathspace"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName STRIKETHROUGH_POSITION = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("strikethrough-position"),
-            SAME_LOWER_CASE_QNAME("strikethrough-position"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("strikethrough-position"),
+            AttributeName.SAME_LOWER_CASE_QNAME("strikethrough-position"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName STRIKETHROUGH_THICKNESS = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("strikethrough-thickness"),
-            SAME_LOWER_CASE_QNAME("strikethrough-thickness"), ALL_NCNAME, false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("strikethrough-thickness"),
+            AttributeName.SAME_LOWER_CASE_QNAME("strikethrough-thickness"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName EXTERNALRESOURCESREQUIRED = new AttributeName(
-            ALL_NO_NS, CAMEL_CASE_LOCAL("externalresourcesrequired",
-                    "externalResourcesRequired"),
-            SAME_LOWER_CASE_QNAME("externalResourcesRequired"), ALL_NCNAME,
-            false);
+            AttributeName.ALL_NO_NS, AttributeName.CAMEL_CASE_LOCAL(
+                    "externalresourcesrequired", "externalResourcesRequired"),
+            AttributeName.SAME_LOWER_CASE_QNAME("externalResourcesRequired"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName GLYPH_ORIENTATION_VERTICAL = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("glyph-orientation-vertical"),
-            SAME_LOWER_CASE_QNAME("glyph-orientation-vertical"), ALL_NCNAME,
-            false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("glyph-orientation-vertical"),
+            AttributeName.SAME_LOWER_CASE_QNAME("glyph-orientation-vertical"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName COLOR_INTERPOLATION_FILTERS = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("color-interpolation-filters"),
-            SAME_LOWER_CASE_QNAME("color-interpolation-filters"), ALL_NCNAME,
-            false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("color-interpolation-filters"),
+            AttributeName.SAME_LOWER_CASE_QNAME("color-interpolation-filters"),
+            AttributeName.ALL_NCNAME, false);
 
     public static final AttributeName GLYPH_ORIENTATION_HORIZONTAL = new AttributeName(
-            ALL_NO_NS, SAME_LOWER_CASE_LOCAL("glyph-orientation-horizontal"),
-            SAME_LOWER_CASE_QNAME("glyph-orientation-horizontal"), ALL_NCNAME,
-            false);
+            AttributeName.ALL_NO_NS,
+            AttributeName.SAME_LOWER_CASE_LOCAL("glyph-orientation-horizontal"),
+            AttributeName.SAME_LOWER_CASE_QNAME("glyph-orientation-horizontal"),
+            AttributeName.ALL_NCNAME, false);
 
-    private final static AttributeName[] ATTRIBUTE_NAMES = { D, K, R, X, Y, Z,
-            BY, CX, CY, DX, DY, G2, G1, FX, FY, K4, K2, K3, K1, ID, IN, U2, U1,
-            RT, RX, RY, TO, Y2, Y1, X1, X2, ALT, DIR, DUR, END, FOR, IN2, MAX,
-            MIN, LOW, REL, REV, SRC, AXIS, ABBR, BBOX, CITE, CODE, BIAS, COLS,
-            END , CLIP, CHAR, BASE, EDGE, DATA, FILL, FROM, FORM, FACE, HIGH,
-            HREF, OPEN, ICON, NAME, MODE, MASK, LINK, LANG, LIST, TYPE, WHEN,
-            WRAP, TEXT, PATH, PING, REFX, REFY, SIZE, SEED, ROWS, SPAN, STEP,
-            ROLE, XREF, ASYNC, ALINK, ALIGN, CLOSE, COLOR, CLASS, CLEAR, BEGIN,
-            DEPTH, DEFER, FENCE, FRAME, ISMAP, ONEND, INDEX, ORDER, OTHER,
-            ONCUT, NARGS, MEDIA, LABEL, LOCAL, WIDTH, TITLE, VLINK, VALUE,
-            SLOPE, SHAPE, SCOPE, SCALE, SPEED, STYLE, RULES, STEMH, STEMV,
-            START, XMLNS, ACCEPT, ACCENT, ASCENT, ACTIVE, ALTIMG, ACTION,
-            BORDER, CURSOR, COORDS, FILTER, FORMAT, HIDDEN, HSPACE, HEIGHT,
-            ONMOVE, ONLOAD, ONDRAG, ORIGIN, ONZOOM, ONHELP, ONSTOP, ONDROP,
-            ONBLUR, OBJECT, OFFSET, ORIENT, ONCOPY, NOWRAP, NOHREF, MACROS,
-            METHOD, LOWSRC, LSPACE, LQUOTE, USEMAP, VALUE_, WIDTHS, TARGET,
-            VALUES, VALIGN, VSPACE, POSTER, POINTS, PROMPT, SCOPED, STRING,
-            SCHEME, STROKE, RADIUS, RESULT, REPEAT, RSPACE, ROTATE, RQUOTE,
-            ALTTEXT, ARCHIVE, AZIMUTH, CLOSURE, CHECKED, CLASSID, CHAROFF,
-            BGCOLOR, COLSPAN, CHARSET, COMPACT, CONTENT, ENCTYPE, DATASRC,
-            DATAFLD, DECLARE, DISPLAY, DIVISOR, DEFAULT, DESCENT, KERNING,
-            HANGING, HEADERS, ONPASTE, ONCLICK, OPTIMUM, ONBEGIN, ONKEYUP,
-            ONFOCUS, ONERROR, ONINPUT, ONABORT, ONSTART, ONRESET, OPACITY,
-            NOSHADE, MINSIZE, MAXSIZE, LARGEOP, UNICODE, TARGETX, TARGETY,
-            VIEWBOX, VERSION, PATTERN, PROFILE, START  , SPACING, RESTART,
-            ROWSPAN, SANDBOX, SUMMARY, STANDBY, REPLACE, ADDITIVE, CALCMODE,
-            CODETYPE, CODEBASE, BEVELLED, BASELINE, EXPONENT, EDGEMODE,
-            ENCODING, GLYPHREF, DATETIME, DISABLED, FONTSIZE, KEYTIMES,
-            LOOPEND , PANOSE_1, HREFLANG, ONRESIZE, ONCHANGE, ONBOUNCE,
-            ONUNLOAD, ONFINISH, ONSCROLL, OPERATOR, OVERFLOW, ONSUBMIT,
-            ONREPEAT, ONSELECT, NOTATION, NORESIZE, MANIFEST, MATHSIZE,
-            MULTIPLE, LONGDESC, LANGUAGE, TEMPLATE, TABINDEX, READONLY,
-            SELECTED, ROWLINES, SEAMLESS, ROWALIGN, STRETCHY, REQUIRED,
-            XML_BASE, XML_LANG, X_HEIGHT, CONTROLS , ARIA_OWNS, AUTOFOCUS,
-            ARIA_SORT, ACCESSKEY, AMPLITUDE, ARIA_LIVE, CLIP_RULE, CLIP_PATH,
-            EQUALROWS, ELEVATION, DIRECTION, DRAGGABLE, FILTERRES, FILL_RULE,
-            FONTSTYLE, FONT_SIZE, KEYPOINTS, HIDEFOCUS, ONMESSAGE, INTERCEPT,
-            ONDRAGEND, ONMOVEEND, ONINVALID, ONKEYDOWN, ONFOCUSIN, ONMOUSEUP,
-            INPUTMODE, ONROWEXIT, MATHCOLOR, MASKUNITS, MAXLENGTH, LINEBREAK,
-            TRANSFORM, V_HANGING, VALUETYPE, POINTSATZ, POINTSATX, POINTSATY,
-            SYMMETRIC, SCROLLING, REPEATDUR, SELECTION, SEPARATOR, AUTOPLAY  ,
-            XML_SPACE, ARIA_GRAB , ARIA_BUSY , AUTOSUBMIT, ALPHABETIC,
-            ACTIONTYPE, ACCUMULATE, ARIA_LEVEL, COLUMNSPAN, CAP_HEIGHT,
-            BACKGROUND, GLYPH_NAME, GROUPALIGN, FONTFAMILY, FONTWEIGHT,
-            FONT_STYLE, KEYSPLINES, LOOPSTART , PLAYCOUNT , HTTP_EQUIV,
-            ONACTIVATE, OCCURRENCE, IRRELEVANT, ONDBLCLICK, ONDRAGDROP,
-            ONKEYPRESS, ONROWENTER, ONDRAGOVER, ONFOCUSOUT, ONMOUSEOUT,
-            NUMOCTAVES, MARKER_MID, MARKER_END, TEXTLENGTH, VISIBILITY,
-            VIEWTARGET, VERT_ADV_Y, PATHLENGTH, REPEAT_MAX, RADIOGROUP,
-            STOP_COLOR, SEPARATORS, REPEAT_MIN, ROWSPACING, ZOOMANDPAN,
-            XLINK_TYPE, XLINK_ROLE, XLINK_HREF, XLINK_SHOW, ACCENTUNDER,
-            ARIA_SECRET, ARIA_ATOMIC, ARIA_FLOWTO, ARABIC_FORM, CELLPADDING,
-            CELLSPACING, COLUMNWIDTH, COLUMNALIGN, COLUMNLINES, CONTEXTMENU,
-            BASEPROFILE, FONT_FAMILY, FRAMEBORDER, FILTERUNITS, FLOOD_COLOR,
-            FONT_WEIGHT, HORIZ_ADV_X, ONDRAGLEAVE, ONMOUSEMOVE, ORIENTATION,
-            ONMOUSEDOWN, ONMOUSEOVER, ONDRAGENTER, IDEOGRAPHIC, ONBEFORECUT,
-            ONFORMINPUT, ONDRAGSTART, ONMOVESTART, MARKERUNITS, MATHVARIANT,
-            MARGINWIDTH, MARKERWIDTH, TEXT_ANCHOR, TABLEVALUES, SCRIPTLEVEL,
-            REPEATCOUNT, STITCHTILES, STARTOFFSET, SCROLLDELAY, XMLNS_XLINK,
-            XLINK_TITLE, ARIA_HIDDEN , AUTOCOMPLETE, ARIA_SETSIZE,
-            ARIA_CHANNEL, EQUALCOLUMNS, DISPLAYSTYLE, DATAFORMATAS,
-            FILL_OPACITY, FONT_VARIANT, FONT_STRETCH, FRAMESPACING,
-            KERNELMATRIX, ONDEACTIVATE, ONROWSDELETE, ONMOUSELEAVE,
-            ONFORMCHANGE, ONCELLCHANGE, ONMOUSEWHEEL, ONMOUSEENTER,
-            ONAFTERPRINT, ONBEFORECOPY, MARGINHEIGHT, MARKERHEIGHT,
-            MARKER_START, MATHEMATICAL, LENGTHADJUST, UNSELECTABLE,
-            UNICODE_BIDI, UNITS_PER_EM, WORD_SPACING, WRITING_MODE,
-            V_ALPHABETIC, PATTERNUNITS, SPREADMETHOD, SURFACESCALE,
-            STROKE_WIDTH, REPEAT_START, STDDEVIATION, STOP_OPACITY,
-            ARIA_CHECKED , ARIA_PRESSED , ARIA_INVALID , ARIA_CONTROLS,
-            ARIA_HASPOPUP, ACCENT_HEIGHT, ARIA_VALUENOW, ARIA_RELEVANT,
-            ARIA_POSINSET, ARIA_VALUEMAX, ARIA_READONLY, ARIA_REQUIRED,
-            ATTRIBUTETYPE, ATTRIBUTENAME, ARIA_DATATYPE, ARIA_VALUEMIN,
-            BASEFREQUENCY, COLUMNSPACING, COLOR_PROFILE, CLIPPATHUNITS,
-            DEFINITIONURL, GRADIENTUNITS, FLOOD_OPACITY, ONAFTERUPDATE,
-            ONERRORUPDATE, ONBEFOREPASTE, ONLOSECAPTURE, ONCONTEXTMENU,
-            ONSELECTSTART, ONBEFOREPRINT, MOVABLELIMITS, LINETHICKNESS,
-            UNICODE_RANGE, THINMATHSPACE, VERT_ORIGIN_X, VERT_ORIGIN_Y,
-            V_IDEOGRAPHIC, PRESERVEALPHA, SCRIPTMINSIZE, SPECIFICATION,
-            XLINK_ACTUATE, XLINK_ARCROLE, ARIA_EXPANDED , ARIA_DISABLED ,
-            ARIA_SELECTED , ACCEPT_CHARSET, ALIGNMENTSCOPE, ARIA_MULTILINE,
-            BASELINE_SHIFT, HORIZ_ORIGIN_X, HORIZ_ORIGIN_Y, ONBEFOREUPDATE,
-            ONFILTERCHANGE, ONROWSINSERTED, ONBEFOREUNLOAD, MATHBACKGROUND,
-            LETTER_SPACING, LIGHTING_COLOR, THICKMATHSPACE, TEXT_RENDERING,
-            V_MATHEMATICAL, POINTER_EVENTS, PRIMITIVEUNITS, SYSTEMLANGUAGE,
-            STROKE_LINECAP, SUBSCRIPTSHIFT, STROKE_OPACITY, ARIA_DROPEFFECT,
-            ARIA_LABELLEDBY, ARIA_TEMPLATEID, COLOR_RENDERING, CONTENTEDITABLE,
-            DIFFUSECONSTANT, ONDATAAVAILABLE, ONCONTROLSELECT, IMAGE_RENDERING,
-            MEDIUMMATHSPACE, TEXT_DECORATION, SHAPE_RENDERING, STROKE_LINEJOIN,
-            REPEAT_TEMPLATE, ARIA_DESCRIBEDBY, CONTENTSTYLETYPE,
-            FONT_SIZE_ADJUST, KERNELUNITLENGTH, ONBEFOREACTIVATE,
-            ONPROPERTYCHANGE, ONDATASETCHANGED, MASKCONTENTUNITS,
-            PATTERNTRANSFORM, REQUIREDFEATURES, RENDERING_INTENT,
-            SPECULAREXPONENT, SPECULARCONSTANT, SUPERSCRIPTSHIFT,
-            STROKE_DASHARRAY, XCHANNELSELECTOR, YCHANNELSELECTOR,
-            ARIA_AUTOCOMPLETE, CONTENTSCRIPTTYPE, ENABLE_BACKGROUND,
-            DOMINANT_BASELINE, GRADIENTTRANSFORM, ONBEFORDEACTIVATE,
-            ONDATASETCOMPLETE, OVERLINE_POSITION, ONBEFOREEDITFOCUS,
-            LIMITINGCONEANGLE, VERYTHINMATHSPACE, STROKE_DASHOFFSET,
-            STROKE_MITERLIMIT, ALIGNMENT_BASELINE, ONREADYSTATECHANGE,
-            OVERLINE_THICKNESS, UNDERLINE_POSITION, VERYTHICKMATHSPACE,
-            REQUIREDEXTENSIONS, COLOR_INTERPOLATION, UNDERLINE_THICKNESS,
-            PRESERVEASPECTRATIO, PATTERNCONTENTUNITS, ARIA_MULTISELECTABLE,
-            SCRIPTSIZEMULTIPLIER, ARIA_ACTIVEDESCENDANT, VERYVERYTHINMATHSPACE,
-            VERYVERYTHICKMATHSPACE, STRIKETHROUGH_POSITION,
-            STRIKETHROUGH_THICKNESS, EXTERNALRESOURCESREQUIRED,
-            GLYPH_ORIENTATION_VERTICAL, COLOR_INTERPOLATION_FILTERS,
-            GLYPH_ORIENTATION_HORIZONTAL, };
+    private final static AttributeName[] ATTRIBUTE_NAMES = { AttributeName.D,
+            AttributeName.K, AttributeName.R, AttributeName.X, AttributeName.Y,
+            AttributeName.Z, AttributeName.BY, AttributeName.CX,
+            AttributeName.CY, AttributeName.DX, AttributeName.DY,
+            AttributeName.G2, AttributeName.G1, AttributeName.FX,
+            AttributeName.FY, AttributeName.K4, AttributeName.K2,
+            AttributeName.K3, AttributeName.K1, AttributeName.ID,
+            AttributeName.IN, AttributeName.U2, AttributeName.U1,
+            AttributeName.RT, AttributeName.RX, AttributeName.RY,
+            AttributeName.TO, AttributeName.Y2, AttributeName.Y1,
+            AttributeName.X1, AttributeName.X2, AttributeName.ALT,
+            AttributeName.DIR, AttributeName.DUR, AttributeName.END,
+            AttributeName.FOR, AttributeName.IN2, AttributeName.MAX,
+            AttributeName.MIN, AttributeName.LOW, AttributeName.REL,
+            AttributeName.REV, AttributeName.SRC, AttributeName.AXIS,
+            AttributeName.ABBR, AttributeName.BBOX, AttributeName.CITE,
+            AttributeName.CODE, AttributeName.BIAS, AttributeName.COLS,
+            AttributeName.END , AttributeName.CLIP, AttributeName.CHAR,
+            AttributeName.BASE, AttributeName.EDGE, AttributeName.DATA,
+            AttributeName.FILL, AttributeName.FROM, AttributeName.FORM,
+            AttributeName.FACE, AttributeName.HIGH, AttributeName.HREF,
+            AttributeName.OPEN, AttributeName.ICON, AttributeName.NAME,
+            AttributeName.MODE, AttributeName.MASK, AttributeName.LINK,
+            AttributeName.LANG, AttributeName.LIST, AttributeName.TYPE,
+            AttributeName.WHEN, AttributeName.WRAP, AttributeName.TEXT,
+            AttributeName.PATH, AttributeName.PING, AttributeName.REFX,
+            AttributeName.REFY, AttributeName.SIZE, AttributeName.SEED,
+            AttributeName.ROWS, AttributeName.SPAN, AttributeName.STEP,
+            AttributeName.ROLE, AttributeName.XREF, AttributeName.ASYNC,
+            AttributeName.ALINK, AttributeName.ALIGN, AttributeName.CLOSE,
+            AttributeName.COLOR, AttributeName.CLASS, AttributeName.CLEAR,
+            AttributeName.BEGIN, AttributeName.DEPTH, AttributeName.DEFER,
+            AttributeName.FENCE, AttributeName.FRAME, AttributeName.ISMAP,
+            AttributeName.ONEND, AttributeName.INDEX, AttributeName.ORDER,
+            AttributeName.OTHER, AttributeName.ONCUT, AttributeName.NARGS,
+            AttributeName.MEDIA, AttributeName.LABEL, AttributeName.LOCAL,
+            AttributeName.WIDTH, AttributeName.TITLE, AttributeName.VLINK,
+            AttributeName.VALUE, AttributeName.SLOPE, AttributeName.SHAPE,
+            AttributeName.SCOPE, AttributeName.SCALE, AttributeName.SPEED,
+            AttributeName.STYLE, AttributeName.RULES, AttributeName.STEMH,
+            AttributeName.STEMV, AttributeName.START, AttributeName.XMLNS,
+            AttributeName.ACCEPT, AttributeName.ACCENT, AttributeName.ASCENT,
+            AttributeName.ACTIVE, AttributeName.ALTIMG, AttributeName.ACTION,
+            AttributeName.BORDER, AttributeName.CURSOR, AttributeName.COORDS,
+            AttributeName.FILTER, AttributeName.FORMAT, AttributeName.HIDDEN,
+            AttributeName.HSPACE, AttributeName.HEIGHT, AttributeName.ONMOVE,
+            AttributeName.ONLOAD, AttributeName.ONDRAG, AttributeName.ORIGIN,
+            AttributeName.ONZOOM, AttributeName.ONHELP, AttributeName.ONSTOP,
+            AttributeName.ONDROP, AttributeName.ONBLUR, AttributeName.OBJECT,
+            AttributeName.OFFSET, AttributeName.ORIENT, AttributeName.ONCOPY,
+            AttributeName.NOWRAP, AttributeName.NOHREF, AttributeName.MACROS,
+            AttributeName.METHOD, AttributeName.LOWSRC, AttributeName.LSPACE,
+            AttributeName.LQUOTE, AttributeName.USEMAP, AttributeName.VALUE_,
+            AttributeName.WIDTHS, AttributeName.TARGET, AttributeName.VALUES,
+            AttributeName.VALIGN, AttributeName.VSPACE, AttributeName.POSTER,
+            AttributeName.POINTS, AttributeName.PROMPT, AttributeName.SCOPED,
+            AttributeName.STRING, AttributeName.SCHEME, AttributeName.STROKE,
+            AttributeName.RADIUS, AttributeName.RESULT, AttributeName.REPEAT,
+            AttributeName.RSPACE, AttributeName.ROTATE, AttributeName.RQUOTE,
+            AttributeName.ALTTEXT, AttributeName.ARCHIVE,
+            AttributeName.AZIMUTH, AttributeName.CLOSURE,
+            AttributeName.CHECKED, AttributeName.CLASSID,
+            AttributeName.CHAROFF, AttributeName.BGCOLOR,
+            AttributeName.COLSPAN, AttributeName.CHARSET,
+            AttributeName.COMPACT, AttributeName.CONTENT,
+            AttributeName.ENCTYPE, AttributeName.DATASRC,
+            AttributeName.DATAFLD, AttributeName.DECLARE,
+            AttributeName.DISPLAY, AttributeName.DIVISOR,
+            AttributeName.DEFAULT, AttributeName.DESCENT,
+            AttributeName.KERNING, AttributeName.HANGING,
+            AttributeName.HEADERS, AttributeName.ONPASTE,
+            AttributeName.ONCLICK, AttributeName.OPTIMUM,
+            AttributeName.ONBEGIN, AttributeName.ONKEYUP,
+            AttributeName.ONFOCUS, AttributeName.ONERROR,
+            AttributeName.ONINPUT, AttributeName.ONABORT,
+            AttributeName.ONSTART, AttributeName.ONRESET,
+            AttributeName.OPACITY, AttributeName.NOSHADE,
+            AttributeName.MINSIZE, AttributeName.MAXSIZE,
+            AttributeName.LARGEOP, AttributeName.UNICODE,
+            AttributeName.TARGETX, AttributeName.TARGETY,
+            AttributeName.VIEWBOX, AttributeName.VERSION,
+            AttributeName.PATTERN, AttributeName.PROFILE,
+            AttributeName.START  , AttributeName.SPACING,
+            AttributeName.RESTART, AttributeName.ROWSPAN,
+            AttributeName.SANDBOX, AttributeName.SUMMARY,
+            AttributeName.STANDBY, AttributeName.REPLACE,
+            AttributeName.ADDITIVE, AttributeName.CALCMODE,
+            AttributeName.CODETYPE, AttributeName.CODEBASE,
+            AttributeName.BEVELLED, AttributeName.BASELINE,
+            AttributeName.EXPONENT, AttributeName.EDGEMODE,
+            AttributeName.ENCODING, AttributeName.GLYPHREF,
+            AttributeName.DATETIME, AttributeName.DISABLED,
+            AttributeName.FONTSIZE, AttributeName.KEYTIMES,
+            AttributeName.LOOPEND , AttributeName.PANOSE_1,
+            AttributeName.HREFLANG, AttributeName.ONRESIZE,
+            AttributeName.ONCHANGE, AttributeName.ONBOUNCE,
+            AttributeName.ONUNLOAD, AttributeName.ONFINISH,
+            AttributeName.ONSCROLL, AttributeName.OPERATOR,
+            AttributeName.OVERFLOW, AttributeName.ONSUBMIT,
+            AttributeName.ONREPEAT, AttributeName.ONSELECT,
+            AttributeName.NOTATION, AttributeName.NORESIZE,
+            AttributeName.MANIFEST, AttributeName.MATHSIZE,
+            AttributeName.MULTIPLE, AttributeName.LONGDESC,
+            AttributeName.LANGUAGE, AttributeName.TEMPLATE,
+            AttributeName.TABINDEX, AttributeName.READONLY,
+            AttributeName.SELECTED, AttributeName.ROWLINES,
+            AttributeName.SEAMLESS, AttributeName.ROWALIGN,
+            AttributeName.STRETCHY, AttributeName.REQUIRED,
+            AttributeName.XML_BASE, AttributeName.XML_LANG,
+            AttributeName.X_HEIGHT, AttributeName.CONTROLS ,
+            AttributeName.ARIA_OWNS, AttributeName.AUTOFOCUS,
+            AttributeName.ARIA_SORT, AttributeName.ACCESSKEY,
+            AttributeName.AMPLITUDE, AttributeName.ARIA_LIVE,
+            AttributeName.CLIP_RULE, AttributeName.CLIP_PATH,
+            AttributeName.EQUALROWS, AttributeName.ELEVATION,
+            AttributeName.DIRECTION, AttributeName.DRAGGABLE,
+            AttributeName.FILTERRES, AttributeName.FILL_RULE,
+            AttributeName.FONTSTYLE, AttributeName.FONT_SIZE,
+            AttributeName.KEYPOINTS, AttributeName.HIDEFOCUS,
+            AttributeName.ONMESSAGE, AttributeName.INTERCEPT,
+            AttributeName.ONDRAGEND, AttributeName.ONMOVEEND,
+            AttributeName.ONINVALID, AttributeName.ONKEYDOWN,
+            AttributeName.ONFOCUSIN, AttributeName.ONMOUSEUP,
+            AttributeName.INPUTMODE, AttributeName.ONROWEXIT,
+            AttributeName.MATHCOLOR, AttributeName.MASKUNITS,
+            AttributeName.MAXLENGTH, AttributeName.LINEBREAK,
+            AttributeName.TRANSFORM, AttributeName.V_HANGING,
+            AttributeName.VALUETYPE, AttributeName.POINTSATZ,
+            AttributeName.POINTSATX, AttributeName.POINTSATY,
+            AttributeName.SYMMETRIC, AttributeName.SCROLLING,
+            AttributeName.REPEATDUR, AttributeName.SELECTION,
+            AttributeName.SEPARATOR, AttributeName.AUTOPLAY  ,
+            AttributeName.XML_SPACE, AttributeName.ARIA_GRAB ,
+            AttributeName.ARIA_BUSY , AttributeName.AUTOSUBMIT,
+            AttributeName.ALPHABETIC, AttributeName.ACTIONTYPE,
+            AttributeName.ACCUMULATE, AttributeName.ARIA_LEVEL,
+            AttributeName.COLUMNSPAN, AttributeName.CAP_HEIGHT,
+            AttributeName.BACKGROUND, AttributeName.GLYPH_NAME,
+            AttributeName.GROUPALIGN, AttributeName.FONTFAMILY,
+            AttributeName.FONTWEIGHT, AttributeName.FONT_STYLE,
+            AttributeName.KEYSPLINES, AttributeName.LOOPSTART ,
+            AttributeName.PLAYCOUNT , AttributeName.HTTP_EQUIV,
+            AttributeName.ONACTIVATE, AttributeName.OCCURRENCE,
+            AttributeName.IRRELEVANT, AttributeName.ONDBLCLICK,
+            AttributeName.ONDRAGDROP, AttributeName.ONKEYPRESS,
+            AttributeName.ONROWENTER, AttributeName.ONDRAGOVER,
+            AttributeName.ONFOCUSOUT, AttributeName.ONMOUSEOUT,
+            AttributeName.NUMOCTAVES, AttributeName.MARKER_MID,
+            AttributeName.MARKER_END, AttributeName.TEXTLENGTH,
+            AttributeName.VISIBILITY, AttributeName.VIEWTARGET,
+            AttributeName.VERT_ADV_Y, AttributeName.PATHLENGTH,
+            AttributeName.REPEAT_MAX, AttributeName.RADIOGROUP,
+            AttributeName.STOP_COLOR, AttributeName.SEPARATORS,
+            AttributeName.REPEAT_MIN, AttributeName.ROWSPACING,
+            AttributeName.ZOOMANDPAN, AttributeName.XLINK_TYPE,
+            AttributeName.XLINK_ROLE, AttributeName.XLINK_HREF,
+            AttributeName.XLINK_SHOW, AttributeName.ACCENTUNDER,
+            AttributeName.ARIA_SECRET, AttributeName.ARIA_ATOMIC,
+            AttributeName.ARIA_FLOWTO, AttributeName.ARABIC_FORM,
+            AttributeName.CELLPADDING, AttributeName.CELLSPACING,
+            AttributeName.COLUMNWIDTH, AttributeName.COLUMNALIGN,
+            AttributeName.COLUMNLINES, AttributeName.CONTEXTMENU,
+            AttributeName.BASEPROFILE, AttributeName.FONT_FAMILY,
+            AttributeName.FRAMEBORDER, AttributeName.FILTERUNITS,
+            AttributeName.FLOOD_COLOR, AttributeName.FONT_WEIGHT,
+            AttributeName.HORIZ_ADV_X, AttributeName.ONDRAGLEAVE,
+            AttributeName.ONMOUSEMOVE, AttributeName.ORIENTATION,
+            AttributeName.ONMOUSEDOWN, AttributeName.ONMOUSEOVER,
+            AttributeName.ONDRAGENTER, AttributeName.IDEOGRAPHIC,
+            AttributeName.ONBEFORECUT, AttributeName.ONFORMINPUT,
+            AttributeName.ONDRAGSTART, AttributeName.ONMOVESTART,
+            AttributeName.MARKERUNITS, AttributeName.MATHVARIANT,
+            AttributeName.MARGINWIDTH, AttributeName.MARKERWIDTH,
+            AttributeName.TEXT_ANCHOR, AttributeName.TABLEVALUES,
+            AttributeName.SCRIPTLEVEL, AttributeName.REPEATCOUNT,
+            AttributeName.STITCHTILES, AttributeName.STARTOFFSET,
+            AttributeName.SCROLLDELAY, AttributeName.XMLNS_XLINK,
+            AttributeName.XLINK_TITLE, AttributeName.ARIA_HIDDEN ,
+            AttributeName.AUTOCOMPLETE, AttributeName.ARIA_SETSIZE,
+            AttributeName.ARIA_CHANNEL, AttributeName.EQUALCOLUMNS,
+            AttributeName.DISPLAYSTYLE, AttributeName.DATAFORMATAS,
+            AttributeName.FILL_OPACITY, AttributeName.FONT_VARIANT,
+            AttributeName.FONT_STRETCH, AttributeName.FRAMESPACING,
+            AttributeName.KERNELMATRIX, AttributeName.ONDEACTIVATE,
+            AttributeName.ONROWSDELETE, AttributeName.ONMOUSELEAVE,
+            AttributeName.ONFORMCHANGE, AttributeName.ONCELLCHANGE,
+            AttributeName.ONMOUSEWHEEL, AttributeName.ONMOUSEENTER,
+            AttributeName.ONAFTERPRINT, AttributeName.ONBEFORECOPY,
+            AttributeName.MARGINHEIGHT, AttributeName.MARKERHEIGHT,
+            AttributeName.MARKER_START, AttributeName.MATHEMATICAL,
+            AttributeName.LENGTHADJUST, AttributeName.UNSELECTABLE,
+            AttributeName.UNICODE_BIDI, AttributeName.UNITS_PER_EM,
+            AttributeName.WORD_SPACING, AttributeName.WRITING_MODE,
+            AttributeName.V_ALPHABETIC, AttributeName.PATTERNUNITS,
+            AttributeName.SPREADMETHOD, AttributeName.SURFACESCALE,
+            AttributeName.STROKE_WIDTH, AttributeName.REPEAT_START,
+            AttributeName.STDDEVIATION, AttributeName.STOP_OPACITY,
+            AttributeName.ARIA_CHECKED , AttributeName.ARIA_PRESSED ,
+            AttributeName.ARIA_INVALID , AttributeName.ARIA_CONTROLS,
+            AttributeName.ARIA_HASPOPUP, AttributeName.ACCENT_HEIGHT,
+            AttributeName.ARIA_VALUENOW, AttributeName.ARIA_RELEVANT,
+            AttributeName.ARIA_POSINSET, AttributeName.ARIA_VALUEMAX,
+            AttributeName.ARIA_READONLY, AttributeName.ARIA_REQUIRED,
+            AttributeName.ATTRIBUTETYPE, AttributeName.ATTRIBUTENAME,
+            AttributeName.ARIA_DATATYPE, AttributeName.ARIA_VALUEMIN,
+            AttributeName.BASEFREQUENCY, AttributeName.COLUMNSPACING,
+            AttributeName.COLOR_PROFILE, AttributeName.CLIPPATHUNITS,
+            AttributeName.DEFINITIONURL, AttributeName.GRADIENTUNITS,
+            AttributeName.FLOOD_OPACITY, AttributeName.ONAFTERUPDATE,
+            AttributeName.ONERRORUPDATE, AttributeName.ONBEFOREPASTE,
+            AttributeName.ONLOSECAPTURE, AttributeName.ONCONTEXTMENU,
+            AttributeName.ONSELECTSTART, AttributeName.ONBEFOREPRINT,
+            AttributeName.MOVABLELIMITS, AttributeName.LINETHICKNESS,
+            AttributeName.UNICODE_RANGE, AttributeName.THINMATHSPACE,
+            AttributeName.VERT_ORIGIN_X, AttributeName.VERT_ORIGIN_Y,
+            AttributeName.V_IDEOGRAPHIC, AttributeName.PRESERVEALPHA,
+            AttributeName.SCRIPTMINSIZE, AttributeName.SPECIFICATION,
+            AttributeName.XLINK_ACTUATE, AttributeName.XLINK_ARCROLE,
+            AttributeName.ARIA_EXPANDED , AttributeName.ARIA_DISABLED ,
+            AttributeName.ARIA_SELECTED , AttributeName.ACCEPT_CHARSET,
+            AttributeName.ALIGNMENTSCOPE, AttributeName.ARIA_MULTILINE,
+            AttributeName.BASELINE_SHIFT, AttributeName.HORIZ_ORIGIN_X,
+            AttributeName.HORIZ_ORIGIN_Y, AttributeName.ONBEFOREUPDATE,
+            AttributeName.ONFILTERCHANGE, AttributeName.ONROWSINSERTED,
+            AttributeName.ONBEFOREUNLOAD, AttributeName.MATHBACKGROUND,
+            AttributeName.LETTER_SPACING, AttributeName.LIGHTING_COLOR,
+            AttributeName.THICKMATHSPACE, AttributeName.TEXT_RENDERING,
+            AttributeName.V_MATHEMATICAL, AttributeName.POINTER_EVENTS,
+            AttributeName.PRIMITIVEUNITS, AttributeName.SYSTEMLANGUAGE,
+            AttributeName.STROKE_LINECAP, AttributeName.SUBSCRIPTSHIFT,
+            AttributeName.STROKE_OPACITY, AttributeName.ARIA_DROPEFFECT,
+            AttributeName.ARIA_LABELLEDBY, AttributeName.ARIA_TEMPLATEID,
+            AttributeName.COLOR_RENDERING, AttributeName.CONTENTEDITABLE,
+            AttributeName.DIFFUSECONSTANT, AttributeName.ONDATAAVAILABLE,
+            AttributeName.ONCONTROLSELECT, AttributeName.IMAGE_RENDERING,
+            AttributeName.MEDIUMMATHSPACE, AttributeName.TEXT_DECORATION,
+            AttributeName.SHAPE_RENDERING, AttributeName.STROKE_LINEJOIN,
+            AttributeName.REPEAT_TEMPLATE, AttributeName.ARIA_DESCRIBEDBY,
+            AttributeName.CONTENTSTYLETYPE, AttributeName.FONT_SIZE_ADJUST,
+            AttributeName.KERNELUNITLENGTH, AttributeName.ONBEFOREACTIVATE,
+            AttributeName.ONPROPERTYCHANGE, AttributeName.ONDATASETCHANGED,
+            AttributeName.MASKCONTENTUNITS, AttributeName.PATTERNTRANSFORM,
+            AttributeName.REQUIREDFEATURES, AttributeName.RENDERING_INTENT,
+            AttributeName.SPECULAREXPONENT, AttributeName.SPECULARCONSTANT,
+            AttributeName.SUPERSCRIPTSHIFT, AttributeName.STROKE_DASHARRAY,
+            AttributeName.XCHANNELSELECTOR, AttributeName.YCHANNELSELECTOR,
+            AttributeName.ARIA_AUTOCOMPLETE, AttributeName.CONTENTSCRIPTTYPE,
+            AttributeName.ENABLE_BACKGROUND, AttributeName.DOMINANT_BASELINE,
+            AttributeName.GRADIENTTRANSFORM, AttributeName.ONBEFORDEACTIVATE,
+            AttributeName.ONDATASETCOMPLETE, AttributeName.OVERLINE_POSITION,
+            AttributeName.ONBEFOREEDITFOCUS, AttributeName.LIMITINGCONEANGLE,
+            AttributeName.VERYTHINMATHSPACE, AttributeName.STROKE_DASHOFFSET,
+            AttributeName.STROKE_MITERLIMIT, AttributeName.ALIGNMENT_BASELINE,
+            AttributeName.ONREADYSTATECHANGE, AttributeName.OVERLINE_THICKNESS,
+            AttributeName.UNDERLINE_POSITION, AttributeName.VERYTHICKMATHSPACE,
+            AttributeName.REQUIREDEXTENSIONS,
+            AttributeName.COLOR_INTERPOLATION,
+            AttributeName.UNDERLINE_THICKNESS,
+            AttributeName.PRESERVEASPECTRATIO,
+            AttributeName.PATTERNCONTENTUNITS,
+            AttributeName.ARIA_MULTISELECTABLE,
+            AttributeName.SCRIPTSIZEMULTIPLIER,
+            AttributeName.ARIA_ACTIVEDESCENDANT,
+            AttributeName.VERYVERYTHINMATHSPACE,
+            AttributeName.VERYVERYTHICKMATHSPACE,
+            AttributeName.STRIKETHROUGH_POSITION,
+            AttributeName.STRIKETHROUGH_THICKNESS,
+            AttributeName.EXTERNALRESOURCESREQUIRED,
+            AttributeName.GLYPH_ORIENTATION_VERTICAL,
+            AttributeName.COLOR_INTERPOLATION_FILTERS,
+            AttributeName.GLYPH_ORIENTATION_HORIZONTAL, };
 
     private final static int[] ATTRIBUTE_HASHES = { 1153, 1383, 1601, 1793,
             1827, 1857, 68600, 69146, 69177, 70237, 70270, 71572, 71669, 72415,

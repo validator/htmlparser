@@ -22,7 +22,6 @@
 
 package nu.validator.htmlparser.impl;
 
-
 public class NCName {
 
     public static boolean isNCNameStart(char c) {
@@ -447,13 +446,13 @@ public class NCName {
                 case 0:
                     return false;
                 case 1:
-                    return isNCNameStart(str.charAt(0));
+                    return NCName.isNCNameStart(str.charAt(0));
                 default:
-                    if (!isNCNameStart(str.charAt(0))) {
+                    if (!NCName.isNCNameStart(str.charAt(0))) {
                         return false;
                     }
                     for (int i = 1; i < len; i++) {
-                        if (!isNCNameTrail(str.charAt(i))) {
+                        if (!NCName.isNCNameTrail(str.charAt(i))) {
                             return false;
                         }
                     }
