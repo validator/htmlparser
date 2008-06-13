@@ -100,6 +100,21 @@ public final class HtmlAttributes implements Attributes {
         return -1;
     }
 
+    /**
+     * Only use with a static argument
+     * 
+     * @param name
+     * @return
+     */
+    public int getIndex(AttributeName name) {
+        for (int i = 0; i < length; i++) {
+            if (names[i] == name) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    
     public int getIndex(@NsUri String uri, @Local String localName) {
         for (int i = 0; i < length; i++) {
             if (names[i].getLocal(mode).equals(localName)
@@ -198,6 +213,20 @@ public final class HtmlAttributes implements Attributes {
         }
     }
 
+    /**
+     * Only use with static argument.
+     * 
+     * @see org.xml.sax.Attributes#getValue(java.lang.String)
+     */
+    public String getValue(AttributeName name) {
+        int index = getIndex(name);
+        if (index == -1) {
+            return null;
+        } else {
+            return getValue(index);
+        }
+    }
+    
     // [NOCPP[
 
     public String getId() {
@@ -314,9 +343,13 @@ public final class HtmlAttributes implements Attributes {
         mode = AttributeName.SVG;
     }
 
+    // [NOCPP[
+    
     public void merge(HtmlAttributes attributes) {
         // TODO Auto-generated method stub
 
     }
 
+    // ]NOCPP]
+    
 }
