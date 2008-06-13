@@ -145,7 +145,7 @@ public final class HtmlAttributes implements Attributes {
         }
     }
 
-    AttributeName getAttributeName(int index) {
+    public AttributeName getAttributeName(int index) {
         if (index < length) {
             return names[index];
         } else {
@@ -346,8 +346,13 @@ public final class HtmlAttributes implements Attributes {
     // [NOCPP[
     
     public void merge(HtmlAttributes attributes) {
-        // TODO Auto-generated method stub
-
+        int len = attributes.getLength();
+        for (int i = 0; i < len; i++) {
+            AttributeName name = attributes.getAttributeName(i);
+            if (!contains(name)) {
+                addAttribute(name, attributes.getValue(i));
+            }
+        }
     }
 
     // ]NOCPP]
