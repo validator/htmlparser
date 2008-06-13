@@ -71,4 +71,9 @@ public final class StringUtil {
     public static @Local String localNameFromBuffer(char[] buf, int length) {
         return new String(buf, 0, length).intern();
     }
+
+    public static String stringFromBuffer(char[] buf, int length) {
+        return new String(buf, 0, length);
+    }
+    
 }

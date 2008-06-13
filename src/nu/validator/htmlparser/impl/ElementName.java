@@ -25,17 +25,18 @@ package nu.validator.htmlparser.impl;
 import java.util.Arrays;
 
 import nu.validator.htmlparser.annotation.Local;
+import nu.validator.htmlparser.annotation.NoLength;
 
 public final class ElementName
-// uncomment when regenating self
+// uncomment when regenerating self
 // implements Comparable<ElementName>
 {
 
     public final static ElementName NULL_ELEMENT_NAME = new ElementName(null);
 
-    public final String name;
+    public final @Local String name;
 
-    public final String camelCaseName;
+    public final @Local String camelCaseName;
 
     public final int group;
 
@@ -95,7 +96,7 @@ public final class ElementName
         return hash;
     }
 
-    private ElementName(String name, String camelCaseName, int group,
+    private ElementName(@Local String name, @Local String camelCaseName, int group,
             boolean special, boolean scoping, boolean fosterParenting) {
         this.name = name;
         this.camelCaseName = camelCaseName;
@@ -106,7 +107,7 @@ public final class ElementName
         this.custom = false;
     }
 
-    private ElementName(String name) {
+    private ElementName(@Local String name) {
         this.name = name;
         this.camelCaseName = name;
         this.group = TreeBuilder.OTHER;
@@ -293,14 +294,14 @@ public final class ElementName
     // + el.constName() + " = new ElementName" + el.toString()
     // + ";");
     // }
-    // System.out.println("private final static ElementName[] ELEMENT_NAMES =
+    // System.out.println("private final static @NoLength ElementName[] ELEMENT_NAMES =
     // {");
     // for (int i = 0; i < ELEMENT_NAMES.length; i++) {
     // ElementName el = ELEMENT_NAMES[i];
     // System.out.println(el.constName() + ",");
     // }
     // System.out.println("};");
-    // System.out.println("private final static int[] ELEMENT_HASHES = {");
+    // System.out.println("private final static @NoLength int[] ELEMENT_HASHES = {");
     // for (int i = 0; i < ELEMENT_NAMES.length; i++) {
     // ElementName el = ELEMENT_NAMES[i];
     // System.out.println(Integer.toString(el.hash()) + ",");
@@ -1577,7 +1578,7 @@ public final class ElementName
             "fecomponenttransfer", "feComponentTransfer", TreeBuilder.OTHER,
             false, false, false);
 
-    private final static ElementName[] ELEMENT_NAMES = { ElementName.A,
+    private final static @NoLength ElementName[] ELEMENT_NAMES = { ElementName.A,
             ElementName.B, ElementName.G, ElementName.I, ElementName.P,
             ElementName.Q, ElementName.S, ElementName.U, ElementName.BR,
             ElementName.CI, ElementName.CN, ElementName.DD, ElementName.DL,
@@ -1714,7 +1715,7 @@ public final class ElementName
             ElementName.FESPECULARLIGHTING, ElementName.DOMAINOFAPPLICATION,
             ElementName.FECOMPONENTTRANSFER, };
 
-    private final static int[] ELEMENT_HASHES = { 1057, 1090, 1255, 1321, 1552,
+    private final static @NoLength int[] ELEMENT_HASHES = { 1057, 1090, 1255, 1321, 1552,
             1585, 1651, 1717, 68162, 68899, 69059, 69764, 70020, 70276, 71077,
             71205, 72134, 72232, 72264, 72296, 72328, 72360, 72392, 73351,
             74312, 75209, 78124, 78284, 78476, 79149, 79309, 79341, 79469,

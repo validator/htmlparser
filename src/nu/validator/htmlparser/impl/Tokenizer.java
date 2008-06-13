@@ -38,6 +38,7 @@ package nu.validator.htmlparser.impl;
 import java.util.Arrays;
 
 import nu.validator.htmlparser.annotation.Local;
+import nu.validator.htmlparser.annotation.NoLength;
 import nu.validator.htmlparser.common.CharacterHandler;
 import nu.validator.htmlparser.common.TokenHandler;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
@@ -319,7 +320,7 @@ public class Tokenizer implements Locator {
 
     private int end = 0;
 
-    private char[] buf;
+    private @NoLength char[] buf;
 
     private int cstart = 0;
 
@@ -447,12 +448,6 @@ public class Tokenizer implements Locator {
     private String systemIdentifier;
 
     /**
-     * Used for NFC checking if non-<code>null</code>, source code capture,
-     * etc.
-     */
-    protected CharacterHandler[] characterHandlers = new CharacterHandler[0];
-
-    /**
      * The policy for vertical tab and form feed.
      */
     private XmlViolationPolicy contentSpacePolicy = XmlViolationPolicy.ALLOW;
@@ -480,7 +475,7 @@ public class Tokenizer implements Locator {
     protected Confidence confidence;
 
     /**
-     * The constuctor.
+     * The constructor.
      * 
      * @param tokenHandler
      *            the handler for receiving tokens
@@ -725,14 +720,14 @@ public class Tokenizer implements Locator {
     }
 
     /**
-     * The smaller buffer as a string.
+     * The smaller buffer as a String.
      * 
      * @return the smaller buffer as a string
      */
     private String strBufToString() {
-        return StringUtil.localNameFromBuffer(strBuf, strBufLen);
+        return StringUtil.stringFromBuffer(strBuf, strBufLen);
     }
-
+    
     /**
      * Emits the smaller buffer as character tokens.
      * 

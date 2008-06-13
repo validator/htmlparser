@@ -59,6 +59,11 @@ public class Driver extends Tokenizer {
     private Encoding characterEncoding;
     private boolean allowRewinding = true;
     private Heuristics heuristics = Heuristics.NONE;
+    /**
+     * Used for NFC checking if non-<code>null</code>, source code capture,
+     * etc.
+     */
+    private CharacterHandler[] characterHandlers = new CharacterHandler[0];
 
     public Driver(TokenHandler tokenHandler) {
         super(tokenHandler);
