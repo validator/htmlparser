@@ -24,7 +24,7 @@ package nu.validator.htmlparser.impl;
 
 import nu.validator.htmlparser.annotation.Local;
 
-public class StringUtil {
+public final class StringUtil {
 
     public static boolean equalsIgnoreAsciiCase(String one,
             String other) {

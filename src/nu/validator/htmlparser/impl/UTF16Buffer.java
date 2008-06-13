@@ -22,7 +22,7 @@
 
 package nu.validator.htmlparser.impl;
 
-public class UTF16Buffer {
+public final class UTF16Buffer {
     private final char[] buffer;
 
     private int offset;

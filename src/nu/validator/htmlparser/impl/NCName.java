@@ -22,7 +22,7 @@
 
 package nu.validator.htmlparser.impl;
 
-public class NCName {
+public final class NCName {
 
     public static boolean isNCNameStart(char c) {
         return ((c >= '\u0041' && c <= '\u005A')
