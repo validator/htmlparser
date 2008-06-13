@@ -23,6 +23,7 @@
 
 package nu.validator.htmlparser.common;
 
+import nu.validator.htmlparser.annotation.NoLength;
 import nu.validator.htmlparser.impl.ElementName;
 import nu.validator.htmlparser.impl.HtmlAttributes;
 import nu.validator.htmlparser.impl.Tokenizer;
@@ -107,7 +108,7 @@ public interface TokenHandler {
      * @throws SAXException if something went wrong
      * @see org.xml.sax.ContentHandler#characters(char[], int, int)
      */
-    public void characters(char[] buf, int start, int length) throws SAXException;
+    public void characters(@NoLength char[] buf, int start, int length) throws SAXException;
     
     /**
      * The end-of-file token.

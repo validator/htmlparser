@@ -26,6 +26,7 @@ import java.util.Arrays;
 
 import nu.validator.htmlparser.annotation.IdType;
 import nu.validator.htmlparser.annotation.Local;
+import nu.validator.htmlparser.annotation.NoLength;
 import nu.validator.htmlparser.annotation.NsUri;
 import nu.validator.htmlparser.annotation.QName;
 
@@ -126,6 +127,7 @@ public final class AttributeName
 
     private final @QName String[] qName;
 
+    // XXX convert to bitfield
     private final boolean[] ncname;
 
     private final boolean xmlns;
@@ -374,14 +376,14 @@ public final class AttributeName
     // + att.constName() + " = new AttributeName" + att.toString()
     // + ";");
     // }
-    // System.out.println("private final static AttributeName[] ATTRIBUTE_NAMES
+    // System.out.println("private final static @NoLength AttributeName[] ATTRIBUTE_NAMES
     // = {");
     // for (int i = 0; i < ATTRIBUTE_NAMES.length; i++) {
     // AttributeName att = ATTRIBUTE_NAMES[i];
     // System.out.println(att.constName() + ",");
     // }
     // System.out.println("};");
-    // System.out.println("private final static int[] ATTRIBUTE_HASHES = {");
+    // System.out.println("private final static @NoLength int[] ATTRIBUTE_HASHES = {");
     // for (int i = 0; i < ATTRIBUTE_NAMES.length; i++) {
     // AttributeName att = ATTRIBUTE_NAMES[i];
     // System.out.println(Integer.toString(att.hash()) + ",");
@@ -3858,7 +3860,7 @@ public final class AttributeName
             AttributeName.SAME_LOWER_CASE_QNAME("glyph-orientation-horizontal"),
             AttributeName.ALL_NCNAME, false);
 
-    private final static AttributeName[] ATTRIBUTE_NAMES = { AttributeName.D,
+    private final static @NoLength AttributeName[] ATTRIBUTE_NAMES = { AttributeName.D,
             AttributeName.K, AttributeName.R, AttributeName.X, AttributeName.Y,
             AttributeName.Z, AttributeName.BY, AttributeName.CX,
             AttributeName.CY, AttributeName.DX, AttributeName.DY,
@@ -4130,7 +4132,7 @@ public final class AttributeName
             AttributeName.COLOR_INTERPOLATION_FILTERS,
             AttributeName.GLYPH_ORIENTATION_HORIZONTAL, };
 
-    private final static int[] ATTRIBUTE_HASHES = { 1153, 1383, 1601, 1793,
+    private final static @NoLength int[] ATTRIBUTE_HASHES = { 1153, 1383, 1601, 1793,
             1827, 1857, 68600, 69146, 69177, 70237, 70270, 71572, 71669, 72415,
             72444, 74846, 74904, 74943, 75001, 75276, 75590, 84742, 84839,
             85575, 85963, 85992, 87204, 88074, 88171, 89130, 89163, 3207892,

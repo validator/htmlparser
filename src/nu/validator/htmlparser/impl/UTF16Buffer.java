@@ -22,8 +22,10 @@
 
 package nu.validator.htmlparser.impl;
 
+import nu.validator.htmlparser.annotation.NoLength;
+
 public final class UTF16Buffer {
-    private final char[] buffer;
+    private final @NoLength char[] buffer;
 
     private int offset;
 
@@ -34,7 +36,7 @@ public final class UTF16Buffer {
      * @param offset
      * @param length
      */
-    public UTF16Buffer(char[] buffer, int offset, int length) {
+    public UTF16Buffer(@NoLength char[] buffer, int offset, int length) {
         this.buffer = buffer;
         this.offset = offset;
         this.length = length;
