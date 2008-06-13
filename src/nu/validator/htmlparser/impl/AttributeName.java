@@ -215,6 +215,11 @@ public final class AttributeName implements Comparable<AttributeName> {
                 || this == AttributeName.SELECTED;
     }
 
+
+    boolean equalsAnother(AttributeName another) {
+        return this.getLocal(HTML) == another.getLocal(HTML);
+    }
+    
     boolean isCaseFolded() {
         return this == AttributeName.ACTIVE || this == AttributeName.ALIGN
                 || this == AttributeName.ASYNC

@@ -279,17 +279,24 @@ public final class HtmlAttributes implements Attributes {
         }
         length = 0;
         idValue = null;
+        // [NOCPP[
+        for (int i = 0; i < xmlnsLength; i++) {
+            xmlnsNames[i] = null;
+            xmlnsValues[i] = null;
+        }
+        xmlnsLength = 0;
+        // ]NOCPP]
     }
     
     boolean contains(AttributeName name) {
-        for (int i = 0; i < names.length; i++) {
-            if (name == names[i]) {
+        for (int i = 0; i < length; i++) {
+            if (name.equalsAnother(names[i])) {
                 return true;
             }
         }
         // [NOCPP[
-        for (int i = 0; i < xmlnsNames.length; i++) {
-            if (name == xmlnsNames[i]) {
+        for (int i = 0; i < xmlnsLength; i++) {
+            if (name.equalsAnother(xmlnsNames[i])) {
                 return true;
             }
         }        
@@ -309,4 +316,5 @@ public final class HtmlAttributes implements Attributes {
         // TODO Auto-generated method stub
         
     }
+
 }
