@@ -45,7 +45,6 @@ import nu.validator.htmlparser.common.DocumentModeHandler;
 import nu.validator.htmlparser.common.TokenHandler;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
 
-import org.xml.sax.Attributes;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -346,8 +345,12 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private int charBufferLen = 0;
     
+    // [NOCPP[
+    
     private Map<String, LocatorImpl> idLocations = new HashMap<String, LocatorImpl>();
 
+    // ]NOCPP]
+    
     protected TreeBuilder(XmlViolationPolicy streamabilityViolationPolicy,
             boolean coalescingText) {
         this.conformingAndStreaming = streamabilityViolationPolicy == XmlViolationPolicy.FATAL;

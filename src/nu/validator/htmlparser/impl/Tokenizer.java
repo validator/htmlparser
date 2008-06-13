@@ -1055,9 +1055,13 @@ public class Tokenizer implements Locator {
 
     private void attributeNameComplete() throws SAXException {
         attributeName = AttributeName.nameByBuffer(strBuf, strBufLen, namePolicy != XmlViolationPolicy.ALLOW);
+        
+        // [NOCPP[
         if (attributes == null) {
             attributes = newAttributes();
         }
+        // ]NOCPP]
+        
         /*
          * When the user agent leaves the attribute name state (and before
          * emitting the tag token, if appropriate), the complete attribute's
@@ -1068,7 +1072,7 @@ public class Tokenizer implements Locator {
          */
         if (attributes.contains(attributeName)) {
             shouldAddAttributes = false;
-            err("Duplicate attribute \u201C" + attributeName + "\u201D.");            
+            err("Duplicate attribute \u201C" + attributeName.getLocal(AttributeName.HTML) + "\u201D.");            
         } else {
             shouldAddAttributes = true;
 //            if (namePolicy == XmlViolationPolicy.ALLOW) {
