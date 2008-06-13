@@ -26,8 +26,8 @@ import nu.validator.htmlparser.annotation.Local;
 
 public class StringUtil {
 
-    public static boolean equalsIgnoreAsciiCase(CharSequence one,
-            CharSequence other) {
+    public static boolean equalsIgnoreAsciiCase(String one,
+            String other) {
         if (other == null && one == null) {
             return true;
         }
