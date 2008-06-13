@@ -158,71 +158,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     private enum InsertionMode {
         INITIAL, BEFORE_HTML, BEFORE_HEAD, IN_HEAD, IN_HEAD_NOSCRIPT, AFTER_HEAD, IN_BODY, IN_TABLE, IN_CAPTION, IN_COLUMN_GROUP, IN_TABLE_BODY, IN_ROW, IN_CELL, IN_SELECT, IN_SELECT_IN_TABLE, AFTER_BODY, IN_FRAMESET, AFTER_FRAMESET, AFTER_AFTER_BODY, AFTER_AFTER_FRAMESET
     }
-
-    private class StackNode<S> {
-        final int group;
-
-        final String name;
-
-        final String popName;
-
-        final String ns;
-
-        final S node;
-
-        final boolean scoping;
-
-        final boolean special;
-
-        final boolean fosterParenting;
-
-        boolean tainted = false;
-
-        /**
-         * @param group
-         *            TODO
-         * @param name
-         * @param node
-         * @param scoping
-         * @param special
-         * @param popName
-         *            TODO
-         */
-        StackNode(int group, final String ns, final String name, final S node,
-                final boolean scoping, final boolean special,
-                final boolean fosterParenting, String popName) {
-            this.group = group;
-            this.name = name;
-            this.ns = ns;
-            this.node = node;
-            this.scoping = scoping;
-            this.special = special;
-            this.fosterParenting = fosterParenting;
-            this.popName = popName;
-        }
-
-        /**
-         * @param elementName
-         *            TODO
-         * @param node
-         */
-        StackNode(final String ns, ElementName elementName, final S node) {
-            this.group = elementName.group;
-            this.name = elementName.name;
-            this.popName = elementName.name;
-            this.ns = ns;
-            this.node = node;
-            this.scoping = elementName.scoping;
-            this.special = elementName.special;
-            this.fosterParenting = elementName.fosterParenting;
-        }
-
-        /**
-         * @see java.lang.Object#toString()
-         */
-        @Override public String toString() {
-            return name;
-        }
+    
+    private enum CharsetState {
+        INITIAL, C, H, A, R, S, E, T, EQUALS, SINGLE_QUOTED, DOUBLE_QUOTED, UNQUOTED
     }
 
     private final static char[] ISINDEX_PROMPT = "This is a searchable index. Insert your search keywords here: ".toCharArray();
@@ -2432,10 +2370,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (selfClosing) {
             err("Self-closing syntax (\u201C/>\u201D) used on a non-void HTML element.");
         }
-    }
-
-    private enum CharsetState {
-        INITIAL, C, H, A, R, S, E, T, EQUALS, SINGLE_QUOTED, DOUBLE_QUOTED, UNQUOTED
     }
 
     /**
