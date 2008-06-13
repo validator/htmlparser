@@ -1449,8 +1449,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         if (isTainted()
                                                 || !StringUtil.equalsIgnoreAsciiCase(
                                                         "hidden",
-                                                        attributes.getValue("",
-                                                                "type"))) {
+                                                        attributes.getValue(AttributeName.TYPE))) {
                                             break intableloop;
                                         }
                                         appendVoidElementToCurrent(
@@ -2531,19 +2530,19 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private void checkMetaCharset(HtmlAttributes attributes)
             throws SAXException {
-        String content = attributes.getValue("", "content");
+        String content = attributes.getValue(AttributeName.CONTENT);
         String internalCharset = null;
         if (content != null) {
             internalCharset = TreeBuilder.extractCharsetFromContent(content);
             if (internalCharset != null) {
                 if (!StringUtil.equalsIgnoreAsciiCase("content-type",
-                        attributes.getValue("", "http-equiv"))) {
+                        attributes.getValue(AttributeName.HTTP_EQUIV))) {
                     warn("Attribute \u201Ccontent\u201D would be sniffed as an internal character encoding declaration but there was no matching \u201Chttp-equiv='Content-Type'\u201D attribute.");
                 }
             }
         }
         if (internalCharset == null) {
-            internalCharset = attributes.getValue("", "charset");
+            internalCharset = attributes.getValue(AttributeName.CHARSET);
         }
         if (internalCharset != null) {
             tokenizer.internalEncodingDeclaration(internalCharset);
