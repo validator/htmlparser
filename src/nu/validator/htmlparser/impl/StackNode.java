@@ -40,7 +40,7 @@ class StackNode<T> {
 
     final boolean fosterParenting;
 
-    boolean tainted = false;
+    boolean tainted;
 
     /**
      * @param group
@@ -63,6 +63,7 @@ class StackNode<T> {
         this.special = special;
         this.fosterParenting = fosterParenting;
         this.popName = popName;
+        this.tainted = false;
     }
 
     /**
@@ -79,6 +80,7 @@ class StackNode<T> {
         this.scoping = elementName.scoping;
         this.special = elementName.special;
         this.fosterParenting = elementName.fosterParenting;
+        this.tainted = false;
     }
 
     // [NOCPP[
