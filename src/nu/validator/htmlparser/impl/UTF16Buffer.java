@@ -27,57 +27,37 @@ import nu.validator.htmlparser.annotation.NoLength;
 public final class UTF16Buffer {
     private final @NoLength char[] buffer;
 
-    private int offset;
+    private int start;
 
-    private int length;
+    private int end;
 
     /**
      * @param buffer
-     * @param offset
-     * @param length
+     * @param start
+     * @param end
      */
-    public UTF16Buffer(@NoLength char[] buffer, int offset, int length) {
+    public UTF16Buffer(@NoLength char[] buffer, int start, int end) {
         this.buffer = buffer;
-        this.offset = offset;
-        this.length = length;
+        this.start = start;
+        this.end = end;
     }
 
     /**
-     * Returns the offset.
+     * Returns the start.
      * 
-     * @return the offset
+     * @return the start
      */
-    public int getOffset() {
-        return offset;
+    public int getStart() {
+        return start;
     }
 
     /**
-     * Sets the offset.
+     * Sets the start.
      * 
-     * @param offset
-     *            the offset to set
+     * @param start the start to set
      */
-    public void setOffset(int offset) {
-        this.offset = offset;
-    }
-
-    /**
-     * Returns the length.
-     * 
-     * @return the length
-     */
-    public int getLength() {
-        return length;
-    }
-
-    /**
-     * Sets the length.
-     * 
-     * @param length
-     *            the length to set
-     */
-    public void setLength(int length) {
-        this.length = length;
+    public void setStart(int start) {
+        this.start = start;
     }
 
     /**
@@ -87,5 +67,33 @@ public final class UTF16Buffer {
      */
     public char[] getBuffer() {
         return buffer;
+    }
+
+    /**
+     * Returns the end.
+     * 
+     * @return the end
+     */
+    public int getEnd() {
+        return end;
+    }
+    
+    public boolean hasMore() {
+        return start < end;
+    }
+    
+    public void adjust(boolean lastWasCR) {
+        if (lastWasCR && buffer[start] == '\n') {
+            start++;
+        }
+    }
+
+    /**
+     * Sets the end.
+     * 
+     * @param end the end to set
+     */
+    public void setEnd(int end) {
+        this.end = end;
     }
 }

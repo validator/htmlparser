@@ -112,13 +112,17 @@ public class HtmlParser {
      * @throws MalformedURLException
      */
     private void tokenize(String source, String context) throws SAXException {
+        boolean lastWasCR = false;
         UTF16Buffer buffer = new UTF16Buffer(source.toCharArray(), 0, source.length());
-        tokenizer.normalizeLineBreaks(buffer, false); // XXX replace this with JS native call?
         domTreeBuilder.setFragmentContext(context);
         try {
             tokenizer.start();
-            while (buffer.getLength() > 0) {
-                tokenizer.tokenizeBuffer(buffer);
+            while (buffer.hasMore()) {
+                buffer.adjust(lastWasCR);
+                lastWasCR = false;
+                if (buffer.hasMore()) {
+                    lastWasCR = tokenizer.tokenizeBuffer(buffer);                    
+                }
             }
             tokenizer.eof();
         } finally {
