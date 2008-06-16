@@ -1698,7 +1698,7 @@ public class Tokenizer implements Locator {
                          * emitted (case insensitively), or if they do but they
                          * are not immediately followed by one of the following
                          * characters: + U+0009 CHARACTER TABULATION + U+000A
-                         * LINE FEED (LF) + U+000B LINE TABULATION + U+000C FORM
+                         * LINE FEED (LF) + + U+000C FORM
                          * FEED (FF) + U+0020 SPACE + U+003E GREATER-THAN SIGN
                          * (>) + U+002F SOLIDUS (/) + EOF
                          * 
@@ -1758,11 +1758,11 @@ public class Tokenizer implements Locator {
                                 case ' ':
                                 case '\t':
                                 case '\n':
-                                case '\u000B':
+                                
                                 case '\u000C':
                                     /*
                                      * U+0009 CHARACTER TABULATION U+000A LINE
-                                     * FEED (LF) U+000B LINE TABULATION U+000C
+                                     * FEED (LF) U+000C
                                      * FORM FEED (FF) U+0020 SPACE Switch to the
                                      * before attribute name state.
                                      */
@@ -1898,11 +1898,11 @@ public class Tokenizer implements Locator {
                             case ' ':
                             case '\t':
                             case '\n':
-                            case '\u000B':
+                            
                             case '\u000C':
                                 /*
                                  * U+0009 CHARACTER TABULATION U+000A LINE FEED
-                                 * (LF) U+000B LINE TABULATION U+000C FORM FEED
+                                 * (LF) U+000C FORM FEED
                                  * (FF) U+0020 SPACE Switch to the before
                                  * attribute name state.
                                  */
@@ -1972,11 +1972,11 @@ public class Tokenizer implements Locator {
                             case ' ':
                             case '\t':
                             case '\n':
-                            case '\u000B':
+                            
                             case '\u000C':
                                 /*
                                  * U+0009 CHARACTER TABULATION U+000A LINE FEED
-                                 * (LF) U+000B LINE TABULATION U+000C FORM FEED
+                                 * (LF) U+000C FORM FEED
                                  * (FF) U+0020 SPACE Stay in the before
                                  * attribute name state.
                                  */
@@ -2066,11 +2066,11 @@ public class Tokenizer implements Locator {
                             case ' ':
                             case '\t':
                             case '\n':
-                            case '\u000B':
+                            
                             case '\u000C':
                                 /*
                                  * U+0009 CHARACTER TABULATION U+000A LINE FEED
-                                 * (LF) U+000B LINE TABULATION U+000C FORM FEED
+                                 * (LF) U+000C FORM FEED
                                  * (FF) U+0020 SPACE Switch to the after
                                  * attribute name state.
                                  */
@@ -2161,11 +2161,11 @@ public class Tokenizer implements Locator {
                             case ' ':
                             case '\t':
                             case '\n':
-                            case '\u000B':
+                            
                             case '\u000C':
                                 /*
                                  * U+0009 CHARACTER TABULATION U+000A LINE FEED
-                                 * (LF) U+000B LINE TABULATION U+000C FORM FEED
+                                 * (LF) U+000C FORM FEED
                                  * (FF) U+0020 SPACE Stay in the after attribute
                                  * name state.
                                  */
@@ -2250,11 +2250,11 @@ public class Tokenizer implements Locator {
                             case ' ':
                             case '\t':
                             case '\n':
-                            case '\u000B':
+                            
                             case '\u000C':
                                 /*
                                  * U+0009 CHARACTER TABULATION U+000A LINE FEED
-                                 * (LF) U+000B LINE TABULATION U+000C FORM FEED
+                                 * (LF) U+000C FORM FEED
                                  * (FF) U+0020 SPACE Stay in the before
                                  * attribute value state.
                                  */
@@ -2437,11 +2437,11 @@ public class Tokenizer implements Locator {
                             case ' ':
                             case '\t':
                             case '\n':
-                            case '\u000B':
+                            
                             case '\u000C':
                                 /*
                                  * U+0009 CHARACTER TABULATION U+000A LINE FEED
-                                 * (LF) U+000B LINE TABULATION U+000C FORM FEED
+                                 * (LF) U+000C FORM FEED
                                  * (FF) U+0020 SPACE Switch to the before
                                  * attribute name state.
                                  */
@@ -2526,11 +2526,11 @@ public class Tokenizer implements Locator {
                         case ' ':
                         case '\t':
                         case '\n':
-                        case '\u000B':
+                        
                         case '\u000C':
                             /*
                              * U+0009 CHARACTER TABULATION U+000A LINE FEED (LF)
-                             * U+000B LINE TABULATION U+000C FORM FEED (FF)
+                             * U+000C FORM FEED (FF)
                              * U+0020 SPACE Switch to the before attribute name
                              * state.
                              */
@@ -2958,11 +2958,11 @@ public class Tokenizer implements Locator {
                         case ' ':
                         case '\t':
                         case '\n':
-                        case '\u000B':
+                        
                         case '\u000C':
                             /*
                              * U+0009 CHARACTER TABULATION U+000A LINE FEED (LF)
-                             * U+000B LINE TABULATION U+000C FORM FEED (FF)
+                             * U+000C FORM FEED (FF)
                              * U+0020 SPACE Switch to the before DOCTYPE name
                              * state.
                              */
@@ -2996,11 +2996,11 @@ public class Tokenizer implements Locator {
                             case ' ':
                             case '\t':
                             case '\n':
-                            case '\u000B':
+                            
                             case '\u000C':
                                 /*
                                  * U+0009 CHARACTER TABULATION U+000A LINE FEED
-                                 * (LF) U+000B LINE TABULATION U+000C FORM FEED
+                                 * (LF) U+000C FORM FEED
                                  * (FF) U+0020 SPACE Stay in the before DOCTYPE
                                  * name state.
                                  */
@@ -3048,11 +3048,11 @@ public class Tokenizer implements Locator {
                             case ' ':
                             case '\t':
                             case '\n':
-                            case '\u000B':
+                            
                             case '\u000C':
                                 /*
                                  * U+0009 CHARACTER TABULATION U+000A LINE FEED
-                                 * (LF) U+000B LINE TABULATION U+000C FORM FEED
+                                 * (LF) U+000C FORM FEED
                                  * (FF) U+0020 SPACE Switch to the after DOCTYPE
                                  * name state.
                                  */
@@ -3097,11 +3097,11 @@ public class Tokenizer implements Locator {
                             case ' ':
                             case '\t':
                             case '\n':
-                            case '\u000B':
+                            
                             case '\u000C':
                                 /*
                                  * U+0009 CHARACTER TABULATION U+000A LINE FEED
-                                 * (LF) U+000B LINE TABULATION U+000C FORM FEED
+                                 * (LF) U+000C FORM FEED
                                  * (FF) U+0020 SPACE Stay in the after DOCTYPE
                                  * name state.
                                  */
@@ -3224,11 +3224,11 @@ public class Tokenizer implements Locator {
                             case ' ':
                             case '\t':
                             case '\n':
-                            case '\u000B':
+                            
                             case '\u000C':
                                 /*
                                  * U+0009 CHARACTER TABULATION U+000A LINE FEED
-                                 * (LF) U+000B LINE TABULATION U+000C FORM FEED
+                                 * (LF) U+000C FORM FEED
                                  * (FF) U+0020 SPACE Stay in the before DOCTYPE
                                  * public identifier state.
                                  */
@@ -3398,11 +3398,11 @@ public class Tokenizer implements Locator {
                             case ' ':
                             case '\t':
                             case '\n':
-                            case '\u000B':
+                            
                             case '\u000C':
                                 /*
                                  * U+0009 CHARACTER TABULATION U+000A LINE FEED
-                                 * (LF) U+000B LINE TABULATION U+000C FORM FEED
+                                 * (LF) U+000C FORM FEED
                                  * (FF) U+0020 SPACE Stay in the after DOCTYPE
                                  * public identifier state.
                                  */
@@ -3475,11 +3475,11 @@ public class Tokenizer implements Locator {
                             case ' ':
                             case '\t':
                             case '\n':
-                            case '\u000B':
+                            
                             case '\u000C':
                                 /*
                                  * U+0009 CHARACTER TABULATION U+000A LINE FEED
-                                 * (LF) U+000B LINE TABULATION U+000C FORM FEED
+                                 * (LF) U+000C FORM FEED
                                  * (FF) U+0020 SPACE Stay in the before DOCTYPE
                                  * system identifier state.
                                  */
@@ -3652,11 +3652,11 @@ public class Tokenizer implements Locator {
                             case ' ':
                             case '\t':
                             case '\n':
-                            case '\u000B':
+                            
                             case '\u000C':
                                 /*
                                  * U+0009 CHARACTER TABULATION U+000A LINE FEED
-                                 * (LF) U+000B LINE TABULATION U+000C FORM FEED
+                                 * (LF) U+000C FORM FEED
                                  * (FF) U+0020 SPACE Stay in the after DOCTYPE
                                  * system identifier state.
                                  */
@@ -3829,7 +3829,7 @@ public class Tokenizer implements Locator {
                         case ' ':
                         case '\t':
                         case '\n':
-                        case '\u000B':
+                        
                         case '\u000C':
                         case '<':
                         case '&':
@@ -4801,7 +4801,7 @@ public class Tokenizer implements Locator {
                     err("Found U+0000 in the character stream.");
                     c = buf[pos] = '\uFFFD';
                     break;
-                case '\u000B':
+                
                 case '\u000C':
                     if (contentNonXmlCharPolicy == XmlViolationPolicy.FATAL) {
                         fatal("This document is not mappable to XML 1.0 without data loss due to "

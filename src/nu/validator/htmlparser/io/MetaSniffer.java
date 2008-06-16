@@ -173,7 +173,7 @@ public final class MetaSniffer implements Locator {
             switch (b) {
                 case '\t':
                 case '\n':
-                case 0x0B: // VT
+                
                 case 0x0C: // FF
                 case '\r':
                 case ' ':
@@ -237,7 +237,7 @@ public final class MetaSniffer implements Locator {
             switch (b) {
                 case '\t':
                 case '\n':
-                case 0x0B: // VT
+                
                 case 0x0C: // FF
                 case '\r':
                 case ' ':
@@ -261,7 +261,7 @@ public final class MetaSniffer implements Locator {
                     break name;
                 case '\t':
                 case '\n':
-                case 0x0B: // VT
+                
                 case 0x0C: // FF
                 case '\r':
                 case ' ':
@@ -270,7 +270,7 @@ public final class MetaSniffer implements Locator {
                         switch (b) {
                             case '\t':
                             case '\n':
-                            case 0x0B: // VT
+                            
                             case 0x0C: // FF
                             case '\r':
                             case ' ':
@@ -308,7 +308,7 @@ public final class MetaSniffer implements Locator {
             switch (b) {
                 case '\t':
                 case '\n':
-                case 0x0B: // VT
+                
                 case 0x0C: // FF
                 case '\r':
                 case ' ':
@@ -339,7 +339,7 @@ public final class MetaSniffer implements Locator {
             switch (b) {
                 case '\t':
                 case '\n':
-                case 0x0B: // VT
+                
                 case 0x0C: // FF
                 case '\r':
                 case ' ':

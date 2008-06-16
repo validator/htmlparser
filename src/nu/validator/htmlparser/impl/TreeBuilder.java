@@ -736,12 +736,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 case ' ':
                 case '\t':
                 case '\n':
-                case '\u000B':
                 case '\u000C':
                     /*
                      * A character token that is one of one of U+0009 CHARACTER
-                     * TABULATION, U+000A LINE FEED (LF), U+000B LINE
-                     * TABULATION, U+000C FORM FEED (FF), or U+0020 SPACE
+                     * TABULATION, U+000A LINE FEED (LF), U+000C FORM FEED (FF), or U+0020 SPACE
                      */
                     switch (mode) {
                         case INITIAL:
@@ -830,8 +828,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 default:
                     /*
                      * A character token that is not one of one of U+0009
-                     * CHARACTER TABULATION, U+000A LINE FEED (LF), U+000B LINE
-                     * TABULATION, U+000C FORM FEED (FF), or U+0020 SPACE
+                     * CHARACTER TABULATION, U+000A LINE FEED (LF), U+000C FORM FEED (FF), or U+0020 SPACE
                      */
                     switch (mode) {
                         case INITIAL:
@@ -2457,7 +2454,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     switch (c) {
                         case '\t':
                         case '\n':
-                        case '\u000B':
                         case '\u000C':
                         case '\r':
                         case ' ':
@@ -2472,7 +2468,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     switch (c) {
                         case '\t':
                         case '\n':
-                        case '\u000B':
                         case '\u000C':
                         case '\r':
                         case ' ':
@@ -2509,7 +2504,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     switch (c) {
                         case '\t':
                         case '\n':
-                        case '\u000B':
                         case '\u000C':
                         case '\r':
                         case ' ':
