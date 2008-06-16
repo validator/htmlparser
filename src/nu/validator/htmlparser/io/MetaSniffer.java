@@ -366,7 +366,7 @@ public final class MetaSniffer implements Locator {
         if (metaState == MetaState.A) {
             String name = attributeName.toString();
             if ("charset".equals(name)) {
-                // XXX revisit trim() to trime only space characters
+                // XXX revisit trim() to trim only space characters
                 tryCharset(attributeValue.toString().trim());
             } else if ("content".equals(name)) {
                 String charset = TreeBuilder.extractCharsetFromContent(attributeValue);
