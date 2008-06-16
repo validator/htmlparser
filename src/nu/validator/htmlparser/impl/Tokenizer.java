@@ -471,6 +471,8 @@ public class Tokenizer implements Locator {
     private int mappingLangToXmlLang;
 
     private XmlViolationPolicy bogusXmlnsPolicy;
+    
+    private boolean shouldSuspend;
 
     protected Confidence confidence;
 
@@ -1209,21 +1211,21 @@ public class Tokenizer implements Locator {
         value = 0;
         inForeign = false; // XXX
         seenDigits = false;
+        shouldSuspend = false;
     }
 
-    // WARNING When editing this, makes sure the bytecode length shown by javap
-    // stays under 8000 bytes!
-    public void tokenizeBuffer(UTF16Buffer buffer) throws SAXException {
+    public boolean tokenizeBuffer(UTF16Buffer buffer) throws SAXException {
         buf = buffer.getBuffer();
         int state = stateSave;
         int returnState = returnStateSave;
         char c = '\u0000';
+        shouldSuspend = false;
 
-        int offset = buffer.getOffset();
+        int start = buffer.getStart();
         /**
          * The index of the last <code>char</code> read from <code>buf</code>.
          */
-        pos = offset - 1;
+        pos = start - 1;
 
         /**
          * The index of the first <code>char</code> in <code>buf</code> that
@@ -1242,7 +1244,7 @@ public class Tokenizer implements Locator {
             case ESCAPE_EXCLAMATION_HYPHEN:
             case ESCAPE_HYPHEN:
             case ESCAPE_HYPHEN_HYPHEN:
-                cstart = offset;
+                cstart = start;
                 break;
             default:
                 cstart = Integer.MAX_VALUE;
@@ -1254,20 +1256,25 @@ public class Tokenizer implements Locator {
          * meaning. (The rest of the array is garbage and should not be
          * examined.)
          */
-        end = offset + buffer.getLength();
+        end = buffer.getEnd();
         boolean reconsume = false;
         stateLoop(state, c, reconsume, returnState);
         if (pos == end) {
             // exiting due to end of buffer
-            buffer.setOffset(end);
-            buffer.setLength(0);
+            buffer.setStart(pos);
         } else {
-            offset = pos + 1;
-            buffer.setOffset(offset);
-            buffer.setLength(end - offset);
+            buffer.setStart(pos + 1);
+        }
+        if (prev == '\r') {
+            prev = ' ';
+            return true;
+        } else {
+            return false;
         }
     }
 
+    // WARNING When editing this, makes sure the bytecode length shown by javap
+    // stays under 8000 bytes!
     private void stateLoop(int state, char c, boolean reconsume, int returnState)
             throws SAXException {
         stateloop: for (;;) {
@@ -1768,8 +1775,7 @@ public class Tokenizer implements Locator {
                                      */
                                     cstart = pos + 1;
                                     state = emitCurrentTagToken(false);
-                                    if (state < 0) {
-                                        state = Tokenizer.DATA;
+                                    if (shouldSuspend) {
                                         break stateloop;
                                     }
                                     /*
@@ -1911,8 +1917,7 @@ public class Tokenizer implements Locator {
                                 tagName = strBufToElementNameString();
                                 cstart = pos + 1;
                                 state = emitCurrentTagToken(false);
-                                if (state < 0) {
-                                    state = Tokenizer.DATA;
+                                if (shouldSuspend) {
                                     break stateloop;
                                 }
                                 /*
@@ -1983,8 +1988,7 @@ public class Tokenizer implements Locator {
                                  */
                                 cstart = pos + 1;
                                 state = emitCurrentTagToken(false);
-                                if (state < 0) {
-                                    state = Tokenizer.DATA;
+                                if (shouldSuspend) {
                                     break stateloop;
                                 }
                                 /*
@@ -2091,8 +2095,7 @@ public class Tokenizer implements Locator {
                                 addAttributeWithoutValue();
                                 cstart = pos + 1;
                                 state = emitCurrentTagToken(false);
-                                if (state < 0) {
-                                    state = Tokenizer.DATA;
+                                if (shouldSuspend) {
                                     break stateloop;
                                 }
                                 /*
@@ -2183,8 +2186,7 @@ public class Tokenizer implements Locator {
                                 addAttributeWithoutValue();
                                 cstart = pos + 1;
                                 state = emitCurrentTagToken(false);
-                                if (state < 0) {
-                                    state = Tokenizer.DATA;
+                                if (shouldSuspend) {
                                     break stateloop;
                                 }
                                 /*
@@ -2291,8 +2293,7 @@ public class Tokenizer implements Locator {
                                 addAttributeWithoutValue();
                                 cstart = pos + 1;
                                 state = emitCurrentTagToken(false);
-                                if (state < 0) {
-                                    state = Tokenizer.DATA;
+                                if (shouldSuspend) {
                                     break stateloop;
                                 }
                                 /*
@@ -2466,8 +2467,7 @@ public class Tokenizer implements Locator {
                                 addAttributeWithValue();
                                 cstart = pos + 1;
                                 state = emitCurrentTagToken(false);
-                                if (state < 0) {
-                                    state = Tokenizer.DATA;
+                                if (shouldSuspend) {
                                     break stateloop;
                                 }
                                 /*
@@ -2543,8 +2543,7 @@ public class Tokenizer implements Locator {
                              */
                             cstart = pos + 1;
                             state = emitCurrentTagToken(false);
-                            if (state < 0) {
-                                state = Tokenizer.DATA;
+                            if (shouldSuspend) {
                                 break stateloop;
                             }
                             /*
@@ -2587,8 +2586,7 @@ public class Tokenizer implements Locator {
                              */
                             cstart = pos + 1;
                             state = emitCurrentTagToken(true);
-                            if (state < 0) {
-                                state = Tokenizer.DATA;
+                            if (shouldSuspend) {
                                 break stateloop;
                             }
                             /*
@@ -4734,60 +4732,6 @@ public class Tokenizer implements Locator {
         return;
     }
 
-    public boolean normalizeLineBreaks(UTF16Buffer buffer, boolean lastWasCR) {
-        char[] arr = buffer.getBuffer();
-        int i = buffer.getOffset();
-        int origEnd = buffer.getLength() + i;
-        int j = origEnd;
-        checkloop: while (i < origEnd) {
-            char c = arr[i];
-            switch (c) {
-                case '\n':
-                    if (lastWasCR) {
-                        j = i;
-                        i++;
-                        lastWasCR = false;
-                        break checkloop;
-                    }
-                    lastWasCR = false;
-                    break;
-                case '\r':
-                    arr[i] = '\n';
-                    lastWasCR = true;
-                    break;
-                default:
-                    lastWasCR = false;
-                    break;
-            }
-            i++;
-        }
-        while (i < origEnd) {
-            char c = arr[i];
-            switch (c) {
-                case '\n':
-                    if (!lastWasCR) {
-                        arr[j] = '\n';
-                        j++;
-                    }
-                    lastWasCR = false;
-                    break;
-                case '\r':
-                    arr[j] = '\n';
-                    j++;
-                    lastWasCR = true;
-                    break;
-                default:
-                    arr[j] = c;
-                    j++;
-                    lastWasCR = false;
-                    break;
-            }
-            i++;
-        }
-        buffer.setLength(j - buffer.getOffset());
-        return lastWasCR;
-    }
-
     private char read() throws SAXException {
         char c;
         pos++;
@@ -4798,10 +4742,6 @@ public class Tokenizer implements Locator {
         colPrev = col;
         if (nextCharOnNewLine) {
             line++;
-            if (line == 5086) {
-                int i = 0;
-                i++;
-            }
             col = 1;
             nextCharOnNewLine = false;
         } else {
@@ -4812,7 +4752,16 @@ public class Tokenizer implements Locator {
         if (errorHandler == null
                 && contentNonXmlCharPolicy == XmlViolationPolicy.ALLOW) {
             switch (c) {
+                case '\r':
+                    nextCharOnNewLine = true;
+                    buf[pos] = '\n';
+                    prev = '\r';
+                    return '\n';                    
                 case '\n':
+                    if (prev == '\r') {
+                        pos--;
+                        return '\u0000';
+                    }
                     nextCharOnNewLine = true;
                     break;
                 case '\u0000':
@@ -4831,7 +4780,16 @@ public class Tokenizer implements Locator {
                 alreadyComplainedAboutNonAscii = true;
             }
             switch (c) {
+                case '\r':
+                    nextCharOnNewLine = true;
+                    buf[pos] = '\n';
+                    prev = '\r';
+                    return '\n';                    
                 case '\n':
+                    if (prev == '\r') {
+                        pos--;
+                        return '\u0000';
+                    }
                     nextCharOnNewLine = true;
                     break;
                 case '\u0000':
@@ -4897,8 +4855,8 @@ public class Tokenizer implements Locator {
                         warnAboutPrivateUseChar();
                     }
             }
-            prev = c;
         }
+        prev = c;
         return c;
     }
 
@@ -4930,5 +4888,9 @@ public class Tokenizer implements Locator {
         tagName = null;
         attributeName = null;
         tokenHandler.endTokenization();
+    }
+
+    public void requestSuspension() {
+        shouldSuspend = true;
     }
 }

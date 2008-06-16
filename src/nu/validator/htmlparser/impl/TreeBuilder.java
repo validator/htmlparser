@@ -4172,6 +4172,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     // ------------------------------- //
 
+    protected final void requestSuspension() {
+        tokenizer.requestSuspension();
+    }
+    
     protected abstract T createElement(String ns, String name,
             HtmlAttributes attributes) throws SAXException;
 
