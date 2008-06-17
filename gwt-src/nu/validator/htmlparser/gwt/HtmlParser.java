@@ -23,13 +23,18 @@
 
 package nu.validator.htmlparser.gwt;
 
+import java.util.LinkedList;
+
 import nu.validator.htmlparser.impl.Tokenizer;
 import nu.validator.htmlparser.impl.UTF16Buffer;
 
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.user.client.Timer;
+import com.ibm.icu.text.UTF16;
 
 /**
  * This class implements an HTML5 parser that exposes data through the DOM 
@@ -65,6 +70,22 @@ public class HtmlParser {
     private final Tokenizer tokenizer;
 
     private final BrowserTreeBuilder domTreeBuilder;
+
+    private final StringBuilder documentWriteBuffer = new StringBuilder();
+
+    private ErrorHandler errorHandler;
+
+    private UTF16Buffer stream;
+
+    private int streamLength;
+
+    private boolean lastWasCR;
+
+    private boolean ending;
+
+    private ParseEndListener parseEndListener;
+
+    private final LinkedList<UTF16Buffer> bufferStack = new LinkedList<UTF16Buffer>();
 
     /**
      * Instantiates the parser
@@ -112,28 +133,109 @@ public class HtmlParser {
      * @throws MalformedURLException
      */
     private void tokenize(String source, String context) throws SAXException {
-        boolean lastWasCR = false;
-        UTF16Buffer buffer = new UTF16Buffer(source.toCharArray(), 0, source.length());
+        lastWasCR = false;
+        ending = false;
+        documentWriteBuffer.setLength(0);
+        streamLength = source.length();
+        stream = new UTF16Buffer(source.toCharArray(), 0,
+                (streamLength < 512 ? streamLength : 512));
+        bufferStack.clear();
+        push(stream);
         domTreeBuilder.setFragmentContext(context);
-        try {
-            tokenizer.start();
-            while (buffer.hasMore()) {
-                buffer.adjust(lastWasCR);
-                lastWasCR = false;
-                if (buffer.hasMore()) {
-                    lastWasCR = tokenizer.tokenizeBuffer(buffer);                    
+        tokenizer.start();
+        pump();
+    }
+
+    private void pump() throws SAXException {
+        if (ending) {
+            tokenizer.end();
+            parseEndListener.parseComplete();
+            // Don't schedule timeout
+            return;
+        }
+
+        int docWriteLen = documentWriteBuffer.length();
+        if (docWriteLen > 0) {
+            char[] newBuf = new char[docWriteLen];
+            documentWriteBuffer.getChars(0, docWriteLen, newBuf, 0);
+            push(new UTF16Buffer(newBuf, 0, docWriteLen));
+            documentWriteBuffer.setLength(0);
+        }
+
+        for (;;) {
+            UTF16Buffer buffer = peek();
+            if (!buffer.hasMore()) {
+                if (buffer == stream) {
+                    if (buffer.getEnd() == streamLength) {
+                        // Stop parsing
+                        tokenizer.eof();
+                        ending = true;
+                        break;
+                    } else {
+                        int newEnd = buffer.getStart() + 512;
+                        buffer.setEnd(newEnd < streamLength ? newEnd
+                                : streamLength);
+                        continue;
+                    }
+                } else {
+                    pop();
+                    continue;
                 }
             }
-            tokenizer.eof();
-        } finally {
-            tokenizer.end();
+            // now we have a non-empty buffer
+            buffer.adjust(lastWasCR);
+            lastWasCR = false;
+            if (buffer.hasMore()) {
+                lastWasCR = tokenizer.tokenizeBuffer(buffer);
+                break;
+            } else {
+                continue;
+            }
         }
+
+        // schedule
+        Timer timer = new Timer() {
+
+            @Override public void run() {
+                try {
+                    pump();
+                } catch (SAXException e) {
+                    ending = true;
+                    if (errorHandler != null) {
+                        try {
+                            errorHandler.fatalError(new SAXParseException(
+                                    e.getMessage(), null, null, -1, -1, e));
+                        } catch (SAXException e1) {
+                        }
+                    }
+                }
+            }
+
+        };
+        timer.schedule(0);
+    }
+
+    private void push(UTF16Buffer buffer) {
+        bufferStack.addLast(buffer);
+    }
+
+    private UTF16Buffer peek() {
+        return bufferStack.getLast();
+    }
+
+    private void pop() {
+        bufferStack.removeLast();
+    }
+
+    public void documentWrite(CharSequence text) {
+        documentWriteBuffer.append(text);
     }
 
     /**
      * @see javax.xml.parsers.DocumentBuilder#setErrorHandler(org.xml.sax.ErrorHandler)
      */
     public void setErrorHandler(ErrorHandler errorHandler) {
+        this.errorHandler = errorHandler;
         domTreeBuilder.setErrorHandler(errorHandler);
         tokenizer.setErrorHandler(errorHandler);
     }
@@ -155,5 +257,5 @@ public class HtmlParser {
     public void setScriptingEnabled(boolean scriptingEnabled) {
         domTreeBuilder.setScriptingEnabled(scriptingEnabled);
     }
-    
+
 }
