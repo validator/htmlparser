@@ -27,7 +27,7 @@ package nu.validator.htmlparser.impl;
  * @version $Id$
  * @author hsivonen
  */
-public final class Entities {
+public final class NamedCharacters {
     static final String[] NAMES = { "AElig", "AElig;", "AMP", "AMP;", "Aacute",
             "Aacute;", "Acirc", "Acirc;", "Agrave", "Agrave;", "Alpha;",
             "Aring", "Aring;", "Atilde", "Atilde;", "Auml", "Auml;", "Beta;",
