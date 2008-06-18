@@ -39,7 +39,6 @@ import java.util.Arrays;
 
 import nu.validator.htmlparser.annotation.Local;
 import nu.validator.htmlparser.annotation.NoLength;
-import nu.validator.htmlparser.common.CharacterHandler;
 import nu.validator.htmlparser.common.TokenHandler;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
 
@@ -149,7 +148,7 @@ public class Tokenizer implements Locator {
 
     private static final int CONSUME_NCR = 38;
 
-    private static final int ENTITY_LOOP = 39;
+    private static final int CHARACTER_REFERENCE_LOOP = 39;
 
     private static final int HEX_NCR_LOOP = 41;
 
@@ -302,7 +301,7 @@ public class Tokenizer implements Locator {
 
     private int lo = 0;
 
-    private int hi = (Entities.NAMES.length - 1);
+    private int hi = (NamedCharacters.NAMES.length - 1);
 
     private int candidate = -1;
 
@@ -1204,7 +1203,7 @@ public class Tokenizer implements Locator {
         additional = '\u0000';
         entCol = -1;
         lo = 0;
-        hi = (Entities.NAMES.length - 1);
+        hi = (NamedCharacters.NAMES.length - 1);
         candidate = -1;
         strBufMark = 0;
         prevValue = -1;
@@ -1314,7 +1313,7 @@ public class Tokenizer implements Locator {
                                  * U+0026 AMPERSAND (&) When the content model
                                  * flag is set to one of the PCDATA or RCDATA
                                  * states and the escape flag is false: switch
-                                 * to the entity data state. Otherwise: treat it
+                                 * to the character reference data state. Otherwise: treat it
                                  * as per the "anything else" entry below.
                                  */
                                 flushChars();
@@ -2355,7 +2354,7 @@ public class Tokenizer implements Locator {
                                 continue stateloop;
                             case '&':
                                 /*
-                                 * U+0026 AMPERSAND (&) Switch to the entity in
+                                 * U+0026 AMPERSAND (&) Switch to the character reference in
                                  * attribute value state, with the additional
                                  * allowed character being U+0022 QUOTATION MARK
                                  * (").
@@ -2400,7 +2399,7 @@ public class Tokenizer implements Locator {
                                 continue stateloop;
                             case '&':
                                 /*
-                                 * U+0026 AMPERSAND (&) Switch to the entity in
+                                 * U+0026 AMPERSAND (&) Switch to the character reference in
                                  * attribute value state, with the + additional
                                  * allowed character being U+0027 APOSTROPHE
                                  * (').
@@ -2451,7 +2450,7 @@ public class Tokenizer implements Locator {
                                 continue stateloop;
                             case '&':
                                 /*
-                                 * U+0026 AMPERSAND (&) Switch to the entity in
+                                 * U+0026 AMPERSAND (&) Switch to the character reference in
                                  * attribute value state, with no + additional
                                  * allowed character.
                                  */
@@ -3811,14 +3810,14 @@ public class Tokenizer implements Locator {
                      * return a value and never requires the caller to
                      * backtrack. This state takes care of emitting characters
                      * or appending to the current attribute value. It also
-                     * takes care of that in the case when consuming the entity
+                     * takes care of that in the case when consuming the character reference
                      * fails.
                      */
                     clearStrBuf();
                     appendStrBuf('&');
                     /*
-                     * This section defines how to consume an entity. This
-                     * definition is used when parsing entities in text and in
+                     * This section defines how to consume a character reference. This
+                     * definition is used when parsing character references in text and in
                      * attributes.
                      * 
                      * The behavior depends on the identity of the next
@@ -3855,15 +3854,15 @@ public class Tokenizer implements Locator {
                             }
                             entCol = -1;
                             lo = 0;
-                            hi = (Entities.NAMES.length - 1);
+                            hi = (NamedCharacters.NAMES.length - 1);
                             candidate = -1;
                             strBufMark = 0;
-                            state = Tokenizer.ENTITY_LOOP;
+                            state = Tokenizer.CHARACTER_REFERENCE_LOOP;
                             reconsume = true;
                             // FALL THROUGH continue stateloop;
                     }
                     // WARNING FALLTHRU CASE TRANSITION: DON'T REORDER
-                case ENTITY_LOOP:
+                case CHARACTER_REFERENCE_LOOP:
                     outer: for (;;) {
                         if (!reconsume) {
                             c = read();
@@ -3877,18 +3876,18 @@ public class Tokenizer implements Locator {
                          * Anything else Consume the maximum number of
                          * characters possible, with the consumed characters
                          * case-sensitively matching one of the identifiers in
-                         * the first column of the entities table.
+                         * the first column of the named character references table.
                          */
                         hiloop: for (;;) {
                             if (hi == -1) {
                                 break hiloop;
                             }
-                            if (entCol == Entities.NAMES[hi].length()) {
+                            if (entCol == NamedCharacters.NAMES[hi].length()) {
                                 break hiloop;
                             }
-                            if (entCol > Entities.NAMES[hi].length()) {
+                            if (entCol > NamedCharacters.NAMES[hi].length()) {
                                 break outer;
-                            } else if (c < Entities.NAMES[hi].charAt(entCol)) {
+                            } else if (c < NamedCharacters.NAMES[hi].charAt(entCol)) {
                                 hi--;
                             } else {
                                 break hiloop;
@@ -3899,13 +3898,13 @@ public class Tokenizer implements Locator {
                             if (hi < lo) {
                                 break outer;
                             }
-                            if (entCol == Entities.NAMES[lo].length()) {
+                            if (entCol == NamedCharacters.NAMES[lo].length()) {
                                 candidate = lo;
                                 strBufMark = strBufLen;
                                 lo++;
-                            } else if (entCol > Entities.NAMES[lo].length()) {
+                            } else if (entCol > NamedCharacters.NAMES[lo].length()) {
                                 break outer;
-                            } else if (c > Entities.NAMES[lo].charAt(entCol)) {
+                            } else if (c > NamedCharacters.NAMES[lo].charAt(entCol)) {
                                 lo++;
                             } else {
                                 break loloop;
@@ -3930,7 +3929,7 @@ public class Tokenizer implements Locator {
                         reconsume = true;
                         continue stateloop;
                     } else {
-                        if (!Entities.NAMES[candidate].endsWith(";")) {
+                        if (!NamedCharacters.NAMES[candidate].endsWith(";")) {
                             /*
                              * If the last character matched is not a U+003B
                              * SEMICOLON (;), there is a parse error.
@@ -3973,9 +3972,9 @@ public class Tokenizer implements Locator {
                         /*
                          * Otherwise, return a character token for the character
                          * corresponding to the entity name (as given by the
-                         * second column of the entities table).
+                         * second column of the named character references table).
                          */
-                        char[] val = Entities.VALUES[candidate];
+                        char[] val = NamedCharacters.VALUES[candidate];
                         emitOrAppend(val, returnState);
                         // this is so complicated!
                         if (strBufMark < strBufLen) {
@@ -4231,7 +4230,7 @@ public class Tokenizer implements Locator {
              * character token for the Unicode character given in the second
              * column of that row.
              */
-            char[] val = Entities.WINDOWS_1252[value - 0x80];
+            char[] val = NamedCharacters.WINDOWS_1252[value - 0x80];
             emitOrAppend(val, returnState);
         } else if (value == 0x0D) {
             err("A numeric character reference expanded to carriage return.");
@@ -4559,7 +4558,7 @@ public class Tokenizer implements Locator {
                     emitOrAppendStrBuf(returnState);
                     state = returnState;
                     continue;
-                case ENTITY_LOOP:
+                case CHARACTER_REFERENCE_LOOP:
                     outer: for (;;) {
                         char c = '\u0000';
                         entCol++;
@@ -4567,18 +4566,18 @@ public class Tokenizer implements Locator {
                          * Anything else Consume the maximum number of
                          * characters possible, with the consumed characters
                          * case-sensitively matching one of the identifiers in
-                         * the first column of the entities table.
+                         * the first column of the named character references table.
                          */
                         hiloop: for (;;) {
                             if (hi == -1) {
                                 break hiloop;
                             }
-                            if (entCol == Entities.NAMES[hi].length()) {
+                            if (entCol == NamedCharacters.NAMES[hi].length()) {
                                 break hiloop;
                             }
-                            if (entCol > Entities.NAMES[hi].length()) {
+                            if (entCol > NamedCharacters.NAMES[hi].length()) {
                                 break outer;
-                            } else if (c < Entities.NAMES[hi].charAt(entCol)) {
+                            } else if (c < NamedCharacters.NAMES[hi].charAt(entCol)) {
                                 hi--;
                             } else {
                                 break hiloop;
@@ -4589,13 +4588,13 @@ public class Tokenizer implements Locator {
                             if (hi < lo) {
                                 break outer;
                             }
-                            if (entCol == Entities.NAMES[lo].length()) {
+                            if (entCol == NamedCharacters.NAMES[lo].length()) {
                                 candidate = lo;
                                 strBufMark = strBufLen;
                                 lo++;
-                            } else if (entCol > Entities.NAMES[lo].length()) {
+                            } else if (entCol > NamedCharacters.NAMES[lo].length()) {
                                 break outer;
-                            } else if (c > Entities.NAMES[lo].charAt(entCol)) {
+                            } else if (c > NamedCharacters.NAMES[lo].charAt(entCol)) {
                                 lo++;
                             } else {
                                 break loloop;
@@ -4618,7 +4617,7 @@ public class Tokenizer implements Locator {
                         state = returnState;
                         continue eofloop;
                     } else {
-                        if (!Entities.NAMES[candidate].endsWith(";")) {
+                        if (!NamedCharacters.NAMES[candidate].endsWith(";")) {
                             /*
                              * If the last character matched is not a U+003B
                              * SEMICOLON (;), there is a parse error.
@@ -4660,9 +4659,9 @@ public class Tokenizer implements Locator {
                         /*
                          * Otherwise, return a character token for the character
                          * corresponding to the entity name (as given by the
-                         * second column of the entities table).
+                         * second column of the named character references table).
                          */
-                        char[] val = Entities.VALUES[candidate];
+                        char[] val = NamedCharacters.VALUES[candidate];
                         emitOrAppend(val, returnState);
                         // this is so complicated!
                         if (strBufMark < strBufLen) {
