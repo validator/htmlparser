@@ -273,10 +273,10 @@ public final class HtmlAttributes implements Attributes {
             if (xmlnsNames.length == xmlnsLength) {
                 int newLen = xmlnsNames.length + 2;
                 AttributeName[] newNames = new AttributeName[newLen];
-                System.arraycopy(xmlnsNames, 0, newNames, 0, names.length);
+                System.arraycopy(xmlnsNames, 0, newNames, 0, xmlnsNames.length);
                 xmlnsNames = newNames;
                 String[] newValues = new String[newLen];
-                System.arraycopy(xmlnsValues, 0, newValues, 0, values.length);
+                System.arraycopy(xmlnsValues, 0, newValues, 0, xmlnsValues.length);
                 xmlnsValues = newValues;
             }
             xmlnsNames[xmlnsLength] = name;
