@@ -145,7 +145,7 @@ public class Tokenizer implements Locator {
 
     private static final int DOCTYPE_YSTEM = 36;
 
-    private static final int CONSUME_ENTITY = 37;
+    private static final int CONSUME_CHARACTER_REFERENCE = 37;
 
     private static final int CONSUME_NCR = 38;
 
@@ -1320,7 +1320,7 @@ public class Tokenizer implements Locator {
                                 flushChars();
                                 additional = '\u0000';
                                 returnState = state;
-                                state = Tokenizer.CONSUME_ENTITY;
+                                state = Tokenizer.CONSUME_CHARACTER_REFERENCE;
                                 continue stateloop;
                             case '<':
                                 /*
@@ -1530,13 +1530,13 @@ public class Tokenizer implements Locator {
                                  * U+0026 AMPERSAND (&) When the content model
                                  * flag is set to one of the PCDATA or RCDATA
                                  * states and the escape flag is false: switch
-                                 * to the entity data state. Otherwise: treat it
+                                 * to the character reference data state. Otherwise: treat it
                                  * as per the "anything else" entry below.
                                  */
                                 flushChars();
                                 additional = '\u0000';
                                 returnState = state;
-                                state = Tokenizer.CONSUME_ENTITY;
+                                state = Tokenizer.CONSUME_CHARACTER_REFERENCE;
                                 continue stateloop;
                             case '<':
                                 /*
@@ -2362,7 +2362,7 @@ public class Tokenizer implements Locator {
                                  */
                                 additional = '\"';
                                 returnState = state;
-                                state = Tokenizer.CONSUME_ENTITY;
+                                state = Tokenizer.CONSUME_CHARACTER_REFERENCE;
                                 continue stateloop;
                             default:
                                 /*
@@ -2407,7 +2407,7 @@ public class Tokenizer implements Locator {
                                  */
                                 additional = '\'';
                                 returnState = state;
-                                state = Tokenizer.CONSUME_ENTITY;
+                                state = Tokenizer.CONSUME_CHARACTER_REFERENCE;
                                 continue stateloop;
                             default:
                                 /*
@@ -2457,7 +2457,7 @@ public class Tokenizer implements Locator {
                                  */
                                 additional = '\u0000';
                                 returnState = state;
-                                state = Tokenizer.CONSUME_ENTITY;
+                                state = Tokenizer.CONSUME_CHARACTER_REFERENCE;
                                 continue stateloop;
                             case '>':
                                 /*
@@ -3237,7 +3237,7 @@ public class Tokenizer implements Locator {
                                 /*
                                  * U+0022 QUOTATION MARK (") Set the DOCTYPE
                                  * token's public identifier to the empty
-                                 * string,
+                                 * string (not missing),
                                  */
                                 clearLongStrBuf();
                                 /*
@@ -3249,7 +3249,7 @@ public class Tokenizer implements Locator {
                             case '\'':
                                 /*
                                  * U+0027 APOSTROPHE (') Set the DOCTYPE token's
-                                 * public identifier to the empty string,
+                                 * public identifier to the empty string (not missing),
                                  */
                                 clearLongStrBuf();
                                 /*
@@ -3411,7 +3411,7 @@ public class Tokenizer implements Locator {
                                 /*
                                  * U+0022 QUOTATION MARK (") Set the DOCTYPE
                                  * token's system identifier to the empty
-                                 * string,
+                                 * string (not missing),
                                  */
                                 clearLongStrBuf();
                                 /*
@@ -3423,7 +3423,7 @@ public class Tokenizer implements Locator {
                             case '\'':
                                 /*
                                  * U+0027 APOSTROPHE (') Set the DOCTYPE token's
-                                 * system identifier to the empty string,
+                                 * system identifier to the empty string (not missing), 
                                  */
                                 clearLongStrBuf();
                                 /*
@@ -3488,7 +3488,7 @@ public class Tokenizer implements Locator {
                                 /*
                                  * U+0022 QUOTATION MARK (") Set the DOCTYPE
                                  * token's system identifier to the empty
-                                 * string,
+                                 * string (not missing),
                                  */
                                 clearLongStrBuf();
                                 /*
@@ -3500,7 +3500,7 @@ public class Tokenizer implements Locator {
                             case '\'':
                                 /*
                                  * U+0027 APOSTROPHE (') Set the DOCTYPE token's
-                                 * system identifier to the empty string,
+                                 * system identifier to the empty string (not missing),
                                  */
                                 clearLongStrBuf();
                                 /*
@@ -3801,7 +3801,7 @@ public class Tokenizer implements Locator {
                             continue stateloop;
 
                     }
-                case CONSUME_ENTITY:
+                case CONSUME_CHARACTER_REFERENCE:
                     c = read();
                     if (c == '\u0000') {
                         break stateloop;
@@ -4236,52 +4236,46 @@ public class Tokenizer implements Locator {
         } else if (value == 0x0D) {
             err("A numeric character reference expanded to carriage return.");
             emitOrAppend(Tokenizer.LF, returnState);
-        } else if (value == 0) {
-            /*
-             * Otherwise, if the number is zero, if the number is higher than
-             * 0x10FFFF, or if it's one of the surrogate characters (characters
-             * in the range 0xD800 to 0xDFFF), then this is a parse error;
-             * return a character token for the U+FFFD REPLACEMENT CHARACTER
-             * character instead.
-             */
-            err("Character reference expands to U+0000.");
-            emitOrAppend(Tokenizer.REPLACEMENT_CHARACTER, returnState);
-        } else if ((contentSpacePolicy != XmlViolationPolicy.ALLOW)
-                && (value == 0xB || value == 0xC)) {
+        } else if (value == 0xC && contentSpacePolicy != XmlViolationPolicy.ALLOW) {
             if (contentSpacePolicy == XmlViolationPolicy.ALTER_INFOSET) {
                 emitOrAppend(Tokenizer.SPACE, returnState);
             } else if (contentSpacePolicy == XmlViolationPolicy.FATAL) {
-                fatal("A character reference expanded to a space character that is not legal XML 1.0 white space.");
+                fatal("A character reference expanded to a form feed which is not legal XML 1.0 white space.");
             }
+        } else if ((value >= 0x0000 && value <= 0x0008) || (value >= 0x000E && value <= 0x001F) || value == 0x007F) {
+            /*
+             * Otherwise, if the number is in the range 0x0000 to 0x0008, 0x000E
+             * to 0x001F, 0x007F to 0x009F, 0xD800 to 0xDFFF , 0xFDD0 to 0xFDDF,
+             * or is one of 0xFFFE, 0xFFFF, 0x1FFFE, 0x1FFFF, 0x2FFFE, 0x2FFFF,
+             * 0x3FFFE, 0x3FFFF, 0x4FFFE, 0x4FFFF, 0x5FFFE, 0x5FFFF, 0x6FFFE,
+             * 0x6FFFF, 0x7FFFE, 0x7FFFF, 0x8FFFE, 0x8FFFF, 0x9FFFE, 0x9FFFF,
+             * 0xAFFFE, 0xAFFFF, 0xBFFFE, 0xBFFFF, 0xCFFFE, 0xCFFFF, 0xDFFFE,
+             * 0xDFFFF, 0xEFFFE, 0xEFFFF, 0xFFFFE, 0xFFFFF, 0x10FFFE, or
+             * 0x10FFFF, or is higher than 0x10FFFF, then this is a parse error;
+             * return a character token for the U+FFFD REPLACEMENT CHARACTER
+             * character instead.
+             */
+            err("Character reference expands to a control character (" + toUPlusString((char) value) + ").");
+            emitOrAppend(Tokenizer.REPLACEMENT_CHARACTER, returnState);
         } else if ((value & 0xF800) == 0xD800) {
             err("Character reference expands to a surrogate.");
             emitOrAppend(Tokenizer.REPLACEMENT_CHARACTER, returnState);
+        } else if (isNonCharacter(value)) {
+            err("Character reference expands to a non-character.");
+            emitOrAppend(Tokenizer.REPLACEMENT_CHARACTER, returnState);            
         } else if (value <= 0xFFFF) {
             /*
              * Otherwise, return a character token for the Unicode character
              * whose code point is that number.
              */
             char ch = (char) value;
-            if (ch < '\t' || (ch > '\r' && ch < ' ') || isNonCharacter(ch)) {
-                if (contentNonXmlCharPolicy != XmlViolationPolicy.FATAL) {
-                    if (contentNonXmlCharPolicy == XmlViolationPolicy.ALTER_INFOSET) {
-                        ch = '\uFFFD';
-                    }
-                    warn("Character reference expanded to a character that is not a legal XML 1.0 character.");
-                } else {
-                    fatal("Character reference expanded to a character that is not a legal XML 1.0 character.");
-                }
-            }
-            if (isPrivateUse(ch)) {
+            if (errorHandler != null && isPrivateUse(ch)) {
                 warnAboutPrivateUseChar();
             }
             bmpChar[0] = ch;
             emitOrAppend(bmpChar, returnState);
         } else if (value <= 0x10FFFF) {
-            if (isNonCharacter(value)) {
-                warn("Character reference expands to an astral non-character.");
-            }
-            if (isAstralPrivateUse(value)) {
+            if (errorHandler != null && isAstralPrivateUse(value)) {
                 warnAboutPrivateUseChar();
             }
             astralChar[0] = (char) (Tokenizer.LEAD_OFFSET + (value >> 10));
@@ -4532,8 +4526,6 @@ public class Tokenizer implements Locator {
                      */
                     break eofloop;
                 case BOGUS_DOCTYPE:
-                    /* EOF Parse error. */
-                    err("End of file inside doctype.");
                     /*
                      * Emit that DOCTYPE token.
                      */
@@ -4543,7 +4535,7 @@ public class Tokenizer implements Locator {
                      * Reconsume the EOF character in the data state.
                      */
                     break eofloop;
-                case CONSUME_ENTITY:
+                case CONSUME_CHARACTER_REFERENCE:
                     /*
                      * Unlike the definition is the spec, this state does not
                      * return a value and never requires the caller to
