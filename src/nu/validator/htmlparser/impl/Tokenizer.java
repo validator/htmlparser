@@ -4241,6 +4241,12 @@ public class Tokenizer implements Locator {
             } else if (contentSpacePolicy == XmlViolationPolicy.FATAL) {
                 fatal("A character reference expanded to a form feed which is not legal XML 1.0 white space.");
             }
+        } else if (value == 0xB && contentNonXmlCharPolicy != XmlViolationPolicy.ALLOW) {
+            if (contentSpacePolicy == XmlViolationPolicy.ALTER_INFOSET) {
+                emitOrAppend(Tokenizer.REPLACEMENT_CHARACTER, returnState);
+            } else if (contentSpacePolicy == XmlViolationPolicy.FATAL) {
+                fatal("A character reference expanded to a vtab which is not legal XML 1.0 white space.");
+            }            
         } else if ((value >= 0x0000 && value <= 0x0008) || (value >= 0x000E && value <= 0x001F) || value == 0x007F) {
             /*
              * Otherwise, if the number is in the range 0x0000 to 0x0008, 0x000E
