@@ -1,12 +1,12 @@
 tokenization.txt represents the state of the spec implemented in Tokenizer.java.
 
 To get a diffable version corresponding to the current spec:
-lynx -display_charset=utf-8 -dump -nolist http://www.whatwg.org/specs/web-apps/current-work/multipage/section-tokenisation.html > current.txt
+lynx -display_charset=utf-8 -dump -nolist http://www.whatwg.org/specs/web-apps/current-work/multipage/tokenisation.html > current.txt
 
 tree-construction.txt represents the state of the spec implemented in TreeBuilder.java.
 
 To get a diffable version corresponding to the current spec:
-lynx -display_charset=utf-8 -dump -nolist http://www.whatwg.org/specs/web-apps/current-work/multipage/section-tree-construction.html > current.txt
+lynx -display_charset=utf-8 -dump -nolist http://www.whatwg.org/specs/web-apps/current-work/multipage/tree-construction.html > current.txt
 
 
 The text comes from the WHATWG HTML 5 spec which carries the following notice:
