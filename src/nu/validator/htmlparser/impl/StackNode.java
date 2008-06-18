@@ -83,6 +83,18 @@ final class StackNode<T> {
         this.tainted = false;
     }
 
+    StackNode(final String ns, ElementName elementName, final T node, String popName) {
+        this.group = elementName.group;
+        this.name = elementName.name;
+        this.popName = popName;
+        this.ns = ns;
+        this.node = node;
+        this.scoping = elementName.scoping;
+        this.special = elementName.special;
+        this.fosterParenting = elementName.fosterParenting;
+        this.tainted = false;
+    }
+    
     // [NOCPP[
     /**
      * @see java.lang.Object#toString()
