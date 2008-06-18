@@ -295,13 +295,13 @@ public class Driver extends Tokenizer {
                     }
                 }
             }
-            bufr.setStart(0);
             while ((len = reader.read(buffer)) != -1) {
                 assert len > 0;
                 for (int i = 0; i < characterHandlers.length; i++) {
                     CharacterHandler ch = characterHandlers[i];
                     ch.characters(buffer, 0, len);
                 }
+                bufr.setStart(0);
                 bufr.setEnd(len);
                 while (bufr.hasMore()) {
                     bufr.adjust(lastWasCR);
