@@ -311,8 +311,6 @@ public class Tokenizer implements Locator {
 
     private int value = 0;
 
-    private boolean inForeign = false; // XXX
-
     private boolean seenDigits = false;
 
     private int pos = 0;
@@ -1208,7 +1206,6 @@ public class Tokenizer implements Locator {
         strBufMark = 0;
         prevValue = -1;
         value = 0;
-        inForeign = false; // XXX
         seenDigits = false;
         shouldSuspend = false;
     }
@@ -2686,7 +2683,7 @@ public class Tokenizer implements Locator {
                             state = Tokenizer.MARKUP_DECLARATION_OCTYPE;
                             continue stateloop;
                         case '[':
-                            if (inForeign) {
+                            if (tokenHandler.inForeign()) {
                                 appendToComment(c);
                                 index = 0;
                                 state = Tokenizer.CDATA_START;

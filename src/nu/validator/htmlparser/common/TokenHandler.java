@@ -124,4 +124,5 @@ public interface TokenHandler {
      */
     public void endTokenization() throws SAXException;
     
+    public boolean inForeign() throws SAXException;
 }

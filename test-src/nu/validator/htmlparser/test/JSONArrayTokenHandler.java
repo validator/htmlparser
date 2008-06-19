@@ -167,4 +167,13 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
         
     }
 
+
+    /**
+     * @see nu.validator.htmlparser.common.TokenHandler#inForeign()
+     */
+    public boolean inForeign() throws SAXException {
+        // TODO Auto-generated method stub
+        return false;
+    }
+    
 }
