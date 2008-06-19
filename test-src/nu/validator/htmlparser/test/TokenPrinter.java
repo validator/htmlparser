@@ -189,5 +189,12 @@ public class TokenPrinter implements TokenHandler, ErrorHandler {
             throw new SAXException(e);
         }        
     }
-    
+
+    /**
+     * @see nu.validator.htmlparser.common.TokenHandler#inForeign()
+     */
+    public boolean inForeign() throws SAXException {
+        // TODO Auto-generated method stub
+        return false;
+    }
 }

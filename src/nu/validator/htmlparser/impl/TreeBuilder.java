@@ -4454,4 +4454,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     public void setReportingDoctype(boolean reportingDoctype) {
         this.reportingDoctype = reportingDoctype;
     }
+
+    /**
+     * @see nu.validator.htmlparser.common.TokenHandler#inForeign()
+     */
+    public boolean inForeign() throws SAXException {
+        return foreignFlag == IN_FOREIGN;
+    }
 }
