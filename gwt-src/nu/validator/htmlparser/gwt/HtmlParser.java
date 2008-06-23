@@ -175,6 +175,7 @@ public class HtmlParser {
             lastWasCR = false;
             if (buffer.hasMore()) {
                 lastWasCR = tokenizer.tokenizeBuffer(buffer);
+                domTreeBuilder.maybeRunScript();
                 break;
             } else {
                 continue;
@@ -221,7 +222,8 @@ public class HtmlParser {
             buffer.adjust(lastWasCR);
             lastWasCR = false;
             if (buffer.hasMore()) {
-                lastWasCR = tokenizer.tokenizeBuffer(buffer);                    
+                lastWasCR = tokenizer.tokenizeBuffer(buffer);            
+                domTreeBuilder.maybeRunScript();
             }
         }
     }
