@@ -470,7 +470,7 @@ public class Tokenizer implements Locator {
     private XmlViolationPolicy bogusXmlnsPolicy;
     
     private boolean shouldSuspend;
-
+    
     protected Confidence confidence;
 
     /**
@@ -4213,6 +4213,9 @@ public class Tokenizer implements Locator {
             }
         }
         flushChars();
+        if (prev == '\r') {
+            pos--;
+        }
         // Save locals
         stateSave = state;
         returnStateSave = returnState;
@@ -4769,7 +4772,6 @@ public class Tokenizer implements Locator {
                     return '\n';                    
                 case '\n':
                     if (prev == '\r') {
-                        pos--;
                         return '\u0000';
                     }
                     nextCharOnNewLine = true;
