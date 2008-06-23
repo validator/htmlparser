@@ -170,8 +170,15 @@ public final class AttributeName
     }
 
     private static @QName String[] COMPUTE_QNAME(String[] local, String[] prefix) {
-        // TODO Auto-generated method stub
-        return null;
+        @QName String[] rv = new String[4];
+        for (int i = 0; i < rv.length; i++) {
+            if (prefix[i] == null) {
+                rv[i] = local[i];
+            } else {
+                rv[i] = (prefix[i] + ':' + local[i]).intern();
+            }
+        }
+        return rv;
     }
 
     private static AttributeName create(@Local String name, boolean checkNcName) {
