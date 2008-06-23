@@ -1283,6 +1283,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             case BR:
                             case CODE_OR_RUBY_OR_SPAN_OR_SUB_OR_SUP_OR_VAR:
                             case DD_OR_DT:
+                            case UL_OR_OL_OR_DL:
                             case EMBED_OR_IMG:
                             case H1_OR_H2_OR_H3_OR_H4_OR_H5_OR_H6:
                             case HEAD:
@@ -1292,6 +1293,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             case NOBR:
                             case P:
                             case PRE_OR_LISTING:
+                            case TABLE:
                                 err("HTML start tag \u201C"
                                         + name
                                         + "\u201D in a foreign namespace context.");
