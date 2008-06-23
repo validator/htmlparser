@@ -23,6 +23,8 @@
 
 package nu.validator.htmlparser.gwt;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.LinkedList;
 
 import nu.validator.htmlparser.impl.Tokenizer;
@@ -34,7 +36,6 @@ import org.xml.sax.SAXParseException;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Timer;
-import com.ibm.icu.text.UTF16;
 
 /**
  * This class implements an HTML5 parser that exposes data through the DOM 
