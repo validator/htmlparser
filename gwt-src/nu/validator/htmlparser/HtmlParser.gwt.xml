@@ -2,6 +2,7 @@
 	<inherits name="com.google.gwt.core.Core"/>
 	<inherits name="com.google.gwt.user.User"/>
 	<super-source path="translatable"/>
+	<source path="annotation"/>
 	<source path="common"/>
 	<source path="impl"/>	
 	<source path="gwt"/>
