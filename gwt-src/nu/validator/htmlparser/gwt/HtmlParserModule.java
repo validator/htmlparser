@@ -35,6 +35,31 @@ public class HtmlParserModule implements EntryPoint {
         }
     }-*/;
     
+    private static native void installDocWrite(JavaScriptObject doc, HtmlParser parser) /*-{
+        doc.write = function() {
+            if (arguments.length == 0) {
+                return;
+            }
+            var text = arguments[0];
+            for (var i = 1; i < arguments.length; i++) {
+                text += arguments[i];
+            }
+            parser.@nu.validator.htmlparser.gwt.HtmlParser::documentWrite(Ljava/lang/String;)(text);
+        }
+        doc.writeln = function() {
+            if (arguments.length == 0) {
+                parser.@nu.validator.htmlparser.gwt.HtmlParser::documentWrite(Ljava/lang/String;)("\n");
+                return;
+            }
+            var text = arguments[0];
+            for (var i = 1; i < arguments.length; i++) {
+                text += arguments[i];
+            }
+            text += "\n";
+            parser.@nu.validator.htmlparser.gwt.HtmlParser::documentWrite(Ljava/lang/String;)(text);
+        }
+    }-*/;
+    
     @SuppressWarnings("unused")
     private static void parseHtmlDocument(String source, JavaScriptObject document, JavaScriptObject readyCallback, JavaScriptObject errorHandler) throws SAXException {
         if (readyCallback == null) {
@@ -43,6 +68,9 @@ public class HtmlParserModule implements EntryPoint {
         zapChildren(document);
         HtmlParser parser = new HtmlParser(document);
         // XXX error handler
+        
+        installDocWrite(document, parser);
+        
         parser.parse(source, new ParseEndListener(readyCallback));
     }
     

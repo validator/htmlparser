@@ -36,6 +36,10 @@ import com.google.gwt.core.client.JavaScriptObject;
 class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
 
     private JavaScriptObject document;
+    
+    private JavaScriptObject script;
+    
+    private JavaScriptObject placeholder;
 
     protected BrowserTreeBuilder(JavaScriptObject document) {
         super(XmlViolationPolicy.ALLOW, true);
@@ -80,8 +84,14 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
     protected void appendCharacters(JavaScriptObject parent, char[] buf, int start,
             int length) throws SAXException {
         try {
-            appendChild(parent, createTextNode(document, new String(buf, start,
+            if (parent == placeholder) {
+                appendChild(script, createTextNode(document, new String(buf, start,
+                        length)));
+                
+            } else {
+                appendChild(parent, createTextNode(document, new String(buf, start,
                     length)));
+            }
         } catch (JavaScriptException e) {
             fatal(e);
         }
@@ -147,6 +157,13 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
                 setAttributeNS(rv, attributes.getURI(i),
                         attributes.getLocalName(i), attributes.getValue(i));
             }
+            
+            if ("script" == name) {
+                script = rv;
+                placeholder = createElementNS(document, "http://n.validator.nu/placeholder/", "__placeholder__");
+                rv = placeholder;
+            }
+            
             return rv;
         } catch (JavaScriptException e) {
             fatal(e);
@@ -316,10 +333,33 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
      */
     @Override
     protected void start(boolean fragment) throws SAXException {
-
+        script = null;
+        placeholder = null;
     }
 
     protected void documentMode(DocumentMode mode, String publicIdentifier, String systemIdentifier, boolean html4SpecificAdditionalErrorChecks) throws SAXException {
 //        document.setUserData("nu.validator.document-mode", mode, null);
+    }
+
+    /**
+     * @see nu.validator.htmlparser.impl.TreeBuilder#elementPopped(java.lang.String, java.lang.String, java.lang.Object)
+     */
+    @Override protected void elementPopped(String ns, String name,
+            JavaScriptObject node) throws SAXException {
+        if (node == placeholder) {
+            requestSuspension();
+        }
+    }
+    
+    private static native void replace(JavaScriptObject oldNode, JavaScriptObject newNode) /*-{
+        oldNode.parentNode.replaceChild(newNode, oldNode);
+    }-*/;
+    
+    void maybeRunScript() {
+        if (script != null) {
+            replace(placeholder, script);
+            script = null;
+            placeholder = null;
+        }
     }
 }
