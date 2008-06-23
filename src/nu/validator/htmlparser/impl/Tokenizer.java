@@ -3921,7 +3921,9 @@ public class Tokenizer implements Locator {
                          */
                         err("Text after \u201C&\u201D did not match an entity name. Probable cause: \u201C&\u201D should have been escaped as \u201C&amp;\u201D.");
                         emitOrAppendStrBuf(returnState);
-                        cstart = pos;
+                        if ((returnState & (~1)) == 0) {
+                            cstart = pos;
+                        }
                         state = returnState;
                         reconsume = true;
                         continue stateloop;
@@ -3984,7 +3986,9 @@ public class Tokenizer implements Locator {
                                         strBufLen - strBufMark);
                             }
                         }
-                        cstart = pos;
+                        if ((returnState & (~1)) == 0) {
+                            cstart = pos;
+                        }
                         state = returnState;
                         reconsume = true;
                         continue stateloop;
@@ -4078,7 +4082,9 @@ public class Tokenizer implements Locator {
                                         + "\u201D.");
                                 appendStrBuf(';');
                                 emitOrAppendStrBuf(returnState);
-                                cstart = pos + 1;
+                                if ((returnState & (~1)) == 0) {
+                                    cstart = pos + 1;
+                                }
                                 state = returnState;
                                 continue stateloop;
                             }
@@ -4098,7 +4104,9 @@ public class Tokenizer implements Locator {
                                 err("No digits after \u201C" + strBufToString()
                                         + "\u201D.");
                                 emitOrAppendStrBuf(returnState);
-                                cstart = pos;
+                                if ((returnState & (~1)) == 0) {
+                                    cstart = pos;
+                                }
                                 state = returnState;
                                 reconsume = true;
                                 continue stateloop;
@@ -4106,7 +4114,9 @@ public class Tokenizer implements Locator {
                                 err("Character reference was not terminated by a semicolon.");
                                 state = Tokenizer.HANDLE_NCR_VALUE;
                                 reconsume = true;
-                                cstart = pos;
+                                if ((returnState & (~1)) == 0) {
+                                    cstart = pos;
+                                }
                                 // FALL THROUGH continue stateloop;
                                 break decimalloop;
                             }
@@ -4161,7 +4171,9 @@ public class Tokenizer implements Locator {
                                         + "\u201D.");
                                 appendStrBuf(';');
                                 emitOrAppendStrBuf(returnState);
-                                cstart = pos + 1;
+                                if ((returnState & (~1)) == 0) {
+                                    cstart = pos + 1;
+                                }
                                 state = returnState;
                                 continue stateloop;
                             }
@@ -4181,13 +4193,17 @@ public class Tokenizer implements Locator {
                                 err("No digits after \u201C" + strBufToString()
                                         + "\u201D.");
                                 emitOrAppendStrBuf(returnState);
-                                cstart = pos;
+                                if ((returnState & (~1)) == 0) {
+                                    cstart = pos;
+                                }
                                 state = returnState;
                                 reconsume = true;
                                 continue stateloop;
                             } else {
                                 err("Character reference was not terminated by a semicolon.");
-                                cstart = pos;
+                                if ((returnState & (~1)) == 0) {
+                                    cstart = pos;
+                                }
                                 state = Tokenizer.HANDLE_NCR_VALUE;
                                 reconsume = true;
                                 continue stateloop;
