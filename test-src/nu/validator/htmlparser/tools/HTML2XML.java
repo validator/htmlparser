@@ -84,7 +84,7 @@ public class HTML2XML {
         HtmlParser parser = new HtmlParser(XmlViolationPolicy.ALTER_INFOSET);
 
         parser.setErrorHandler(new SystemErrErrorHandler());
-        parser.setContentHandler(serializer);
+        parser.setContentHandler(new EventFixups(serializer));
         parser.setProperty("http://xml.org/sax/properties/lexical-handler",
                 serializer);
         parser.parse(new InputSource(in));
