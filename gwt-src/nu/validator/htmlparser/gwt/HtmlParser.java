@@ -67,6 +67,8 @@ import com.ibm.icu.text.UTF16;
  */
 public class HtmlParser {
 
+    private static final int CHUNK_SIZE = 512;
+    
     private final Tokenizer tokenizer;
 
     private final BrowserTreeBuilder domTreeBuilder;
@@ -105,25 +107,10 @@ public class HtmlParser {
      * @return the doc
      * @see javax.xml.parsers.DocumentBuilder#parse(org.xml.sax.InputSource)
      */
-    public JavaScriptObject parse(String source) throws SAXException {
+    public void parse(String source, ParseEndListener callback) throws SAXException {
+        parseEndListener = callback;
         domTreeBuilder.setFragmentContext(null);
-        tokenize(source, null);
-        return domTreeBuilder.getDocument();
-    }
-
-    /**
-     * Parses a document fragment from a SAX <code>InputSource</code>.
-     * @param is the source
-     * @param context the context element name
-     * @return the doc
-     * @throws IOException
-     * @throws SAXException
-     */
-    public JavaScriptObject parseFragment(String source, String context)
-            throws SAXException {
-        domTreeBuilder.setFragmentContext(context);
-        tokenize(source, context);
-        return domTreeBuilder.getDocumentFragment();
+        tokenize(source, null);   
     }
 
     /**
@@ -138,7 +125,7 @@ public class HtmlParser {
         documentWriteBuffer.setLength(0);
         streamLength = source.length();
         stream = new UTF16Buffer(source.toCharArray(), 0,
-                (streamLength < 512 ? streamLength : 512));
+                (streamLength < CHUNK_SIZE ? streamLength : CHUNK_SIZE));
         bufferStack.clear();
         push(stream);
         domTreeBuilder.setFragmentContext(context);
@@ -149,6 +136,7 @@ public class HtmlParser {
     private void pump() throws SAXException {
         if (ending) {
             tokenizer.end();
+            domTreeBuilder.getDocument(); // drops the internal reference
             parseEndListener.parseComplete();
             // Don't schedule timeout
             return;
@@ -172,7 +160,7 @@ public class HtmlParser {
                         ending = true;
                         break;
                     } else {
-                        int newEnd = buffer.getStart() + 512;
+                        int newEnd = buffer.getStart() + CHUNK_SIZE;
                         buffer.setEnd(newEnd < streamLength ? newEnd
                                 : streamLength);
                         continue;
@@ -212,7 +200,7 @@ public class HtmlParser {
             }
 
         };
-        timer.schedule(0);
+        timer.schedule(1);
     }
 
     private void push(UTF16Buffer buffer) {
@@ -227,8 +215,15 @@ public class HtmlParser {
         bufferStack.removeLast();
     }
 
-    public void documentWrite(CharSequence text) {
-        documentWriteBuffer.append(text);
+    public void documentWrite(String text) throws SAXException {
+        UTF16Buffer buffer = new UTF16Buffer(text.toCharArray(), 0, text.length());
+        while (buffer.hasMore()) {
+            buffer.adjust(lastWasCR);
+            lastWasCR = false;
+            if (buffer.hasMore()) {
+                lastWasCR = tokenizer.tokenizeBuffer(buffer);                    
+            }
+        }
     }
 
     /**

@@ -1,5 +1,6 @@
 <module>
 	<inherits name="com.google.gwt.core.Core"/>
+	<inherits name="com.google.gwt.user.User"/>
 	<super-source path="translatable"/>
 	<source path="common"/>
 	<source path="impl"/>	

@@ -34,30 +34,20 @@ public class HtmlParserModule implements EntryPoint {
             node.removeChild(node.lastChild);
         }
     }-*/;
-
-    private static native void alert(String str) /*-{
-        $wnd.alert(str);
-    }-*/;
     
     @SuppressWarnings("unused")
-    private static JavaScriptObject parseHtmlDocument(String source, JavaScriptObject document, JavaScriptObject errorHandler) throws SAXException {
+    private static void parseHtmlDocument(String source, JavaScriptObject document, JavaScriptObject readyCallback, JavaScriptObject errorHandler) throws SAXException {
+        if (readyCallback == null) {
+            readyCallback = JavaScriptObject.createFunction();
+        }
         zapChildren(document);
         HtmlParser parser = new HtmlParser(document);
-        JavaScriptObject rv = parser.parse(source);
-alert("Done");
-        return rv;
-    }
-
-    @SuppressWarnings("unused")
-    private static JavaScriptObject parseHtmlFragment(String source, String context, JavaScriptObject document, JavaScriptObject errorHandler) throws SAXException {
-        zapChildren(document);
-        HtmlParser parser = new HtmlParser(document);
-        return parser.parseFragment(source, context);        
+        // XXX error handler
+        parser.parse(source, new ParseEndListener(readyCallback));
     }
     
     private static native void exportEntryPoints() /*-{
-        $wnd.parseHtmlDocument = @nu.validator.htmlparser.gwt.HtmlParserModule::parseHtmlDocument(Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;Lcom/google/gwt/core/client/JavaScriptObject;);
-        $wnd.parseHtmlFragment = @nu.validator.htmlparser.gwt.HtmlParserModule::parseHtmlFragment(Ljava/lang/String;Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;Lcom/google/gwt/core/client/JavaScriptObject;);
+        $wnd.parseHtmlDocument = @nu.validator.htmlparser.gwt.HtmlParserModule::parseHtmlDocument(Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;Lcom/google/gwt/core/client/JavaScriptObject;Lcom/google/gwt/core/client/JavaScriptObject;);
     }-*/;
 
     
