@@ -3028,23 +3028,26 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                 pop();
                                 break endtagloop;
                             }
+                            
+                            eltPos = currentPtr;                            
                             for (;;) {
-                                generateImpliedEndTags();
-                                if (isCurrent(name)) {
-                                    pop();
+                                StackNode<T> node = stack[eltPos];
+                                if (node.name == name) {
+                                    generateImpliedEndTags();
+                                    if(!isCurrent(name)) {
+                                        err("End tag \u201C" + name + "\u201D seen but there were unclosed elements.");
+                                    }
+                                    while (currentPtr >= eltPos) {
+                                        pop();
+                                    }
                                     break endtagloop;
                                 }
-                                StackNode<T> node = stack[currentPtr];
-                                if (!(node.scoping || node.special)) {
-                                    err("Unclosed element \u201C" + node.name
-                                            + "\u201D.");
-                                    pop();
-                                } else {
-                                    err("Stray end tag \u201C" + name
-                                            + "\u201D.");
+                                if (node.scoping || node.special) {
+                                    err("Stray end tag \u201C" + name + "\u201D.");
                                     break endtagloop;
                                 }
-                            }
+                                eltPos--;
+                            }                            
                     }
                 case IN_COLUMN_GROUP:
                     switch (group) {
