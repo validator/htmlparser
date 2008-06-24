@@ -1586,27 +1586,26 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                             break starttagloop;
                                         }
                                     case LI:
-                                        implicitlyCloseP();
-                                        eltPos = findLiToPop();
-                                        if (eltPos < currentPtr) {
-                                            err("A \u201Cli\u201D start tag was seen but the previous \u201Cli\u201D element had open children.");
-                                        }
-                                        while (currentPtr >= eltPos) {
-                                            pop();
-                                        }
-                                        appendToCurrentNodeAndPushElementMayFoster(
-                                                "http://www.w3.org/1999/xhtml",
-                                                elementName, attributes);
-                                        break starttagloop;
                                     case DD_OR_DT:
+                                        eltPos = currentPtr;
+                                        for(;;) {
+                                            StackNode<T> node = stack[eltPos];
+                                            if (node.group == group) { // LI or DD_OR_DT
+                                                generateImpliedEndTagsExceptFor(node.name);
+                                                if (eltPos != currentPtr) {
+                                                    err("Unclosed elements inside a list.");
+                                                }
+                                                while (currentPtr >= eltPos) {
+                                                    pop();
+                                                }
+                                                break;
+                                            }
+                                            if (node.scoping || (node.special && node.name != "address" && node.name != "div")) {
+                                                break;
+                                            }
+                                            eltPos--;
+                                        }
                                         implicitlyCloseP();
-                                        eltPos = findDdOrDtToPop();
-                                        if (eltPos < currentPtr) {
-                                            err("A definition list item start tag was seen but the previous definition list item element had open children.");
-                                        }
-                                        while (currentPtr >= eltPos) {
-                                            pop();
-                                        }
                                         appendToCurrentNodeAndPushElementMayFoster(
                                                 "http://www.w3.org/1999/xhtml",
                                                 elementName, attributes);
@@ -2925,36 +2924,45 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             }
                             break endtagloop;
                         case P:
-                            if (!isCurrent(name)) {
-                                err("End tag \u201Cp\u201D seen but there were unclosed elements.");
-                            }
-                            eltPos = findLastInScope(name);
-                            if (eltPos != TreeBuilder.NOT_FOUND_ON_STACK) {
-                                while (currentPtr >= eltPos) {
-                                    pop();
+                            eltPos = findLastInScope("p");
+                            if (eltPos == TreeBuilder.NOT_FOUND_ON_STACK) {
+                                err("No \u201Cp\u201D element in scope but a \u201Cp\u201D end tag seen.");
+                                // XXX inline this case
+                                if (foreignFlag == TreeBuilder.IN_FOREIGN) {
+                                    err("HTML start tag \u201C"
+                                            + name
+                                            + "\u201D in a foreign namespace context.");
+                                    while (stack[currentPtr].ns != "http://www.w3.org/1999/xhtml") {
+                                        pop();
+                                    }
+                                    foreignFlag = TreeBuilder.NOT_IN_FOREIGN;
                                 }
-                            } else {
-                                appendVoidElementToCurrentMayFoster(
-                                        "http://www.w3.org/1999/xhtml", name,
-                                        HtmlAttributes.EMPTY_ATTRIBUTES);
+                                appendVoidElementToCurrentMayFoster("http://www.w3.org/1999/xhtml", name, HtmlAttributes.EMPTY_ATTRIBUTES);
+                                break endtagloop;
                             }
+                            generateImpliedEndTagsExceptFor("p");
+                            assert eltPos != TreeBuilder.NOT_FOUND_ON_STACK;
+                            if (eltPos != currentPtr) {
+                                err("End tag for \u201Cp\u201D seen, but there were unclosed elements.");
+                            }
+                            while (currentPtr >= eltPos) {
+                                pop();
+                            }                            
                             break endtagloop;
                         case DD_OR_DT:
                         case LI:
                             eltPos = findLastInScope(name);
                             if (eltPos == TreeBuilder.NOT_FOUND_ON_STACK) {
-                                err("Stray end tag \u201C" + name + "\u201D.");
-                            } else {
-                                generateImpliedEndTagsExceptFor(name);
-                                if (!isCurrent(name)) {
-                                    err("End tag \u201C"
-                                            + name
-                                            + "\u201D seen but there were unclosed elements.");
-                                }
-                                while (currentPtr >= eltPos) {
-                                    pop();
-                                }
+                                err("No \u201C" + name + "\u201D element in scope but a \u201C" + name + "\u201D end tag seen.");
+                                break endtagloop; // XXX http://www.w3.org/Bugs/Public/show_bug.cgi?id=5792
                             }
+                            generateImpliedEndTagsExceptFor(name);
+                            if (eltPos != currentPtr) {
+                                err("End tag for \u201Cp\u201D seen, but there were unclosed elements.");
+                            }
+                            while (currentPtr >= eltPos) {
+                                pop();
+                            }                            
                             break endtagloop;
                         case H1_OR_H2_OR_H3_OR_H4_OR_H5_OR_H6:
                             eltPos = findLastInScopeHn();
@@ -2997,6 +3005,15 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             break endtagloop;
                         case BR:
                             err("End tag \u201Cbr\u201D.");
+                            if (foreignFlag == TreeBuilder.IN_FOREIGN) {
+                                err("HTML start tag \u201C"
+                                        + name
+                                        + "\u201D in a foreign namespace context.");
+                                while (stack[currentPtr].ns != "http://www.w3.org/1999/xhtml") {
+                                    pop();
+                                }
+                                foreignFlag = TreeBuilder.NOT_IN_FOREIGN;
+                            }
                             reconstructTheActiveFormattingElements();
                             appendVoidElementToCurrentMayFoster(
                                     "http://www.w3.org/1999/xhtml", name,
@@ -3588,12 +3605,13 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (eltPos == TreeBuilder.NOT_FOUND_ON_STACK) {
             return;
         }
-        if (currentPtr != eltPos) {
+        generateImpliedEndTagsExceptFor("p");
+        if (eltPos != currentPtr) {
             err("Unclosed elements.");
         }
         while (currentPtr >= eltPos) {
             pop();
-        }
+        }                            
     }
 
     private boolean clearLastStackSlot() {
