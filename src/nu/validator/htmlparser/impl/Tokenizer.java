@@ -4905,4 +4905,5 @@ public class Tokenizer implements Locator {
     public void requestSuspension() {
         shouldSuspend = true;
     }
+    
 }
