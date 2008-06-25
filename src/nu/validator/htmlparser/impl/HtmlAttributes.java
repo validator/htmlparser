@@ -260,6 +260,24 @@ public final class HtmlAttributes implements Attributes {
             return null;
         }
     }
+    
+    public int getXmlnsIndex(AttributeName name) {
+        for (int i = 0; i < xmlnsLength; i++) {
+            if (xmlnsNames[i] == name) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    
+    public String getXmlnsValue(AttributeName name) {
+        int index = getXmlnsIndex(name);
+        if (index == -1) {
+            return null;
+        } else {
+            return getXmlnsValue(index);
+        }
+    }
 
     // ]NOCPP]
 
