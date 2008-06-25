@@ -1305,26 +1305,44 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             default:
                                 if ("http://www.w3.org/2000/svg" == currNs) {
                                     attributes.adjustForSvg();
+                                    // [NOCPP[
+                                    if (errorHandler != null) {
+                                        String xmlns = attributes.getXmlnsValue(AttributeName.XMLNS);
+                                        if (xmlns != null && !"http://www.w3.org/2000/svg".equals(xmlns)) {
+                                            err("Bad value \u201C" + xmlns + "\u201D for the attribute \u201Cxmlns\u201D (only \u201Chttp://www.w3.org/2000/svg\u201D permitted here).");
+                                        }
+                                    }
+                                    // ]NOCPP]
                                     if (selfClosing) {
-                                        appendVoidElementToCurrentMayFoster(currNs,
-                                                elementName.camelCaseName, attributes);
+                                        appendVoidElementToCurrentMayFoster(
+                                                currNs,
+                                                elementName.camelCaseName,
+                                                attributes);
                                         selfClosing = false;
                                     } else {
                                         appendToCurrentNodeAndPushElementMayFosterCamelCase(
                                                 currNs, elementName, attributes);
                                     }
-                                    break starttagloop;                                    
+                                    break starttagloop;
                                 } else {
-                                attributes.adjustForMath();
-                                if (selfClosing) {
-                                    appendVoidElementToCurrentMayFoster(currNs,
-                                            name, attributes);
-                                    selfClosing = false;
-                                } else {
-                                    appendToCurrentNodeAndPushElementMayFoster(
-                                            currNs, elementName, attributes);
-                                }
-                                break starttagloop;
+                                    attributes.adjustForMath();
+                                    // [NOCPP[
+                                    if (errorHandler != null) {
+                                        String xmlns = attributes.getXmlnsValue(AttributeName.XMLNS);
+                                        if (xmlns != null && !"http://www.w3.org/1998/Math/MathML".equals(xmlns)) {
+                                            err("Bad value \u201C" + xmlns + "\u201D for the attribute \u201Cxmlns\u201D (only \u201Chttp://www.w3.org/1998/Math/MathML\u201D permitted here).");
+                                        }
+                                    }
+                                    // ]NOCPP]
+                                    if (selfClosing) {
+                                        appendVoidElementToCurrentMayFoster(
+                                                currNs, name, attributes);
+                                        selfClosing = false;
+                                    } else {
+                                        appendToCurrentNodeAndPushElementMayFoster(
+                                                currNs, elementName, attributes);
+                                    }
+                                    break starttagloop;
                                 }
                         }
                     }
@@ -1876,6 +1894,14 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     case MATH:
                                         reconstructTheActiveFormattingElements();
                                         attributes.adjustForMath();
+                                        // [NOCPP[
+                                        if (errorHandler != null) {
+                                            String xmlns = attributes.getXmlnsValue(AttributeName.XMLNS);
+                                            if (xmlns != null && !"http://www.w3.org/1998/Math/MathML".equals(xmlns)) {
+                                                err("Bad value \u201C" + xmlns + "\u201D for the attribute \u201Cxmlns\u201D (only \u201Chttp://www.w3.org/1998/Math/MathML\u201D permitted here).");
+                                            }
+                                        }
+                                        // ]NOCPP]
                                         if (selfClosing) {
                                             appendVoidElementToCurrentMayFoster(
                                                     "http://www.w3.org/1998/Math/MathML",
@@ -1891,6 +1917,14 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     case SVG:
                                         reconstructTheActiveFormattingElements();
                                         attributes.adjustForSvg();
+                                        // [NOCPP[
+                                        if (errorHandler != null) {
+                                            String xmlns = attributes.getXmlnsValue(AttributeName.XMLNS);
+                                            if (xmlns != null && !"http://www.w3.org/2000/svg".equals(xmlns)) {
+                                                err("Bad value \u201C" + xmlns + "\u201D for the attribute \u201Cxmlns\u201D (only \u201Chttp://www.w3.org/2000/svg\u201D permitted here).");
+                                            }
+                                        }
+                                        // ]NOCPP]
                                         if (selfClosing) {
                                             appendVoidElementToCurrentMayFoster(
                                                     "http://www.w3.org/2000/svg",
