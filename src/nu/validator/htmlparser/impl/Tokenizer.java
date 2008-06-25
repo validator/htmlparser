@@ -26,7 +26,7 @@
 /*
  * The comments following this one that use the same comment syntax as this 
  * comment are quotes from the WHATWG HTML 5 spec as of 2 June 2007 
- * amended as of June 23 2007.
+ * amended as of June 18 2008.
  * That document came with this statement:
  * "© Copyright 2004-2007 Apple Computer, Inc., Mozilla Foundation, and 
  * Opera Software ASA. You are granted a license to use, reproduce and 
@@ -291,35 +291,35 @@ public class Tokenizer implements Locator {
 
     private int returnStateSave;
 
-    private int index = 0;
+    private int index;
 
-    private boolean forceQuirks = false;
+    private boolean forceQuirks;
 
-    private char additional = '\u0000';
+    private char additional;
 
-    private int entCol = -1;
+    private int entCol;
 
-    private int lo = 0;
+    private int lo;
 
-    private int hi = (NamedCharacters.NAMES.length - 1);
+    private int hi;
 
-    private int candidate = -1;
+    private int candidate;
 
-    private int strBufMark = 0;
+    private int strBufMark;
 
-    private int prevValue = -1;
+    private int prevValue;
 
-    private int value = 0;
+    private int value;
 
-    private boolean seenDigits = false;
+    private boolean seenDigits;
 
-    private int pos = 0;
+    private int pos;
 
-    private int end = 0;
+    private int end;
 
     private @NoLength char[] buf;
 
-    private int cstart = 0;
+    private int cstart;
 
     /**
      * The SAX public id for the resource being tokenized. (Only passed to back
@@ -3879,12 +3879,12 @@ public class Tokenizer implements Locator {
                             if (hi == -1) {
                                 break hiloop;
                             }
-                            if (entCol == NamedCharacters.NAMES[hi].length()) {
+                            if (entCol == NamedCharacters.NAMES[hi].length) {
                                 break hiloop;
                             }
-                            if (entCol > NamedCharacters.NAMES[hi].length()) {
+                            if (entCol > NamedCharacters.NAMES[hi].length) {
                                 break outer;
-                            } else if (c < NamedCharacters.NAMES[hi].charAt(entCol)) {
+                            } else if (c < NamedCharacters.NAMES[hi][entCol]) {
                                 hi--;
                             } else {
                                 break hiloop;
@@ -3895,13 +3895,13 @@ public class Tokenizer implements Locator {
                             if (hi < lo) {
                                 break outer;
                             }
-                            if (entCol == NamedCharacters.NAMES[lo].length()) {
+                            if (entCol == NamedCharacters.NAMES[lo].length) {
                                 candidate = lo;
                                 strBufMark = strBufLen;
                                 lo++;
-                            } else if (entCol > NamedCharacters.NAMES[lo].length()) {
+                            } else if (entCol > NamedCharacters.NAMES[lo].length) {
                                 break outer;
-                            } else if (c > NamedCharacters.NAMES[lo].charAt(entCol)) {
+                            } else if (c > NamedCharacters.NAMES[lo][entCol]) {
                                 lo++;
                             } else {
                                 break loloop;
@@ -3928,7 +3928,8 @@ public class Tokenizer implements Locator {
                         reconsume = true;
                         continue stateloop;
                     } else {
-                        if (!NamedCharacters.NAMES[candidate].endsWith(";")) {
+                        char[] candidateArr = NamedCharacters.NAMES[candidate];
+                        if (candidateArr[candidateArr.length - 1] != ';') {
                             /*
                              * If the last character matched is not a U+003B
                              * SEMICOLON (;), there is a parse error.
@@ -4594,12 +4595,12 @@ public class Tokenizer implements Locator {
                             if (hi == -1) {
                                 break hiloop;
                             }
-                            if (entCol == NamedCharacters.NAMES[hi].length()) {
+                            if (entCol == NamedCharacters.NAMES[hi].length) {
                                 break hiloop;
                             }
-                            if (entCol > NamedCharacters.NAMES[hi].length()) {
+                            if (entCol > NamedCharacters.NAMES[hi].length) {
                                 break outer;
-                            } else if (c < NamedCharacters.NAMES[hi].charAt(entCol)) {
+                            } else if (c < NamedCharacters.NAMES[hi][entCol]) {
                                 hi--;
                             } else {
                                 break hiloop;
@@ -4610,13 +4611,13 @@ public class Tokenizer implements Locator {
                             if (hi < lo) {
                                 break outer;
                             }
-                            if (entCol == NamedCharacters.NAMES[lo].length()) {
+                            if (entCol == NamedCharacters.NAMES[lo].length) {
                                 candidate = lo;
                                 strBufMark = strBufLen;
                                 lo++;
-                            } else if (entCol > NamedCharacters.NAMES[lo].length()) {
+                            } else if (entCol > NamedCharacters.NAMES[lo].length) {
                                 break outer;
-                            } else if (c > NamedCharacters.NAMES[lo].charAt(entCol)) {
+                            } else if (c > NamedCharacters.NAMES[lo][entCol]) {
                                 lo++;
                             } else {
                                 break loloop;
@@ -4639,7 +4640,8 @@ public class Tokenizer implements Locator {
                         state = returnState;
                         continue eofloop;
                     } else {
-                        if (!NamedCharacters.NAMES[candidate].endsWith(";")) {
+                        char[] candidateArr = NamedCharacters.NAMES[candidate];
+                        if (candidateArr[candidateArr.length - 1] != ';') {
                             /*
                              * If the last character matched is not a U+003B
                              * SEMICOLON (;), there is a parse error.
@@ -4751,6 +4753,8 @@ public class Tokenizer implements Locator {
         if (pos == end) {
             return '\u0000';
         }
+        // [NOCPP[
+        
         linePrev = line;
         colPrev = col;
         if (nextCharOnNewLine) {
@@ -4761,9 +4765,13 @@ public class Tokenizer implements Locator {
             col++;
         }
 
+        // ]NOCPP]
+        
         c = buf[pos];
+        // [NOCPP[
         if (errorHandler == null
                 && contentNonXmlCharPolicy == XmlViolationPolicy.ALLOW) {
+            // ]NOCPP]
             switch (c) {
                 case '\r':
                     nextCharOnNewLine = true;
@@ -4785,6 +4793,7 @@ public class Tokenizer implements Locator {
                     c = buf[pos] = '\uFFFD';
                     break;
             }
+        // [NOCPP[
         } else {
             if (confidence == Confidence.TENTATIVE
                     && !alreadyComplainedAboutNonAscii && c > '\u007F') {
@@ -4868,6 +4877,7 @@ public class Tokenizer implements Locator {
                     }
             }
         }
+        // ]NOCPP]
         prev = c;
         return c;
     }
