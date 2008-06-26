@@ -447,28 +447,26 @@ public class Tokenizer implements Locator {
     /**
      * The policy for vertical tab and form feed.
      */
-    private XmlViolationPolicy contentSpacePolicy = XmlViolationPolicy.ALLOW;
+    private XmlViolationPolicy contentSpacePolicy = XmlViolationPolicy.ALTER_INFOSET;
 
     /**
      * The policy for non-space non-XML characters.
      */
-    private XmlViolationPolicy contentNonXmlCharPolicy = XmlViolationPolicy.ALLOW;
+    private XmlViolationPolicy contentNonXmlCharPolicy = XmlViolationPolicy.ALTER_INFOSET;
 
     /**
      * The policy for comments.
      */
-    private XmlViolationPolicy commentPolicy = XmlViolationPolicy.ALLOW;
+    private XmlViolationPolicy commentPolicy = XmlViolationPolicy.ALTER_INFOSET;
 
-    private XmlViolationPolicy xmlnsPolicy = XmlViolationPolicy.ALLOW;
+    private XmlViolationPolicy xmlnsPolicy = XmlViolationPolicy.ALTER_INFOSET;
 
-    private XmlViolationPolicy namePolicy = XmlViolationPolicy.ALLOW;
+    private XmlViolationPolicy namePolicy = XmlViolationPolicy.ALTER_INFOSET;
 
     private boolean html4ModeCompatibleWithXhtml1Schemata;
 
     private int mappingLangToXmlLang;
 
-    private XmlViolationPolicy bogusXmlnsPolicy;
-    
     private boolean shouldSuspend;
     
     protected Confidence confidence;
@@ -590,16 +588,6 @@ public class Tokenizer implements Locator {
 
     public void setNamePolicy(XmlViolationPolicy namePolicy) {
         this.namePolicy = namePolicy;
-    }
-
-    /**
-     * Sets the bogusXmlnsPolicy.
-     * 
-     * @param bogusXmlnsPolicy
-     *            the bogusXmlnsPolicy to set
-     */
-    public void setBogusXmlnsPolicy(XmlViolationPolicy bogusXmlnsPolicy) {
-        this.bogusXmlnsPolicy = bogusXmlnsPolicy;
     }
 
     /**
@@ -998,18 +986,6 @@ public class Tokenizer implements Locator {
         if (selfClosing && endTag) {
             err("Stray \u201C/\u201D at the end of an end tag.");
         }
-        if (namePolicy != XmlViolationPolicy.ALLOW) {
-            if (tagName.custom && !NCName.isNCName(tagName.name)) {
-                if (namePolicy == XmlViolationPolicy.FATAL) {
-                    fatal((endTag ? "End" : "Start") + " tag \u201C" + tagName
-                            + "\u201D has a non-NCName name.");
-                } else {
-                    warn((endTag ? "End" : "Start") + " tag \u201C" + tagName
-                            + "\u201D has a non-NCName name. Ignoring token.");
-                    return 0;
-                }
-            }
-        }
         int rv = Tokenizer.DATA;
         HtmlAttributes attrs = (attributes == null ? HtmlAttributes.EMPTY_ATTRIBUTES
                 : attributes);
@@ -1100,13 +1076,13 @@ public class Tokenizer implements Locator {
                 if (attributeName.isBoolean()) {
                     if (html4ModeCompatibleWithXhtml1Schemata) {
                         attributes.addAttribute(attributeName,
-                                attributeName.getLocal(AttributeName.HTML));
+                                attributeName.getLocal(AttributeName.HTML), xmlnsPolicy);
                     } else {
-                        attributes.addAttribute(attributeName, "");
+                        attributes.addAttribute(attributeName, "", xmlnsPolicy);
                     }
                 } else {
                     err("Attribute value omitted for a non-boolean attribute. (HTML4-only error.)");
-                    attributes.addAttribute(attributeName, "");
+                    attributes.addAttribute(attributeName, "", xmlnsPolicy);
                 }
             } else {
                 if (AttributeName.SRC == attributeName
@@ -1115,7 +1091,7 @@ public class Tokenizer implements Locator {
                             + attributeName.getLocal(AttributeName.HTML)
                             + "\u201D without an explicit value seen. The attribute may be dropped by IE7.");
                 }
-                attributes.addAttribute(attributeName, "");
+                attributes.addAttribute(attributeName, "", xmlnsPolicy);
             }
         }
     }
@@ -1128,46 +1104,12 @@ public class Tokenizer implements Locator {
         if (shouldAddAttributes) {
             String value = longStrBufToString();
             if (!endTag) {
-                // if ("xmlns".equals(attributeName)) {
-                // if ("html" == tagName.name
-                // && "http://www.w3.org/1999/xhtml".equals(value)) {
-                // if (xmlnsPolicy == XmlViolationPolicy.ALTER_INFOSET) {
-                // return;
-                // }
-                // } else {
-                // if (bogusXmlnsPolicy == XmlViolationPolicy.FATAL) {
-                // fatal("Forbidden attribute \u201C"
-                // + attributeName
-                // + "\u201D is not mappable to namespace-aware XML 1.0.");
-                // } else {
-                // warn("Forbidden attribute \u201C"
-                // + attributeName
-                // + "\u201D is not mappable to namespace-aware XML 1.0.");
-                // if (bogusXmlnsPolicy == XmlViolationPolicy.ALTER_INFOSET) {
-                // return;
-                // }
-                // }
-                // }
-                // } else if (attributeName.startsWith("xmlns:")) {
-                // if (bogusXmlnsPolicy == XmlViolationPolicy.FATAL) {
-                // fatal("Forbidden attribute \u201C"
-                // + attributeName
-                // + "\u201D is not mappable to namespace-aware XML 1.0.");
-                // } else {
-                // warn("Forbidden attribute \u201C"
-                // + attributeName
-                // + "\u201D is not mappable to namespace-aware XML 1.0.");
-                // if (bogusXmlnsPolicy == XmlViolationPolicy.ALTER_INFOSET) {
-                // return;
-                // }
-                // }
-                // } else
                 if (html4 && html4ModeCompatibleWithXhtml1Schemata
                         && attributeName.isCaseFolded()) {
                     value = StringUtil.toAsciiLowerCase(value);
                 }
             }
-            attributes.addAttribute(attributeName, value);
+            attributes.addAttribute(attributeName, value, xmlnsPolicy);
         }
     }
 
