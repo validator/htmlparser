@@ -1305,14 +1305,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             default:
                                 if ("http://www.w3.org/2000/svg" == currNs) {
                                     attributes.adjustForSvg();
-                                    // [NOCPP[
-                                    if (errorHandler != null) {
-                                        String xmlns = attributes.getXmlnsValue(AttributeName.XMLNS);
-                                        if (xmlns != null && !"http://www.w3.org/2000/svg".equals(xmlns)) {
-                                            err("Bad value \u201C" + xmlns + "\u201D for the attribute \u201Cxmlns\u201D (only \u201Chttp://www.w3.org/2000/svg\u201D permitted here).");
-                                        }
-                                    }
-                                    // ]NOCPP]
                                     if (selfClosing) {
                                         appendVoidElementToCurrentMayFoster(
                                                 currNs,
@@ -1326,14 +1318,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     break starttagloop;
                                 } else {
                                     attributes.adjustForMath();
-                                    // [NOCPP[
-                                    if (errorHandler != null) {
-                                        String xmlns = attributes.getXmlnsValue(AttributeName.XMLNS);
-                                        if (xmlns != null && !"http://www.w3.org/1998/Math/MathML".equals(xmlns)) {
-                                            err("Bad value \u201C" + xmlns + "\u201D for the attribute \u201Cxmlns\u201D (only \u201Chttp://www.w3.org/1998/Math/MathML\u201D permitted here).");
-                                        }
-                                    }
-                                    // ]NOCPP]
                                     if (selfClosing) {
                                         appendVoidElementToCurrentMayFoster(
                                                 currNs, name, attributes);
@@ -1894,14 +1878,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     case MATH:
                                         reconstructTheActiveFormattingElements();
                                         attributes.adjustForMath();
-                                        // [NOCPP[
-                                        if (errorHandler != null) {
-                                            String xmlns = attributes.getXmlnsValue(AttributeName.XMLNS);
-                                            if (xmlns != null && !"http://www.w3.org/1998/Math/MathML".equals(xmlns)) {
-                                                err("Bad value \u201C" + xmlns + "\u201D for the attribute \u201Cxmlns\u201D (only \u201Chttp://www.w3.org/1998/Math/MathML\u201D permitted here).");
-                                            }
-                                        }
-                                        // ]NOCPP]
                                         if (selfClosing) {
                                             appendVoidElementToCurrentMayFoster(
                                                     "http://www.w3.org/1998/Math/MathML",
@@ -1917,14 +1893,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     case SVG:
                                         reconstructTheActiveFormattingElements();
                                         attributes.adjustForSvg();
-                                        // [NOCPP[
-                                        if (errorHandler != null) {
-                                            String xmlns = attributes.getXmlnsValue(AttributeName.XMLNS);
-                                            if (xmlns != null && !"http://www.w3.org/2000/svg".equals(xmlns)) {
-                                                err("Bad value \u201C" + xmlns + "\u201D for the attribute \u201Cxmlns\u201D (only \u201Chttp://www.w3.org/2000/svg\u201D permitted here).");
-                                            }
-                                        }
-                                        // ]NOCPP]
                                         if (selfClosing) {
                                             appendVoidElementToCurrentMayFoster(
                                                     "http://www.w3.org/2000/svg",
@@ -4101,8 +4069,22 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         return node.tainted;
     }
 
+    // [NOCPP[
+    private void checkXmlns(HtmlAttributes attributes, String ns) throws SAXException {
+        if (errorHandler != null) {
+            String xmlns = attributes.getXmlnsValue(AttributeName.XMLNS);
+            if (xmlns != null && !ns.equals(xmlns)) {
+                err("Bad value \u201C" + xmlns + "\u201D for the attribute \u201Cxmlns\u201D (only \u201C" + ns + "\u201D permitted here).");
+            }
+        }
+    }
+    // ]NOCPP]
+    
     private void appendHtmlElementToDocumentAndPush(HtmlAttributes attributes)
             throws SAXException {
+        // [NOCPP[
+        checkXmlns(attributes, "http://www.w3.org/1999/xhtml");
+        // ]NOCPP]        
         T elt = createHtmlElementSetAsRoot(attributes);
         StackNode<T> node = new StackNode<T>("http://www.w3.org/1999/xhtml",
                 ElementName.HTML, elt);
@@ -4116,6 +4098,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     private void appendToCurrentNodeAndPushHeadElement(HtmlAttributes attributes)
             throws SAXException {
         flushCharacters();
+        // [NOCPP[
+        checkXmlns(attributes, "http://www.w3.org/1999/xhtml");
+        // ]NOCPP]        
         T elt = createElement("http://www.w3.org/1999/xhtml", "head",
                 attributes);
         detachFromParentAndAppendToNewParent(elt, stack[currentPtr].node);
@@ -4138,6 +4123,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     private void appendToCurrentNodeAndPushFormElementMayFoster(
             HtmlAttributes attributes) throws SAXException {
         flushCharacters();
+        // [NOCPP[
+        checkXmlns(attributes, "http://www.w3.org/1999/xhtml");
+        // ]NOCPP]        
         T elt = createElement("http://www.w3.org/1999/xhtml", "form",
                 attributes);
         formPointer = elt;
@@ -4162,6 +4150,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             String ns, ElementName elementName, HtmlAttributes attributes)
             throws SAXException {
         flushCharacters();
+        // [NOCPP[
+        checkXmlns(attributes, ns);
+        // ]NOCPP]        
         T elt = createElement(ns, elementName.name, attributes, formPointer);
         StackNode<T> current = stack[currentPtr];
         if (current.fosterParenting) {
@@ -4184,6 +4175,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             ElementName elementName, HtmlAttributes attributes)
             throws SAXException {
         flushCharacters();
+        // [NOCPP[
+        checkXmlns(attributes, ns);
+        // ]NOCPP]        
         T elt = createElement(ns, elementName.name, attributes);
         detachFromParentAndAppendToNewParent(elt, stack[currentPtr].node);
         StackNode<T> node = new StackNode<T>(ns, elementName, elt);
@@ -4194,6 +4188,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             ElementName elementName, HtmlAttributes attributes)
             throws SAXException {
         flushCharacters();
+        // [NOCPP[
+        checkXmlns(attributes, ns);
+        // ]NOCPP]        
         T elt = createElement(ns, elementName.name, attributes);
         StackNode<T> current = stack[currentPtr];
         if (current.fosterParenting) {
@@ -4215,6 +4212,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             ElementName elementName, HtmlAttributes attributes)
             throws SAXException {
         flushCharacters();
+        // [NOCPP[
+        checkXmlns(attributes, ns);
+        // ]NOCPP]        
         T elt = createElement(ns, elementName.camelCaseName, attributes);
         StackNode<T> current = stack[currentPtr];
         if (current.fosterParenting) {
@@ -4236,6 +4236,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             ElementName elementName, HtmlAttributes attributes, T form)
             throws SAXException {
         flushCharacters();
+        // [NOCPP[
+        checkXmlns(attributes, ns);
+        // ]NOCPP]        
         T elt = createElement(ns, elementName.name, attributes, formPointer);
         StackNode<T> current = stack[currentPtr];
         if (current.fosterParenting) {
@@ -4256,6 +4259,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     private void appendVoidElementToCurrentMayFoster(String ns, String name,
             HtmlAttributes attributes, T form) throws SAXException {
         flushCharacters();
+        // [NOCPP[
+        checkXmlns(attributes, ns);
+        // ]NOCPP]        
         T elt = createElement(ns, name, attributes, formPointer);
         StackNode<T> current = stack[currentPtr];
         if (current.fosterParenting) {
@@ -4278,6 +4284,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     private void appendVoidElementToCurrentMayFoster(String ns, String name,
             HtmlAttributes attributes) throws SAXException {
         flushCharacters();
+        // [NOCPP[
+        checkXmlns(attributes, ns);
+        // ]NOCPP]        
         T elt = createElement(ns, name, attributes);
         StackNode<T> current = stack[currentPtr];
         if (current.fosterParenting) {
@@ -4300,7 +4309,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     private void appendVoidElementToCurrent(String ns, String name,
             HtmlAttributes attributes, T form) throws SAXException {
         flushCharacters();
-        T elt = createElement("http://www.w3.org/1999/xhtml", name, attributes,
+        // [NOCPP[
+        checkXmlns(attributes, ns);
+        // ]NOCPP]        
+        T elt = createElement(ns, name, attributes,
                 formPointer);
         StackNode<T> current = stack[currentPtr];
         detachFromParentAndAppendToNewParent(elt, current.node);
