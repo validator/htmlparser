@@ -1756,7 +1756,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         appendToCurrentNodeAndPushFormElementMayFoster(formAttrs);
                                         appendVoidElementToCurrentMayFoster(
                                                 "http://www.w3.org/1999/xhtml",
-                                                elementName,
+                                                ElementName.HR,
                                                 HtmlAttributes.EMPTY_ATTRIBUTES);
                                         appendToCurrentNodeAndPushElementMayFoster(
                                                 "http://www.w3.org/1999/xhtml",
@@ -1802,7 +1802,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         pop(); // p
                                         appendVoidElementToCurrentMayFoster(
                                                 "http://www.w3.org/1999/xhtml",
-                                                elementName,
+                                                ElementName.HR,
                                                 HtmlAttributes.EMPTY_ATTRIBUTES);
                                         pop(); // form
                                         selfClosing = false;
