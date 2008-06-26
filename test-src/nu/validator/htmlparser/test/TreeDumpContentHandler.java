@@ -99,13 +99,29 @@ public class TreeDumpContentHandler implements ContentHandler, LexicalHandler {
         try {
             printLead();
             writer.write('<');
-            writer.write(qName);
+            if ("http://www.w3.org/1998/Math/MathML" == uri) {
+                writer.write("math ");                
+            } else if ("http://www.w3.org/2000/svg" == uri) {
+                writer.write("svg ");                                
+            }
+            writer.write(localName);
             writer.write(">\n");
             level++;
 
             TreeMap<String, String> map = new TreeMap<String, String>();
             for (int i = 0; i < atts.getLength(); i++) {
-                map.put(atts.getQName(i), atts.getValue(i));
+                String ns = atts.getURI(i);
+                String name;
+                if ("http://www.w3.org/1999/xlink" == ns) {
+                    name = "xlink " + atts.getLocalName(i);
+                } else if ("http://www.w3.org/XML/1998/namespace" == ns) {
+                    name = "xml " + atts.getLocalName(i);                    
+                } else if ("http://www.w3.org/2000/xmlns/" == ns) {
+                    name = "xmlns " + atts.getLocalName(i);                    
+                } else {
+                    name = atts.getLocalName(i);                    
+                }
+                map.put(name, atts.getValue(i));
             }
             for (Map.Entry<String, String> entry : map.entrySet()) {
                 printLead();
