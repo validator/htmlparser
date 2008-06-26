@@ -27,8 +27,10 @@ import nu.validator.htmlparser.annotation.IdType;
 import nu.validator.htmlparser.annotation.Local;
 import nu.validator.htmlparser.annotation.NsUri;
 import nu.validator.htmlparser.annotation.QName;
+import nu.validator.htmlparser.common.XmlViolationPolicy;
 
 import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
 
 /**
  * Be careful with this class. QName is the name in from HTML tokenization.
@@ -281,7 +283,7 @@ public final class HtmlAttributes implements Attributes {
 
     // ]NOCPP]
 
-    void addAttribute(AttributeName name, String value) {
+    void addAttribute(AttributeName name, String value, XmlViolationPolicy xmlnsPolicy) throws SAXException {
         // [NOCPP[
         if (name == AttributeName.ID) {
             idValue = value;
@@ -300,7 +302,15 @@ public final class HtmlAttributes implements Attributes {
             xmlnsNames[xmlnsLength] = name;
             xmlnsValues[xmlnsLength] = value;
             xmlnsLength++;
-            return;
+            switch (xmlnsPolicy) {
+                case FATAL:
+                    // this is ugly
+                    throw new SAXException("Saw an xmlns attribute.");
+                case ALTER_INFOSET:
+                    return;
+                case ALLOW:
+                    // fall through
+            }
         }
 
         // ]NOCPP]
@@ -363,12 +373,31 @@ public final class HtmlAttributes implements Attributes {
 
     // [NOCPP[
     
-    public void merge(HtmlAttributes attributes) {
+    void processNonNcNames(TreeBuilder<?> treeBuilder, XmlViolationPolicy namePolicy) throws SAXException {
+        for (int i = 0; i < length; i++) {
+            if (!names[i].isNcName(mode)) {
+                String name = names[i].getLocal(mode);
+                switch (namePolicy) {
+                    case ALTER_INFOSET:
+                        names[i] = AttributeName.create(NCName.escapeName(name));
+                        // fall through
+                    case ALLOW:
+                        treeBuilder.warn("Attribute \u201C" + name + "\u201D is not serializable as XML 1.0.");
+                        break;
+                    case FATAL:
+                        treeBuilder.fatal("Attribute \u201C" + name + "\u201D is not serializable as XML 1.0.");
+                        break;
+                }
+            }
+        }
+    }
+    
+    public void merge(HtmlAttributes attributes) throws SAXException {
         int len = attributes.getLength();
         for (int i = 0; i < len; i++) {
             AttributeName name = attributes.getAttributeName(i);
             if (!contains(name)) {
-                addAttribute(name, attributes.getValue(i));
+                addAttribute(name, attributes.getValue(i), XmlViolationPolicy.ALLOW);
             }
         }
     }

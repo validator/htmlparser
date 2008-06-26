@@ -39,6 +39,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import nu.validator.htmlparser.annotation.Local;
 import nu.validator.htmlparser.common.DoctypeExpectation;
 import nu.validator.htmlparser.common.DocumentMode;
 import nu.validator.htmlparser.common.DocumentModeHandler;
@@ -299,6 +300,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     // [NOCPP[
 
+    private XmlViolationPolicy namePolicy = XmlViolationPolicy.ALTER_INFOSET;
+    
     private Map<String, LocatorImpl> idLocations = new HashMap<String, LocatorImpl>();
 
     // ]NOCPP]
@@ -333,13 +336,21 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     protected final void fatal(Exception e) throws SAXException {
         SAXParseException spe = new SAXParseException(e.getMessage(),
                 tokenizer, e);
-        ;
         if (errorHandler != null) {
             errorHandler.fatalError(spe);
         }
         throw spe;
     }
 
+    final void fatal(String s) throws SAXException {
+        SAXParseException spe = new SAXParseException(s,
+                tokenizer);
+        if (errorHandler != null) {
+            errorHandler.fatalError(spe);
+        }
+        throw spe;
+    }
+    
     /**
      * Reports a Parse Error.
      * 
@@ -347,7 +358,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
      *            the message
      * @throws SAXException
      */
-    protected final void err(String message) throws SAXException {
+    final void err(String message) throws SAXException {
         if (errorHandler == null) {
             return;
         }
@@ -362,7 +373,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
      *            the message
      * @throws SAXException
      */
-    protected final void warn(String message) throws SAXException {
+    final void warn(String message) throws SAXException {
         if (errorHandler == null) {
             return;
         }
@@ -1740,7 +1751,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         if (actionIndex > -1) {
                                             formAttrs.addAttribute(
                                                     AttributeName.ACTION,
-                                                    attributes.getValue(actionIndex));
+                                                    attributes.getValue(actionIndex), XmlViolationPolicy.ALLOW);
                                         }
                                         appendToCurrentNodeAndPushFormElementMayFoster(formAttrs);
                                         appendVoidElementToCurrentMayFoster(
@@ -1772,14 +1783,14 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         }
                                         HtmlAttributes inputAttributes = tokenizer.newAttributes();
                                         inputAttributes.addAttribute(
-                                                AttributeName.NAME, "isindex");
+                                                AttributeName.NAME, "isindex", XmlViolationPolicy.ALLOW);
                                         for (int i = 0; i < attributes.getLength(); i++) {
                                             AttributeName attributeQName = attributes.getAttributeName(i);
                                             if (!(AttributeName.NAME == attributeQName
                                                     || "action".equals(attributeQName) || "prompt".equals(attributeQName))) {
                                                 inputAttributes.addAttribute(
                                                         attributeQName,
-                                                        attributes.getValue(i));
+                                                        attributes.getValue(i), XmlViolationPolicy.ALLOW);
                                             }
                                         }
                                         appendVoidElementToCurrentMayFoster(
@@ -4070,20 +4081,35 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     // [NOCPP[
-    private void checkXmlns(HtmlAttributes attributes, String ns) throws SAXException {
+    private void checkAttributes(HtmlAttributes attributes, String ns) throws SAXException {
         if (errorHandler != null) {
             String xmlns = attributes.getXmlnsValue(AttributeName.XMLNS);
             if (xmlns != null && !ns.equals(xmlns)) {
                 err("Bad value \u201C" + xmlns + "\u201D for the attribute \u201Cxmlns\u201D (only \u201C" + ns + "\u201D permitted here).");
             }
         }
+        attributes.processNonNcNames(this, namePolicy);
+    }
+    
+    private String checkPopName(String name) throws SAXException {
+        switch (namePolicy) {
+            case ALLOW:
+                warn("Element name \u201C" + name + "\u201D cannot be represented as XML 1.0.");
+                return name;
+            case ALTER_INFOSET:
+                warn("Element name \u201C" + name + "\u201D cannot be represented as XML 1.0.");
+                return NCName.escapeName(name);
+            case FATAL:
+                fatal("Element name \u201C" + name + "\u201D cannot be represented as XML 1.0.");
+        }
+        return null; // keep compiler happy
     }
     // ]NOCPP]
     
     private void appendHtmlElementToDocumentAndPush(HtmlAttributes attributes)
             throws SAXException {
         // [NOCPP[
-        checkXmlns(attributes, "http://www.w3.org/1999/xhtml");
+        checkAttributes(attributes, "http://www.w3.org/1999/xhtml");
         // ]NOCPP]        
         T elt = createHtmlElementSetAsRoot(attributes);
         StackNode<T> node = new StackNode<T>("http://www.w3.org/1999/xhtml",
@@ -4099,7 +4125,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             throws SAXException {
         flushCharacters();
         // [NOCPP[
-        checkXmlns(attributes, "http://www.w3.org/1999/xhtml");
+        checkAttributes(attributes, "http://www.w3.org/1999/xhtml");
         // ]NOCPP]        
         T elt = createElement("http://www.w3.org/1999/xhtml", "head",
                 attributes);
@@ -4124,7 +4150,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             HtmlAttributes attributes) throws SAXException {
         flushCharacters();
         // [NOCPP[
-        checkXmlns(attributes, "http://www.w3.org/1999/xhtml");
+        checkAttributes(attributes, "http://www.w3.org/1999/xhtml");
         // ]NOCPP]        
         T elt = createElement("http://www.w3.org/1999/xhtml", "form",
                 attributes);
@@ -4151,8 +4177,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             throws SAXException {
         flushCharacters();
         // [NOCPP[
-        checkXmlns(attributes, ns);
-        // ]NOCPP]        
+        checkAttributes(attributes, ns);
+        // ]NOCPP]
+        // This method can't be called for custom elements
         T elt = createElement(ns, elementName.name, attributes, formPointer);
         StackNode<T> current = stack[currentPtr];
         if (current.fosterParenting) {
@@ -4176,8 +4203,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             throws SAXException {
         flushCharacters();
         // [NOCPP[
-        checkXmlns(attributes, ns);
-        // ]NOCPP]        
+        checkAttributes(attributes, ns);
+        // ]NOCPP]
+        // This method can't be called for custom elements
         T elt = createElement(ns, elementName.name, attributes);
         detachFromParentAndAppendToNewParent(elt, stack[currentPtr].node);
         StackNode<T> node = new StackNode<T>(ns, elementName, elt);
@@ -4188,10 +4216,12 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             ElementName elementName, HtmlAttributes attributes)
             throws SAXException {
         flushCharacters();
+        @Local String popName = elementName.name;
         // [NOCPP[
-        checkXmlns(attributes, ns);
+        checkAttributes(attributes, ns);
+        popName = checkPopName(popName);
         // ]NOCPP]        
-        T elt = createElement(ns, elementName.name, attributes);
+        T elt = createElement(ns, popName, attributes);
         StackNode<T> current = stack[currentPtr];
         if (current.fosterParenting) {
             if (conformingAndStreaming) {
@@ -4204,18 +4234,20 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         } else {
             detachFromParentAndAppendToNewParent(elt, current.node);
         }
-        StackNode<T> node = new StackNode<T>(ns, elementName, elt);
+        StackNode<T> node = new StackNode<T>(ns, elementName, elt, popName);
         push(node);
     }
-    
+
     private void appendToCurrentNodeAndPushElementMayFosterCamelCase(String ns,
             ElementName elementName, HtmlAttributes attributes)
             throws SAXException {
         flushCharacters();
+        @Local String popName = elementName.camelCaseName;
         // [NOCPP[
-        checkXmlns(attributes, ns);
+        checkAttributes(attributes, ns);
+        popName = checkPopName(popName);
         // ]NOCPP]        
-        T elt = createElement(ns, elementName.camelCaseName, attributes);
+        T elt = createElement(ns, popName, attributes);
         StackNode<T> current = stack[currentPtr];
         if (current.fosterParenting) {
             if (conformingAndStreaming) {
@@ -4228,7 +4260,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         } else {
             detachFromParentAndAppendToNewParent(elt, current.node);
         }
-        StackNode<T> node = new StackNode<T>(ns, elementName, elt, elementName.camelCaseName);
+        StackNode<T> node = new StackNode<T>(ns, elementName, elt, popName);
         push(node);
     }
 
@@ -4237,8 +4269,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             throws SAXException {
         flushCharacters();
         // [NOCPP[
-        checkXmlns(attributes, ns);
+        checkAttributes(attributes, ns);
         // ]NOCPP]        
+        // Can't be called for custom elements
         T elt = createElement(ns, elementName.name, attributes, formPointer);
         StackNode<T> current = stack[currentPtr];
         if (current.fosterParenting) {
@@ -4260,8 +4293,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             HtmlAttributes attributes, T form) throws SAXException {
         flushCharacters();
         // [NOCPP[
-        checkXmlns(attributes, ns);
+        checkAttributes(attributes, ns);
         // ]NOCPP]        
+        // Can't be called for custom elements
         T elt = createElement(ns, name, attributes, formPointer);
         StackNode<T> current = stack[currentPtr];
         if (current.fosterParenting) {
@@ -4284,10 +4318,12 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     private void appendVoidElementToCurrentMayFoster(String ns, String name,
             HtmlAttributes attributes) throws SAXException {
         flushCharacters();
+        @Local String popName = name;
         // [NOCPP[
-        checkXmlns(attributes, ns);
+        checkAttributes(attributes, ns);
+        popName = checkPopName(popName);
         // ]NOCPP]        
-        T elt = createElement(ns, name, attributes);
+        T elt = createElement(ns, popName, attributes);
         StackNode<T> current = stack[currentPtr];
         if (current.fosterParenting) {
             if (conformingAndStreaming) {
@@ -4301,8 +4337,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             detachFromParentAndAppendToNewParent(elt, current.node);
         }
         if (conformingAndStreaming || nonConformingAndStreaming) {
-            elementPushed(ns, name, (T) attributes);
-            elementPopped(ns, name, null);
+            elementPushed(ns, popName, (T) attributes);
+            elementPopped(ns, popName, null);
         }
     }
     
@@ -4310,8 +4346,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             HtmlAttributes attributes, T form) throws SAXException {
         flushCharacters();
         // [NOCPP[
-        checkXmlns(attributes, ns);
+        checkAttributes(attributes, ns);
         // ]NOCPP]        
+        // Can't be called for custom elements
         T elt = createElement(ns, name, attributes,
                 formPointer);
         StackNode<T> current = stack[currentPtr];
@@ -4529,5 +4566,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
      */
     public boolean inForeign() throws SAXException {
         return foreignFlag == IN_FOREIGN;
+    }
+    
+    public void setNamePolicy(XmlViolationPolicy namePolicy) {
+        this.namePolicy = namePolicy;
     }
 }

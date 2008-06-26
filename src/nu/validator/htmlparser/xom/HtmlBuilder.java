@@ -407,6 +407,7 @@ public class HtmlBuilder extends Builder {
             throw new IllegalArgumentException("Only XML 1.0-compatible policies allowed. Cannot use ALLOW.");
         }
         tokenizer.setNamePolicy(namePolicy);
+        xomTreeBuilder.setNamePolicy(namePolicy);
     }
 
     /**
@@ -420,7 +421,6 @@ public class HtmlBuilder extends Builder {
         setContentSpacePolicy(xmlPolicy);
         setContentNonXmlCharPolicy(xmlPolicy);
         setCommentPolicy(xmlPolicy);
-        setBogusXmlnsPolicy(xmlPolicy);
     }
 
     /**
@@ -442,15 +442,6 @@ public class HtmlBuilder extends Builder {
      */
     public void setDocumentModeHandler(DocumentModeHandler documentModeHandler) {
         xomTreeBuilder.setDocumentModeHandler(documentModeHandler);
-    }
-    
-    /**
-     * Sets the policy for forbidden <code>xmlns</code> attributes.
-     * @param bogusXmlnsPolicy the policy
-     * @see nu.validator.htmlparser.impl.Tokenizer#setBogusXmlnsPolicy(nu.validator.htmlparser.common.XmlViolationPolicy)
-     */
-    public void setBogusXmlnsPolicy(XmlViolationPolicy bogusXmlnsPolicy) {
-        tokenizer.setBogusXmlnsPolicy(bogusXmlnsPolicy);
     }
 
     /**

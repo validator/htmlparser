@@ -352,7 +352,6 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
         setContentSpacePolicy(xmlPolicy);
         setContentNonXmlCharPolicy(xmlPolicy);
         setCommentPolicy(xmlPolicy);
-        setBogusXmlnsPolicy(xmlPolicy);
     }
 
     /**
@@ -374,15 +373,6 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
      */
     public void setDocumentModeHandler(DocumentModeHandler documentModeHandler) {
         domTreeBuilder.setDocumentModeHandler(documentModeHandler);
-    }
-
-    /**
-     * Sets the policy for forbidden <code>xmlns</code> attributes.
-     * @param bogusXmlnsPolicy the policy
-     * @see nu.validator.htmlparser.impl.Tokenizer#setBogusXmlnsPolicy(nu.validator.htmlparser.common.XmlViolationPolicy)
-     */
-    public void setBogusXmlnsPolicy(XmlViolationPolicy bogusXmlnsPolicy) {
-        tokenizer.setBogusXmlnsPolicy(bogusXmlnsPolicy);
     }
 
     /**

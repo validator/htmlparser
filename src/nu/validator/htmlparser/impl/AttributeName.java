@@ -182,6 +182,7 @@ public final class AttributeName
     }
 
     private static AttributeName create(@Local String name, boolean checkNcName) {
+        // [NOCPP[
         boolean ncName = true;
         boolean xmlns = name.startsWith("xmlns:");
         if (checkNcName) {
@@ -196,8 +197,17 @@ public final class AttributeName
                 ALL_NO_PREFIX,
                 (ncName ? AttributeName.ALL_NCNAME
                         : AttributeName.ALL_NO_NCNAME), xmlns);
+        // ]NOCPP]
     }
 
+    // [NOCPP[
+    static AttributeName create(@Local String name) {
+        return new AttributeName(AttributeName.ALL_NO_NS,
+                AttributeName.SAME_LOWER_CASE_LOCAL(name),
+                ALL_NO_PREFIX, AttributeName.ALL_NCNAME, false);
+    }
+    // ]NOCPP]
+    
     public String getType(int mode) {
         return type;
     }

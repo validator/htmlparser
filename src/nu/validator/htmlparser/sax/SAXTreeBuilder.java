@@ -108,7 +108,7 @@ class SAXTreeBuilder extends TreeBuilder<Element> {
     }
 
     @Override
-    protected void addAttributesToElement(Element element, HtmlAttributes attributes) {
+    protected void addAttributesToElement(Element element, HtmlAttributes attributes) throws SAXException {
         HtmlAttributes existingAttrs = (HtmlAttributes) element.getAttributes();
         existingAttrs.merge(attributes);
     }

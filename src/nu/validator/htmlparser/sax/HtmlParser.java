@@ -948,6 +948,7 @@ public class HtmlParser implements XMLReader {
         this.namePolicy = namePolicy;
         if (tokenizer != null) {
             tokenizer.setNamePolicy(namePolicy);
+            treeBuilder.setNamePolicy(namePolicy);
         }
     }
     
@@ -981,7 +982,6 @@ public class HtmlParser implements XMLReader {
         setContentSpacePolicy(xmlPolicy);
         setContentNonXmlCharPolicy(xmlPolicy);
         setCommentPolicy(xmlPolicy);
-        setBogusXmlnsPolicy(xmlPolicy);
     }
 
     /**
@@ -991,19 +991,6 @@ public class HtmlParser implements XMLReader {
      */
     public XmlViolationPolicy getNamePolicy() {
         return namePolicy;
-    }
-
-    /**
-     * Sets the policy for forbidden <code>xmlns</code> attributes.
-     * @param bogusXmlnsPolicy the policy
-     * @see nu.validator.htmlparser.impl.Tokenizer#setBogusXmlnsPolicy(nu.validator.htmlparser.common.XmlViolationPolicy)
-     */
-    public void setBogusXmlnsPolicy(
-            XmlViolationPolicy bogusXmlnsPolicy) {
-        this.bogusXmlnsPolicy = bogusXmlnsPolicy;
-        if (tokenizer != null) {
-            tokenizer.setBogusXmlnsPolicy(bogusXmlnsPolicy);
-        }
     }
 
     /**
