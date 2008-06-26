@@ -1317,9 +1317,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                 if ("http://www.w3.org/2000/svg" == currNs) {
                                     attributes.adjustForSvg();
                                     if (selfClosing) {
-                                        appendVoidElementToCurrentMayFoster(
+                                        appendVoidElementToCurrentMayFosterCamelCase(
                                                 currNs,
-                                                elementName.camelCaseName,
+                                                elementName,
                                                 attributes);
                                         selfClosing = false;
                                     } else {
@@ -1331,7 +1331,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     attributes.adjustForMath();
                                     if (selfClosing) {
                                         appendVoidElementToCurrentMayFoster(
-                                                currNs, name, attributes);
+                                                currNs, elementName, attributes);
                                         selfClosing = false;
                                     } else {
                                         appendToCurrentNodeAndPushElementMayFoster(
@@ -1719,14 +1719,14 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     case PARAM_OR_SOURCE:
                                         appendVoidElementToCurrentMayFoster(
                                                 "http://www.w3.org/1999/xhtml",
-                                                name, attributes);
+                                                elementName, attributes);
                                         selfClosing = false;
                                         break starttagloop;                                        
                                     case HR:
                                         implicitlyCloseP();
                                         appendVoidElementToCurrentMayFoster(
                                                 "http://www.w3.org/1999/xhtml",
-                                                name, attributes);
+                                                elementName, attributes);
                                         selfClosing = false;
                                         break starttagloop;
                                     case IMAGE:
@@ -1756,7 +1756,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         appendToCurrentNodeAndPushFormElementMayFoster(formAttrs);
                                         appendVoidElementToCurrentMayFoster(
                                                 "http://www.w3.org/1999/xhtml",
-                                                "hr",
+                                                elementName,
                                                 HtmlAttributes.EMPTY_ATTRIBUTES);
                                         appendToCurrentNodeAndPushElementMayFoster(
                                                 "http://www.w3.org/1999/xhtml",
@@ -1802,7 +1802,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         pop(); // p
                                         appendVoidElementToCurrentMayFoster(
                                                 "http://www.w3.org/1999/xhtml",
-                                                "hr",
+                                                elementName,
                                                 HtmlAttributes.EMPTY_ATTRIBUTES);
                                         pop(); // form
                                         selfClosing = false;
@@ -1892,7 +1892,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         if (selfClosing) {
                                             appendVoidElementToCurrentMayFoster(
                                                     "http://www.w3.org/1998/Math/MathML",
-                                                    name, attributes);
+                                                    elementName, attributes);
                                             selfClosing = false;
                                         } else {
                                             appendToCurrentNodeAndPushElementMayFoster(
@@ -1905,9 +1905,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         reconstructTheActiveFormattingElements();
                                         attributes.adjustForSvg();
                                         if (selfClosing) {
-                                            appendVoidElementToCurrentMayFoster(
+                                            appendVoidElementToCurrentMayFosterCamelCase(
                                                     "http://www.w3.org/2000/svg",
-                                                    name, attributes);
+                                                    elementName, attributes);
                                             selfClosing = false;
                                         } else {
                                             appendToCurrentNodeAndPushElementMayFoster(
@@ -1948,7 +1948,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     case COMMAND_OR_EVENT_SOURCE:
                                         appendVoidElementToCurrentMayFoster(
                                                 "http://www.w3.org/1999/xhtml",
-                                                name, attributes);
+                                                elementName, attributes);
                                         selfClosing = false;
                                         break starttagloop;
                                     case META:
@@ -2018,14 +2018,14 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                 case LINK:
                                     appendVoidElementToCurrentMayFoster(
                                             "http://www.w3.org/1999/xhtml",
-                                            name, attributes);
+                                            elementName, attributes);
                                     selfClosing = false;
                                     break starttagloop;
                                 case META:
                                     checkMetaCharset(attributes);
                                     appendVoidElementToCurrentMayFoster(
                                             "http://www.w3.org/1999/xhtml",
-                                            name, attributes);
+                                            elementName, attributes);
                                     selfClosing = false;
                                     break starttagloop;
                                 case STYLE:
@@ -2059,7 +2059,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                 case COL:
                                     appendVoidElementToCurrentMayFoster(
                                             "http://www.w3.org/1999/xhtml",
-                                            name, attributes);
+                                            elementName, attributes);
                                     selfClosing = false;
                                     break starttagloop;
                                 default:
@@ -2165,7 +2165,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                 case FRAME:
                                     appendVoidElementToCurrentMayFoster(
                                             "http://www.w3.org/1999/xhtml",
-                                            name, attributes);
+                                            elementName, attributes);
                                     selfClosing = false;
                                     break starttagloop;
                                 default:
@@ -2341,7 +2341,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     }
                                     appendVoidElementToCurrentMayFoster(
                                             "http://www.w3.org/1999/xhtml",
-                                            name, attributes);
+                                            elementName, attributes);
                                     selfClosing = false;
                                     if (!nonConformingAndStreaming) {
                                         pop(); // head
@@ -2354,7 +2354,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     }
                                     appendVoidElementToCurrentMayFoster(
                                             "http://www.w3.org/1999/xhtml",
-                                            name, attributes);
+                                            elementName, attributes);
                                     selfClosing = false;
                                     if (!nonConformingAndStreaming) {
                                         pop(); // head
@@ -2368,7 +2368,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     }
                                     appendVoidElementToCurrentMayFoster(
                                             "http://www.w3.org/1999/xhtml",
-                                            name, attributes);
+                                            elementName, attributes);
                                     selfClosing = false;
                                     if (!nonConformingAndStreaming) {
                                         pop(); // head
@@ -2950,7 +2950,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     }
                                     foreignFlag = TreeBuilder.NOT_IN_FOREIGN;
                                 }
-                                appendVoidElementToCurrentMayFoster("http://www.w3.org/1999/xhtml", name, HtmlAttributes.EMPTY_ATTRIBUTES);
+                                appendVoidElementToCurrentMayFoster("http://www.w3.org/1999/xhtml", elementName, HtmlAttributes.EMPTY_ATTRIBUTES);
                                 break endtagloop;
                             }
                             generateImpliedEndTagsExceptFor("p");
@@ -3029,7 +3029,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             }
                             reconstructTheActiveFormattingElements();
                             appendVoidElementToCurrentMayFoster(
-                                    "http://www.w3.org/1999/xhtml", name,
+                                    "http://www.w3.org/1999/xhtml", elementName,
                                     HtmlAttributes.EMPTY_ATTRIBUTES);
                             break endtagloop;
                         case AREA_OR_BASEFONT_OR_BGSOUND_OR_SPACER_OR_WBR:
@@ -4098,7 +4098,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 return name;
             case ALTER_INFOSET:
                 warn("Element name \u201C" + name + "\u201D cannot be represented as XML 1.0.");
-                return NCName.escapeName(name);
+                if (NCName.isNCName(name)) {
+                    return name;
+                } else {
+                    return NCName.escapeName(name);                    
+                }
             case FATAL:
                 fatal("Element name \u201C" + name + "\u201D cannot be represented as XML 1.0.");
         }
@@ -4219,7 +4223,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         @Local String popName = elementName.name;
         // [NOCPP[
         checkAttributes(attributes, ns);
-        popName = checkPopName(popName);
+        if (elementName.custom) {
+            popName = checkPopName(popName);
+        }
         // ]NOCPP]        
         T elt = createElement(ns, popName, attributes);
         StackNode<T> current = stack[currentPtr];
@@ -4245,7 +4251,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         @Local String popName = elementName.camelCaseName;
         // [NOCPP[
         checkAttributes(attributes, ns);
-        popName = checkPopName(popName);
+        if (elementName.custom) {
+            popName = checkPopName(popName);
+        }
         // ]NOCPP]        
         T elt = createElement(ns, popName, attributes);
         StackNode<T> current = stack[currentPtr];
@@ -4315,13 +4323,44 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
     }
 
-    private void appendVoidElementToCurrentMayFoster(String ns, String name,
+    private void appendVoidElementToCurrentMayFoster(String ns, ElementName elementName,
             HtmlAttributes attributes) throws SAXException {
         flushCharacters();
-        @Local String popName = name;
+        @Local String popName = elementName.name;
         // [NOCPP[
         checkAttributes(attributes, ns);
-        popName = checkPopName(popName);
+        if (elementName.custom) {
+            popName = checkPopName(popName);
+        }
+        // ]NOCPP]        
+        T elt = createElement(ns, popName, attributes);
+        StackNode<T> current = stack[currentPtr];
+        if (current.fosterParenting) {
+            if (conformingAndStreaming) {
+                fatal();
+            } else if (nonConformingAndStreaming) {
+                return;
+            } else {
+                insertIntoFosterParent(elt);
+            }
+        } else {
+            detachFromParentAndAppendToNewParent(elt, current.node);
+        }
+        if (conformingAndStreaming || nonConformingAndStreaming) {
+            elementPushed(ns, popName, (T) attributes);
+            elementPopped(ns, popName, null);
+        }
+    }
+
+    private void appendVoidElementToCurrentMayFosterCamelCase(String ns, ElementName elementName,
+            HtmlAttributes attributes) throws SAXException {
+        flushCharacters();
+        @Local String popName = elementName.camelCaseName;
+        // [NOCPP[
+        checkAttributes(attributes, ns);
+        if (elementName.custom) {
+            popName = checkPopName(popName);
+        }
         // ]NOCPP]        
         T elt = createElement(ns, popName, attributes);
         StackNode<T> current = stack[currentPtr];
