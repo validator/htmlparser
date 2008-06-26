@@ -339,6 +339,7 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
      */
     public void setNamePolicy(XmlViolationPolicy namePolicy) {
         tokenizer.setNamePolicy(namePolicy);
+        domTreeBuilder.setNamePolicy(namePolicy);
     }
 
     /**

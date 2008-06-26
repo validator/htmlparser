@@ -188,6 +188,7 @@ public class HtmlParser implements XMLReader {
             this.treeBuilder.setIgnoringComments(lexicalHandler == null);
             this.treeBuilder.setScriptingEnabled(scriptingEnabled);
             this.treeBuilder.setReportingDoctype(reportingDoctype);
+            this.treeBuilder.setNamePolicy(namePolicy);
             if (saxStreamer != null) {
                 saxStreamer.setContentHandler(contentHandler == null ? new DefaultHandler()
                         : contentHandler);
