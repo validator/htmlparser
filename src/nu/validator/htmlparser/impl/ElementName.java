@@ -1415,7 +1415,7 @@ public final class ElementName
             "notanumber", TreeBuilder.OTHER, false, false, false);
 
     public static final ElementName SOLIDCOLOR = new ElementName("solidcolor",
-            "solidColor", TreeBuilder.OTHER, false, false, false);
+            "solidcolor", TreeBuilder.OTHER, false, false, false);
 
     public static final ElementName ALTGLYPHDEF = new ElementName(
             "altglyphdef", "altGlyphDef", TreeBuilder.OTHER, false, false,

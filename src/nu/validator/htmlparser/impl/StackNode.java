@@ -94,6 +94,18 @@ final class StackNode<T> {
         this.fosterParenting = elementName.fosterParenting;
         this.tainted = false;
     }
+
+    StackNode(final String ns, ElementName elementName, final T node, String popName, boolean scoping) {
+        this.group = elementName.group;
+        this.name = elementName.name;
+        this.popName = popName;
+        this.ns = ns;
+        this.node = node;
+        this.scoping = scoping;
+        this.special = false;
+        this.fosterParenting = false;
+        this.tainted = false;
+    }
     
     // [NOCPP[
     /**
