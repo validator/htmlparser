@@ -4268,7 +4268,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         } else {
             detachFromParentAndAppendToNewParent(elt, current.node);
         }
-        StackNode<T> node = new StackNode<T>(ns, elementName, elt, popName);
+        StackNode<T> node = new StackNode<T>(ns, elementName, elt, popName, ElementName.FOREIGNOBJECT == elementName);
         push(node);
     }
 
