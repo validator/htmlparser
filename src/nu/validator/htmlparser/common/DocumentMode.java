@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
+ * Copyright (c) 2008 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -22,8 +23,25 @@
 
 package nu.validator.htmlparser.common;
 
+/**
+ * Represents the HTML document compatibility mode.
+ * 
+ * @version $Id$
+ * @author hsivonen
+ */
 public enum DocumentMode {
-STANDARDS_MODE,
-ALMOST_STANDARDS_MODE,
-QUIRKS_MODE
+    /**
+     * The Standards Mode
+     */
+    STANDARDS_MODE,
+
+    /**
+     * The Limited Quirks Mode aka. The Almost Standards Mode
+     */
+    ALMOST_STANDARDS_MODE,
+
+    /**
+     * The Quirks Mode
+     */
+    QUIRKS_MODE
 }

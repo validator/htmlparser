@@ -22,9 +22,31 @@
 
 package nu.validator.htmlparser.common;
 
+/**
+ * Indicates a request for character encoding sniffer choice.
+ * 
+ * @version $Id$
+ * @author hsivonen
+ */
 public enum Heuristics {
+    
+    /**
+     * Perform no heuristic sniffing.
+     */
     NONE,
+    
+    /**
+     * Use both jchardet and ICU4J.
+     */
     ALL,
+    
+    /**
+     * Use jchardet only.
+     */
     CHARDET,
+    
+    /**
+     * Use ICU4J only.
+     */
     ICU
 }
