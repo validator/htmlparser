@@ -8,6 +8,4 @@
 	<source path="gwt"/>
 	<entry-point class="nu.validator.htmlparser.gwt.HtmlParserModule"/>
 	<add-linker name="sso"/>		
-
-    <stylesheet src='HtmlParser.css' />
 </module>
