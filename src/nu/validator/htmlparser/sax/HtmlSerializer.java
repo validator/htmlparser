@@ -39,8 +39,9 @@ import org.xml.sax.ext.LexicalHandler;
 public class HtmlSerializer implements ContentHandler, LexicalHandler {
 
     private static final String[] VOID_ELEMENTS = { "area", "base", "basefont",
-            "bgsound", "br", "col", "embed", "frame", "hr", "img", "input",
-            "link", "meta", "param", "spacer", "wbr" };
+            "bgsound", "br", "col", "command", "embed", "event-source",
+            "frame", "hr", "img", "input", "link", "meta", "param", "source",
+            "spacer", "wbr" };
 
     private static final String[] NON_ESCAPING = { "iframe", "noembed",
             "noframes", "noscript", "plaintext", "script", "style", "xmp" };
@@ -152,7 +153,8 @@ public class HtmlSerializer implements ContentHandler, LexicalHandler {
         if (escapeLevel > 0) {
             escapeLevel++;
         }
-        if (ignoreLevel > 0 || !"http://www.w3.org/1999/xhtml".equals(uri)) {
+        boolean xhtml = "http://www.w3.org/1999/xhtml".equals(uri);
+        if (ignoreLevel > 0 || !(xhtml || "http://www.w3.org/2000/svg".equals(uri) || "http://www.w3.org/1998/Math/MathML".equals(uri))) {
             ignoreLevel++;
             return;
         }
@@ -160,8 +162,26 @@ public class HtmlSerializer implements ContentHandler, LexicalHandler {
             writer.write('<');
             writer.write(localName);
             for (int i = 0; i < atts.getLength(); i++) {
-                writer.write(' ');
-                writer.write(atts.getLocalName(i)); // XXX xml:lang
+                String attUri = atts.getURI(i);
+                String attLocal = atts.getLocalName(i);
+                if (attUri.length() == 0) {
+                    writer.write(' ');                                        
+                } else if (!xhtml && "http://www.w3.org/1999/xlink".equals(attUri)) {
+                    writer.write(" xlink:");                    
+                } else if ("http://www.w3.org/XML/1998/namespace".equals(attUri)) {
+                    if (xhtml) {
+                        if ("lang".equals(attLocal)) {
+                            writer.write(' ');                                                                    
+                        } else {
+                            continue;
+                        }                        
+                    } else {
+                        writer.write(" xml:");                        
+                    }
+                } else {
+                    continue;
+                }
+                writer.write(atts.getLocalName(i));
                 writer.write('=');
                 writer.write('"');
                 String val = atts.getValue(i);

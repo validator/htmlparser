@@ -356,6 +356,14 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
     }
 
     /**
+     * Does nothing.
+     * @deprecated
+     */
+    public void setBogusXmlnsPolicy(
+            XmlViolationPolicy bogusXmlnsPolicy) {
+    }
+    
+    /**
      * Sets the doctype expectation.
      * 
      * @param doctypeExpectation
