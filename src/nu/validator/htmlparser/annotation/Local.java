@@ -22,6 +22,13 @@
 
 package nu.validator.htmlparser.annotation;
 
+/**
+ * The local name of an element or attribute. Must be comparable with
+ * <code>==</code> (interned <code>String</code> in Java).
+ * 
+ * @version $Id$
+ * @author hsivonen
+ */
 public @interface Local {
 
 }

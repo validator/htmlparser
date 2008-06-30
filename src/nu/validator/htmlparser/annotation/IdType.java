@@ -22,6 +22,13 @@
 
 package nu.validator.htmlparser.annotation;
 
+/**
+ * The type for attribute IDness. (In Java, an interned string
+ * <code>"CDATA"</code> or <code>"ID"</code>.)
+ * 
+ * @version $Id$
+ * @author hsivonen
+ */
 public @interface IdType {
 
 }
