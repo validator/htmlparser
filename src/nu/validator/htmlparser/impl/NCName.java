@@ -22,8 +22,6 @@
 
 package nu.validator.htmlparser.impl;
 
-import java.io.UnsupportedEncodingException;
-
 public final class NCName {
 
     public static boolean isNCNameStart(char c) {
@@ -467,21 +465,21 @@ public final class NCName {
     public static String escapeName(String str) {
         StringBuilder sb = new StringBuilder();
         sb.append("_NONXML_");
-        byte[] bytes;
-        try {
-            bytes = str.getBytes("utf-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e); // JDK broken if ever thrown
-        }
-        for (int i = 0; i < bytes.length; i++) {
-            int b = bytes[i] & 0xFF;
-            if ((b >= 'a' && b <= 'z') || b == '-') {
-                sb.append((char) b);
-            } else if (b <= 0xf) {
-                sb.append('0');
-                sb.append(Integer.toHexString(b).toUpperCase());
+        for (int i = 0; i < str.length(); i++) {
+            int c = str.charAt(i) & 0xFF;
+            if ((c >= 'a' && c <= 'z') || c == '-') {
+                sb.append(c);
+            } else if (c <= 0xf) {
+                sb.append("000");
+                sb.append(Integer.toHexString(c).toUpperCase());
+            } else if (c <= 0xff) {
+                sb.append("00");
+                sb.append(Integer.toHexString(c).toUpperCase());
+            } else if (c <= 0xfff) {
+                sb.append("0");
+                sb.append(Integer.toHexString(c).toUpperCase());
             } else {
-                sb.append(Integer.toHexString(b).toUpperCase());                
+                sb.append(Integer.toHexString(c).toUpperCase());                
             }
         }
         sb.append('_');
