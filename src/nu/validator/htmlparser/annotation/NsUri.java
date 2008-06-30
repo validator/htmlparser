@@ -23,6 +23,8 @@
 package nu.validator.htmlparser.annotation;
 
 /**
+ * The namespace URI type. (In Java, an interned <code>String</code>.)
+ * 
  * @version $Id$
  * @author hsivonen
  */

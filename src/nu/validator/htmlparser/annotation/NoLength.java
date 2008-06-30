@@ -22,6 +22,13 @@
 
 package nu.validator.htmlparser.annotation;
 
+/**
+ * The array type marked with this annotation won't have its
+ * <code>.length</code> read.
+ * 
+ * @version $Id$
+ * @author hsivonen
+ */
 public @interface NoLength {
 
 }

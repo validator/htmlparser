@@ -22,6 +22,12 @@
 
 package nu.validator.htmlparser.annotation;
 
+/**
+ * The type for namespace prefixes. (In Java, an interned <code>String</code>.)
+ * 
+ * @version $Id$
+ * @author hsivonen
+ */
 public @interface Prefix {
 
 }
