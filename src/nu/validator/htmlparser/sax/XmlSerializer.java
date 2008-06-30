@@ -28,7 +28,11 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
-import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Set;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
@@ -38,6 +42,88 @@ import org.xml.sax.ext.LexicalHandler;
 
 public class XmlSerializer implements ContentHandler, LexicalHandler {   
     
+    private class PrefixMapping {
+        public final String uri;
+        public final String prefix;
+        /**
+         * @param uri
+         * @param prefix
+         */
+        public PrefixMapping(String uri, String prefix) {
+            this.uri = uri;
+            this.prefix = prefix;
+        }
+        /**
+         * @see java.lang.Object#equals(java.lang.Object)
+         */
+        @Override public boolean equals(Object obj) {
+            if (obj instanceof PrefixMapping) {
+                PrefixMapping other = (PrefixMapping) obj;
+                return this.prefix.equals(other.prefix);
+            } else {
+                return false;
+            }
+        }
+        /**
+         * @see java.lang.Object#hashCode()
+         */
+        @Override public int hashCode() {
+            return  prefix.hashCode();
+        }
+        
+    }
+    
+    private class StackNode {
+        public final String uri;
+        public final String prefix;
+        public final String qName;
+        public final Set<PrefixMapping> mappings = new HashSet<PrefixMapping>();
+        /**
+         * @param uri
+         * @param qName
+         */
+        public StackNode(String uri, String qName, String prefix) {
+            this.uri = uri;
+            this.qName = qName;
+            this.prefix = prefix;
+        } 
+    }
+    
+    private final static Map<String, String> WELL_KNOWN_ATTRIBUTE_PREFIXES = new HashMap<String, String>();
+    
+    static {
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://www.w3.org/1999/xlink", "xlink");
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://www.w3.org/1999/02/22-rdf-syntax-ns#", "rdf");
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://www.w3.org/2001/XMLSchema-instance", "xsi");
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://www.inkscape.org/namespaces/inkscape", "inkscape");
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd", "sodipodi");
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://ns.adobe.com/AdobeSVGViewerExtensions/3.0/", "a");  
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://ns.adobe.com/AdobeIllustrator/10.0/", "i");  
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("adobe:ns:meta/", "x");  
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://ns.adobe.com/xap/1.0/", "xap");  
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://ns.adobe.com/pdf/1.3/", "pdf");  
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://ns.adobe.com/tiff/1.0/", "tiff");  
+    }
+
+    private final static Map<String, String> WELL_KNOWN_ELEMENT_PREFIXES = new HashMap<String, String>();
+    
+    static {
+        WELL_KNOWN_ELEMENT_PREFIXES.put("http://www.w3.org/1999/XSL/Transform", "xsl");
+        WELL_KNOWN_ELEMENT_PREFIXES.put("http://www.w3.org/1999/02/22-rdf-syntax-ns#", "rdf");
+        WELL_KNOWN_ELEMENT_PREFIXES.put("http://purl.org/dc/elements/1.1/", "cd");
+        WELL_KNOWN_ELEMENT_PREFIXES.put("http://www.w3.org/2001/XMLSchema-instance", "xsi");
+        WELL_KNOWN_ELEMENT_PREFIXES.put("http://www.ascc.net/xml/schematron", "sch");
+        WELL_KNOWN_ELEMENT_PREFIXES.put("http://purl.oclc.org/dsdl/schematron", "sch");
+        WELL_KNOWN_ELEMENT_PREFIXES.put("http://www.inkscape.org/namespaces/inkscape", "inkscape");
+        WELL_KNOWN_ELEMENT_PREFIXES.put("http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd", "sodipodi");
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://ns.adobe.com/AdobeSVGViewerExtensions/3.0/", "a");  
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://ns.adobe.com/AdobeIllustrator/10.0/", "i");  
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("adobe:ns:meta/", "x");  
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://ns.adobe.com/xap/1.0/", "xap");  
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://ns.adobe.com/pdf/1.3/", "pdf");  
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://ns.adobe.com/tiff/1.0/", "tiff");  
+    }
+    
     private static Writer wrap(OutputStream out) {
         try {
             return new OutputStreamWriter(out, "UTF-8");
@@ -46,7 +132,12 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
         }
     }
 
+    // grows from head
+    private final LinkedList<StackNode> stack = new LinkedList<StackNode>();
+    
     private final Writer writer;
+
+    private int counter = 0;
 
     public XmlSerializer(OutputStream out) {
         this(wrap(out));
@@ -55,7 +146,39 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
     public XmlSerializer(Writer out) {
         this.writer = out;
     }
+    
+    private void push(String uri, String local, String prefix) {
+        stack.addFirst(new StackNode(uri, local, prefix));
+    }
 
+    private String pop() {
+        String rv = stack.removeFirst().qName;
+        stack.getFirst().mappings.clear();
+        return rv;
+    }
+    
+    private String lookupPrefix(String ns) {
+        for (StackNode node : stack) {
+            for (PrefixMapping mapping : node.mappings) {
+                if (mapping.uri.equals(ns)) {
+                    return mapping.prefix;
+                }
+            }
+        }
+        return null;
+    }
+
+    private String lookupUri(String prefix) {
+        for (StackNode node : stack) {
+            for (PrefixMapping mapping : node.mappings) {
+                if (mapping.prefix.equals(prefix)) {
+                    return mapping.uri;
+                }
+            }
+        }
+        return null;
+    }
+    
     public void characters(char[] ch, int start, int length)
             throws SAXException {
         try {
@@ -83,6 +206,7 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
 
     public void endDocument() throws SAXException {
         try {
+            stack.clear();
             writer.flush();
             writer.close();
         } catch (IOException e) {
@@ -95,7 +219,7 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
             try {
                 writer.write('<');
                 writer.write('/');
-                writer.write(localName);
+                writer.write(pop());
                 writer.write('>');
             } catch (IOException e) {
                 throw new SAXException(e);
@@ -116,20 +240,72 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
 
     public void startDocument() throws SAXException {
         try {
-            writer.write("<!DOCTYPE html>\n");
+            writer.write("<?xml version='1.0' encoding='utf-8'?>\n");
         } catch (IOException e) {
             throw new SAXException(e);
         }
+        stack.clear();
+        counter = 0;
+        push(null, null, null);
     }
 
-    public void startElement(String uri, String localName, String qName,
+    public void startElement(String uri, String localName, String q,
             Attributes atts) throws SAXException {
+        String prefix;
+        String qName;
+        if (uri.length() == 0) {
+            prefix = "";
+            qName = localName;
+            // generate xmlns
+            startPrefixMapping(prefix, uri);
+        } else {
+            prefix = WELL_KNOWN_ELEMENT_PREFIXES.get(uri);
+            if (prefix == null) {
+                prefix = "";
+            }
+            String lookup = lookupUri(prefix);
+            if (lookup == null || !lookup.equals(uri)) {
+                prefix = "";
+                startPrefixMapping(prefix, uri);
+            }
+            if (prefix.length() == 0) {
+                qName = localName;
+            } else {
+                qName = prefix + ':' + localName;
+            }
+        }
+        
+        int attLen = atts.getLength();
+        for (int i = 0; i < attLen; i++) {
+            String attUri = atts.getURI(i);
+            if ("".equals(attUri) || "http://www.w3.org/XML/1998/namespace".equals(attUri)) {
+                continue;
+            }
+            if (lookupPrefix(attUri) == null) {
+                generatePrefix(attUri);
+            }
+        }
+        
         try {
             writer.write('<');
-            writer.write(localName);
-            for (int i = 0; i < atts.getLength(); i++) {
+            writer.write(qName);
+            for (PrefixMapping mapping : stack.getFirst().mappings) {
                 writer.write(' ');
-                writer.write(atts.getLocalName(i)); // XXX xml:lang
+                if (mapping.prefix.length() == 0) {
+                    writer.write("xmlns");                    
+                } else {
+                    writer.write("xmlns:");
+                    writer.write(mapping.prefix);                    
+                }
+                writer.write('=');
+                writer.write('"');
+                writer.write(mapping.uri);
+                writer.write('"');
+            }
+            
+            for (int i = 0; i < attLen; i++) {
+                writer.write(' ');
+                writer.write(atts.getLocalName(i));
                 writer.write('=');
                 writer.write('"');
                 String val = atts.getValue(i);
@@ -159,6 +335,18 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
         } catch (IOException e) {
             throw new SAXException(e);
         }
+        push(uri, qName, prefix);
+    }
+
+    private void generatePrefix(String uri) throws SAXException {
+        String candidate = WELL_KNOWN_ATTRIBUTE_PREFIXES.get(uri);
+        if (candidate == null) {
+            candidate = "p" + (counter++);
+        }
+        while (lookupUri(candidate) != null) {
+            candidate = "p" + (counter++);            
+        }
+        startPrefixMapping(candidate, uri);
     }
 
     public void comment(char[] ch, int start, int length) throws SAXException {
@@ -192,6 +380,10 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
 
     public void startPrefixMapping(String prefix, String uri)
             throws SAXException {
+        if (uri.length() == 0) {
+            return;
+        }
+        stack.getFirst().mappings.add(new PrefixMapping(uri, prefix));
     }
 
     public void endPrefixMapping(String prefix) throws SAXException {

@@ -129,8 +129,6 @@ public class HtmlParser implements XMLReader {
     private boolean mappingLangToXmlLang = false;
 
     private XmlViolationPolicy xmlnsPolicy = XmlViolationPolicy.FATAL;
-
-    private XmlViolationPolicy bogusXmlnsPolicy = XmlViolationPolicy.FATAL;
     
     private boolean reportingDoctype = true;
 
@@ -995,12 +993,20 @@ public class HtmlParser implements XMLReader {
     }
 
     /**
-     * Returns the bogusXmlnsPolicy.
-     * 
-     * @return the bogusXmlnsPolicy
+     * Does nothing.
+     * @deprecated
+     */
+    public void setBogusXmlnsPolicy(
+            XmlViolationPolicy bogusXmlnsPolicy) {
+    }
+
+    /**
+     * Returns <code>XmlViolationPolicy.ALTER_INFOSET</code>.
+     * @deprecated
+     * @return <code>XmlViolationPolicy.ALTER_INFOSET</code>
      */
     public XmlViolationPolicy getBogusXmlnsPolicy() {
-        return bogusXmlnsPolicy;
+        return XmlViolationPolicy.ALTER_INFOSET;
     }
     
     public void addCharacterHandler(CharacterHandler characterHandler) {
