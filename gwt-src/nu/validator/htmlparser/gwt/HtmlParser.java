@@ -25,6 +25,7 @@ package nu.validator.htmlparser.gwt;
 
 import java.util.LinkedList;
 
+import nu.validator.htmlparser.common.XmlViolationPolicy;
 import nu.validator.htmlparser.impl.Tokenizer;
 import nu.validator.htmlparser.impl.UTF16Buffer;
 
@@ -98,6 +99,12 @@ public class HtmlParser {
     public HtmlParser(JavaScriptObject document) {
         this.domTreeBuilder = new BrowserTreeBuilder(document);
         this.tokenizer = new Tokenizer(domTreeBuilder);
+        this.domTreeBuilder.setNamePolicy(XmlViolationPolicy.ALLOW);
+        this.tokenizer.setCommentPolicy(XmlViolationPolicy.ALLOW);
+        this.tokenizer.setContentNonXmlCharPolicy(XmlViolationPolicy.ALLOW);
+        this.tokenizer.setContentSpacePolicy(XmlViolationPolicy.ALLOW);
+        this.tokenizer.setNamePolicy(XmlViolationPolicy.ALLOW);
+        this.tokenizer.setXmlnsPolicy(XmlViolationPolicy.ALLOW);
     }
 
     /**
