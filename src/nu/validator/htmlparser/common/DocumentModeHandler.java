@@ -25,6 +25,22 @@ package nu.validator.htmlparser.common;
 
 import org.xml.sax.SAXException;
 
+/**
+ * A callback interface for receiving notification about the document mode.
+ * 
+ * @version $Id$
+ * @author hsivonen
+ */
 public interface DocumentModeHandler {
+    
+    /**
+     * Receive notification of the document mode.
+     * 
+     * @param mode the document mode
+     * @param publicIdentifier the public id of the doctype or <code>null</code> if unavailable
+     * @param systemIdentifier the system id of the doctype or <code>null</code> if unavailable
+     * @param html4SpecificAdditionalErrorChecks <code>true</code> if HTML 4-specific checks were enabled, <code>false</code> otherwise
+     * @throws SAXException if things go wrong
+     */
     public void documentMode(DocumentMode mode, String publicIdentifier, String systemIdentifier, boolean html4SpecificAdditionalErrorChecks) throws SAXException;
 }

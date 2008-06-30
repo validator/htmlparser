@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Mozilla Foundation
+ * Copyright (c) 2007-2008 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -24,13 +24,36 @@ package nu.validator.htmlparser.common;
 
 import org.xml.sax.SAXException;
 
+/**
+ * An interface for receiving notifications of UTF-16 code units read from a character stream.
+ * 
+ * @version $Id$
+ * @author hsivonen
+ */
 public interface CharacterHandler {
 
+    /**
+     * Receive notification of a run of UTF-16 code units.
+     * @param ch the buffer
+     * @param start start index in the buffer
+     * @param length the number of characters to process starting from <code>start</code>
+     * @throws SAXException if things go wrong
+     */
     public void characters(char[] ch, int start, int length)
             throws SAXException;
 
+    /**
+     * Signals the end of the stream. Can be used for cleanup. Doesn't mean that the stream ended successfully.
+     * 
+     * @throws SAXException if things go wrong
+     */
     public void end() throws SAXException;
 
+    /**
+     * Signals the start of the stream. Can be used for setup.
+     * 
+     * @throws SAXException if things go wrong
+     */
     public void start() throws SAXException;
-    
+
 }

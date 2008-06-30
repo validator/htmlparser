@@ -39,90 +39,124 @@ import org.xml.sax.SAXException;
 public interface TokenHandler {
 
     /**
-     * This method is called at the start of tokenization before any other 
-     * methods on this interface are called. Implementations should hold 
-     * the reference to the <code>Tokenizer</code> in order to set the 
-     * content model flag and in order to be able to query for 
-     * <code>Locator</code> data.
+     * This method is called at the start of tokenization before any other
+     * methods on this interface are called. Implementations should hold the
+     * reference to the <code>Tokenizer</code> in order to set the content
+     * model flag and in order to be able to query for <code>Locator</code>
+     * data.
      * 
-     * @param self the <code>Tokenizer</code>.
-     * @throws SAXException if something went wrong
+     * @param self
+     *            the <code>Tokenizer</code>.
+     * @throws SAXException
+     *             if something went wrong
      */
     public void startTokenization(Tokenizer self) throws SAXException;
 
     /**
-     * If this handler implementation cares about comments, return <code>true</code>.
-     * If not, return <code>false</code>.
+     * If this handler implementation cares about comments, return
+     * <code>true</code>. If not, return <code>false</code>.
      * 
      * @return whether this handler wants comments
-     * @throws SAXException if something went wrong
+     * @throws SAXException
+     *             if something went wrong
      */
     public boolean wantsComments() throws SAXException;
-    
+
     /**
      * Receive a doctype token.
      * 
-     * @param name the name
-     * @param publicIdentifier the public id
-     * @param systemIdentifier the system id
-     * @param forceQuirks whether the token is correct
-     * @throws SAXException if something went wrong
+     * @param name
+     *            the name
+     * @param publicIdentifier
+     *            the public id
+     * @param systemIdentifier
+     *            the system id
+     * @param forceQuirks
+     *            whether the token is correct
+     * @throws SAXException
+     *             if something went wrong
      */
-    public void doctype(String name, String publicIdentifier, String systemIdentifier, boolean forceQuirks) throws SAXException;
+    public void doctype(String name, String publicIdentifier,
+            String systemIdentifier, boolean forceQuirks) throws SAXException;
 
     /**
      * Receive a start tag token.
      * 
-     * @param eltName the tag name
-     * @param attributes the attributes
-     * @param selfClosing TODO
-     * @throws SAXException if something went wrong
+     * @param eltName
+     *            the tag name
+     * @param attributes
+     *            the attributes
+     * @param selfClosing
+     *            TODO
+     * @throws SAXException
+     *             if something went wrong
      */
-    public void startTag(ElementName eltName, HtmlAttributes attributes, boolean selfClosing) throws SAXException;
-    
+    public void startTag(ElementName eltName, HtmlAttributes attributes,
+            boolean selfClosing) throws SAXException;
+
     /**
      * Receive an end tag token.
      * 
-     * @param eltName the tag name
-     * @throws SAXException if something went wrong
+     * @param eltName
+     *            the tag name
+     * @throws SAXException
+     *             if something went wrong
      */
     public void endTag(ElementName eltName) throws SAXException;
-    
+
     /**
-     * Receive a comment token. The data is junk if the <code>wantsComments()</code> 
-     * returned <code>false</code>.
+     * Receive a comment token. The data is junk if the
+     * <code>wantsComments()</code> returned <code>false</code>.
      * 
-     * @param buf a buffer holding the data
-     * @param length the number of code units to read
-     * @throws SAXException if something went wrong
+     * @param buf
+     *            a buffer holding the data
+     * @param length
+     *            the number of code units to read
+     * @throws SAXException
+     *             if something went wrong
      */
     public void comment(char[] buf, int length) throws SAXException;
-    
+
     /**
-     * Receive character tokens. This method has the same semantics as 
-     * the SAX method of the same name.
+     * Receive character tokens. This method has the same semantics as the SAX
+     * method of the same name.
      * 
-     * @param buf a buffer holding the data
-     * @param start offset into the buffer
-     * @param length the number of code units to read
-     * @throws SAXException if something went wrong
+     * @param buf
+     *            a buffer holding the data
+     * @param start
+     *            offset into the buffer
+     * @param length
+     *            the number of code units to read
+     * @throws SAXException
+     *             if something went wrong
      * @see org.xml.sax.ContentHandler#characters(char[], int, int)
      */
-    public void characters(@NoLength char[] buf, int start, int length) throws SAXException;
-    
+    public void characters(@NoLength char[] buf, int start, int length)
+            throws SAXException;
+
     /**
      * The end-of-file token.
      * 
-     * @throws SAXException if something went wrong
+     * @throws SAXException
+     *             if something went wrong
      */
     public void eof() throws SAXException;
 
     /**
      * The perform final cleanup.
      * 
-     * @throws SAXException if something went wrong
+     * @throws SAXException
+     *             if something went wrong
      */
     public void endTokenization() throws SAXException;
-    
+
+    /**
+     * Checks if the handler is in foreign content.
+     * 
+     * @return <code>true</code> if in foreign content and <code>false</code>
+     *         otherwise.
+     * @throws SAXException
+     *             if something went wrong
+     */
     public boolean inForeign() throws SAXException;
 }
