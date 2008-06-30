@@ -20,7 +20,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-package nu.validator.htmlparser.io;
+package nu.validator.htmlparser.common;
 
 import org.xml.sax.SAXException;
 

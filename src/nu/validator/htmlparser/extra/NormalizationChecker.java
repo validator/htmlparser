@@ -23,7 +23,7 @@
 
 package nu.validator.htmlparser.extra;
 
-import nu.validator.htmlparser.io.CharacterHandler;
+import nu.validator.htmlparser.common.CharacterHandler;
 
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.Locator;
@@ -133,7 +133,7 @@ public final class NormalizationChecker implements CharacterHandler {
     }
 
     /**
-     * @see nu.validator.htmlparser.io.CharacterHandler#start()
+     * @see nu.validator.htmlparser.common.CharacterHandler#start()
      */
     public void start() {
         atStartOfRun = true;
@@ -142,7 +142,7 @@ public final class NormalizationChecker implements CharacterHandler {
     }
 
     /**
-     * @see nu.validator.htmlparser.io.CharacterHandler#characters(char[], int, int)
+     * @see nu.validator.htmlparser.common.CharacterHandler#characters(char[], int, int)
      */
     public void characters(char[] ch, int start, int length)
             throws SAXException {
@@ -246,7 +246,7 @@ public final class NormalizationChecker implements CharacterHandler {
     }
 
     /**
-     * @see nu.validator.htmlparser.io.CharacterHandler#end()
+     * @see nu.validator.htmlparser.common.CharacterHandler#end()
      */
     public void end() throws SAXException {
         if (!alreadyComplainedAboutThisRun
