@@ -1,14 +1,15 @@
-   #8.2.3 Tokenisation Table of contents 8.3 Namespaces
+   #8.2.4 Tokenisation Table of contents 8.4 Serializing HTML fragments
 
    WHATWG
 
 HTML 5
 
-Working Draft — 9 March 2008
+Draft Recommendation — 18 June 2008
 
-   < 8.2.3 Tokenisation – Table of contents – 8.3 Namespaces >
+   ← 8.2.4 Tokenisation – Table of contents – 8.4 Serializing HTML
+   fragments →
 
-    8.2.4 Tree construction
+    8.2.5 Tree construction
 
    The input to the tree construction stage is a sequence of tokens from
    the tokenisation stage. The tree construction stage is associated with
@@ -19,6 +20,10 @@ Working Draft — 9 March 2008
    This specification does not define when an interactive user agent has
    to render the Document so that it is available to the user, or when it
    has to begin accepting user input.
+
+   As each token is emitted from the tokeniser, the user agent must
+   process the token according to the rules given in the section
+   corresponding to the current insertion mode.
 
    When the steps below require the UA to insert a character into a node,
    if that node has a child immediately before where the character is to
@@ -38,211 +43,145 @@ Working Draft — 9 March 2008
 
    The algorithm described below places no limit on the depth of the DOM
    tree generated, or on the length of tag names, attribute names,
-   attribute values, text nodes, etc. While implementators are encouraged
-   to avoid arbitrary limits, it is recognised that practical concerns
-   will likely force user agents to impose nesting depths.
+   attribute values, text nodes, etc. While implementors are encouraged to
+   avoid arbitrary limits, it is recognized that practical concerns will
+   likely force user agents to impose nesting depths.
 
-   As each token is emitted from the tokeniser, the user agent must
-   process the token according to the rules given in the section
-   corresponding to the current insertion mode.
+      8.2.5.1. Creating and inserting elements
 
-   Initially the insertion mode is "initial". It can change to "before
-   html", "before head", "in head", "in head noscript", "after head", "in
-   body", "in table", "in caption", "in column group", "in table body",
-   "in row", "in cell", "in select", "in select in table", "after body",
-   "in frameset", "after frameset", "after after body", and "after after
-   frameset" during the course of the parsing, as described below. It
-   affects how certain tokens are processed.
+   When the steps below require the UA to create an element for a token in
+   a particular namespace, the UA must create a node implementing the
+   interface appropriate for the element type corresponding to the tag
+   name of the token in the given namespace (as given in the specification
+   that defines that element, e.g. for an a element in the HTML namespace,
+   this specification defines it to be the HTMLAnchorElement interface),
+   with the tag name being the name of that element, with the node being
+   in the given namespace, and with the attributes on the node being those
+   given in the given token.
 
-   Four of these modes, namely "in head", "in body", "in table", and "in
-   select", are special, in that the other modes defer to them at various
-   times. When the algorithm below says that the user agent is to do
-   something "using the rules for the m insertion mode", where m is one of
-   these modes, the user agent must use the rules described under that
-   insertion mode's section, but must leave the insertion mode unchanged
-   (unless the rules in that section themselves switch the insertion
-   mode).
-
-   In addition to the insertion mode, the tree construction stage has
-   several pieces of state: a stack of open elements, a list of active
-   formatting elements, a head element pointer, and a form element
-   pointer.
-
-      8.2.4.1. The stack of open elements
-
-   Initially the stack of open elements is empty. The stack grows
-   downwards; the topmost node on the stack is the first one added to the
-   stack, and the bottommost node of the stack is the most recently added
-   node in the stack (notwithstanding when the stack is manipulated in a
-   random access fashion as part of the handling for misnested tags).
-
-   The "before html" insertion mode creates the html root element node,
-   which is then added to the stack.
-
-   In the fragment case, the stack of open elements is initialised to
-   contain an html element that is created as part of that algorithm. (The
-   fragment case skips the "before html" insertion mode.)
-
-   The html node, however it is created, is the topmost node of the stack.
-   It never gets popped off the stack.
-
-   The current node is the bottommost node in this stack.
-
-   The current table is the last table element in the stack of open
-   elements, if there is one. If there is no table element in the stack of
-   open elements (fragment case), then the current table is the first
-   element in the stack of open elements (the html element).
-
-   Elements in the stack fall into the following categories:
-
-   Special
-          The following HTML elements have varying levels of special
-          parsing rules: address, area, base, basefont, bgsound,
-          blockquote, body, br, center, col, colgroup, dd, dir, div, dl,
-          dt, embed, fieldset, form, frame, frameset, h1, h2, h3, h4, h5,
-          h6, head, hr, iframe, image, img, input, isindex, li, link,
-          listing, menu, meta, noembed, noframes, noscript, ol, optgroup,
-          option, p, param, plaintext, pre, script, select, spacer, style,
-          tbody, textarea, tfoot, thead, title, tr, ul, and wbr.
-
-   Scoping
-          The following HTML elements introduce new scopes for various
-          parts of the parsing: applet, button, caption, html, marquee,
-          object, table, td and th.
-
-   Formatting
-          The following HTML elements are those that end up in the list of
-          active formatting elements: a, b, big, em, font, i, nobr, s,
-          small, strike, strong, tt, and u.
-
-   Phrasing
-          All other elements found while parsing an HTML document.
-
-   Still need to add these new elements to the lists: event-source,
-   section, nav, article, aside, header, footer, datagrid, command
-
-   The stack of open elements is said to have an element in scope or have
-   an element in table scope when the following algorithm terminates in a
-   match state:
-    1. Initialise node to be the current node (the bottommost node of the
-       stack).
-    2. If node is the target node, terminate in a match state.
-    3. Otherwise, if node is a table element, terminate in a failure
-       state.
-    4. Otherwise, if the algorithm is the "has an element in scope"
-       variant (rather than the "has an element in table scope" variant),
-       and node is one of the following, terminate in a failure state:
-          + applet
-          + caption
-          + td
-          + th
-          + button
-          + marquee
-          + object
-    5. Otherwise, if node is an html element, terminate in a failure
-       state. (This can only happen if the node is the topmost node of the
-       stack of open elements, and prevents the next step from being
-       invoked if there are no more elements in the stack.)
-    6. Otherwise, set node to the previous entry in the stack of open
-       elements and return to step 2. (This will never fail, since the
-       loop will always terminate in the previous step if the top of the
-       stack is reached.)
-
-   Nothing happens if at any time any of the elements in the stack of open
-   elements are moved to a new location in, or removed from, the Document
-   tree. In particular, the stack is not changed in this situation. This
-   can cause, amongst other strange effects, content to be appended to
-   nodes that are no longer in the DOM.
-
-   In some cases (namely, when closing misnested formatting elements), the
-   stack is manipulated in a random-access fashion.
-
-      8.2.4.2. The list of active formatting elements
-
-   Initially the list of active formatting elements is empty. It is used
-   to handle mis-nested formatting element tags.
-
-   The list contains elements in the formatting category, and scope
-   markers. The scope markers are inserted when entering applet elements,
-   buttons, object elements, marquees, table cells, and table captions,
-   and are used to prevent formatting from "leaking" into applet elements,
-   buttons, object elements, marquees, and tables.
-
-   When the steps below require the UA to reconstruct the active
-   formatting elements, the UA must perform the following steps:
-    1. If there are no entries in the list of active formatting elements,
-       then there is nothing to reconstruct; stop this algorithm.
-    2. If the last (most recently added) entry in the list of active
-       formatting elements is a marker, or if it is an element that is in
-       the stack of open elements, then there is nothing to reconstruct;
-       stop this algorithm.
-    3. Let entry be the last (most recently added) element in the list of
-       active formatting elements.
-    4. If there are no entries before entry in the list of active
-       formatting elements, then jump to step 8.
-    5. Let entry be the entry one earlier than entry in the list of active
-       formatting elements.
-    6. If entry is neither a marker nor an element that is also in the
-       stack of open elements, go to step 4.
-    7. Let entry be the element one later than entry in the list of active
-       formatting elements.
-    8. Perform a shallow clone of the element entry to obtain clone.
-       [DOM3CORE]
-    9. Append clone to the current node and push it onto the stack of open
-       elements so that it is the new current node.
-   10. Replace the entry for entry in the list with an entry for clone.
-   11. If the entry for clone in the list of active formatting elements is
-       not the last entry in the list, return to step 7.
-
-   This has the effect of reopening all the formatting elements that were
-   opened in the current body, cell, or caption (whichever is youngest)
-   that haven't been explicitly closed.
-
-   The way this specification is written, the list of active formatting
-   elements always consists of elements in chronological order with the
-   least recently added element first and the most recently added element
-   last (except for while steps 8 to 11 of the above algorithm are being
-   executed, of course).
-
-   When the steps below require the UA to clear the list of active
-   formatting elements up to the last marker, the UA must perform the
-   following steps:
-    1. Let entry be the last (most recently added) entry in the list of
-       active formatting elements.
-    2. Remove entry from the list of active formatting elements.
-    3. If entry was a marker, then stop the algorithm at this point. The
-       list has been cleared up to the last marker.
-    4. Go to step 1.
-
-      8.2.4.3. Creating and inserting HTML elements
-
-   When the steps below require the UA to create an element for a token,
-   the UA must create a node implementing the interface appropriate for
-   the element type corresponding to the tag name of the token (as given
-   in the section of this specification that defines that element, e.g.
-   for an a element it would be the HTMLAnchorElement interface), with the
-   tag name being the name of that element, with the node being in the
-   HTML namespace, and with the attributes on the node being those given
-   in the given token.
+   The interface appropriate for an element in the HTML namespace that is
+   not defined in this specification is HTMLElement. The interface
+   appropriate for an element in another namespace that is not defined by
+   that namespace's specification is Element.
 
    When the steps below require the UA to insert an HTML element for a
-   token, the UA must first create an element for the token, and then
-   append this node to the current node, and push it onto the stack of
-   open elements so that it is the new current node.
+   token, the UA must first create an element for the token in the HTML
+   namespace, and then append this node to the current node, and push it
+   onto the stack of open elements so that it is the new current node.
 
    The steps below may also require that the UA insert an HTML element in
-   a particular place, in which case the UA must create an element for the
-   token and then insert or append the new node in the location specified.
-   (This happens in particular during the parsing of tables with invalid
-   content.)
+   a particular place, in which case the UA must follow the same steps
+   except that it must insert or append the new node in the location
+   specified instead of appending it to the current node. (This happens in
+   particular during the parsing of tables with invalid content.)
 
-   The interface appropriate for an element that is not defined in this
-   specification is HTMLElement.
+   When the steps below require the UA to insert a foreign element for a
+   token, the UA must first create an element for the token in the given
+   namespace, and then append this node to the current node, and push it
+   onto the stack of open elements so that it is the new current node. If
+   the newly created element has an xmlns attribute in the XMLNS namespace
+   whose value is not exactly the same as the element's namespace, that is
+   a parse error.
+
+   When the steps below require the user agent to adjust SVG attributes
+   for a token, then, for each attribute on the token whose attribute name
+   is one of the ones in the first column of the following table, change
+   the attribute's name to the name given in the corresponding cell in the
+   second column. (This fixes the case of SVG attributes that are not all
+   lowercase.)
+
+    Attribute name on token  Attribute name on element
+   attributename             attributeName
+   attributetype             attributeType
+   basefrequency             baseFrequency
+   baseprofile               baseProfile
+   calcmode                  calcMode
+   clippathunits             clipPathUnits
+   contentscripttype         contentScriptType
+   contentstyletype          contentStyleType
+   diffuseconstant           diffuseConstant
+   edgemode                  edgeMode
+   externalresourcesrequired externalResourcesRequired
+   filterres                 filterRes
+   filterunits               filterUnits
+   glyphref                  glyphRef
+   gradienttransform         gradientTransform
+   gradientunits             gradientUnits
+   kernelmatrix              kernelMatrix
+   kernelunitlength          kernelUnitLength
+   keypoints                 keyPoints
+   keysplines                keySplines
+   keytimes                  keyTimes
+   lengthadjust              lengthAdjust
+   limitingconeangle         limitingConeAngle
+   markerheight              markerHeight
+   markerunits               markerUnits
+   markerwidth               markerWidth
+   maskcontentunits          maskContentUnits
+   maskunits                 maskUnits
+   numoctaves                numOctaves
+   pathlength                pathLength
+   patterncontentunits       patternContentUnits
+   patterntransform          patternTransform
+   patternunits              patternUnits
+   pointsatx                 pointsAtX
+   pointsaty                 pointsAtY
+   pointsatz                 pointsAtZ
+   preservealpha             preserveAlpha
+   preserveaspectratio       preserveAspectRatio
+   primitiveunits            primitiveUnits
+   refx                      refX
+   refy                      refY
+   repeatcount               repeatCount
+   repeatdur                 repeatDur
+   requiredextensions        requiredExtensions
+   requiredfeatures          requiredFeatures
+   specularconstant          specularConstant
+   specularexponent          specularExponent
+   spreadmethod              spreadMethod
+   startoffset               startOffset
+   stddeviation              stdDeviation
+   stitchtiles               stitchTiles
+   surfacescale              surfaceScale
+   systemlanguage            systemLanguage
+   tablevalues               tableValues
+   targetx                   targetX
+   targety                   targetY
+   textlength                textLength
+   viewbox                   viewBox
+   viewtarget                viewTarget
+   xchannelselector          xChannelSelector
+   ychannelselector          yChannelSelector
+   zoomandpan                zoomAndPan
+
+   When the steps below require the user agent to adjust foreign
+   attributes for a token, then, if any of the attributes on the token
+   match the strings given in the first column of the following table, let
+   the attribute be a namespaced attribute, with the prefix being the
+   string given in the corresponding cell in the second column, the local
+   name being the string given in the corresponding cell in the third
+   column, and the namespace being the namespace given in the
+   corresponding cell in the fourth column. (This fixes the use of
+   namespaced attributes, in particular xml:lang.)
+
+   Attribute name Prefix Local name    Namespace
+   xlink:actuate  xlink  actuate    XLink namespace
+   xlink:arcrole  xlink  arcrole    XLink namespace
+   xlink:href     xlink  href       XLink namespace
+   xlink:role     xlink  role       XLink namespace
+   xlink:show     xlink  show       XLink namespace
+   xlink:title    xlink  title      XLink namespace
+   xlink:type     xlink  type       XLink namespace
+   xml:base       xml    base       XML namespace
+   xml:lang       xml    lang       XML namespace
+   xml:space      xml    space      XML namespace
+   xmlns          (none) xmlns      XMLNS namespace
+   xmlns:xlink    xmlns  xlink      XMLNS namespace
 
    The generic CDATA parsing algorithm and the generic RCDATA parsing
    algorithm consist of the following steps. These algorithms are always
    invoked in response to a start tag token.
-    1. Create an element for the token.
+    1. Create an element for the token in the HTML namespace.
     2. Append the new element to the current node.
     3. If the algorithm that was invoked is the generic CDATA parsing
        algorithm, switch the tokeniser's content model flag to the CDATA
@@ -261,78 +200,52 @@ Working Draft — 9 March 2008
        start tag token, ignore it. Otherwise, it's an end-of-file token,
        and this is a parse error.
 
-      8.2.4.4. Closing elements that have implied end tags
+      8.2.5.2. Closing elements that have implied end tags
 
    When the steps below require the UA to generate implied end tags, then,
-   while the current node is a dd element, a dt element, an li element, or
-   a p element, the UA must pop the current node off the stack of open
+   while the current node is a dd element, a dt element, an li element, an
+   option element, an optgroup element, a p element, an rp element, or an
+   rt element, the UA must pop the current node off the stack of open
    elements.
 
    If a step requires the UA to generate implied end tags but lists an
    element to exclude from the process, then the UA must perform the above
    steps as if that element was not in the above list.
 
-      8.2.4.5. The element pointers
+      8.2.5.3. Foster parenting
 
-   Initially the head element pointer and the form element pointer are
-   both null.
+   Foster parenting happens when content is misnested in tables.
 
-   Once a head element has been parsed (whether implicitly or explicitly)
-   the head element pointer gets set to point to this node.
+   When a node node is to be foster parented, the node node must be
+   inserted into the foster parent element, and the current table must be
+   marked as tainted. (Once the current table has been tainted, whitespace
+   characters are inserted into the foster parent element instead of the
+   current node.)
 
-   The form element pointer points to the last form element that was
-   opened and whose end tag has not yet been seen. It is used to make form
-   controls associate with forms in the face of dramatically bad markup,
-   for historical reasons.
+   The foster parent element is the parent element of the last table
+   element in the stack of open elements, if there is a table element and
+   it has such a parent element. If there is no table element in the stack
+   of open elements (fragment case), then the foster parent element is the
+   first element in the stack of open elements (the html element).
+   Otherwise, if there is a table element in the stack of open elements,
+   but the last table element in the stack of open elements has no parent,
+   or its parent node is not an element, then the foster parent element is
+   the element before the last table element in the stack of open
+   elements.
 
-      8.2.4.6. Resetting the insertion mode
+   If the foster parent element is the parent element of the last table
+   element in the stack of open elements, then node must be inserted
+   immediately before the last table element in the stack of open elements
+   in the foster parent element; otherwise, node must be appended to the
+   foster parent element.
 
-   When the steps below require the UA to reset the insertion mode
-   appropriately, it means the UA must follow these steps:
-    1. Let last be false.
-    2. Let node be the last node in the stack of open elements.
-    3. If node is the first node in the stack of open elements, then set
-       last to true; if, in addition, the context element of the HTML
-       fragment parsing algorithm is neither a td element nor a th
-       element, then set node to the context element. (fragment case)
-    4. If node is a select element, then switch the insertion mode to "in
-       select" and abort these steps. (fragment case)
-    5. If node is a td or th element, then switch the insertion mode to
-       "in cell" and abort these steps.
-    6. If node is a tr element, then switch the insertion mode to "in row"
-       and abort these steps.
-    7. If node is a tbody, thead, or tfoot element, then switch the
-       insertion mode to "in table body" and abort these steps.
-    8. If node is a caption element, then switch the insertion mode to "in
-       caption" and abort these steps.
-    9. If node is a colgroup element, then switch the insertion mode to
-       "in column group" and abort these steps. (fragment case)
-   10. If node is a table element, then switch the insertion mode to "in
-       table" and abort these steps.
-   11. If node is a head element, then switch the insertion mode to "in
-       body" ("in body"! not "in head"!) and abort these steps. (fragment
-       case)
-   12. If node is a body element, then switch the insertion mode to "in
-       body" and abort these steps.
-   13. If node is a frameset element, then switch the insertion mode to
-       "in frameset" and abort these steps. (fragment case)
-   14. If node is an html element, then: if the head element pointer is
-       null, switch the insertion mode to "before head", otherwise, switch
-       the insertion mode to "after head". In either case, abort these
-       steps. (fragment case)
-   15. If last is true, then switch the insertion mode to "in body" and
-       abort these steps. (fragment case)
-   16. Let node now be the node before node in the stack of open elements.
-   17. Return to step 3.
-
-      8.2.4.7. The "initial" insertion mode
+      8.2.5.4. The "initial" insertion mode
 
    When the insertion mode is "initial", tokens must be handled as
    follows:
 
    A character token that is one of one of U+0009 CHARACTER TABULATION,
-          U+000A LINE FEED (LF), U+000B LINE TABULATION, U+000C FORM FEED
-          (FF), or U+0020 SPACE
+          U+000A LINE FEED (LF), U+000C FORM FEED (FF), or U+0020 SPACE
           Ignore the token.
 
    A comment token
@@ -346,16 +259,16 @@ Working Draft — 9 March 2008
           then there is a parse error. Conformance checkers may, instead
           of reporting this error, switch to a conformance checking mode
           for another language (e.g. based on the DOCTYPE token a
-          conformance checker could recognise that the document is an
+          conformance checker could recognize that the document is an
           HTML4-era document, and defer to an HTML4 conformance checker.)
 
           Append a DocumentType node to the Document node, with the name
           attribute set to the name given in the DOCTYPE token; the
           publicId attribute set to the public identifier given in the
           DOCTYPE token, or the empty string if the public identifier was
-          not set; the systemId attribute set to the system identifier
+          missing; the systemId attribute set to the system identifier
           given in the DOCTYPE token, or the empty string if the system
-          identifier was not set; and the other attributes specific to
+          identifier was missing; and the other attributes specific to
           DocumentType objects set to null and empty lists as appropriate.
           Associate the DocumentType node with the Document object so that
           it is returned as the value of the doctype attribute of the
@@ -366,160 +279,137 @@ Working Draft — 9 March 2008
 
           + The force-quirks flag is set to on.
           + The name is set to anything other than "HTML".
-          + The public identifier is set to: "+//Silmaril//dtd html Pro
-            v0r11 19970101//EN"
-          + The public identifier is set to: "-//AdvaSoft Ltd//DTD HTML
-            3.0 asWedit + extensions//EN"
-          + The public identifier is set to: "-//AS//DTD HTML 3.0 asWedit
-            + extensions//EN"
-          + The public identifier is set to: "-//IETF//DTD HTML 2.0 Level
-            1//EN"
-          + The public identifier is set to: "-//IETF//DTD HTML 2.0 Level
-            2//EN"
-          + The public identifier is set to: "-//IETF//DTD HTML 2.0 Strict
-            Level 1//EN"
-          + The public identifier is set to: "-//IETF//DTD HTML 2.0 Strict
-            Level 2//EN"
-          + The public identifier is set to: "-//IETF//DTD HTML 2.0
-            Strict//EN"
-          + The public identifier is set to: "-//IETF//DTD HTML 2.0//EN"
-          + The public identifier is set to: "-//IETF//DTD HTML 2.1E//EN"
-          + The public identifier is set to: "-//IETF//DTD HTML 3.0//EN"
-          + The public identifier is set to: "-//IETF//DTD HTML 3.0//EN//"
-          + The public identifier is set to: "-//IETF//DTD HTML 3.2
-            Final//EN"
-          + The public identifier is set to: "-//IETF//DTD HTML 3.2//EN"
-          + The public identifier is set to: "-//IETF//DTD HTML 3//EN"
-          + The public identifier is set to: "-//IETF//DTD HTML Level
-            0//EN"
-          + The public identifier is set to: "-//IETF//DTD HTML Level
-            0//EN//2.0"
-          + The public identifier is set to: "-//IETF//DTD HTML Level
-            1//EN"
-          + The public identifier is set to: "-//IETF//DTD HTML Level
-            1//EN//2.0"
-          + The public identifier is set to: "-//IETF//DTD HTML Level
-            2//EN"
-          + The public identifier is set to: "-//IETF//DTD HTML Level
-            2//EN//2.0"
-          + The public identifier is set to: "-//IETF//DTD HTML Level
-            3//EN"
-          + The public identifier is set to: "-//IETF//DTD HTML Level
-            3//EN//3.0"
-          + The public identifier is set to: "-//IETF//DTD HTML Strict
-            Level 0//EN"
-          + The public identifier is set to: "-//IETF//DTD HTML Strict
-            Level 0//EN//2.0"
-          + The public identifier is set to: "-//IETF//DTD HTML Strict
-            Level 1//EN"
-          + The public identifier is set to: "-//IETF//DTD HTML Strict
-            Level 1//EN//2.0"
-          + The public identifier is set to: "-//IETF//DTD HTML Strict
-            Level 2//EN"
-          + The public identifier is set to: "-//IETF//DTD HTML Strict
-            Level 2//EN//2.0"
-          + The public identifier is set to: "-//IETF//DTD HTML Strict
-            Level 3//EN"
-          + The public identifier is set to: "-//IETF//DTD HTML Strict
-            Level 3//EN//3.0"
-          + The public identifier is set to: "-//IETF//DTD HTML
-            Strict//EN"
-          + The public identifier is set to: "-//IETF//DTD HTML
-            Strict//EN//2.0"
-          + The public identifier is set to: "-//IETF//DTD HTML
-            Strict//EN//3.0"
-          + The public identifier is set to: "-//IETF//DTD HTML//EN"
-          + The public identifier is set to: "-//IETF//DTD HTML//EN//2.0"
-          + The public identifier is set to: "-//IETF//DTD HTML//EN//3.0"
-          + The public identifier is set to: "-//Metrius//DTD Metrius
-            Presentational//EN"
-          + The public identifier is set to: "-//Microsoft//DTD Internet
-            Explorer 2.0 HTML Strict//EN"
-          + The public identifier is set to: "-//Microsoft//DTD Internet
-            Explorer 2.0 HTML//EN"
-          + The public identifier is set to: "-//Microsoft//DTD Internet
-            Explorer 2.0 Tables//EN"
-          + The public identifier is set to: "-//Microsoft//DTD Internet
-            Explorer 3.0 HTML Strict//EN"
-          + The public identifier is set to: "-//Microsoft//DTD Internet
-            Explorer 3.0 HTML//EN"
-          + The public identifier is set to: "-//Microsoft//DTD Internet
-            Explorer 3.0 Tables//EN"
-          + The public identifier is set to: "-//Netscape Comm. Corp.//DTD
-            HTML//EN"
-          + The public identifier is set to: "-//Netscape Comm. Corp.//DTD
-            Strict HTML//EN"
-          + The public identifier is set to: "-//O'Reilly and
-            Associates//DTD HTML 2.0//EN"
-          + The public identifier is set to: "-//O'Reilly and
-            Associates//DTD HTML Extended 1.0//EN"
-          + The public identifier is set to: "-//O'Reilly and
-            Associates//DTD HTML Extended Relaxed 1.0//EN"
-          + The public identifier is set to: "-//SoftQuad Software//DTD
-            HoTMetaL PRO 6.0::19990601::extensions to HTML 4.0//EN"
-          + The public identifier is set to: "-//SoftQuad//DTD HoTMetaL
-            PRO 4.0::19971010::extensions to HTML 4.0//EN"
-          + The public identifier is set to: "-//Spyglass//DTD HTML 2.0
-            Extended//EN"
-          + The public identifier is set to: "-//SQ//DTD HTML 2.0 HoTMetaL
-            + extensions//EN"
-          + The public identifier is set to: "-//Sun Microsystems
-            Corp.//DTD HotJava HTML//EN"
-          + The public identifier is set to: "-//Sun Microsystems
-            Corp.//DTD HotJava Strict HTML//EN"
-          + The public identifier is set to: "-//W3C//DTD HTML 3
-            1995-03-24//EN"
-          + The public identifier is set to: "-//W3C//DTD HTML 3.2
-            Draft//EN"
-          + The public identifier is set to: "-//W3C//DTD HTML 3.2
-            Final//EN"
-          + The public identifier is set to: "-//W3C//DTD HTML 3.2//EN"
-          + The public identifier is set to: "-//W3C//DTD HTML 3.2S
-            Draft//EN"
-          + The public identifier is set to: "-//W3C//DTD HTML 4.0
-            Frameset//EN"
-          + The public identifier is set to: "-//W3C//DTD HTML 4.0
-            Transitional//EN"
-          + The public identifier is set to: "-//W3C//DTD HTML
-            Experimental 19960712//EN"
-          + The public identifier is set to: "-//W3C//DTD HTML
-            Experimental 970421//EN"
-          + The public identifier is set to: "-//W3C//DTD W3 HTML//EN"
-          + The public identifier is set to: "-//W3O//DTD W3 HTML 3.0//EN"
-          + The public identifier is set to: "-//W3O//DTD W3 HTML
-            3.0//EN//"
+          + The public identifier starts with: "+//Silmaril//dtd html Pro
+            v0r11 19970101//"
+          + The public identifier starts with: "-//AdvaSoft Ltd//DTD HTML
+            3.0 asWedit + extensions//"
+          + The public identifier starts with: "-//AS//DTD HTML 3.0
+            asWedit + extensions//"
+          + The public identifier starts with: "-//IETF//DTD HTML 2.0
+            Level 1//"
+          + The public identifier starts with: "-//IETF//DTD HTML 2.0
+            Level 2//"
+          + The public identifier starts with: "-//IETF//DTD HTML 2.0
+            Strict Level 1//"
+          + The public identifier starts with: "-//IETF//DTD HTML 2.0
+            Strict Level 2//"
+          + The public identifier starts with: "-//IETF//DTD HTML 2.0
+            Strict//"
+          + The public identifier starts with: "-//IETF//DTD HTML 2.0//"
+          + The public identifier starts with: "-//IETF//DTD HTML 2.1E//"
+          + The public identifier starts with: "-//IETF//DTD HTML 3.0//"
+          + The public identifier starts with: "-//IETF//DTD HTML 3.2
+            Final//"
+          + The public identifier starts with: "-//IETF//DTD HTML 3.2//"
+          + The public identifier starts with: "-//IETF//DTD HTML 3//"
+          + The public identifier starts with: "-//IETF//DTD HTML Level
+            0//"
+          + The public identifier starts with: "-//IETF//DTD HTML Level
+            1//"
+          + The public identifier starts with: "-//IETF//DTD HTML Level
+            2//"
+          + The public identifier starts with: "-//IETF//DTD HTML Level
+            3//"
+          + The public identifier starts with: "-//IETF//DTD HTML Strict
+            Level 0//"
+          + The public identifier starts with: "-//IETF//DTD HTML Strict
+            Level 1//"
+          + The public identifier starts with: "-//IETF//DTD HTML Strict
+            Level 2//"
+          + The public identifier starts with: "-//IETF//DTD HTML Strict
+            Level 3//"
+          + The public identifier starts with: "-//IETF//DTD HTML
+            Strict//"
+          + The public identifier starts with: "-//IETF//DTD HTML//"
+          + The public identifier starts with: "-//Metrius//DTD Metrius
+            Presentational//"
+          + The public identifier starts with: "-//Microsoft//DTD Internet
+            Explorer 2.0 HTML Strict//"
+          + The public identifier starts with: "-//Microsoft//DTD Internet
+            Explorer 2.0 HTML//"
+          + The public identifier starts with: "-//Microsoft//DTD Internet
+            Explorer 2.0 Tables//"
+          + The public identifier starts with: "-//Microsoft//DTD Internet
+            Explorer 3.0 HTML Strict//"
+          + The public identifier starts with: "-//Microsoft//DTD Internet
+            Explorer 3.0 HTML//"
+          + The public identifier starts with: "-//Microsoft//DTD Internet
+            Explorer 3.0 Tables//"
+          + The public identifier starts with: "-//Netscape Comm.
+            Corp.//DTD HTML//"
+          + The public identifier starts with: "-//Netscape Comm.
+            Corp.//DTD Strict HTML//"
+          + The public identifier starts with: "-//O'Reilly and
+            Associates//DTD HTML 2.0//"
+          + The public identifier starts with: "-//O'Reilly and
+            Associates//DTD HTML Extended 1.0//"
+          + The public identifier starts with: "-//O'Reilly and
+            Associates//DTD HTML Extended Relaxed 1.0//"
+          + The public identifier starts with: "-//SoftQuad Software//DTD
+            HoTMetaL PRO 6.0::19990601::extensions to HTML 4.0//"
+          + The public identifier starts with: "-//SoftQuad//DTD HoTMetaL
+            PRO 4.0::19971010::extensions to HTML 4.0//"
+          + The public identifier starts with: "-//Spyglass//DTD HTML 2.0
+            Extended//"
+          + The public identifier starts with: "-//SQ//DTD HTML 2.0
+            HoTMetaL + extensions//"
+          + The public identifier starts with: "-//Sun Microsystems
+            Corp.//DTD HotJava HTML//"
+          + The public identifier starts with: "-//Sun Microsystems
+            Corp.//DTD HotJava Strict HTML//"
+          + The public identifier starts with: "-//W3C//DTD HTML 3
+            1995-03-24//"
+          + The public identifier starts with: "-//W3C//DTD HTML 3.2
+            Draft//"
+          + The public identifier starts with: "-//W3C//DTD HTML 3.2
+            Final//"
+          + The public identifier starts with: "-//W3C//DTD HTML 3.2//"
+          + The public identifier starts with: "-//W3C//DTD HTML 3.2S
+            Draft//"
+          + The public identifier starts with: "-//W3C//DTD HTML 4.0
+            Frameset//"
+          + The public identifier starts with: "-//W3C//DTD HTML 4.0
+            Transitional//"
+          + The public identifier starts with: "-//W3C//DTD HTML
+            Experimental 19960712//"
+          + The public identifier starts with: "-//W3C//DTD HTML
+            Experimental 970421//"
+          + The public identifier starts with: "-//W3C//DTD W3 HTML//"
+          + The public identifier starts with: "-//W3O//DTD W3 HTML 3.0//"
           + The public identifier is set to: "-//W3O//DTD W3 HTML Strict
             3.0//EN//"
-          + The public identifier is set to: "-//WebTechs//DTD Mozilla
-            HTML 2.0//EN"
-          + The public identifier is set to: "-//WebTechs//DTD Mozilla
-            HTML//EN"
+          + The public identifier starts with: "-//WebTechs//DTD Mozilla
+            HTML 2.0//"
+          + The public identifier starts with: "-//WebTechs//DTD Mozilla
+            HTML//"
           + The public identifier is set to: "-/W3C/DTD HTML 4.0
             Transitional/EN"
           + The public identifier is set to: "HTML"
           + The system identifier is set to:
             "http://www.ibm.com/data/dtd/v11/ibmxhtml1-transitional.dtd"
-          + The system identifier is missing and the public identifier is
-            set to: "-//W3C//DTD HTML 4.01 Frameset//EN"
-          + The system identifier is missing and the public identifier is
-            set to: "-//W3C//DTD HTML 4.01 Transitional//EN"
+          + The system identifier is missing and the public identifier
+            starts with: "-//W3C//DTD HTML 4.01 Frameset//"
+          + The system identifier is missing and the public identifier
+            starts with: "-//W3C//DTD HTML 4.01 Transitional//"
 
           Otherwise, if the DOCTYPE token matches one of the conditions in
           the following list, then set the document to limited quirks
           mode:
 
-          + The public identifier is set to: "-//W3C//DTD XHTML 1.0
-            Frameset//EN"
-          + The public identifier is set to: "-//W3C//DTD XHTML 1.0
-            Transitional//EN"
+          + The public identifier starts with: "-//W3C//DTD XHTML 1.0
+            Frameset//"
+          + The public identifier starts with: "-//W3C//DTD XHTML 1.0
+            Transitional//"
           + The system identifier is not missing and the public identifier
-            is set to: "-//W3C//DTD HTML 4.01 Frameset//EN"
+            starts with: "-//W3C//DTD HTML 4.01 Frameset//"
           + The system identifier is not missing and the public identifier
-            is set to: "-//W3C//DTD HTML 4.01 Transitional//EN"
+            starts with: "-//W3C//DTD HTML 4.01 Transitional//"
 
           The name, system identifier, and public identifier strings must
           be compared to the values given in the lists above in a
-          case-insensitive manner.
+          case-insensitive manner. A system identifier whose value is the
+          empty string is not considered missing for the purposes of the
+          conditions above.
 
           Then, switch the insertion mode to "before html".
 
@@ -531,7 +421,7 @@ Working Draft — 9 March 2008
           Switch the insertion mode to "before html", then reprocess the
           current token.
 
-      8.2.4.8. The "before html" insertion mode
+      8.2.5.5. The "before html" insertion mode
 
    When the insertion mode is "before html", tokens must be handled as
    follows:
@@ -544,18 +434,22 @@ Working Draft — 9 March 2008
           attribute set to the data given in the comment token.
 
    A character token that is one of one of U+0009 CHARACTER TABULATION,
-          U+000A LINE FEED (LF), U+000B LINE TABULATION, U+000C FORM FEED
-          (FF), or U+0020 SPACE
+          U+000A LINE FEED (LF), U+000C FORM FEED (FF), or U+0020 SPACE
           Ignore the token.
 
    A start tag whose tag name is "html"
-          Create an element for the token. Append it to the Document
-          object. Put this element in the stack of open elements.
+          Create an element for the token in the HTML namespace. Append it
+          to the Document object. Put this element in the stack of open
+          elements.
 
           If the token has an attribute "manifest", then run the
           application cache selection algorithm with the value of that
-          attribute as the manifest URI. Otherwise, run the application
-          cache selection algorithm with no manifest.
+          attribute as the manifest URI, resolving relative URIs according
+          to section 5.1 of RFC3986 as if there was no base URI embedded
+          in content (i.e. relative to the base URI from the encapsulating
+          entity or the URI used to retrieve the entity). Otherwise, run
+          the application cache selection algorithm with no manifest.
+          [RFC3986]
 
           Switch the insertion mode to "before head".
 
@@ -576,14 +470,13 @@ Working Draft — 9 March 2008
    e.g. by scripts; nothing in particular happens in such cases, content
    continues being appended to the nodes as described in the next section.
 
-      8.2.4.9. The "before head" insertion mode
+      8.2.5.6. The "before head" insertion mode
 
    When the insertion mode is "before head", tokens must be handled as
    follows:
 
    A character token that is one of one of U+0009 CHARACTER TABULATION,
-          U+000A LINE FEED (LF), U+000B LINE TABULATION, U+000C FORM FEED
-          (FF), or U+0020 SPACE
+          U+000A LINE FEED (LF), U+000C FORM FEED (FF), or U+0020 SPACE
           Ignore the token.
 
    A comment token
@@ -598,23 +491,18 @@ Working Draft — 9 March 2008
           mode.
 
    A start tag whose tag name is "head"
-          Create an element for the token.
+          Insert an HTML element for the token.
 
-          Set the head element pointer to this new element node.
-
-          Append the new element to the current node and push it onto the
-          stack of open elements.
+          Set the head element pointer to the newly created head element.
 
           Switch the insertion mode to "in head".
 
-   An end tag whose tag name is one of: "head", "body", "html", "p", "br"
+   An end tag whose tag name is one of: "head", "br"
           Act as if a start tag token with the tag name "head" and no
           attributes had been seen, then reprocess the current token.
 
    Any other end tag
           Parse error. Ignore the token.
-
-          Do we really want to ignore end tags here?
 
    Anything else
           Act as if a start tag token with the tag name "head" and no
@@ -624,14 +512,13 @@ Working Draft — 9 March 2008
           the current token being reprocessed in the "after head"
           insertion mode.
 
-      8.2.4.10. The "in head" insertion mode
+      8.2.5.7. The "in head" insertion mode
 
    When the insertion mode is "in head", tokens must be handled as
    follows:
 
    A character token that is one of one of U+0009 CHARACTER TABULATION,
-          U+000A LINE FEED (LF), U+000B LINE TABULATION, U+000C FORM FEED
-          (FF), or U+0020 SPACE
+          U+000A LINE FEED (LF), U+000C FORM FEED (FF), or U+0020 SPACE
           Insert the character into the current node.
 
    A comment token
@@ -645,13 +532,18 @@ Working Draft — 9 March 2008
           Process the token using the rules for the "in body" insertion
           mode.
 
-   A start tag whose tag name is one of: "base", "link"
+   A start tag whose tag name is one of: "base", "command",
+          "event-source", "link"
           Insert an HTML element for the token. Immediately pop the
           current node off the stack of open elements.
+
+          Acknowledge the token's self-closing flag, if it is set.
 
    A start tag whose tag name is "meta"
           Insert an HTML element for the token. Immediately pop the
           current node off the stack of open elements.
+
+          Acknowledge the token's self-closing flag, if it is set.
 
           If the element has a charset attribute, and its value is a
           supported encoding, and the confidence is currently tentative,
@@ -667,17 +559,20 @@ Working Draft — 9 March 2008
    A start tag whose tag name is "title"
           Follow the generic RCDATA parsing algorithm.
 
-   A start tag whose tag name is "noscript", if scripting is enabled:
-   A start tag whose tag name is "style"
+   A start tag whose tag name is "noscript", if the scripting flag is
+          enabled
+
+   A start tag whose tag name is one of: "noframes", "style"
           Follow the generic CDATA parsing algorithm.
 
-   A start tag whose tag name is "noscript", if scripting is disabled:
+   A start tag whose tag name is "noscript", if the scripting flag is
+          disabled
           Insert an HTML element for the token.
 
           Switch the insertion mode to "in head noscript".
 
    A start tag whose tag name is "script"
-          Create an element for the token.
+          Create an element for the token in the HTML namespace.
 
           Mark the element as being "parser-inserted". This ensures that,
           if the script is external, any document.write() calls in the
@@ -733,7 +628,7 @@ Working Draft — 9 March 2008
 
         If the tree construction stage is being called reentrantly, say
                 from a call to document.write():
-                Abort the processing of any nested invokations of the
+                Abort the processing of any nested invocations of the
                 tokeniser, yielding control back to the caller.
                 (Tokenisation will resume when the caller returns to the
                 "outer" tree construction stage.)
@@ -759,7 +654,7 @@ Working Draft — 9 March 2008
 
           Switch the insertion mode to "after head".
 
-   An end tag whose tag name is one of: "body", "html", "p", "br"
+   An end tag whose tag name is "br"
           Act as described in the "anything else" entry below.
 
    A start tag whose tag name is "head"
@@ -774,7 +669,7 @@ Working Draft — 9 March 2008
           straight away, but instead get put into the head. Do we want to
           copy that?
 
-      8.2.4.11. The "in head noscript" insertion mode
+      8.2.5.8. The "in head noscript" insertion mode
 
    When the insertion mode is "in head noscript", tokens must be handled
    as follows:
@@ -794,15 +689,15 @@ Working Draft — 9 March 2008
           Switch the insertion mode to "in head".
 
    A character token that is one of one of U+0009 CHARACTER TABULATION,
-          U+000A LINE FEED (LF), U+000B LINE TABULATION, U+000C FORM FEED
-          (FF), or U+0020 SPACE
+          U+000A LINE FEED (LF), U+000C FORM FEED (FF), or U+0020 SPACE
 
    A comment token
-   A start tag whose tag name is one of: "link", "meta", "style"
+   A start tag whose tag name is one of: "link", "meta", "noframes",
+          "style"
           Process the token using the rules for the "in head" insertion
           mode.
 
-   An end tag whose tag name is one of: "p", "br"
+   An end tag whose tag name is one of: "br"
           Act as described in the "anything else" entry below.
 
    A start tag whose tag name is one of: "head", "noscript"
@@ -813,14 +708,13 @@ Working Draft — 9 March 2008
           Parse error. Act as if an end tag with the tag name "noscript"
           had been seen and reprocess the current token.
 
-      8.2.4.12. The "after head" insertion mode
+      8.2.5.9. The "after head" insertion mode
 
    When the insertion mode is "after head", tokens must be handled as
    follows:
 
    A character token that is one of one of U+0009 CHARACTER TABULATION,
-          U+000A LINE FEED (LF), U+000B LINE TABULATION, U+000C FORM FEED
-          (FF), or U+0020 SPACE
+          U+000A LINE FEED (LF), U+000C FORM FEED (FF), or U+0020 SPACE
           Insert the character into the current node.
 
    A comment token
@@ -845,7 +739,7 @@ Working Draft — 9 March 2008
           Switch the insertion mode to "in frameset".
 
    A start tag token whose tag name is one of: "base", "link", "meta",
-          "script", "style", "title"
+          "noframes", "script", "style", "title"
           Parse error.
 
           Push the node pointed to by the head element pointer onto the
@@ -857,11 +751,15 @@ Working Draft — 9 March 2008
           Pop the current node (which will be the node pointed to by the
           head element pointer) off the stack of open elements.
 
+   A start tag whose tag name is "head"
+   Any other end tag
+          Parse error. Ignore the token.
+
    Anything else
           Act as if a start tag token with the tag name "body" and no
           attributes had been seen, and then reprocess the current token.
 
-      8.2.4.13. The "in body" insertion mode
+      8.2.5.10. The "in body" insertion mode
 
    When the insertion mode is "in body", tokens must be handled as
    follows:
@@ -884,8 +782,9 @@ Working Draft — 9 March 2008
           of open elements. If it is not, add the attribute and its
           corresponding value to that element.
 
-   A start tag token whose tag name is one of: "base", "link", "meta",
-          "script", "style", "title"
+   A start tag token whose tag name is one of: "base", "command",
+          "event-source", "link", "meta", "noframes", "script", "style",
+          "title"
           Process the token using the rules for the "in head" insertion
           mode.
 
@@ -930,19 +829,19 @@ Working Draft — 9 March 2008
           The fake end tag token here can only be ignored in the fragment
           case.
 
-   A start tag whose tag name is one of: "address", "blockquote",
-          "center", "dir", "div", "dl", "fieldset", "h1", "h2", "h3",
-          "h4", "h5", "h6", "menu", "ol", "p", "ul"
-          This doesn't match browsers.
-
+   A start tag whose tag name is one of: "address", "article", "aside",
+          "blockquote", "center", "datagrid", "details", "dialog", "dir",
+          "div", "dl", "fieldset", "figure", "footer", "h1", "h2", "h3",
+          "h4", "h5", "h6", "header", "menu", "nav", "ol", "p", "section",
+          "ul"
           If the stack of open elements has a p element in scope, then act
-          as if an end tag with the tag name p had been seen.
+          as if an end tag with the tag name "p" had been seen.
 
           Insert an HTML element for the token.
 
    A start tag whose tag name is one of: "pre", "listing"
           If the stack of open elements has a p element in scope, then act
-          as if an end tag with the tag name p had been seen.
+          as if an end tag with the tag name "p" had been seen.
 
           Insert an HTML element for the token.
 
@@ -958,54 +857,47 @@ Working Draft — 9 March 2008
           Otherwise:
 
           If the stack of open elements has a p element in scope, then act
-          as if an end tag with the tag name p had been seen.
+          as if an end tag with the tag name "p" had been seen.
 
           Insert an HTML element for the token, and set the form element
           pointer to point to the element created.
 
    A start tag whose tag name is "li"
-          If the stack of open elements has a p element in scope, then act
-          as if an end tag with the tag name p had been seen.
-
           Run the following algorithm:
 
          1. Initialise node to be the current node (the bottommost node of
             the stack).
-         2. If node is an li element, then pop all the nodes from the
-            current node up to node, including node, then stop this
-            algorithm. If more than one node is popped, then this is a
-            parse error.
+         2. If node is an li element, then act as if an end tag with the
+            tag name "li" had been seen, then jump to the last step.
          3. If node is not in the formatting category, and is not in the
             phrasing category, and is not an address or div element, then
-            stop this algorithm.
+            jump to the last step.
          4. Otherwise, set node to the previous entry in the stack of open
             elements and return to step 2.
-
-          Finally, insert an HTML element for the token.
+         5. If the stack of open elements has a p element in scope, then
+            act as if an end tag with the tag name "p" had been seen.
+            Finally, insert an HTML element for the token.
 
    A start tag whose tag name is one of: "dd", "dt"
-          If the stack of open elements has a p element in scope, then act
-          as if an end tag with the tag name p had been seen.
-
           Run the following algorithm:
 
          1. Initialise node to be the current node (the bottommost node of
             the stack).
-         2. If node is a dd or dt element, then pop all the nodes from the
-            current node up to node, including node, then stop this
-            algorithm. If more than one node is popped, then this is a
-            parse error.
+         2. If node is a dd or dt element, then act as if an end tag with
+            the same tag name as node had been seen, then jump to the last
+            step.
          3. If node is not in the formatting category, and is not in the
             phrasing category, and is not an address or div element, then
-            stop this algorithm.
+            jump to the last step.
          4. Otherwise, set node to the previous entry in the stack of open
             elements and return to step 2.
-
-          Finally, insert an HTML element for the token.
+         5. If the stack of open elements has a p element in scope, then
+            act as if an end tag with the tag name "p" had been seen.
+            Finally, insert an HTML element for the token.
 
    A start tag whose tag name is "plaintext"
           If the stack of open elements has a p element in scope, then act
-          as if an end tag with the tag name p had been seen.
+          as if an end tag with the tag name "p" had been seen.
 
           Insert an HTML element for the token.
 
@@ -1016,9 +908,10 @@ Working Draft — 9 March 2008
           tokens (and the end-of-file token), because there is no way to
           switch the content model flag out of the PLAINTEXT state.
 
-   An end tag whose tag name is one of: "address", "blockquote", "center",
-          "dir", "div", "dl", "fieldset", "listing", "menu", "ol", "pre",
-          "ul"
+   An end tag whose tag name is one of: "address", "article", "aside",
+          "blockquote", "center", "datagrid", "details", "dialog", "dir",
+          "div", "dl", "fieldset", "figure", "footer", "header",
+          "listing", "menu", "nav", "ol", "pre", "section", "ul"
           If the stack of open elements does not have an element in scope
           with the same tag name as that of the token, then this is a
           parse error.
@@ -1049,15 +942,20 @@ Working Draft — 9 March 2008
             stack.
 
    An end tag whose tag name is "p"
-          If the current node is not a p element, then this is a parse
-          error.
-
-          If the stack of open elements has a p element in scope, then pop
-          elements from this stack until the stack no longer has a p
-          element in scope.
-
-          Otherwise, act as if a start tag with the tag name p had been
+          If the stack of open elements does not have an element in scope
+          with the same tag name as that of the token, then this is a
+          parse error; act as if a start tag with the tag name p had been
           seen, then reprocess the current token.
+
+          Otherwise, run these steps:
+
+         1. Generate implied end tags, except for elements with the same
+            tag name as the token.
+         2. If the current node is not an element with the same tag name
+            as that of the token, then this is a parse error.
+         3. Pop elements from the stack of open elements until an element
+            with the same tag name as the token has been popped from the
+            stack.
 
    An end tag whose tag name is one of: "dd", "dt", "li"
           If the stack of open elements does not have an element in scope
@@ -1087,6 +985,10 @@ Working Draft — 9 March 2008
          3. Pop elements from the stack of open elements until an element
             whose tag name is one of "h1", "h2", "h3", "h4", "h5", or "h6"
             has been popped from the stack.
+
+   An end tag whose tag name is "sarcasm"
+          Take a deep breath, then act as described in the "any other end
+          tag" entry below.
 
    A start tag whose tag name is "a"
           If the list of active formatting elements contains an element
@@ -1123,7 +1025,7 @@ Working Draft — 9 March 2008
 
           If the stack of open elements has a nobr element in scope, then
           this is a parse error. Act as if an end tag with the tag name
-          nobr had been seen, then once again reconstruct the active
+          "nobr" had been seen, then once again reconstruct the active
           formatting elements, if any.
 
           Insert an HTML element for the token. Add that element to the
@@ -1189,14 +1091,8 @@ Working Draft — 9 March 2008
               7. Let last node be node.
               8. Return to step 1 of this inner set of steps.
          8. If the common ancestor node is a table, tbody, tfoot, thead,
-            or tr element, then, insert whatever last node ended up being
-            in the previous step into the foster parent element. If the
-            foster parent element is the parent element of the last table
-            element in the stack of open elements, then last node must be
-            inserted immediately before the last table element in the
-            stack of open elements in the foster parent element;
-            otherwise, last node must be appended to the foster parent
-            element.
+            or tr element, then, foster parent whatever last node ended up
+            being in the previous step.
             Otherwise, append whatever last node ended up being in the
             previous step to the common ancestor node, first removing it
             from its previous parent node if any.
@@ -1274,25 +1170,35 @@ Working Draft — 9 March 2008
 
    A start tag whose tag name is "table"
           If the stack of open elements has a p element in scope, then act
-          as if an end tag with the tag name p had been seen.
+          as if an end tag with the tag name "p" had been seen.
 
           Insert an HTML element for the token.
 
           Switch the insertion mode to "in table".
 
    A start tag whose tag name is one of: "area", "basefont", "bgsound",
-          "br", "embed", "img", "param", "spacer", "wbr"
+          "br", "embed", "img", "spacer", "wbr"
           Reconstruct the active formatting elements, if any.
 
           Insert an HTML element for the token. Immediately pop the
           current node off the stack of open elements.
 
+          Acknowledge the token's self-closing flag, if it is set.
+
+   A start tag whose tag name is one of: "param", "source"
+          Insert an HTML element for the token. Immediately pop the
+          current node off the stack of open elements.
+
+          Acknowledge the token's self-closing flag, if it is set.
+
    A start tag whose tag name is "hr"
           If the stack of open elements has a p element in scope, then act
-          as if an end tag with the tag name p had been seen.
+          as if an end tag with the tag name "p" had been seen.
 
           Insert an HTML element for the token. Immediately pop the
           current node off the stack of open elements.
+
+          Acknowledge the token's self-closing flag, if it is set.
 
    A start tag whose tag name is "image"
           Parse error. Change the token's tag name to "img" and reprocess
@@ -1301,13 +1207,14 @@ Working Draft — 9 March 2008
    A start tag whose tag name is "input"
           Reconstruct the active formatting elements, if any.
 
-          Insert an HTML element for the token.
+          Insert an HTML element for the token. Immediately pop the
+          current node off the stack of open elements.
+
+          Acknowledge the token's self-closing flag, if it is set.
 
           If the form element pointer is not null, then associate the
-          input element with the form element pointed to by the form
-          element pointer.
-
-          Pop that input element off the stack of open elements.
+          newly created input element with the form element pointed to by
+          the form element pointer.
 
    A start tag whose tag name is "isindex"
           Parse error.
@@ -1315,6 +1222,8 @@ Working Draft — 9 March 2008
           If the form element pointer is not null, then ignore the token.
 
           Otherwise:
+
+          Acknowledge the token's self-closing flag, if it is set.
 
           Act as if a start tag token with the tag name "form" had been
           seen.
@@ -1366,13 +1275,12 @@ Working Draft — 9 March 2008
           then we submit just the value part, not the "isindex=" part.
 
    A start tag whose tag name is "textarea"
-          Create an element for the token.
+          Create an element for the token in the HTML namespace. Append
+          the new element to the current node.
 
           If the form element pointer is not null, then associate the
-          textarea element with the form element pointed to by the form
-          element pointer.
-
-          Append the new element to the current node.
+          newly created textarea element with the form element pointed to
+          by the form element pointer.
 
           Switch the tokeniser's content model flag to the RCDATA state.
 
@@ -1395,8 +1303,9 @@ Working Draft — 9 March 2008
           If the next token is an end tag token with the tag name
           "textarea", ignore it. Otherwise, this is a parse error.
 
-   A start tag whose tag name is one of: "iframe", "noembed", "noframes"
-   A start tag whose tag name is "noscript", if scripting is enabled:
+   A start tag whose tag name is one of: "iframe", "noembed"
+   A start tag whose tag name is "noscript", if the scripting flag is
+          enabled
           Follow the generic CDATA parsing algorithm.
 
    A start tag whose tag name is "select"
@@ -1413,35 +1322,67 @@ Working Draft — 9 March 2008
           switch the insertion mode to "in select in table". Otherwise,
           switch the insertion mode to "in select".
 
+   A start tag whose tag name is one of: "rp", "rt"
+          If the stack of open elements has a ruby element in scope, then
+          generate implied end tags. If the current node is not then a
+          ruby element, this is a parse error; pop all the nodes from the
+          current node up to the node immediately before the bottommost
+          ruby element on the stack of open elements.
+
+          Insert an HTML element for the token.
+
    An end tag whose tag name is "br"
           Parse error. Act as if a start tag token with the tag name "br"
           had been seen. Ignore the end tag token.
 
-   A start or end tag whose tag name is one of: "caption", "col",
-          "colgroup", "frame", "frameset", "head", "option", "optgroup",
-          "tbody", "td", "tfoot", "th", "thead", "tr"
+   A start tag whose tag name is "math"
+          Reconstruct the active formatting elements, if any.
 
-   An end tag whose tag name is one of: "area", "basefont", "bgsound",
-          "embed", "hr", "iframe", "image", "img", "input", "isindex",
-          "noembed", "noframes", "param", "select", "spacer", "table",
-          "textarea", "wbr"
+          Adjust foreign attributes for the token. (This fixes the use of
+          namespaced attributes, in particular XLink.)
 
-   An end tag whose tag name is "noscript", if scripting is enabled:
+          Insert a foreign element for the token, in the MathML namespace.
+
+          If the token has its self-closing flag set, pop the current node
+          off the stack of open elements and acknowledge the token's
+          self-closing flag.
+
+          Otherwise, let the secondary insertion mode be the current
+          insertion mode, and then switch the insertion mode to "in
+          foreign content".
+
+   A start tag whose tag name is "svg"
+          Reconstruct the active formatting elements, if any.
+
+          Adjust SVG attributes for the token. (This fixes the case of SVG
+          attributes that are not all lowercase.)
+
+          Adjust foreign attributes for the token. (This fixes the use of
+          namespaced attributes, in particular XLink in SVG.)
+
+          Insert a foreign element for the token, in the SVG namespace.
+
+          If the token has its self-closing flag set, pop the current node
+          off the stack of open elements and acknowledge the token's
+          self-closing flag.
+
+          Otherwise, let the secondary insertion mode be the current
+          insertion mode, and then switch the insertion mode to "in
+          foreign content".
+
+   A start tag whose tag name is one of: "caption", "col", "colgroup",
+          "frame", "frameset", "head", "tbody", "td", "tfoot", "th",
+          "thead", "tr"
           Parse error. Ignore the token.
 
-   A start or end tag whose tag name is one of: "event-source", "section",
-          "nav", "article", "aside", "header", "footer", "datagrid",
-          "command"
-          Work in progress!
-
-   A start tag token not covered by the previous entries
+   Any other start tag
           Reconstruct the active formatting elements, if any.
 
           Insert an HTML element for the token.
 
           This element will be a phrasing element.
 
-   An end tag token not covered by the previous entries
+   Any other end tag
           Run the following algorithm:
 
          1. Initialise node to be the current node (the bottommost node of
@@ -1458,14 +1399,13 @@ Working Draft — 9 March 2008
          4. Set node to the previous entry in the stack of open elements.
          5. Return to step 2.
 
-      8.2.4.14. The "in table" insertion mode
+      8.2.5.11. The "in table" insertion mode
 
    When the insertion mode is "in table", tokens must be handled as
    follows:
 
    A character token that is one of one of U+0009 CHARACTER TABULATION,
-          U+000A LINE FEED (LF), U+000B LINE TABULATION, U+000C FORM FEED
-          (FF), or U+0020 SPACE
+          U+000A LINE FEED (LF), U+000C FORM FEED (FF), or U+0020 SPACE
           If the current table is tainted, then act as described in the
           "anything else" entry below.
 
@@ -1567,34 +1507,10 @@ Working Draft — 9 March 2008
 
    Anything else
           Parse error. Process the token using the rules for the "in body"
-          insertion mode, with the following exception:
-
-          If the current node is a table, tbody, tfoot, thead, or tr
-          element, then, whenever a node would be inserted into the
-          current node, it must instead be inserted into the foster parent
-          element, and the current table must be marked as tainted. (Once
-          the current table has been tainted, whitespace characters are
-          inserted into the foster parent element instead of the current
-          node.)
-
-          The foster parent element is the parent element of the last
-          table element in the stack of open elements, if there is a table
-          element and it has such a parent element. If there is no table
-          element in the stack of open elements (fragment case), then the
-          foster parent element is the first element in the stack of open
-          elements (the html element). Otherwise, if there is a table
-          element in the stack of open elements, but the last table
-          element in the stack of open elements has no parent, or its
-          parent node is not an element, then the foster parent element is
-          the element before the last table element in the stack of open
-          elements.
-
-          If the foster parent element is the parent element of the last
-          table element in the stack of open elements, then the new node
-          must be inserted immediately before the last table element in
-          the stack of open elements in the foster parent element;
-          otherwise, the new node must be appended to the foster parent
-          element.
+          insertion mode, except that if the current node is a table,
+          tbody, tfoot, thead, or tr element, then, whenever a node would
+          be inserted into the current node, it must instead be foster
+          parented.
 
    When the steps above require the UA to clear the stack back to a table
    context, it means that the UA must, while the current node is not a
@@ -1604,7 +1520,7 @@ Working Draft — 9 March 2008
    The current node being an html element after this process is a fragment
    case.
 
-      8.2.4.15. The "in caption" insertion mode
+      8.2.5.12. The "in caption" insertion mode
 
    When the insertion mode is "in caption", tokens must be handled as
    follows:
@@ -1648,14 +1564,13 @@ Working Draft — 9 March 2008
           Process the token using the rules for the "in body" insertion
           mode.
 
-      8.2.4.16. The "in column group" insertion mode
+      8.2.5.13. The "in column group" insertion mode
 
    When the insertion mode is "in column group", tokens must be handled as
    follows:
 
    A character token that is one of one of U+0009 CHARACTER TABULATION,
-          U+000A LINE FEED (LF), U+000B LINE TABULATION, U+000C FORM FEED
-          (FF), or U+0020 SPACE
+          U+000A LINE FEED (LF), U+000C FORM FEED (FF), or U+0020 SPACE
           Insert the character into the current node.
 
    A comment token
@@ -1672,6 +1587,8 @@ Working Draft — 9 March 2008
    A start tag whose tag name is "col"
           Insert an HTML element for the token. Immediately pop the
           current node off the stack of open elements.
+
+          Acknowledge the token's self-closing flag, if it is set.
 
    An end tag whose tag name is "colgroup"
           If the current node is the root html element, then this is a
@@ -1698,7 +1615,7 @@ Working Draft — 9 March 2008
           The fake end tag token here can only be ignored in the fragment
           case.
 
-      8.2.4.17. The "in table body" insertion mode
+      8.2.5.14. The "in table body" insertion mode
 
    When the insertion mode is "in table body", tokens must be handled as
    follows:
@@ -1757,7 +1674,7 @@ Working Draft — 9 March 2008
    The current node being an html element after this process is a fragment
    case.
 
-      8.2.4.18. The "in row" insertion mode
+      8.2.5.15. The "in row" insertion mode
 
    When the insertion mode is "in row", tokens must be handled as follows:
 
@@ -1816,7 +1733,7 @@ Working Draft — 9 March 2008
    The current node being an html element after this process is a fragment
    case.
 
-      8.2.4.19. The "in cell" insertion mode
+      8.2.5.16. The "in cell" insertion mode
 
    When the insertion mode is "in cell", tokens must be handled as
    follows:
@@ -1882,7 +1799,7 @@ Working Draft — 9 March 2008
    table scope at the same time, nor can it have neither when the
    insertion mode is "in cell".
 
-      8.2.4.20. The "in select" insertion mode
+      8.2.5.17. The "in select" insertion mode
 
    When the insertion mode is "in select", tokens must be handled as
    follows:
@@ -1947,7 +1864,7 @@ Working Draft — 9 March 2008
           Parse error. Act as if the token had been an end tag with the
           tag name "select" instead.
 
-   A start tag whose tag name is "input"
+   A start tag whose tag name is one of: "input", "textarea"
           Parse error. Act as if an end tag with the tag name "select" had
           been seen, and reprocess the token.
 
@@ -1962,7 +1879,7 @@ Working Draft — 9 March 2008
    Anything else
           Parse error. Ignore the token.
 
-      8.2.4.21. The "in select in table" insertion mode
+      8.2.5.18. The "in select in table" insertion mode
 
    When the insertion mode is "in select in table", tokens must be handled
    as follows:
@@ -1985,14 +1902,140 @@ Working Draft — 9 March 2008
           Process the token using the rules for the "in select" insertion
           mode.
 
-      8.2.4.22. The "after body" insertion mode
+      8.2.5.19. The "in foreign content" insertion mode
+
+   When the insertion mode is "in foreign content", tokens must be handled
+   as follows:
+
+   A character token
+          Insert the token's character into the current node.
+
+   A comment token
+          Append a Comment node to the current node with the data
+          attribute set to the data given in the comment token.
+
+   A DOCTYPE token
+          Parse error. Ignore the token.
+
+   A start tag whose tag name is neither "mglyph" nor "malignmark", if the
+          current node is an mi element in the MathML namespace.
+
+   A start tag whose tag name is neither "mglyph" nor "malignmark", if the
+          current node is an mo element in the MathML namespace.
+
+   A start tag whose tag name is neither "mglyph" nor "malignmark", if the
+          current node is an mn element in the MathML namespace.
+
+   A start tag whose tag name is neither "mglyph" nor "malignmark", if the
+          current node is an ms element in the MathML namespace.
+
+   A start tag whose tag name is neither "mglyph" nor "malignmark", if the
+          current node is an mtext element in the MathML namespace.
+
+   A start tag whose tag name is "svg", if the current node is an
+          annotation-xml element in the MathML namespace.
+
+   A start tag, if the current node is a foreignObject element in the SVG
+          namespace.
+
+   A start tag, if the current node is a desc element in the SVG
+          namespace.
+
+   A start tag, if the current node is a title element in the SVG
+          namespace.
+
+   A start tag, if the current node is an element in the HTML namespace.
+   An end tag
+          Process the token using the rules for the secondary insertion
+          mode.
+
+          If, after doing so, the insertion mode is still "in foreign
+          content", but there is no element in scope that has a namespace
+          other than the HTML namespace, switch the insertion mode to the
+          secondary insertion mode.
+
+   A start tag whose tag name is one of: "b", "big", "blockquote", "body",
+          "br", "center", "code", "dd", "div", "dl", "dt", "em", "embed",
+          "font", "h1", "h2", "h3", "h4", "h5", "h6", "head", "hr", "i",
+          "img", "li", "listing", "menu", "meta", "nobr", "ol", "p",
+          "pre", "ruby", "s", "small", "span", "strong", "strike", "sub",
+          "sup", "table", "tt", "u", "ul", "var"
+
+   An end-of-file token
+          Parse error.
+
+          Pop elements from the stack of open elements until the current
+          node is in the HTML namespace.
+
+          Switch the insertion mode to the secondary insertion mode, and
+          reprocess the token.
+
+   Any other start tag
+          If the current node is an element in the SVG namespace, and the
+          token's tag name is one of the ones in the first column of the
+          following table, change the tag name to the name given in the
+          corresponding cell in the second column. (This fixes the case of
+          SVG elements that are not all lowercase.)
+
+          Tag name          Element name
+     altglyph            altGlyph
+     altglyphdef         altGlyphDef
+     altglyphitem        altGlyphItem
+     animatecolor        animateColor
+     animatemotion       animateMotion
+     animatetransform    animateTransform
+     clippath            clipPath
+     feblend             feBlend
+     fecolormatrix       feColorMatrix
+     fecomponenttransfer feComponentTransfer
+     fecomposite         feComposite
+     feconvolvematrix    feConvolveMatrix
+     fediffuselighting   feDiffuseLighting
+     fedisplacementmap   feDisplacementMap
+     fedistantlight      feDistantLight
+     feflood             feFlood
+     fefunca             feFuncA
+     fefuncb             feFuncB
+     fefuncg             feFuncG
+     fefuncr             feFuncR
+     fegaussianblur      feGaussianBlur
+     feimage             feImage
+     femerge             feMerge
+     femergenode         feMergeNode
+     femorphology        feMorphology
+     feoffset            feOffset
+     fepointlight        fePointLight
+     fespecularlighting  feSpecularLighting
+     fespotlight         feSpotLight
+     fetile              feTile
+     feturbulence        feTurbulence
+     foreignobject       foreignObject
+     glyphref            glyphRef
+     lineargradient      linearGradient
+     radialgradient      radialGradient      solidcolor solidColor (SVG 1.2)- ->
+     textpath            textPath
+
+          If the current node is an element in the SVG namespace, adjust
+          SVG attributes for the token. (This fixes the case of SVG
+          attributes that are not all lowercase.)
+
+          Adjust foreign attributes for the token. (This fixes the use of
+          namespaced attributes, in particular XLink in SVG.)
+
+          Insert a foreign element for the token, in the same namespace as
+          the current node.
+
+          If the token has its self-closing flag set, pop the current node
+          off the stack of open elements and acknowledge the token's
+          self-closing flag.
+
+      8.2.5.20. The "after body" insertion mode
 
    When the insertion mode is "after body", tokens must be handled as
    follows:
 
    A character token that is one of one of U+0009 CHARACTER TABULATION,
-          U+000A LINE FEED (LF), U+000B LINE TABULATION, U+000C FORM FEED
-          (FF), or U+0020 SPACE
+          U+000A LINE FEED (LF), U+000C FORM FEED (FF), or U+0020 SPACE
           Process the token using the rules for the "in body" insertion
           mode.
 
@@ -2022,14 +2065,13 @@ Working Draft — 9 March 2008
           Parse error. Switch the insertion mode to "in body" and
           reprocess the token.
 
-      8.2.4.23. The "in frameset" insertion mode
+      8.2.5.21. The "in frameset" insertion mode
 
    When the insertion mode is "in frameset", tokens must be handled as
    follows:
 
    A character token that is one of one of U+0009 CHARACTER TABULATION,
-          U+000A LINE FEED (LF), U+000B LINE TABULATION, U+000C FORM FEED
-          (FF), or U+0020 SPACE
+          U+000A LINE FEED (LF), U+000C FORM FEED (FF), or U+0020 SPACE
           Insert the character into the current node.
 
    A comment token
@@ -2061,8 +2103,10 @@ Working Draft — 9 March 2008
           Insert an HTML element for the token. Immediately pop the
           current node off the stack of open elements.
 
+          Acknowledge the token's self-closing flag, if it is set.
+
    A start tag whose tag name is "noframes"
-          Process the token using the rules for the "in body" insertion
+          Process the token using the rules for the "in head" insertion
           mode.
 
    An end-of-file token
@@ -2076,14 +2120,13 @@ Working Draft — 9 March 2008
    Anything else
           Parse error. Ignore the token.
 
-      8.2.4.24. The "after frameset" insertion mode
+      8.2.5.22. The "after frameset" insertion mode
 
    When the insertion mode is "after frameset", tokens must be handled as
    follows:
 
    A character token that is one of one of U+0009 CHARACTER TABULATION,
-          U+000A LINE FEED (LF), U+000B LINE TABULATION, U+000C FORM FEED
-          (FF), or U+0020 SPACE
+          U+000A LINE FEED (LF), U+000C FORM FEED (FF), or U+0020 SPACE
           Insert the character into the current node.
 
    A comment token
@@ -2094,12 +2137,15 @@ Working Draft — 9 March 2008
           Parse error. Ignore the token.
 
    A start tag whose tag name is "html"
-   A start tag whose tag name is "noframes"
           Process the token using the rules for the "in body" insertion
           mode.
 
    An end tag whose tag name is "html"
           Switch the insertion mode to "after after frameset".
+
+   A start tag whose tag name is "noframes"
+          Process the token using the rules for the "in head" insertion
+          mode.
 
    An end-of-file token
           Stop parsing.
@@ -2111,7 +2157,7 @@ Working Draft — 9 March 2008
    frames but want to show the NOFRAMES content. Supporting the former is
    easy; supporting the latter is harder.
 
-      8.2.4.25. The "after after body" insertion mode
+      8.2.5.23. The "after after body" insertion mode
 
    When the insertion mode is "after after body", tokens must be handled
    as follows:
@@ -2122,8 +2168,7 @@ Working Draft — 9 March 2008
 
    A DOCTYPE token
    A character token that is one of one of U+0009 CHARACTER TABULATION,
-          U+000A LINE FEED (LF), U+000B LINE TABULATION, U+000C FORM FEED
-          (FF), or U+0020 SPACE
+          U+000A LINE FEED (LF), U+000C FORM FEED (FF), or U+0020 SPACE
 
    A start tag whose tag name is "html"
           Process the token using the rules for the "in body" insertion
@@ -2136,7 +2181,7 @@ Working Draft — 9 March 2008
           Parse error. Switch the insertion mode to "in body" and
           reprocess the token.
 
-      8.2.4.26. The "after after frameset" insertion mode
+      8.2.5.24. The "after after frameset" insertion mode
 
    When the insertion mode is "after after frameset", tokens must be
    handled as follows:
@@ -2147,8 +2192,7 @@ Working Draft — 9 March 2008
 
    A DOCTYPE token
    A character token that is one of one of U+0009 CHARACTER TABULATION,
-          U+000A LINE FEED (LF), U+000B LINE TABULATION, U+000C FORM FEED
-          (FF), or U+0020 SPACE
+          U+000A LINE FEED (LF), U+000C FORM FEED (FF), or U+0020 SPACE
 
    A start tag whose tag name is "html"
           Process the token using the rules for the "in body" insertion
@@ -2161,12 +2205,14 @@ Working Draft — 9 March 2008
           Parse error. Switch the insertion mode to "in frameset" and
           reprocess the token.
 
-    8.2.5 The end
+    8.2.6 The end
 
    Once the user agent stops parsing the document, the user agent must
    follow the steps in this section.
 
-   First, the rules for when a script completes loading start applying
+   First, the current document readiness must be set to "interactive".
+
+   Then, the rules for when a script completes loading start applying
    (script execution is no longer managed by the parser).
 
    If any of the scripts in the list of scripts that will execute as soon
@@ -2188,8 +2234,23 @@ Working Draft — 9 March 2008
    the Document.
 
    Once everything that delays the load event has completed, the user
-   agent must fire a load event at the body element.
+   agent must set the current document readiness to "complete", and then
+   fire a load event at the body element.
 
    delaying the load event for things like image loads allows for intranet
    port scans (even without javascript!). Should we really encode that
    into the spec?
+
+  8.3 Namespaces
+
+   The HTML namespace is: http://www.w3.org/1999/xhtml
+
+   The MathML namespace is: http://www.w3.org/1998/Math/MathML
+
+   The SVG namespace is: http://www.w3.org/2000/svg
+
+   The XLink namespace is: http://www.w3.org/1999/xlink
+
+   The XML namespace is: http://www.w3.org/XML/1998/namespace
+
+   The XMLNS namespace is: http://www.w3.org/2000/xmlns/
