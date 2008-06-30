@@ -36,17 +36,37 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
+/**
+ * The tree builder glue for building a tree through the public DOM APIs.
+ * 
+ * @version $Id$
+ * @author hsivonen
+ */
 class DOMTreeBuilder extends TreeBuilder<Element> {
 
+    /**
+     * The DOM impl.
+     */
     private DOMImplementation implementation;
 
+    /**
+     * The current doc.
+     */
     private Document document;
 
+    /**
+     * The constructor.
+     * @param implementation the DOM impl.
+     */
     protected DOMTreeBuilder(DOMImplementation implementation) {
         super(XmlViolationPolicy.ALLOW, true);
         this.implementation = implementation;
     }
 
+    /**
+     * 
+     * @see nu.validator.htmlparser.impl.TreeBuilder#addAttributesToElement(java.lang.Object, nu.validator.htmlparser.impl.HtmlAttributes)
+     */
     @Override
     protected void addAttributesToElement(Element element, HtmlAttributes attributes)
             throws SAXException {
@@ -64,6 +84,10 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
         }
     }
 
+    /**
+     * 
+     * @see nu.validator.htmlparser.impl.TreeBuilder#appendCharacters(java.lang.Object, char[], int, int)
+     */
     @Override
     protected void appendCharacters(Element parent, char[] buf, int start,
             int length) throws SAXException {
@@ -75,6 +99,10 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
         }
     }
 
+    /**
+     * 
+     * @see nu.validator.htmlparser.impl.TreeBuilder#appendChildrenToNewParent(java.lang.Object, java.lang.Object)
+     */
     @Override
     protected void appendChildrenToNewParent(Element oldParent,
             Element newParent) throws SAXException {
@@ -87,6 +115,10 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
         }
     }
 
+    /**
+     * 
+     * @see nu.validator.htmlparser.impl.TreeBuilder#appendComment(java.lang.Object, char[], int, int)
+     */
     @Override
     protected void appendComment(Element parent, char[] buf, int start,
             int length) throws SAXException {
@@ -98,6 +130,10 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
         }
     }
 
+    /**
+     * 
+     * @see nu.validator.htmlparser.impl.TreeBuilder#appendCommentToDocument(char[], int, int)
+     */
     @Override
     protected void appendCommentToDocument(char[] buf, int start, int length)
             throws SAXException {
@@ -109,6 +145,10 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
         }
     }
 
+    /**
+     * 
+     * @see nu.validator.htmlparser.impl.TreeBuilder#createElement(java.lang.String, java.lang.String, nu.validator.htmlparser.impl.HtmlAttributes)
+     */
     @Override
     protected Element createElement(String ns, String name, HtmlAttributes attributes)
             throws SAXException {
@@ -126,6 +166,10 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
         }
     }
 
+    /**
+     * 
+     * @see nu.validator.htmlparser.impl.TreeBuilder#createHtmlElementSetAsRoot(nu.validator.htmlparser.impl.HtmlAttributes)
+     */
     @Override
     protected Element createHtmlElementSetAsRoot(HtmlAttributes attributes)
             throws SAXException {
@@ -144,6 +188,10 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
         }
     }
 
+    /**
+     * 
+     * @see nu.validator.htmlparser.impl.TreeBuilder#detachFromParent(java.lang.Object)
+     */
     @Override
     protected void detachFromParent(Element element) throws SAXException {
         try {
@@ -156,6 +204,10 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
         }
     }
 
+    /**
+     * 
+     * @see nu.validator.htmlparser.impl.TreeBuilder#detachFromParentAndAppendToNewParent(java.lang.Object, java.lang.Object)
+     */
     @Override
     protected void detachFromParentAndAppendToNewParent(Element child,
             Element newParent) throws SAXException {
@@ -166,6 +218,10 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
         }
     }
 
+    /**
+     * 
+     * @see nu.validator.htmlparser.impl.TreeBuilder#hasChildren(java.lang.Object)
+     */
     @Override
     protected boolean hasChildren(Element element) throws SAXException {
         try {
@@ -176,6 +232,10 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
         }
     }
 
+    /**
+     * 
+     * @see nu.validator.htmlparser.impl.TreeBuilder#insertBefore(java.lang.Object, java.lang.Object, java.lang.Object)
+     */
     @Override
     protected void insertBefore(Element child, Element sibling, Element parent)
             throws SAXException {
@@ -186,6 +246,10 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
         }
     }
 
+    /**
+     * 
+     * @see nu.validator.htmlparser.impl.TreeBuilder#insertCharactersBefore(char[], int, int, java.lang.Object, java.lang.Object)
+     */
     @Override
     protected void insertCharactersBefore(char[] buf, int start, int length,
             Element sibling, Element parent) throws SAXException {
@@ -196,6 +260,10 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
         }
     }
 
+    /**
+     * 
+     * @see nu.validator.htmlparser.impl.TreeBuilder#parentElementFor(java.lang.Object)
+     */
     @Override
     protected Element parentElementFor(Element child) throws SAXException {
         try {
@@ -211,6 +279,10 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
         }
     }
 
+    /**
+     * 
+     * @see nu.validator.htmlparser.impl.TreeBuilder#shallowClone(java.lang.Object)
+     */
     @Override
     protected Element shallowClone(Element element) throws SAXException {
         try {
@@ -219,27 +291,6 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
             fatal(e);
             throw new RuntimeException("Unreachable");
         }
-    }
-
-    /**
-     * Returns the document.
-     * 
-     * @return the document
-     */
-    Document getDocument() {
-        Document rv = document;
-        document = null;
-        return rv;
-    }
-
-    DocumentFragment getDocumentFragment() {
-        DocumentFragment rv = document.createDocumentFragment();
-        Node rootElt = document.getFirstChild();
-        while (rootElt.hasChildNodes()) {
-            rv.appendChild(rootElt.getFirstChild());
-        }
-        document = null;
-        return rv;
     }
 
     /**
@@ -266,7 +317,38 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
         document = implementation.createDocument(null, null, null);
     }
 
+    /**
+     * 
+     * @see nu.validator.htmlparser.impl.TreeBuilder#documentMode(nu.validator.htmlparser.common.DocumentMode, java.lang.String, java.lang.String, boolean)
+     */
     protected void documentMode(DocumentMode mode, String publicIdentifier, String systemIdentifier, boolean html4SpecificAdditionalErrorChecks) throws SAXException {
         document.setUserData("nu.validator.document-mode", mode, null);
+    }
+    
+
+    /**
+     * Returns the document.
+     * 
+     * @return the document
+     */
+    Document getDocument() {
+        Document rv = document;
+        document = null;
+        return rv;
+    }
+
+    /**
+     * Return the document fragment.
+     * 
+     * @return the document fragment
+     */
+    DocumentFragment getDocumentFragment() {
+        DocumentFragment rv = document.createDocumentFragment();
+        Node rootElt = document.getFirstChild();
+        while (rootElt.hasChildNodes()) {
+            rv.appendChild(rootElt.getFirstChild());
+        }
+        document = null;
+        return rv;
     }
 }
