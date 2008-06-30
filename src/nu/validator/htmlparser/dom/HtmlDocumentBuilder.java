@@ -50,17 +50,14 @@ import org.xml.sax.SAXException;
  * interface. 
  * 
  * <p>By default, when using the constructor without arguments, the 
- * this parser treats XML 1.0-incompatible infosets as fatal errors. 
+ * this parser coerces XML 1.0-incompatible infosets into XML 1.0 infosets.
  * This corresponds to 
- * <code>FATAL</code> as the general XML violation policy. To make the parser 
+ * <code>ALTER_INFOSET</code> as the general XML violation policy. To make the parser 
  * support non-conforming HTML fully per the HTML 5 spec while on the other 
  * hand potentially violating the DOM API contract, set the general XML 
  * violation policy to <code>ALLOW</code>. This does not work with a standard 
- * DOM implementation. Handling all input without fatal errors and without 
- * violating the DOM API contract is possible by setting 
- * the general XML violation policy to <code>ALTER_INFOSET</code>. <em>This 
- * makes the parser non-conforming</em> but is probably the most useful 
- * setting for most applications.
+ * DOM implementation. Halting on XML-incompatible parser outputs is possible by setting 
+ * the general XML violation policy to <code>FATAL</code>.
  * 
  * <p>The doctype is not represented in the tree.
  * 
@@ -77,6 +74,8 @@ import org.xml.sax.SAXException;
 public class HtmlDocumentBuilder extends DocumentBuilder {
 
     /**
+     * Returns the JAXP DOM implementation.
+     * 
      * @return the JAXP DOM implementation
      */
     private static DOMImplementation jaxpDOMImplementation() {
@@ -91,12 +90,24 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
         return builder.getDOMImplementation();
     }
 
+    /**
+     * The tokenizer.
+     */
     private final Driver tokenizer;
 
+    /**
+     * The tree builder.
+     */
     private final DOMTreeBuilder domTreeBuilder;
 
+    /**
+     * The DOM impl.
+     */
     private final DOMImplementation implementation;
 
+    /**
+     * The entity resolver.
+     */
     private EntityResolver entityResolver;
 
     /**
@@ -118,21 +129,21 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
 
     /**
      * Instantiates the document builder with a specific DOM implementation 
-     * and fatal XML violation policy.
+     * and the infoset-altering XML violation policy.
      * 
      * @param implementation
      *            the DOM implementation
      */
     public HtmlDocumentBuilder(DOMImplementation implementation) {
-        this(implementation, XmlViolationPolicy.FATAL);
+        this(implementation, XmlViolationPolicy.ALTER_INFOSET);
     }
 
     /**
      * Instantiates the document builder with the JAXP DOM implementation 
-     * and fatal XML violation policy.
+     * and the infoset-altering XML violation policy.
      */
     public HtmlDocumentBuilder() {
-        this(XmlViolationPolicy.FATAL);
+        this(XmlViolationPolicy.ALTER_INFOSET);
     }
 
     /**
@@ -149,8 +160,7 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
      * @return the DOM implementation
      * @see javax.xml.parsers.DocumentBuilder#getDOMImplementation()
      */
-    @Override
-    public DOMImplementation getDOMImplementation() {
+    @Override public DOMImplementation getDOMImplementation() {
         return implementation;
     }
 
@@ -159,8 +169,7 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
      * @return <code>true</code>
      * @see javax.xml.parsers.DocumentBuilder#isNamespaceAware()
      */
-    @Override
-    public boolean isNamespaceAware() {
+    @Override public boolean isNamespaceAware() {
         return true;
     }
 
@@ -169,8 +178,7 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
      * @return <code>false</code>
      * @see javax.xml.parsers.DocumentBuilder#isValidating()
      */
-    @Override
-    public boolean isValidating() {
+    @Override public boolean isValidating() {
         return false;
     }
 
@@ -178,8 +186,7 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
      * For API compatibility.
      * @see javax.xml.parsers.DocumentBuilder#newDocument()
      */
-    @Override
-    public Document newDocument() {
+    @Override public Document newDocument() {
         return implementation.createDocument(null, null, null);
     }
 
@@ -187,10 +194,12 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
      * Parses a document from a SAX <code>InputSource</code>.
      * @param is the source
      * @return the doc
+     * @throws SAXException if stuff goes wrong
+     * @throws IOException if IO goes wrong
      * @see javax.xml.parsers.DocumentBuilder#parse(org.xml.sax.InputSource)
      */
-    @Override
-    public Document parse(InputSource is) throws SAXException, IOException {
+    @Override public Document parse(InputSource is) throws SAXException,
+            IOException {
         domTreeBuilder.setFragmentContext(null);
         tokenize(is);
         return domTreeBuilder.getDocument();
@@ -201,8 +210,8 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
      * @param is the source
      * @param context the context element name
      * @return the doc
-     * @throws IOException
-     * @throws SAXException
+     * @throws SAXException if stuff goes wrong
+     * @throws IOException if IO goes wrong
      */
     public DocumentFragment parseFragment(InputSource is, String context)
             throws IOException, SAXException {
@@ -212,49 +221,20 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
     }
 
     /**
-     * @param is
-     * @throws SAXException
-     * @throws IOException
-     * @throws MalformedURLException
-     */
-    private void tokenize(InputSource is) throws SAXException, IOException,
-            MalformedURLException {
-        if (is == null) {
-            throw new IllegalArgumentException("Null input.");
-        }
-        if (is.getByteStream() == null && is.getCharacterStream() == null) {
-            String systemId = is.getSystemId();
-            if (systemId == null) {
-                throw new IllegalArgumentException(
-                        "No byte stream, no character stream nor URI.");
-            }
-            if (entityResolver != null) {
-                is = entityResolver.resolveEntity(is.getPublicId(), systemId);
-            }
-            if (is.getByteStream() == null || is.getCharacterStream() == null) {
-                is = new InputSource();
-                is.setSystemId(systemId);
-                is.setByteStream(new URL(systemId).openStream());
-            }
-        }
-        tokenizer.tokenize(is);
-    }
-
-    /**
      * Sets the entity resolver for URI-only inputs.
      * @param resolver the resolver
      * @see javax.xml.parsers.DocumentBuilder#setEntityResolver(org.xml.sax.EntityResolver)
      */
-    @Override
-    public void setEntityResolver(EntityResolver resolver) {
+    @Override public void setEntityResolver(EntityResolver resolver) {
         this.entityResolver = resolver;
     }
 
     /**
+     * Sets the error handler.
+     * @param errorHandler the handler
      * @see javax.xml.parsers.DocumentBuilder#setErrorHandler(org.xml.sax.ErrorHandler)
      */
-    @Override
-    public void setErrorHandler(ErrorHandler errorHandler) {
+    @Override public void setErrorHandler(ErrorHandler errorHandler) {
         domTreeBuilder.setErrorHandler(errorHandler);
         tokenizer.setErrorHandler(errorHandler);
     }
@@ -314,7 +294,6 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
         tokenizer.setContentSpacePolicy(contentSpacePolicy);
     }
 
-
     /**
      * Whether the HTML 4 mode reports boolean attributes in a way that repeats
      * the name in the value.
@@ -326,7 +305,8 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
     }
 
     /**
-     * @param mappingLangToXmlLang
+     * Whether to map the HTML <code>lang</code> attribute to <code>xml:lang</code>.
+     * @param mappingLangToXmlLang <code>true</code> to map <code>lang</code> to <code>xml:lang</code>
      * @see nu.validator.htmlparser.impl.Tokenizer#setMappingLangToXmlLang(boolean)
      */
     public void setMappingLangToXmlLang(boolean mappingLangToXmlLang) {
@@ -334,7 +314,8 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
     }
 
     /**
-     * @param namePolicy
+     * Sets the policy for dealing with names that aren't XML 1.0 4th ed. plus Namespaces NCNames.
+     * @param namePolicy the policy
      * @see nu.validator.htmlparser.impl.Tokenizer#setNamePolicy(nu.validator.htmlparser.common.XmlViolationPolicy)
      */
     public void setNamePolicy(XmlViolationPolicy namePolicy) {
@@ -346,7 +327,7 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
      * This is a catch-all convenience method for setting name, content space,
      * content non-XML char and comment policies in one go.
      * 
-     * @param xmlPolicy
+     * @param namePolicy the policy
      */
     public void setXmlPolicy(XmlViolationPolicy xmlPolicy) {
         setNamePolicy(xmlPolicy);
@@ -359,10 +340,9 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
      * Does nothing.
      * @deprecated
      */
-    public void setBogusXmlnsPolicy(
-            XmlViolationPolicy bogusXmlnsPolicy) {
+    public void setBogusXmlnsPolicy(XmlViolationPolicy bogusXmlnsPolicy) {
     }
-    
+
     /**
      * Sets the doctype expectation.
      * 
@@ -393,5 +373,36 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
     public void setHeuristics(Heuristics heuristics) {
         tokenizer.setHeuristics(heuristics);
     }
-    
+
+    /**
+     * Tokenizes the input source.
+     * 
+     * @param is the source
+     * @throws SAXException if stuff goes wrong
+     * @throws IOException if IO goes wrong
+     * @throws MalformedURLException if the system ID is malformed and the entity resolver is <code>null</code>
+     */
+    private void tokenize(InputSource is) throws SAXException, IOException,
+            MalformedURLException {
+        if (is == null) {
+            throw new IllegalArgumentException("Null input.");
+        }
+        if (is.getByteStream() == null && is.getCharacterStream() == null) {
+            String systemId = is.getSystemId();
+            if (systemId == null) {
+                throw new IllegalArgumentException(
+                        "No byte stream, no character stream nor URI.");
+            }
+            if (entityResolver != null) {
+                is = entityResolver.resolveEntity(is.getPublicId(), systemId);
+            }
+            if (is.getByteStream() == null || is.getCharacterStream() == null) {
+                is = new InputSource();
+                is.setSystemId(systemId);
+                is.setByteStream(new URL(systemId).openStream());
+            }
+        }
+        tokenizer.tokenize(is);
+    }
+
 }
