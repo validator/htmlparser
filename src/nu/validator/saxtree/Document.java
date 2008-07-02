@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
+ * Copyright (c) 2008 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -25,19 +26,31 @@ package nu.validator.saxtree;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 
+/**
+ * A document.
+ * @version $Id$
+ * @author hsivonen
+ */
 public final class Document extends ParentNode {
 
+    /**
+     * The constructor.
+     * @param locator the locator
+     */
     public Document(Locator locator) {
         super(locator);
     }
 
+    /**
+     * 
+     * @see nu.validator.saxtree.Node#visit(nu.validator.saxtree.TreeParser)
+     */
     @Override
     void visit(TreeParser treeParser) throws SAXException {
         treeParser.startDocument(this);
     }
 
     /**
-     * @throws SAXException 
      * @see nu.validator.saxtree.Node#revisit(nu.validator.saxtree.TreeParser)
      */
     @Override
@@ -45,6 +58,10 @@ public final class Document extends ParentNode {
         treeParser.endDocument(endLocator);
     }
 
+    /**
+     * 
+     * @see nu.validator.saxtree.Node#getNodeType()
+     */
     @Override
     public NodeType getNodeType() {
         return NodeType.DOCUMENT;

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
+ * Copyright (c) 2008 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -22,12 +23,24 @@
 
 package nu.validator.saxtree;
 
+/**
+ * A prefix mapping.
+ * @version $Id$
+ * @author hsivonen
+ */
 public final class PrefixMapping {
+    /**
+     * The namespace prefix.
+     */
     private final String prefix;
+    /**
+     * The namespace URI.
+     */
     private final String uri;
     /**
-     * @param prefix
-     * @param uri
+     * Constructor.
+     * @param prefix the prefix
+     * @param uri the URI
      */
     public PrefixMapping(final String prefix, final String uri) {
         this.prefix = prefix;

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
+ * Copyright (c) 2008 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -24,10 +25,25 @@ package nu.validator.saxtree;
 
 import org.xml.sax.Locator;
 
+/**
+ * A common superclass for character buffer node classes.
+ * @version $Id$
+ * @author hsivonen
+ */
 public abstract class CharBufferNode extends Node {
 
+    /**
+     * The buffer.
+     */
     protected final char[] buffer;
     
+    /**
+     * The constructor.
+     * @param locator the locator
+     * @param buf the buffer
+     * @param start the offset
+     * @param length the length
+     */
     CharBufferNode(Locator locator, char[] buf, int start, int length) {
         super(locator);
         this.buffer = new char[length];

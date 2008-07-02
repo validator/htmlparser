@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
+ * Copyright (c) 2008 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -29,18 +30,48 @@ import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
+/**
+ * An element.
+ * @version $Id$
+ * @author hsivonen
+ */
 public final class Element extends ParentNode {
 
+    /**
+     * The namespace URI.
+     */
     private final String uri;
 
+    /**
+     * The local name.
+     */
     private final String localName;
 
+    /**
+     * The qualified name.
+     */
     private final String qName;
 
+    /**
+     * The attributes.
+     */
     private final Attributes attributes;
 
+    /**
+     * The namespace prefix mappings.
+     */
     private final List<PrefixMapping> prefixMappings;
 
+    /**
+     * The contructor.
+     * @param locator the locator.
+     * @param uri the namespace URI
+     * @param localName the local name
+     * @param qName the qualified name
+     * @param atts the attributes
+     * @param retainAttributes <code>true</code> to retain the attributes instead of copying
+     * @param prefixMappings the prefix mappings
+     */
     public Element(Locator locator, String uri, String localName, String qName,
             Attributes atts, boolean retainAttributes,
             List<PrefixMapping> prefixMappings) {
@@ -56,6 +87,10 @@ public final class Element extends ParentNode {
         this.prefixMappings = prefixMappings;
     }
 
+    /**
+     * 
+     * @see nu.validator.saxtree.Node#visit(nu.validator.saxtree.TreeParser)
+     */
     @Override
     void visit(TreeParser treeParser) throws SAXException {
         if (prefixMappings != null) {
@@ -68,7 +103,6 @@ public final class Element extends ParentNode {
     }
 
     /**
-     * @throws SAXException
      * @see nu.validator.saxtree.Node#revisit(nu.validator.saxtree.TreeParser)
      */
     @Override
@@ -126,6 +160,10 @@ public final class Element extends ParentNode {
         return uri;
     }
 
+    /**
+     * 
+     * @see nu.validator.saxtree.Node#getNodeType()
+     */
     @Override
     public NodeType getNodeType() {
         return NodeType.ELEMENT;

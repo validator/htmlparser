@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
- * Copyright (c) 2007 Mozilla Foundation
+ * Copyright (c) 2007-2008 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -25,13 +25,37 @@ package nu.validator.saxtree;
 
 import org.xml.sax.Locator;
 
+/**
+ * A locator implementation.
+ * @version $Id$
+ * @author hsivonen
+ */
 public final class LocatorImpl implements Locator {
 
+    /**
+     * The system id.
+     */
     private final String systemId;
+    
+    /**
+     * The public id.
+     */
     private final String publicId;
+    
+    /**
+     * The column.
+     */
     private final int column;
+    
+    /**
+     * The line.
+     */
     private final int line;
     
+    /**
+     * The constructor.
+     * @param locator the locator
+     */
     public LocatorImpl(Locator locator) {
         if (locator == null) {
             this.systemId = null;
@@ -46,18 +70,34 @@ public final class LocatorImpl implements Locator {
         }
     }
     
+    /**
+     * 
+     * @see org.xml.sax.Locator#getColumnNumber()
+     */
     public int getColumnNumber() {
         return column;
     }
 
+    /**
+     * 
+     * @see org.xml.sax.Locator#getLineNumber()
+     */
     public int getLineNumber() {
         return line;
     }
 
+    /**
+     * 
+     * @see org.xml.sax.Locator#getPublicId()
+     */
     public String getPublicId() {
         return publicId;
     }
 
+    /**
+     * 
+     * @see org.xml.sax.Locator#getSystemId()
+     */
     public String getSystemId() {
         return systemId;
     }

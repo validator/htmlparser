@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
- * Copyright (c) 2007 Mozilla Foundation
+ * Copyright (c) 2007-2008 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -29,17 +29,48 @@ import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 
+/**
+ * The common node superclass.
+ * @version $Id$
+ * @author hsivonen
+ */
 public abstract class Node implements Locator {
 
+    /**
+     * The system id.
+     */
     private final String systemId;
-    private final String publicId;
-    private final int column;
-    private final int line;
     
+    /**
+     * The public id.
+     */
+    private final String publicId;
+    
+    /**
+     * The column.
+     */
+    private final int column;
+    
+    /**
+     * The line.
+     */
+    private final int line;
+
+    /**
+     * The next sibling.
+     */
     private Node nextSibling = null;
     
+    /**
+     * The parent.
+     */
     private ParentNode parentNode = null;
 
+    /**
+     * The constructor.
+     * 
+     * @param locator the locator
+     */
     Node(Locator locator) {
         if (locator == null) {
             this.systemId = null;
@@ -54,28 +85,60 @@ public abstract class Node implements Locator {
         }
     }
     
+    /**
+     * 
+     * @see org.xml.sax.Locator#getColumnNumber()
+     */
     public int getColumnNumber() {
         return column;
     }
 
+    /**
+     * 
+     * @see org.xml.sax.Locator#getLineNumber()
+     */
     public int getLineNumber() {
         return line;
     }
 
+    /**
+     * 
+     * @see org.xml.sax.Locator#getPublicId()
+     */
     public String getPublicId() {
         return publicId;
     }
 
+    /**
+     * 
+     * @see org.xml.sax.Locator#getSystemId()
+     */
     public String getSystemId() {
         return systemId;
     }
 
+    /**
+     * Visit the node.
+     * 
+     * @param treeParser the visitor
+     * @throws SAXException if stuff goes wrong
+     */
     abstract void visit(TreeParser treeParser) throws SAXException;
     
+    /**
+     * Revisit the node.
+     * 
+     * @param treeParser the visitor
+     * @throws SAXException if stuff goes wrong
+     */
     void revisit(TreeParser treeParser) throws SAXException {
         return;
     }
     
+    /**
+     * Return the first child.
+     * @return the first child
+     */
     public Node getFirstChild() {
         return null;
     }
@@ -108,11 +171,6 @@ public abstract class Node implements Locator {
         return parentNode;
     }
     
-    public abstract NodeType getNodeType();
-    
-    // Subclass-specific accessors that are hoisted here to 
-    // avoid casting.
-
     /**
      * Sets the parentNode.
      * 
@@ -122,6 +180,18 @@ public abstract class Node implements Locator {
         this.parentNode = parentNode;
     }
     
+    /**
+     * Return the node type.
+     * @return the node type
+     */
+    public abstract NodeType getNodeType();
+    
+    // Subclass-specific accessors that are hoisted here to 
+    // avoid casting.
+    
+    /**
+     * Detach this node from its parent.
+     */
     public void detach() {
         if (parentNode != null) {
             parentNode.removeChild(this);

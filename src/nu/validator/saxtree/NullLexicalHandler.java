@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
+ * Copyright (c) 2008 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -25,26 +26,59 @@ package nu.validator.saxtree;
 import org.xml.sax.SAXException;
 import org.xml.sax.ext.LexicalHandler;
 
+/**
+ * A lexical handler that does nothing.
+ * @version $Id$
+ * @author hsivonen
+ */
 final class NullLexicalHandler implements LexicalHandler {
 
+    /**
+     * 
+     * @see org.xml.sax.ext.LexicalHandler#comment(char[], int, int)
+     */
     public void comment(char[] arg0, int arg1, int arg2) throws SAXException {
     }
 
+    /**
+     * 
+     * @see org.xml.sax.ext.LexicalHandler#endCDATA()
+     */
     public void endCDATA() throws SAXException {
     }
 
+    /**
+     * 
+     * @see org.xml.sax.ext.LexicalHandler#endDTD()
+     */
     public void endDTD() throws SAXException {
     }
 
+    /**
+     * 
+     * @see org.xml.sax.ext.LexicalHandler#endEntity(java.lang.String)
+     */
     public void endEntity(String arg0) throws SAXException {
     }
 
+    /**
+     * 
+     * @see org.xml.sax.ext.LexicalHandler#startCDATA()
+     */
     public void startCDATA() throws SAXException {
     }
 
+    /**
+     * 
+     * @see org.xml.sax.ext.LexicalHandler#startDTD(java.lang.String, java.lang.String, java.lang.String)
+     */
     public void startDTD(String arg0, String arg1, String arg2) throws SAXException {
     }
 
+    /**
+     * 
+     * @see org.xml.sax.ext.LexicalHandler#startEntity(java.lang.String)
+     */
     public void startEntity(String arg0) throws SAXException {
     }
 

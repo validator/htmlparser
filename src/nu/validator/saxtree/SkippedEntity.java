@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
+ * Copyright (c) 2008 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -25,20 +26,41 @@ package nu.validator.saxtree;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 
+/**
+ * A skipped entity.
+ * @version $Id$
+ * @author hsivonen
+ */
 public final class SkippedEntity extends Node {
 
+    /**
+     * The name.
+     */
     private final String name;
 
+    /**
+     * Constructor.
+     * @param locator the locator
+     * @param name the name
+     */
     public SkippedEntity(Locator locator, String name) {
         super(locator);
         this.name = name;
     }
 
+    /**
+     * 
+     * @see nu.validator.saxtree.Node#visit(nu.validator.saxtree.TreeParser)
+     */
     @Override
     void visit(TreeParser treeParser) throws SAXException {
         treeParser.skippedEntity(name, this);
     }
 
+    /**
+     * 
+     * @see nu.validator.saxtree.Node#getNodeType()
+     */
     @Override
     public NodeType getNodeType() {
         return NodeType.SKIPPED_ENTITY;

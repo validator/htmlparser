@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
+ * Copyright (c) 2008 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -25,12 +26,35 @@ package nu.validator.saxtree;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 
+/**
+ * A doctype.
+ * @version $Id$
+ * @author hsivonen
+ */
 public final class DTD extends ParentNode {
 
+    /**
+     * The name.
+     */
     private final String name;
+    
+    /**
+     * The public id.
+     */
     private final String publicIdentifier;
+    
+    /**
+     * The system id.
+     */
     private final String systemIdentifier;
 
+    /**
+     * The constructor.
+     * @param locator the locator
+     * @param name the name
+     * @param publicIdentifier the public id
+     * @param systemIdentifier the system id
+     */
     public DTD(Locator locator, String name, String publicIdentifier, String systemIdentifier) {
         super(locator);
         this.name = name;
@@ -38,13 +62,16 @@ public final class DTD extends ParentNode {
         this.systemIdentifier = systemIdentifier;
     }
 
+    /**
+     * 
+     * @see nu.validator.saxtree.Node#visit(nu.validator.saxtree.TreeParser)
+     */
     @Override
     void visit(TreeParser treeParser) throws SAXException {
         treeParser.startDTD(name, publicIdentifier, systemIdentifier, this);
     }
 
     /**
-     * @throws SAXException 
      * @see nu.validator.saxtree.Node#revisit(nu.validator.saxtree.TreeParser)
      */
     @Override
@@ -79,6 +106,10 @@ public final class DTD extends ParentNode {
         return systemIdentifier;
     }
 
+    /**
+     * 
+     * @see nu.validator.saxtree.Node#getNodeType()
+     */
     @Override
     public NodeType getNodeType() {
         return NodeType.DTD;
