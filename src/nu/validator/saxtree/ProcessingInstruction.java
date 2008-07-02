@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
+ * Copyright (c) 2008 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -25,22 +26,48 @@ package nu.validator.saxtree;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 
+/**
+ * A processing instruction.
+ * @version $Id$
+ * @author hsivonen
+ */
 public final class ProcessingInstruction extends Node {
 
+    /**
+     * PI target.
+     */
     private final String target;
+    
+    /**
+     * PI data.
+     */
     private final String data;
 
+    /**
+     * Constructor.
+     * @param locator the locator
+     * @param target PI target
+     * @param data PI data
+     */
     public ProcessingInstruction(Locator locator, String target, String data) {
         super(locator);
         this.target = target;
         this.data = data;
     }
 
+    /**
+     * 
+     * @see nu.validator.saxtree.Node#visit(nu.validator.saxtree.TreeParser)
+     */
     @Override
     void visit(TreeParser treeParser) throws SAXException {
         treeParser.processingInstruction(target, data, this);
     }
 
+    /**
+     * 
+     * @see nu.validator.saxtree.Node#getNodeType()
+     */
     @Override
     public NodeType getNodeType() {
         return NodeType.PROCESSING_INSTRUCTION;

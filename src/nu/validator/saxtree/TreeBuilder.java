@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
+ * Copyright (c) 2008 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -45,12 +46,24 @@ import org.xml.sax.ext.LexicalHandler;
  */
 public class TreeBuilder implements ContentHandler, LexicalHandler {
 
+    /**
+     * The locator.
+     */
     private Locator locator;
 
+    /**
+     * The current node.
+     */
     private ParentNode current;
 
+    /**
+     * Whether to retain attribute objects.
+     */
     private final boolean retainAttributes;
 
+    /**
+     * The prefix mappings for the next element to be inserted.
+     */
     private List<PrefixMapping> prefixMappings;
     
     /**
@@ -78,30 +91,58 @@ public class TreeBuilder implements ContentHandler, LexicalHandler {
         this.retainAttributes = retainAttributes;
     }
 
+    /**
+     * 
+     * @see org.xml.sax.ContentHandler#characters(char[], int, int)
+     */
     public void characters(char[] ch, int start, int length) throws SAXException {
         current.appendChild(new Characters(locator, ch, start, length));
     }
 
+    /**
+     * 
+     * @see org.xml.sax.ContentHandler#endDocument()
+     */
     public void endDocument() throws SAXException {
         current.setEndLocator(locator);
     }
 
+    /**
+     * 
+     * @see org.xml.sax.ContentHandler#endElement(java.lang.String, java.lang.String, java.lang.String)
+     */
     public void endElement(String uri, String localName, String qName) throws SAXException {
         current.setEndLocator(locator);
         current = current.getParentNode();
     }
 
+    /**
+     * 
+     * @see org.xml.sax.ContentHandler#endPrefixMapping(java.lang.String)
+     */
     public void endPrefixMapping(String prefix) throws SAXException {
     }
 
+    /**
+     * 
+     * @see org.xml.sax.ContentHandler#ignorableWhitespace(char[], int, int)
+     */
     public void ignorableWhitespace(char[] ch, int start, int length) throws SAXException {
         current.appendChild(new IgnorableWhitespace(locator, ch, start, length));
     }
 
+    /**
+     * 
+     * @see org.xml.sax.ContentHandler#processingInstruction(java.lang.String, java.lang.String)
+     */
     public void processingInstruction(String target, String data) throws SAXException {
         current.appendChild(new ProcessingInstruction(locator, target, data));
     }
 
+    /**
+     * 
+     * @see org.xml.sax.ContentHandler#setDocumentLocator(org.xml.sax.Locator)
+     */
     public void setDocumentLocator(Locator locator) {
         this.locator = locator;
     }
@@ -110,15 +151,27 @@ public class TreeBuilder implements ContentHandler, LexicalHandler {
         current.appendChild(new SkippedEntity(locator, name));
     }
 
+    /**
+     * 
+     * @see org.xml.sax.ContentHandler#startDocument()
+     */
     public void startDocument() throws SAXException {
         current = new Document(locator);
     }
 
+    /**
+     * 
+     * @see org.xml.sax.ContentHandler#startElement(java.lang.String, java.lang.String, java.lang.String, org.xml.sax.Attributes)
+     */
     public void startElement(String uri, String localName, String qName, Attributes atts) throws SAXException {
         current = (ParentNode) current.appendChild(new Element(locator, uri, localName, qName, atts, retainAttributes, prefixMappings));
         prefixMappings = null;
     }
 
+    /**
+     * 
+     * @see org.xml.sax.ContentHandler#startPrefixMapping(java.lang.String, java.lang.String)
+     */
     public void startPrefixMapping(String prefix, String uri) throws SAXException {
         if (prefixMappings == null) {
             prefixMappings = new LinkedList<PrefixMapping>();
@@ -126,33 +179,61 @@ public class TreeBuilder implements ContentHandler, LexicalHandler {
         prefixMappings.add(new PrefixMapping(prefix, uri));
     }
 
+    /**
+     * 
+     * @see org.xml.sax.ext.LexicalHandler#comment(char[], int, int)
+     */
     public void comment(char[] ch, int start, int length) throws SAXException {
         current.appendChild(new Comment(locator, ch, start, length));
     }
 
+    /**
+     * 
+     * @see org.xml.sax.ext.LexicalHandler#endCDATA()
+     */
     public void endCDATA() throws SAXException {
         current.setEndLocator(locator);
         current = current.getParentNode();
     }
 
+    /**
+     * 
+     * @see org.xml.sax.ext.LexicalHandler#endDTD()
+     */
     public void endDTD() throws SAXException {
         current.setEndLocator(locator);
         current = current.getParentNode();
     }
 
+    /**
+     * 
+     * @see org.xml.sax.ext.LexicalHandler#endEntity(java.lang.String)
+     */
     public void endEntity(String name) throws SAXException {
         current.setEndLocator(locator);
         current = current.getParentNode();
     }
 
+    /**
+     * 
+     * @see org.xml.sax.ext.LexicalHandler#startCDATA()
+     */
     public void startCDATA() throws SAXException {
         current = (ParentNode) current.appendChild(new CDATA(locator));        
     }
 
+    /**
+     * 
+     * @see org.xml.sax.ext.LexicalHandler#startDTD(java.lang.String, java.lang.String, java.lang.String)
+     */
     public void startDTD(String name, String publicId, String systemId) throws SAXException {
         current = (ParentNode) current.appendChild(new DTD(locator, name, publicId, systemId));        
     }
 
+    /**
+     * 
+     * @see org.xml.sax.ext.LexicalHandler#startEntity(java.lang.String)
+     */
     public void startEntity(String name) throws SAXException {
         current = (ParentNode) current.appendChild(new Entity(locator, name));        
     }

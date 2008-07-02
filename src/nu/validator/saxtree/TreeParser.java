@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
+ * Copyright (c) 2008 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -28,11 +29,26 @@ import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.ext.LexicalHandler;
 
+/**
+ * A tree visitor that replays a tree as SAX events.
+ * @version $Id$
+ * @author hsivonen
+ */
 public final class TreeParser implements Locator {
+    
+    /**
+     * The content handler.
+     */
     private final ContentHandler contentHandler;
 
+    /**
+     * The lexical handler.
+     */
     private final LexicalHandler lexicalHandler;
 
+    /**
+     * The current locator.
+     */
     private Locator locatorDelegate;
 
     /**
@@ -90,10 +106,6 @@ public final class TreeParser implements Locator {
     }
 
     /**
-     * @param ch
-     * @param start
-     * @param length
-     * @throws SAXException
      * @see org.xml.sax.ContentHandler#characters(char[], int, int)
      */
     void characters(char[] ch, int start, int length, Locator locator)
@@ -103,7 +115,6 @@ public final class TreeParser implements Locator {
     }
 
     /**
-     * @throws SAXException
      * @see org.xml.sax.ContentHandler#endDocument()
      */
     void endDocument(Locator locator) throws SAXException {
@@ -112,10 +123,6 @@ public final class TreeParser implements Locator {
     }
 
     /**
-     * @param uri
-     * @param localName
-     * @param qName
-     * @throws SAXException
      * @see org.xml.sax.ContentHandler#endElement(java.lang.String,
      *      java.lang.String, java.lang.String)
      */
@@ -126,8 +133,6 @@ public final class TreeParser implements Locator {
     }
 
     /**
-     * @param prefix
-     * @throws SAXException
      * @see org.xml.sax.ContentHandler#endPrefixMapping(java.lang.String)
      */
     void endPrefixMapping(String prefix, Locator locator) throws SAXException {
@@ -136,10 +141,6 @@ public final class TreeParser implements Locator {
     }
 
     /**
-     * @param ch
-     * @param start
-     * @param length
-     * @throws SAXException
      * @see org.xml.sax.ContentHandler#ignorableWhitespace(char[], int, int)
      */
     void ignorableWhitespace(char[] ch, int start, int length, Locator locator)
@@ -149,9 +150,6 @@ public final class TreeParser implements Locator {
     }
 
     /**
-     * @param target
-     * @param data
-     * @throws SAXException
      * @see org.xml.sax.ContentHandler#processingInstruction(java.lang.String,
      *      java.lang.String)
      */
@@ -162,8 +160,6 @@ public final class TreeParser implements Locator {
     }
 
     /**
-     * @param name
-     * @throws SAXException
      * @see org.xml.sax.ContentHandler#skippedEntity(java.lang.String)
      */
     void skippedEntity(String name, Locator locator) throws SAXException {
@@ -172,7 +168,6 @@ public final class TreeParser implements Locator {
     }
 
     /**
-     * @throws SAXException
      * @see org.xml.sax.ContentHandler#startDocument()
      */
     void startDocument(Locator locator) throws SAXException {
@@ -181,11 +176,6 @@ public final class TreeParser implements Locator {
     }
 
     /**
-     * @param uri
-     * @param localName
-     * @param qName
-     * @param atts
-     * @throws SAXException
      * @see org.xml.sax.ContentHandler#startElement(java.lang.String,
      *      java.lang.String, java.lang.String, org.xml.sax.Attributes)
      */
@@ -196,9 +186,6 @@ public final class TreeParser implements Locator {
     }
 
     /**
-     * @param prefix
-     * @param uri
-     * @throws SAXException
      * @see org.xml.sax.ContentHandler#startPrefixMapping(java.lang.String,
      *      java.lang.String)
      */
@@ -209,10 +196,6 @@ public final class TreeParser implements Locator {
     }
 
     /**
-     * @param ch
-     * @param start
-     * @param length
-     * @throws SAXException
      * @see org.xml.sax.ext.LexicalHandler#comment(char[], int, int)
      */
     void comment(char[] ch, int start, int length, Locator locator)
@@ -222,7 +205,6 @@ public final class TreeParser implements Locator {
     }
 
     /**
-     * @throws SAXException
      * @see org.xml.sax.ext.LexicalHandler#endCDATA()
      */
     void endCDATA(Locator locator) throws SAXException {
@@ -231,7 +213,6 @@ public final class TreeParser implements Locator {
     }
 
     /**
-     * @throws SAXException
      * @see org.xml.sax.ext.LexicalHandler#endDTD()
      */
     void endDTD(Locator locator) throws SAXException {
@@ -240,8 +221,6 @@ public final class TreeParser implements Locator {
     }
 
     /**
-     * @param name
-     * @throws SAXException
      * @see org.xml.sax.ext.LexicalHandler#endEntity(java.lang.String)
      */
     void endEntity(String name, Locator locator) throws SAXException {
@@ -250,7 +229,6 @@ public final class TreeParser implements Locator {
     }
 
     /**
-     * @throws SAXException
      * @see org.xml.sax.ext.LexicalHandler#startCDATA()
      */
     void startCDATA(Locator locator) throws SAXException {
@@ -259,10 +237,6 @@ public final class TreeParser implements Locator {
     }
 
     /**
-     * @param name
-     * @param publicId
-     * @param systemId
-     * @throws SAXException
      * @see org.xml.sax.ext.LexicalHandler#startDTD(java.lang.String,
      *      java.lang.String, java.lang.String)
      */
@@ -273,8 +247,6 @@ public final class TreeParser implements Locator {
     }
 
     /**
-     * @param name
-     * @throws SAXException
      * @see org.xml.sax.ext.LexicalHandler#startEntity(java.lang.String)
      */
     void startEntity(String name, Locator locator) throws SAXException {
@@ -283,7 +255,6 @@ public final class TreeParser implements Locator {
     }
 
     /**
-     * @return
      * @see org.xml.sax.Locator#getColumnNumber()
      */
     public int getColumnNumber() {
@@ -295,7 +266,6 @@ public final class TreeParser implements Locator {
     }
 
     /**
-     * @return
      * @see org.xml.sax.Locator#getLineNumber()
      */
     public int getLineNumber() {
@@ -307,7 +277,6 @@ public final class TreeParser implements Locator {
     }
 
     /**
-     * @return
      * @see org.xml.sax.Locator#getPublicId()
      */
     public String getPublicId() {
@@ -320,7 +289,6 @@ public final class TreeParser implements Locator {
     }
 
     /**
-     * @return
      * @see org.xml.sax.Locator#getSystemId()
      */
     public String getSystemId() {

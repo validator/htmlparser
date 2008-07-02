@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
+ * Copyright (c) 2008 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -25,17 +26,37 @@ package nu.validator.saxtree;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 
+/**
+ * A run of characters
+ * @version $Id$
+ * @author hsivonen
+ */
 public final class Characters extends CharBufferNode {
 
+    /**
+     * The constructor.
+     * @param locator the locator
+     * @param buf the buffer
+     * @param start the offset in the buffer
+     * @param length the length
+     */
     public Characters(Locator locator, char[] buf, int start, int length) {
         super(locator, buf, start, length);
     }
 
+    /**
+     * 
+     * @see nu.validator.saxtree.Node#visit(nu.validator.saxtree.TreeParser)
+     */
     @Override
     void visit(TreeParser treeParser) throws SAXException {
         treeParser.characters(buffer, 0, buffer.length, this);
     }
 
+    /**
+     * 
+     * @see nu.validator.saxtree.Node#getNodeType()
+     */
     @Override
     public NodeType getNodeType() {
         return NodeType.CHARACTERS;

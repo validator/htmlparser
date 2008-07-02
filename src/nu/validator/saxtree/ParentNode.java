@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
+ * Copyright (c) 2008 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -24,14 +25,32 @@ package nu.validator.saxtree;
 
 import org.xml.sax.Locator;
 
+/**
+ * Common superclass for parent nodes.
+ * @version $Id$
+ * @author hsivonen
+ */
 public abstract class ParentNode extends Node {
 
+    /**
+     * The end locator.
+     */
     protected Locator endLocator;
     
+    /**
+     * The first child.
+     */
     private Node firstChild = null;
     
+    /**
+     * The last child (for efficiency).
+     */
     private Node lastChild = null;
     
+    /**
+     * The constuctor.
+     * @param locator the locator
+     */
     ParentNode(Locator locator) {
         super(locator);
     }
@@ -72,6 +91,12 @@ public abstract class ParentNode extends Node {
         return lastChild;
     }
 
+    /**
+     * Insert a new child before a pre-existing child and return the newly inserted child.
+     * @param child the new child
+     * @param sibling the existing child before which to insert (must be a child of this node) or <code>null</code> to append
+     * @return <code>child</code>
+     */
     public Node insertBefore(Node child, Node sibling) {
         assert sibling == null || this == sibling.getParentNode();
         if (sibling == null) {
@@ -95,6 +120,12 @@ public abstract class ParentNode extends Node {
         return child;
     }
     
+    /**
+     * Append a child to this node and return the child.
+     * 
+     * @param child the child to append.
+     * @return <code>child</code>
+     */
     public Node appendChild(Node child) {
         child.detach();
         child.setParentNode(this);
@@ -107,6 +138,10 @@ public abstract class ParentNode extends Node {
         return child;
     }
     
+    /**
+     * Append the children of another node to this node removing them from the other node .
+     * @param parent the other node whose children to append to this one
+     */
     public void appendChildren(Node parent) {
         Node child = parent.getFirstChild();
         if (child == null) {
@@ -126,6 +161,10 @@ public abstract class ParentNode extends Node {
         another.lastChild = null;
     }
 
+    /**
+     * Remove a child from this node.
+     * @param node the child to remove
+     */
     void removeChild(Node node) {
         assert this == node.getParentNode();
         if (firstChild == node) {
