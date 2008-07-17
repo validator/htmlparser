@@ -4017,7 +4017,9 @@ public class Tokenizer implements Locator {
                         } else if (c == ';') {
                             if (seenDigits) {
                                 state = Tokenizer.HANDLE_NCR_VALUE;
-                                cstart = pos + 1;
+                                if ((returnState & (~1)) == 0) {
+                                    cstart = pos + 1;
+                                }
                                 // FALL THROUGH continue stateloop;
                                 break decimalloop;
                             } else {
