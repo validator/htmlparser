@@ -1334,7 +1334,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                                 currNs, elementName, attributes);
                                         selfClosing = false;
                                     } else {
-                                        appendToCurrentNodeAndPushElementMayFoster(
+                                        appendToCurrentNodeAndPushElementMayFosterNoScoping(
                                                 currNs, elementName, attributes);
                                     }
                                     break starttagloop;
@@ -4244,6 +4244,34 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         push(node);
     }
 
+    private void appendToCurrentNodeAndPushElementMayFosterNoScoping(String ns,
+            ElementName elementName, HtmlAttributes attributes)
+            throws SAXException {
+        flushCharacters();
+        @Local String popName = elementName.name;
+        // [NOCPP[
+        checkAttributes(attributes, ns);
+        if (elementName.custom) {
+            popName = checkPopName(popName);
+        }
+        // ]NOCPP]        
+        T elt = createElement(ns, popName, attributes);
+        StackNode<T> current = stack[currentPtr];
+        if (current.fosterParenting) {
+            if (conformingAndStreaming) {
+                fatal();
+            } else if (nonConformingAndStreaming) {
+                return;
+            } else {
+                insertIntoFosterParent(elt);
+            }
+        } else {
+            detachFromParentAndAppendToNewParent(elt, current.node);
+        }
+        StackNode<T> node = new StackNode<T>(ns, elementName, elt, popName, false);
+        push(node);
+    }
+    
     private void appendToCurrentNodeAndPushElementMayFosterCamelCase(String ns,
             ElementName elementName, HtmlAttributes attributes)
             throws SAXException {
@@ -4297,7 +4325,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         push(node);
     }
 
-    private void appendVoidElementToCurrentMayFoster(String ns, String name,
+    @SuppressWarnings("unchecked") private void appendVoidElementToCurrentMayFoster(String ns, String name,
             HtmlAttributes attributes, T form) throws SAXException {
         flushCharacters();
         // [NOCPP[
@@ -4323,7 +4351,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
     }
 
-    private void appendVoidElementToCurrentMayFoster(String ns, ElementName elementName,
+    @SuppressWarnings("unchecked") private void appendVoidElementToCurrentMayFoster(String ns, ElementName elementName,
             HtmlAttributes attributes) throws SAXException {
         flushCharacters();
         @Local String popName = elementName.name;
@@ -4352,7 +4380,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
     }
 
-    private void appendVoidElementToCurrentMayFosterCamelCase(String ns, ElementName elementName,
+    @SuppressWarnings("unchecked") private void appendVoidElementToCurrentMayFosterCamelCase(String ns, ElementName elementName,
             HtmlAttributes attributes) throws SAXException {
         flushCharacters();
         @Local String popName = elementName.camelCaseName;
@@ -4381,7 +4409,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
     }
     
-    private void appendVoidElementToCurrent(String ns, String name,
+    @SuppressWarnings("unchecked") private void appendVoidElementToCurrent(String ns, String name,
             HtmlAttributes attributes, T form) throws SAXException {
         flushCharacters();
         // [NOCPP[
