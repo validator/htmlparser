@@ -1613,7 +1613,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                                 }
                                                 break;
                                             }
-                                            if (node.scoping || (node.special && node.name != "address" && node.name != "div")) {
+                                            if (node.scoping || (node.special && node.name != "p" && node.name != "address" && node.name != "div")) {
                                                 break;
                                             }
                                             eltPos--;
