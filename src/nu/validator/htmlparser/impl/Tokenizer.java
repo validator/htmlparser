@@ -160,7 +160,7 @@ public class Tokenizer implements Locator {
 
     private static final int CDATA_START = 45;
 
-    private static final int CDATA_BLOCK = 46;
+    private static final int CDATA_SECTION = 46;
 
     private static final int CDATA_RSQB = 47;
 
@@ -834,7 +834,16 @@ public class Tokenizer implements Locator {
     private void emitComment() throws SAXException {
         if (wantsComments) {
             if (longStrBufPending != '\u0000') {
-                appendLongStrBuf(longStrBufPending);
+                if (longStrBufPending == '-' && commentPolicy != XmlViolationPolicy.ALLOW) {
+                    if (commentPolicy == XmlViolationPolicy.FATAL) {
+                            fatal("This document is not mappable to XML 1.0 without data loss due to trailing \u201C-\u201D in a comment.");
+                    } else {
+                        appendLongStrBuf('-');
+                        appendLongStrBuf(' ');
+                    }
+                } else {
+                    appendLongStrBuf(longStrBufPending);
+                }
             }
         }
         tokenHandler.comment(longStrBuf, longStrBufLen);
@@ -1181,7 +1190,7 @@ public class Tokenizer implements Locator {
             case RCDATA:
             case CDATA:
             case PLAINTEXT:
-            case CDATA_BLOCK:
+            case CDATA_SECTION:
             case ESCAPE:
             case ESCAPE_EXCLAMATION:
             case ESCAPE_EXCLAMATION_HYPHEN:
@@ -1634,7 +1643,7 @@ public class Tokenizer implements Locator {
                         /*
                          * If the content model flag is set to the RCDATA or
                          * CDATA states but no start tag token has ever been
-                         * emitted by this instance of the tokeniser (fragment
+                         * emitted by this instance of the tokenizer (fragment
                          * case), or, if the content model flag is set to the
                          * RCDATA or CDATA states and the next few characters do
                          * not match the tag name of the last start tag token
@@ -2557,17 +2566,17 @@ public class Tokenizer implements Locator {
                          * (This can only happen if the content model flag is
                          * set to the PCDATA state.)
                          * 
-                         * Consume every character up to the first U+003E
-                         * GREATER-THAN SIGN character (>) or the end of the
-                         * file (EOF), whichever comes first. Emit a comment
+                         * Consume every character up to and including the first
+                         * U+003E GREATER-THAN SIGN character (>) or the end of
+                         * the file (EOF), whichever comes first. Emit a comment
                          * token whose data is the concatenation of all the
                          * characters starting from and including the character
                          * that caused the state machine to switch into the
-                         * bogus comment state, up to and including the last
-                         * consumed character before the U+003E character, if
-                         * any, or up to the end of the file otherwise. (If the
-                         * comment was started by the end of the file (EOF), the
-                         * token is empty.)
+                         * bogus comment state, up to and including the
+                         * character immediately before the last consumed
+                         * character (i.e. up to the character just before the
+                         * U+003E or EOF character). (If the comment was started
+                         * by the end of the file (EOF), the token is empty.)
                          * 
                          * Switch to the data state.
                          * 
@@ -2610,7 +2619,7 @@ public class Tokenizer implements Locator {
                      * case-sensitive match for the string "[CDATA[" (the five
                      * uppercase letters "CDATA" with a U+005B LEFT SQUARE
                      * BRACKET character before and after), then consume those
-                     * characters and switch to the CDATA block state (which is
+                     * characters and switch to the CDATA section state (which is
                      * unrelated to the content model flag's CDATA state).
                      * 
                      * Otherwise, is is a parse error. Switch to the bogus
@@ -3684,13 +3693,13 @@ public class Tokenizer implements Locator {
                             continue;
                         } else {
                             cstart = pos; // start coalescing
-                            state = Tokenizer.CDATA_BLOCK;
+                            state = Tokenizer.CDATA_SECTION;
                             reconsume = true;
                             break; // FALL THROUGH continue stateloop;
                         }
                     }
                     // WARNING FALLTHRU CASE TRANSITION: DON'T REORDER
-                case CDATA_BLOCK:
+                case CDATA_SECTION:
                     cdataloop: for (;;) {
                         if (!reconsume) {
                             c = read();
@@ -3721,7 +3730,7 @@ public class Tokenizer implements Locator {
                                 tokenHandler.characters(Tokenizer.RSQB_RSQB, 0,
                                         1);
                                 cstart = pos;
-                                state = Tokenizer.CDATA_BLOCK;
+                                state = Tokenizer.CDATA_SECTION;
                                 reconsume = true;
                                 continue stateloop;
                         }
@@ -3739,7 +3748,7 @@ public class Tokenizer implements Locator {
                         default:
                             tokenHandler.characters(Tokenizer.RSQB_RSQB, 0, 2);
                             cstart = pos;
-                            state = Tokenizer.CDATA_BLOCK;
+                            state = Tokenizer.CDATA_SECTION;
                             reconsume = true;
                             continue stateloop;
 
