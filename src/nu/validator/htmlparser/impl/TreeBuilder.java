@@ -2426,12 +2426,21 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     continue;
                             }
                         case AFTER_AFTER_BODY:
-                            err("Stray \u201C" + name + "\u201D start tag.");
-                            if (conformingAndStreaming) {
-                                fatal();
+                            switch (group) {
+                                case HTML:
+                                    err("Stray \u201Chtml\u201D start tag.");
+                                    addAttributesToElement(stack[0].node,
+                                            attributes);
+                                    break starttagloop;
+                                default:
+                                    err("Stray \u201C" + name
+                                            + "\u201D start tag.");
+                                    if (conformingAndStreaming) {
+                                        fatal();
+                                    }
+                                    mode = InsertionMode.IN_BODY;
+                                    continue;
                             }
-                            mode = InsertionMode.IN_BODY;
-                            continue;
                         case AFTER_AFTER_FRAMESET:
                             err("Stray \u201C" + name + "\u201D start tag.");
                             if (conformingAndStreaming) {
