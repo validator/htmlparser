@@ -68,12 +68,27 @@ public final class StringUtil {
         return new String(buf);
     }
 
-    public static @Local String localNameFromBuffer(char[] buf, int length) {
-        return new String(buf, 0, length).intern();
+    public static @Local String localNameFromBuffer(char[] buf, int offset, int length) {
+        return new String(buf, offset, length).intern();
     }
 
     public static String stringFromBuffer(char[] buf, int length) {
         return new String(buf, 0, length);
     }
     
+    public static char[] localToCharArray(@Local String local) {
+        return local.toCharArray();
+    }
+    
+    public static boolean equals(@Local String local, char[] buf, int offset, int length) {
+        if (local.length() != length) {
+            return false;
+        }
+        for (int i = 0; i < length; i++) {
+            if (local.charAt(i) != buf[offset + i]) {
+                return false;
+            }
+        }
+        return true;
+    }
 }

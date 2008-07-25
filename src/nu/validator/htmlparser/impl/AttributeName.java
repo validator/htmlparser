@@ -67,25 +67,19 @@ public final class AttributeName
         return new String[] { name, name, name, name };
     }
 
-    static AttributeName nameByBuffer(char[] buf, int length,
-            boolean checkNcName) {
+    static AttributeName nameByBuffer(char[] buf, int offset,
+            int length, boolean checkNcName) {
         int hash = AttributeName.bufToHash(buf, length);
         int index = Arrays.binarySearch(AttributeName.ATTRIBUTE_HASHES, hash);
         if (index < 0) {
             return AttributeName.create(StringUtil.localNameFromBuffer(buf,
-                    length), checkNcName);
+                    offset, length), checkNcName);
         } else {
             AttributeName rv = AttributeName.ATTRIBUTE_NAMES[index];
             @Local String name = rv.getLocal(AttributeName.HTML);
-            if (name.length() != length) {
+            if (!StringUtil.equals(name, buf, offset, length)) {
                 return AttributeName.create(StringUtil.localNameFromBuffer(buf,
-                        length), checkNcName);
-            }
-            for (int i = 0; i < length; i++) {
-                if (name.charAt(i) != buf[i]) {
-                    return AttributeName.create(StringUtil.localNameFromBuffer(
-                            buf, length), checkNcName);
-                }
+                        offset, length), checkNcName);                
             }
             return rv;
         }
@@ -131,8 +125,12 @@ public final class AttributeName
 
     private final @Prefix String[] prefix;
     
+    // [NOCPP[
+    
     private final @QName String[] qName;
 
+    // ]NOCPP]
+    
     // XXX convert to bitfield
     private final boolean[] ncname;
 
@@ -153,9 +151,12 @@ public final class AttributeName
         this.uri = uri;
         this.local = local;
         this.prefix = prefix;
+        
+        // [NOCPP[
         this.qName = COMPUTE_QNAME(local, prefix);
         this.ncname = ncname;
         this.xmlns = xmlns;
+        // ]NOCPP]        
     }
 
     private AttributeName(@NsUri String[] uri, @Local String[] local,
@@ -164,9 +165,11 @@ public final class AttributeName
         this.uri = uri;
         this.local = local;
         this.prefix = prefix;
+        // [NOCPP[
         this.qName = COMPUTE_QNAME(local, prefix);
         this.ncname = ncname;
         this.xmlns = xmlns;
+        // ]NOCPP]
     }
 
     private static @QName String[] COMPUTE_QNAME(String[] local, String[] prefix) {
@@ -206,56 +209,15 @@ public final class AttributeName
                 AttributeName.SAME_LOWER_CASE_LOCAL(name),
                 ALL_NO_PREFIX, AttributeName.ALL_NCNAME, false);
     }
-    // ]NOCPP]
-    
-    public String getType(int mode) {
-        return type;
-    }
-
-    public String getUri(int mode) {
-        return uri[mode];
-    }
-
-    public String getLocal(int mode) {
-        return local[mode];
-    }
-
-    public String getQName(int mode) {
-        return qName[mode];
-    }
 
     public boolean isNcName(int mode) {
         return ncname[mode];
     }
-
+    
     public boolean isXmlns() {
         return xmlns;
     }
-
-    boolean isBoolean() {
-        return this == AttributeName.ACTIVE || this == AttributeName.ASYNC
-                || this == AttributeName.AUTOFOCUS
-                || this == AttributeName.AUTOSUBMIT
-                || this == AttributeName.CHECKED
-                || this == AttributeName.COMPACT
-                || this == AttributeName.DECLARE
-                || this == AttributeName.DEFAULT || this == AttributeName.DEFER
-                || this == AttributeName.DISABLED
-                || this == AttributeName.ISMAP
-                || this == AttributeName.MULTIPLE
-                || this == AttributeName.NOHREF
-                || this == AttributeName.NORESIZE
-                || this == AttributeName.NOSHADE
-                || this == AttributeName.NOWRAP
-                || this == AttributeName.READONLY
-                || this == AttributeName.REQUIRED
-                || this == AttributeName.SELECTED;
-    }
-
-    boolean equalsAnother(AttributeName another) {
-        return this.getLocal(AttributeName.HTML) == another.getLocal(AttributeName.HTML);
-    }
-
+    
     boolean isCaseFolded() {
         return this == AttributeName.ACTIVE || this == AttributeName.ALIGN
                 || this == AttributeName.ASYNC
@@ -284,6 +246,48 @@ public final class AttributeName
                 || this == AttributeName.SHAPE || this == AttributeName.STEP
                 || this == AttributeName.TYPE || this == AttributeName.VALIGN
                 || this == AttributeName.VALUETYPE;
+    }
+    
+    boolean isBoolean() {
+        return this == AttributeName.ACTIVE || this == AttributeName.ASYNC
+                || this == AttributeName.AUTOFOCUS
+                || this == AttributeName.AUTOSUBMIT
+                || this == AttributeName.CHECKED
+                || this == AttributeName.COMPACT
+                || this == AttributeName.DECLARE
+                || this == AttributeName.DEFAULT || this == AttributeName.DEFER
+                || this == AttributeName.DISABLED
+                || this == AttributeName.ISMAP
+                || this == AttributeName.MULTIPLE
+                || this == AttributeName.NOHREF
+                || this == AttributeName.NORESIZE
+                || this == AttributeName.NOSHADE
+                || this == AttributeName.NOWRAP
+                || this == AttributeName.READONLY
+                || this == AttributeName.REQUIRED
+                || this == AttributeName.SELECTED;
+    }
+
+    public @QName String getQName(int mode) {
+        return qName[mode];
+    }
+    
+    // ]NOCPP]
+    
+    public @IdType String getType(int mode) {
+        return type;
+    }
+
+    public @NsUri String getUri(int mode) {
+        return uri[mode];
+    }
+
+    public @Local String getLocal(int mode) {
+        return local[mode];
+    }
+
+    boolean equalsAnother(AttributeName another) {
+        return this.getLocal(AttributeName.HTML) == another.getLocal(AttributeName.HTML);
     }
 
     // START CODE ONLY USED FOR GENERATING CODE uncomment to regenerate
