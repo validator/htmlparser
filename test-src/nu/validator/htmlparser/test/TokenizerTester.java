@@ -94,6 +94,11 @@ public class TokenizerTester {
             RecognitionException, UnsupportedEncodingException {
         tokenHandler = new JSONArrayTokenHandler();
         tokenizer = new Driver(tokenHandler);
+        tokenizer.setCommentPolicy(XmlViolationPolicy.ALLOW);
+        tokenizer.setContentNonXmlCharPolicy(XmlViolationPolicy.ALLOW);
+        tokenizer.setContentSpacePolicy(XmlViolationPolicy.ALLOW);
+        tokenizer.setNamePolicy(XmlViolationPolicy.ALLOW);
+        tokenizer.setXmlnsPolicy(XmlViolationPolicy.ALLOW);
         tokenizer.setErrorHandler(tokenHandler);
         writer = new OutputStreamWriter(System.out, "UTF-8");
         JSONParser jsonParser = new JSONParser(new InputStreamReader(stream,
