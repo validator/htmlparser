@@ -3252,9 +3252,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 case BEFORE_HEAD:
                     switch (group) {
                         case HEAD:
-                        case BODY:
-                        case HTML:
-                        case P:
                         case BR:
                             appendToCurrentNodeAndPushHeadElement(HtmlAttributes.EMPTY_ATTRIBUTES);
                             mode = InsertionMode.IN_HEAD;
@@ -3269,9 +3266,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             pop();
                             mode = InsertionMode.AFTER_HEAD;
                             break endtagloop;
-                        case BODY:
-                        case HTML:
-                        case P:
                         case BR:
                             pop();
                             mode = InsertionMode.AFTER_HEAD;
@@ -3286,7 +3280,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             pop();
                             mode = InsertionMode.IN_HEAD;
                             break endtagloop;
-                        case P:
                         case BR:
                             err("Stray end tag \u201C" + name + "\u201D.");
                             pop();

@@ -613,7 +613,8 @@ public class Tokenizer implements Locator {
     public void setContentModelFlag(ContentModelFlag contentModelFlag,
             @Local String contentModelElement) {
         this.contentModelFlag = contentModelFlag;
-        this.contentModelElement = ElementName.elementNameByLocalName(contentModelElement);
+        char[] asArray = StringUtil.localToCharArray(contentModelElement);
+        this.contentModelElement = ElementName.elementNameByBuffer(asArray, 0, asArray.length);
     }
 
     /**
@@ -979,7 +980,7 @@ public class Tokenizer implements Locator {
     }
 
     private ElementName strBufToElementNameString() {
-        return ElementName.elementNameByBuffer(strBuf, strBufLen);
+        return ElementName.elementNameByBuffer(strBuf, 0, strBufLen);
     }
 
     private int emitCurrentTagToken(boolean selfClosing) throws SAXException {
@@ -1023,8 +1024,8 @@ public class Tokenizer implements Locator {
     }
 
     private void attributeNameComplete() throws SAXException {
-        attributeName = AttributeName.nameByBuffer(strBuf, strBufLen,
-                namePolicy != XmlViolationPolicy.ALLOW);
+        attributeName = AttributeName.nameByBuffer(strBuf, 0,
+                strBufLen, namePolicy != XmlViolationPolicy.ALLOW);
 
         // [NOCPP[
         if (attributes == null) {
@@ -1072,6 +1073,7 @@ public class Tokenizer implements Locator {
             err("A \u201Ccharset\u201D attribute on a \u201Cmeta\u201D element found after the first 512 bytes.");
         }
         if (shouldAddAttributes) {
+            // [NOCPP[
             if (html4) {
                 if (attributeName.isBoolean()) {
                     if (html4ModeCompatibleWithXhtml1Schemata) {
@@ -1085,6 +1087,7 @@ public class Tokenizer implements Locator {
                     attributes.addAttribute(attributeName, "", xmlnsPolicy);
                 }
             } else {
+                // ]NOCPP]
                 if (AttributeName.SRC == attributeName
                         || AttributeName.HREF == attributeName) {
                     warn("Attribute \u201C"
@@ -1092,7 +1095,9 @@ public class Tokenizer implements Locator {
                             + "\u201D without an explicit value seen. The attribute may be dropped by IE7.");
                 }
                 attributes.addAttribute(attributeName, "", xmlnsPolicy);
+// [NOCPP[
             }
+            // ]NOCPP]
         }
     }
 
@@ -1103,12 +1108,12 @@ public class Tokenizer implements Locator {
         }
         if (shouldAddAttributes) {
             String value = longStrBufToString();
-            if (!endTag) {
-                if (html4 && html4ModeCompatibleWithXhtml1Schemata
+            // [NOCPP[
+            if (!endTag && html4 && html4ModeCompatibleWithXhtml1Schemata
                         && attributeName.isCaseFolded()) {
                     value = StringUtil.toAsciiLowerCase(value);
-                }
             }
+            // ]NOCPP]
             attributes.addAttribute(attributeName, value, xmlnsPolicy);
         }
     }

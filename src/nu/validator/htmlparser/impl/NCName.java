@@ -23,6 +23,7 @@
 package nu.validator.htmlparser.impl;
 
 public final class NCName {
+    // [NOCPP[
 
     public static boolean isNCNameStart(char c) {
         return ((c >= '\u0041' && c <= '\u005A')
@@ -461,7 +462,6 @@ public final class NCName {
         }
     }
     
-    // [NOCPP[
     public static String escapeName(String str) {
         StringBuilder sb = new StringBuilder();
         sb.append("_NONXML_");
