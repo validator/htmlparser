@@ -4172,7 +4172,7 @@ public class Tokenizer implements Locator {
             }
         }
         flushChars();
-        if (prev == '\r') {
+        if (prev == '\r' && pos != end) {
             pos--;
             col--;
         }
