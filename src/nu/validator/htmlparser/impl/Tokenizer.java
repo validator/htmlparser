@@ -4174,6 +4174,7 @@ public class Tokenizer implements Locator {
         flushChars();
         if (prev == '\r') {
             pos--;
+            col--;
         }
         // Save locals
         stateSave = state;
@@ -4766,7 +4767,6 @@ public class Tokenizer implements Locator {
                     return '\n';                    
                 case '\n':
                     if (prev == '\r') {
-                        pos--;
                         return '\u0000';
                     }
                     nextCharOnNewLine = true;
