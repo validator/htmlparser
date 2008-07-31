@@ -25,19 +25,15 @@ package nu.validator.saxtree.test;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Properties;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
 
+import nu.validator.htmlparser.sax.XmlSerializer;
 import nu.validator.saxtree.Node;
 import nu.validator.saxtree.TreeBuilder;
 import nu.validator.saxtree.TreeParser;
 
-import org.apache.xml.serializer.Method;
-import org.apache.xml.serializer.OutputPropertiesFactory;
-import org.apache.xml.serializer.Serializer;
-import org.apache.xml.serializer.SerializerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -62,10 +58,7 @@ public class PassThruPrinter {
         
         Node doc = treeBuilder.getRoot();
         
-        Properties props = OutputPropertiesFactory.getDefaultMethodProperties(Method.XML);
-        Serializer ser = SerializerFactory.getSerializer(props);
-        ser.setOutputStream(System.out);
-        ContentHandler xmlSerializer = ser.asContentHandler();
+        ContentHandler xmlSerializer = new XmlSerializer(System.out);
         
         TreeParser treeParser = new TreeParser(xmlSerializer, (LexicalHandler) xmlSerializer);
         treeParser.parse(doc);

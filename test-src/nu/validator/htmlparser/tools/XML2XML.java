@@ -30,18 +30,18 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParserFactory;
 import javax.xml.transform.TransformerException;
 
-import nu.validator.htmlparser.common.XmlViolationPolicy;
-import nu.validator.htmlparser.sax.HtmlParser;
 import nu.validator.htmlparser.sax.XmlSerializer;
 import nu.validator.htmlparser.test.SystemErrErrorHandler;
 
 import org.xml.sax.ContentHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
 
-public class HTML2XML {
+public class XML2XML {
 
     /**
      * @param args
@@ -72,9 +72,11 @@ public class HTML2XML {
         }
 
         ContentHandler serializer = new XmlSerializer(out);
-
-        HtmlParser parser = new HtmlParser(XmlViolationPolicy.ALTER_INFOSET);
-
+        
+        SAXParserFactory factory = SAXParserFactory.newInstance();
+        factory.setNamespaceAware(true);
+        factory.setValidating(false);
+        XMLReader parser = factory.newSAXParser().getXMLReader();
         parser.setErrorHandler(new SystemErrErrorHandler());
         parser.setContentHandler(serializer);
         parser.setProperty("http://xml.org/sax/properties/lexical-handler",

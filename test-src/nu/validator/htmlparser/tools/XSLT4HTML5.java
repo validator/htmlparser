@@ -27,7 +27,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.Properties;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -47,12 +46,9 @@ import nu.validator.htmlparser.common.XmlViolationPolicy;
 import nu.validator.htmlparser.dom.HtmlDocumentBuilder;
 import nu.validator.htmlparser.sax.HtmlParser;
 import nu.validator.htmlparser.sax.HtmlSerializer;
+import nu.validator.htmlparser.sax.XmlSerializer;
 import nu.validator.htmlparser.test.SystemErrErrorHandler;
 
-import org.apache.xml.serializer.Method;
-import org.apache.xml.serializer.OutputPropertiesFactory;
-import org.apache.xml.serializer.Serializer;
-import org.apache.xml.serializer.SerializerFactory;
 import org.w3c.dom.Document;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -195,10 +191,7 @@ public class XSLT4HTML5 {
         if (outputHtml) {
             serializer = new HtmlSerializer(outputStream);
         } else {
-            Properties props = OutputPropertiesFactory.getDefaultMethodProperties(Method.XML);
-            Serializer ser = SerializerFactory.getSerializer(props);
-            ser.setOutputStream(outputStream);
-            serializer = ser.asContentHandler();
+            serializer = new XmlSerializer(outputStream);
         }
         SAXResult result = new SAXResult(new XmlnsDropper(serializer));
         result.setLexicalHandler((LexicalHandler) serializer);
