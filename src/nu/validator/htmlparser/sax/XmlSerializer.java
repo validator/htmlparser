@@ -28,6 +28,10 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.CodingErrorAction;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -125,11 +129,16 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
     }
     
     private static Writer wrap(OutputStream out) {
+        Charset charset = Charset.forName("utf-8");
+        CharsetEncoder encoder = charset.newEncoder();
+        encoder.onMalformedInput(CodingErrorAction.REPLACE);
+        encoder.onUnmappableCharacter(CodingErrorAction.REPLACE);
         try {
-            return new OutputStreamWriter(out, "UTF-8");
+            encoder.replaceWith("\uFFFD".getBytes("utf-8"));
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
+        return new OutputStreamWriter(out, encoder);
     }
 
     // grows from head
