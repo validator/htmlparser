@@ -51,6 +51,7 @@ public class XmlSerializerTester {
         serializer.startElement("http://www.w3.org/1999/02/22-rdf-syntax-ns#", "e", null, attrs);
         serializer.startPrefixMapping("p0", "bar");        
         serializer.startElement("http://www.w3.org/1999/02/22-rdf-syntax-ns#", "f", null, attrs);
+        serializer.characters("a\uD834\uDD21a\uD834a\uDD21a".toCharArray(), 0, 8);
         serializer.endElement("http://www.w3.org/1999/02/22-rdf-syntax-ns#", "f", null);        
         serializer.endElement("http://www.w3.org/1999/02/22-rdf-syntax-ns#", "e", null);        
         
