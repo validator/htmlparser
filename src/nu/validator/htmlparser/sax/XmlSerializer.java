@@ -137,8 +137,6 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
     
     private final Writer writer;
 
-    private int counter = 0;
-
     public XmlSerializer(OutputStream out) {
         this(wrap(out));
     }
@@ -326,7 +324,6 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
             throw new SAXException(e);
         }
         stack.clear();
-        counter = 0;
         push(null, null, null);
     }
 
@@ -444,6 +441,7 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
     }
 
     private void generatePrefix(String uri) throws SAXException {
+        int counter = 0;
         String candidate = WELL_KNOWN_ATTRIBUTE_PREFIXES.get(uri);
         if (candidate == null) {
             candidate = "p" + (counter++);
