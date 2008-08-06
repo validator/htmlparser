@@ -23,14 +23,17 @@
 
 package nu.validator.htmlparser.impl;
 
+import nu.validator.htmlparser.annotation.Local;
+import nu.validator.htmlparser.annotation.NsUri;
+
 final class StackNode<T> {
     final int group;
 
-    final String name;
+    final @Local String name;
 
-    final String popName;
+    final @Local String popName;
 
-    final String ns;
+    final @NsUri String ns;
 
     final T node;
 
@@ -52,9 +55,9 @@ final class StackNode<T> {
      * @param popName
      *            TODO
      */
-    StackNode(int group, final String ns, final String name, final T node,
+    StackNode(int group, final @NsUri String ns, final @Local String name, final T node,
             final boolean scoping, final boolean special,
-            final boolean fosterParenting, String popName) {
+            final boolean fosterParenting, final @Local String popName) {
         this.group = group;
         this.name = name;
         this.ns = ns;
@@ -71,7 +74,7 @@ final class StackNode<T> {
      *            TODO
      * @param node
      */
-    StackNode(final String ns, ElementName elementName, final T node) {
+    StackNode(final @NsUri String ns, ElementName elementName, final T node) {
         this.group = elementName.group;
         this.name = elementName.name;
         this.popName = elementName.name;
@@ -83,7 +86,7 @@ final class StackNode<T> {
         this.tainted = false;
     }
 
-    StackNode(final String ns, ElementName elementName, final T node, String popName) {
+    StackNode(final @NsUri String ns, ElementName elementName, final T node, @Local String popName) {
         this.group = elementName.group;
         this.name = elementName.name;
         this.popName = popName;
@@ -95,7 +98,7 @@ final class StackNode<T> {
         this.tainted = false;
     }
 
-    StackNode(final String ns, ElementName elementName, final T node, String popName, boolean scoping) {
+    StackNode(final @NsUri String ns, ElementName elementName, final T node, @Local String popName, boolean scoping) {
         this.group = elementName.group;
         this.name = elementName.name;
         this.popName = popName;
@@ -111,7 +114,7 @@ final class StackNode<T> {
     /**
      * @see java.lang.Object#toString()
      */
-    @Override public String toString() {
+    @Override public @Local String toString() {
         return name;
     }
     // ]NOCPP]
