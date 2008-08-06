@@ -43,11 +43,13 @@ import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.ext.LexicalHandler;
 
-public class XmlSerializer implements ContentHandler, LexicalHandler {   
-    
+public class XmlSerializer implements ContentHandler, LexicalHandler {
+
     private class PrefixMapping {
         public final String uri;
+
         public final String prefix;
+
         /**
          * @param uri
          * @param prefix
@@ -56,6 +58,7 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
             this.uri = uri;
             this.prefix = prefix;
         }
+
         /**
          * @see java.lang.Object#equals(java.lang.Object)
          */
@@ -67,20 +70,25 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
                 return false;
             }
         }
+
         /**
          * @see java.lang.Object#hashCode()
          */
         @Override public int hashCode() {
-            return  prefix.hashCode();
+            return prefix.hashCode();
         }
-        
+
     }
-    
+
     private class StackNode {
         public final String uri;
+
         public final String prefix;
+
         public final String qName;
+
         public final Set<PrefixMapping> mappings = new HashSet<PrefixMapping>();
+
         /**
          * @param uri
          * @param qName
@@ -89,88 +97,146 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
             this.uri = uri;
             this.qName = qName;
             this.prefix = prefix;
-        } 
+        }
     }
-    
+
     private final static Map<String, String> WELL_KNOWN_ATTRIBUTE_PREFIXES = new HashMap<String, String>();
-    
+
     static {
         WELL_KNOWN_ATTRIBUTE_PREFIXES.put("adobe:ns:meta/", "x");
-        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://inkscape.sourceforge.net/DTD/sodipodi-0.dtd", "sodipodi");
-        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://ns.adobe.com/AdobeIllustrator/10.0/", "i");
-        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://ns.adobe.com/AdobeSVGViewerExtensions/3.0/", "a");
-        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://ns.adobe.com/Extensibility/1.0/", "x");
-        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://ns.adobe.com/illustrator/1.0/", "illustrator");
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put(
+                "http://inkscape.sourceforge.net/DTD/sodipodi-0.dtd",
+                "sodipodi");
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put(
+                "http://ns.adobe.com/AdobeIllustrator/10.0/", "i");
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put(
+                "http://ns.adobe.com/AdobeSVGViewerExtensions/3.0/", "a");
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put(
+                "http://ns.adobe.com/Extensibility/1.0/", "x");
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put(
+                "http://ns.adobe.com/illustrator/1.0/", "illustrator");
         WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://ns.adobe.com/pdf/1.3/", "pdf");
-        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://ns.adobe.com/photoshop/1.0/", "photoshop");
-        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://ns.adobe.com/tiff/1.0/", "tiff");
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://ns.adobe.com/photoshop/1.0/",
+                "photoshop");
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://ns.adobe.com/tiff/1.0/",
+                "tiff");
         WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://ns.adobe.com/xap/1.0/", "xap");
-        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://ns.adobe.com/xap/1.0/g/", "xapG");
-        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://ns.adobe.com/xap/1.0/mm/", "xapMM");
-        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://ns.adobe.com/xap/1.0/rights/", "xapRights");
-        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://ns.adobe.com/xap/1.0/sType/Dimensions#", "stDim");
-        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://ns.adobe.com/xap/1.0/sType/ResourceRef#", "stRef");
-        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://ns.adobe.com/xap/1.0/t/pg/", "xapTPg");
-        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://purl.org/dc/elements/1.1/", "dc");
-        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://schemas.microsoft.com/visio/2003/SVGExtensions/", "v");
-        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd", "sodipodi");
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://ns.adobe.com/xap/1.0/g/",
+                "xapG");
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://ns.adobe.com/xap/1.0/mm/",
+                "xapMM");
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put(
+                "http://ns.adobe.com/xap/1.0/rights/", "xapRights");
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put(
+                "http://ns.adobe.com/xap/1.0/sType/Dimensions#", "stDim");
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put(
+                "http://ns.adobe.com/xap/1.0/sType/ResourceRef#", "stRef");
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://ns.adobe.com/xap/1.0/t/pg/",
+                "xapTPg");
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://purl.org/dc/elements/1.1/",
+                "dc");
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put(
+                "http://schemas.microsoft.com/visio/2003/SVGExtensions/", "v");
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put(
+                "http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd",
+                "sodipodi");
         WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://w3.org/1999/xlink", "xlink");
-        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://www.carto.net/attrib/", "attrib");
-        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://www.iki.fi/pav/software/textext/", "textext");
-        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://www.inkscape.org/namespaces/inkscape", "inkscape");
-        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://www.justsystem.co.jp/hanako13/svg", "jsh");
-        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://www.w3.org/1999/02/22-rdf-syntax-ns#", "rdf");
-        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://www.w3.org/1999/xlink", "xlink");
-        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://www.w3.org/2001/XMLSchema-instance", "xsi");
-        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://www.w3org/1999/xlink", "xlink");
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://www.carto.net/attrib/",
+                "attrib");
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put(
+                "http://www.iki.fi/pav/software/textext/", "textext");
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put(
+                "http://www.inkscape.org/namespaces/inkscape", "inkscape");
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put(
+                "http://www.justsystem.co.jp/hanako13/svg", "jsh");
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put(
+                "http://www.w3.org/1999/02/22-rdf-syntax-ns#", "rdf");
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://www.w3.org/1999/xlink",
+                "xlink");
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put(
+                "http://www.w3.org/2001/XMLSchema-instance", "xsi");
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://www.w3org/1999/xlink",
+                "xlink");
     }
 
     private final static Map<String, String> WELL_KNOWN_ELEMENT_PREFIXES = new HashMap<String, String>();
-    
+
     static {
-        WELL_KNOWN_ELEMENT_PREFIXES.put("http://www.w3.org/1999/XSL/Transform", "xsl");
-        WELL_KNOWN_ELEMENT_PREFIXES.put("http://www.w3.org/1999/02/22-rdf-syntax-ns#", "rdf");
-        WELL_KNOWN_ELEMENT_PREFIXES.put("http://purl.org/dc/elements/1.1/", "dc");
-        WELL_KNOWN_ELEMENT_PREFIXES.put("http://www.w3.org/2001/XMLSchema-instance", "xsi");
-        WELL_KNOWN_ELEMENT_PREFIXES.put("http://www.ascc.net/xml/schematron", "sch");
-        WELL_KNOWN_ELEMENT_PREFIXES.put("http://purl.oclc.org/dsdl/schematron", "sch");
-        WELL_KNOWN_ELEMENT_PREFIXES.put("http://www.inkscape.org/namespaces/inkscape", "inkscape");
-        WELL_KNOWN_ELEMENT_PREFIXES.put("http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd", "sodipodi");
-        WELL_KNOWN_ELEMENT_PREFIXES.put("http://ns.adobe.com/AdobeSVGViewerExtensions/3.0/", "a");
-        WELL_KNOWN_ELEMENT_PREFIXES.put("http://ns.adobe.com/AdobeIllustrator/10.0/", "i");
+        WELL_KNOWN_ELEMENT_PREFIXES.put("http://www.w3.org/1999/XSL/Transform",
+                "xsl");
+        WELL_KNOWN_ELEMENT_PREFIXES.put(
+                "http://www.w3.org/1999/02/22-rdf-syntax-ns#", "rdf");
+        WELL_KNOWN_ELEMENT_PREFIXES.put("http://purl.org/dc/elements/1.1/",
+                "dc");
+        WELL_KNOWN_ELEMENT_PREFIXES.put(
+                "http://www.w3.org/2001/XMLSchema-instance", "xsi");
+        WELL_KNOWN_ELEMENT_PREFIXES.put("http://www.ascc.net/xml/schematron",
+                "sch");
+        WELL_KNOWN_ELEMENT_PREFIXES.put("http://purl.oclc.org/dsdl/schematron",
+                "sch");
+        WELL_KNOWN_ELEMENT_PREFIXES.put(
+                "http://www.inkscape.org/namespaces/inkscape", "inkscape");
+        WELL_KNOWN_ELEMENT_PREFIXES.put(
+                "http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd",
+                "sodipodi");
+        WELL_KNOWN_ELEMENT_PREFIXES.put(
+                "http://ns.adobe.com/AdobeSVGViewerExtensions/3.0/", "a");
+        WELL_KNOWN_ELEMENT_PREFIXES.put(
+                "http://ns.adobe.com/AdobeIllustrator/10.0/", "i");
         WELL_KNOWN_ELEMENT_PREFIXES.put("adobe:ns:meta/", "x");
         WELL_KNOWN_ELEMENT_PREFIXES.put("http://ns.adobe.com/xap/1.0/", "xap");
         WELL_KNOWN_ELEMENT_PREFIXES.put("http://ns.adobe.com/pdf/1.3/", "pdf");
         WELL_KNOWN_ELEMENT_PREFIXES.put("http://ns.adobe.com/tiff/1.0/", "tiff");
         WELL_KNOWN_ELEMENT_PREFIXES.put("http://creativecommons.org/ns#", "cc");
-        WELL_KNOWN_ELEMENT_PREFIXES.put("http://inkscape.sourceforge.net/DTD/sodipodi-0.dtd", "sodipodi");
-        WELL_KNOWN_ELEMENT_PREFIXES.put("http://iptc.org/std/Iptc4xmpCore/1.0/xmlns/", "Iptc4xmpCore");
+        WELL_KNOWN_ELEMENT_PREFIXES.put(
+                "http://inkscape.sourceforge.net/DTD/sodipodi-0.dtd",
+                "sodipodi");
+        WELL_KNOWN_ELEMENT_PREFIXES.put(
+                "http://iptc.org/std/Iptc4xmpCore/1.0/xmlns/", "Iptc4xmpCore");
         WELL_KNOWN_ELEMENT_PREFIXES.put("http://ns.adobe.com/exif/1.0/", "exif");
-        WELL_KNOWN_ELEMENT_PREFIXES.put("http://ns.adobe.com/Extensibility/1.0/", "x");
-        WELL_KNOWN_ELEMENT_PREFIXES.put("http://ns.adobe.com/illustrator/1.0/", "illustrator");
+        WELL_KNOWN_ELEMENT_PREFIXES.put(
+                "http://ns.adobe.com/Extensibility/1.0/", "x");
+        WELL_KNOWN_ELEMENT_PREFIXES.put("http://ns.adobe.com/illustrator/1.0/",
+                "illustrator");
         WELL_KNOWN_ELEMENT_PREFIXES.put("http://ns.adobe.com/pdfx/1.3/", "pdfx");
-        WELL_KNOWN_ELEMENT_PREFIXES.put("http://ns.adobe.com/photoshop/1.0/", "photoshop");
-        WELL_KNOWN_ELEMENT_PREFIXES.put("http://ns.adobe.com/Variables/1.0/", "v");
-        WELL_KNOWN_ELEMENT_PREFIXES.put("http://ns.adobe.com/xap/1.0/g/", "xapG");
-        WELL_KNOWN_ELEMENT_PREFIXES.put("http://ns.adobe.com/xap/1.0/g/img/", "xapGImg");
-        WELL_KNOWN_ELEMENT_PREFIXES.put("http://ns.adobe.com/xap/1.0/mm/", "xapMM");
-        WELL_KNOWN_ELEMENT_PREFIXES.put("http://ns.adobe.com/xap/1.0/rights/", "xapRights");
-        WELL_KNOWN_ELEMENT_PREFIXES.put("http://ns.adobe.com/xap/1.0/sType/Dimensions#", "stDim");
-        WELL_KNOWN_ELEMENT_PREFIXES.put("http://ns.adobe.com/xap/1.0/sType/Font#", "stFnt");
-        WELL_KNOWN_ELEMENT_PREFIXES.put("http://ns.adobe.com/xap/1.0/sType/ResourceRef#", "stRef");
-        WELL_KNOWN_ELEMENT_PREFIXES.put("http://ns.adobe.com/xap/1.0/t/pg/", "xapTPg");
-        WELL_KNOWN_ELEMENT_PREFIXES.put("http://product.corel.com/CGS/11/cddns/", "odm");
-        WELL_KNOWN_ELEMENT_PREFIXES.put("http://schemas.microsoft.com/visio/2003/SVGExtensions/", "v");
+        WELL_KNOWN_ELEMENT_PREFIXES.put("http://ns.adobe.com/photoshop/1.0/",
+                "photoshop");
+        WELL_KNOWN_ELEMENT_PREFIXES.put("http://ns.adobe.com/Variables/1.0/",
+                "v");
+        WELL_KNOWN_ELEMENT_PREFIXES.put("http://ns.adobe.com/xap/1.0/g/",
+                "xapG");
+        WELL_KNOWN_ELEMENT_PREFIXES.put("http://ns.adobe.com/xap/1.0/g/img/",
+                "xapGImg");
+        WELL_KNOWN_ELEMENT_PREFIXES.put("http://ns.adobe.com/xap/1.0/mm/",
+                "xapMM");
+        WELL_KNOWN_ELEMENT_PREFIXES.put("http://ns.adobe.com/xap/1.0/rights/",
+                "xapRights");
+        WELL_KNOWN_ELEMENT_PREFIXES.put(
+                "http://ns.adobe.com/xap/1.0/sType/Dimensions#", "stDim");
+        WELL_KNOWN_ELEMENT_PREFIXES.put(
+                "http://ns.adobe.com/xap/1.0/sType/Font#", "stFnt");
+        WELL_KNOWN_ELEMENT_PREFIXES.put(
+                "http://ns.adobe.com/xap/1.0/sType/ResourceRef#", "stRef");
+        WELL_KNOWN_ELEMENT_PREFIXES.put("http://ns.adobe.com/xap/1.0/t/pg/",
+                "xapTPg");
+        WELL_KNOWN_ELEMENT_PREFIXES.put(
+                "http://product.corel.com/CGS/11/cddns/", "odm");
+        WELL_KNOWN_ELEMENT_PREFIXES.put(
+                "http://schemas.microsoft.com/visio/2003/SVGExtensions/", "v");
         WELL_KNOWN_ELEMENT_PREFIXES.put("http://web.resource.org/cc/", "cc");
-        WELL_KNOWN_ELEMENT_PREFIXES.put("http://www.freesoftware.fsf.org/bkchem/cdml", "cdml");
+        WELL_KNOWN_ELEMENT_PREFIXES.put(
+                "http://www.freesoftware.fsf.org/bkchem/cdml", "cdml");
         WELL_KNOWN_ELEMENT_PREFIXES.put("http://www.opengis.net/gml", "gml");
-        WELL_KNOWN_ELEMENT_PREFIXES.put("http://www.svgmaker.com/svgns", "svgmaker");
-        WELL_KNOWN_ELEMENT_PREFIXES.put("http://www.w3.org/2000/01/rdf-schema#", "rdfs");
+        WELL_KNOWN_ELEMENT_PREFIXES.put("http://www.svgmaker.com/svgns",
+                "svgmaker");
+        WELL_KNOWN_ELEMENT_PREFIXES.put(
+                "http://www.w3.org/2000/01/rdf-schema#", "rdfs");
         WELL_KNOWN_ELEMENT_PREFIXES.put("http://xmlns.com/foaf/0.1/", "foaf");
-        WELL_KNOWN_ELEMENT_PREFIXES.put("http://www.xml-cml.org/schema/stmml", "stm");
+        WELL_KNOWN_ELEMENT_PREFIXES.put("http://www.xml-cml.org/schema/stmml",
+                "stm");
         WELL_KNOWN_ELEMENT_PREFIXES.put("http://www.iupac.org/foo/ichi", "ichi");
     }
-    
+
     private static Writer wrap(OutputStream out) {
         Charset charset = Charset.forName("utf-8");
         CharsetEncoder encoder = charset.newEncoder();
@@ -186,7 +252,7 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
 
     // grows from head
     private final LinkedList<StackNode> stack = new LinkedList<StackNode>();
-    
+
     private final Writer writer;
 
     public XmlSerializer(OutputStream out) {
@@ -196,7 +262,7 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
     public XmlSerializer(Writer out) {
         this.writer = out;
     }
-    
+
     private void push(String uri, String local, String prefix) {
         stack.addFirst(new StackNode(uri, local, prefix));
     }
@@ -211,10 +277,11 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
         if ("http://www.w3.org/XML/1998/namespace".equals(ns)) {
             return "xml";
         }
-        Set<String> hidden = new HashSet<String>();        
+        Set<String> hidden = new HashSet<String>();
         for (StackNode node : stack) {
             for (PrefixMapping mapping : node.mappings) {
-                if (mapping.prefix.length() != 0 && mapping.uri.equals(ns) && !hidden.contains(mapping.prefix)) {
+                if (mapping.prefix.length() != 0 && mapping.uri.equals(ns)
+                        && !hidden.contains(mapping.prefix)) {
                     return mapping.prefix;
                 }
                 hidden.add(mapping.prefix);
@@ -222,7 +289,7 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
         }
         return null;
     }
-    
+
     private String lookupUri(String prefix) {
         for (StackNode node : stack) {
             for (PrefixMapping mapping : node.mappings) {
@@ -233,7 +300,93 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
         }
         return null;
     }
-    
+
+    private boolean xmlNsQname(String name) {
+        if (name == null) {
+            return false;
+        } else if ("xmlns".equals(name)) {
+            return true;
+        } else if (name.startsWith("xmlns:")) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private void writeAttributeValue(String val) throws IOException {
+        boolean prevWasSpace = true;
+        int last = val.length() - 1;
+        for (int i = 0; i <= last; i++) {
+            char c = val.charAt(i);
+            switch (c) {
+                case '<':
+                    writer.write("&lt;");
+                    prevWasSpace = false;
+                    break;
+                case '>':
+                    writer.write("&gt;");
+                    prevWasSpace = false;
+                    break;
+                case '&':
+                    writer.write("&amp;");
+                    prevWasSpace = false;
+                    break;
+                case '"':
+                    writer.write("&quot;");
+                    prevWasSpace = false;
+                    break;
+                case '\r':
+                    writer.write("&#xD;");
+                    prevWasSpace = false;
+                    break;
+                case '\t':
+                    writer.write("&#x9;");
+                    prevWasSpace = false;
+                    break;
+                case '\n':
+                    writer.write("&#xA;");
+                    prevWasSpace = false;
+                    break;
+                case ' ':
+                    if (prevWasSpace || i == last) {
+                        writer.write("&#x20;");
+                        prevWasSpace = false;
+                    } else {
+                        writer.write(' ');
+                        prevWasSpace = true;
+                    }
+                case '\uFFFE':
+                    writer.write('\uFFFD');
+                    prevWasSpace = false;
+                    break;
+                case '\uFFFF':
+                    writer.write('\uFFFD');
+                    prevWasSpace = false;
+                    break;
+                default:
+                    if (c < ' ') {
+                        writer.write('\uFFFD');
+                    } else {
+                        writer.write(c);
+                    }
+                    prevWasSpace = false;
+                    break;
+            }
+        }
+    }
+
+    private void generatePrefix(String uri) throws SAXException {
+        int counter = 0;
+        String candidate = WELL_KNOWN_ATTRIBUTE_PREFIXES.get(uri);
+        if (candidate == null) {
+            candidate = "p" + (counter++);
+        }
+        while (lookupUri(candidate) != null) {
+            candidate = "p" + (counter++);
+        }
+        startPrefixMappingPrivate(candidate, uri);
+    }
+
     public void characters(char[] ch, int start, int length)
             throws SAXException {
         try {
@@ -254,19 +407,19 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
                         break;
                     case '\t':
                         writer.write('\t');
-                        break;                        
+                        break;
                     case '\n':
                         writer.write('\n');
-                        break;              
+                        break;
                     case '\uFFFE':
                         writer.write('\uFFFD');
-                        break;              
+                        break;
                     case '\uFFFF':
                         writer.write('\uFFFD');
-                        break;              
+                        break;
                     default:
                         if (c < ' ') {
-                            writer.write('\uFFFD');                            
+                            writer.write('\uFFFD');
                         } else {
                             writer.write(c);
                         }
@@ -290,14 +443,14 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
 
     public void endElement(String uri, String localName, String qName)
             throws SAXException {
-            try {
-                writer.write('<');
-                writer.write('/');
-                writer.write(pop());
-                writer.write('>');
-            } catch (IOException e) {
-                throw new SAXException(e);
-            }
+        try {
+            writer.write('<');
+            writer.write('/');
+            writer.write(pop());
+            writer.write('>');
+        } catch (IOException e) {
+            throw new SAXException(e);
+        }
     }
 
     public void ignorableWhitespace(char[] ch, int start, int length)
@@ -321,7 +474,7 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
                         break;
                     case '>':
                         if (prevWasQuestionmark) {
-                            writer.write(" >");                            
+                            writer.write(" >");
                         } else {
                             writer.write('>');
                         }
@@ -334,31 +487,31 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
                     case '\t':
                         writer.write('\t');
                         prevWasQuestionmark = false;
-                        break;                        
+                        break;
                     case '\n':
                         writer.write('\n');
                         prevWasQuestionmark = false;
-                        break;              
+                        break;
                     case '\uFFFE':
                         writer.write('\uFFFD');
                         prevWasQuestionmark = false;
-                        break;              
+                        break;
                     case '\uFFFF':
                         writer.write('\uFFFD');
                         prevWasQuestionmark = false;
-                        break;              
+                        break;
                     default:
                         if (c < ' ') {
-                            writer.write('\uFFFD');                            
+                            writer.write('\uFFFD');
                         } else {
                             writer.write(c);
                         }
-                    prevWasQuestionmark = false;
+                        prevWasQuestionmark = false;
                         break;
                 }
             }
             if (prevWasQuestionmark) {
-                writer.write(' ');                
+                writer.write(' ');
             }
             writer.write("?>");
         } catch (IOException e) {
@@ -404,38 +557,46 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
                 qName = prefix + ':' + localName;
             }
         }
-        
+
         int attLen = atts.getLength();
         for (int i = 0; i < attLen; i++) {
             String attUri = atts.getURI(i);
-            if (attUri.length() == 0 || "http://www.w3.org/XML/1998/namespace".equals(attUri) || "http://www.w3.org/2000/xmlns/".equals(attUri) || atts.getLocalName(i).length() == 0 || xmlNsQname(atts.getQName(i))) {
+            if (attUri.length() == 0
+                    || "http://www.w3.org/XML/1998/namespace".equals(attUri)
+                    || "http://www.w3.org/2000/xmlns/".equals(attUri)
+                    || atts.getLocalName(i).length() == 0
+                    || xmlNsQname(atts.getQName(i))) {
                 continue;
             }
             if (lookupPrefixAttribute(attUri) == null) {
                 generatePrefix(attUri);
             }
         }
-        
+
         try {
             writer.write('<');
             writer.write(qName);
             for (PrefixMapping mapping : stack.getFirst().mappings) {
                 writer.write(' ');
                 if (mapping.prefix.length() == 0) {
-                    writer.write("xmlns");                    
+                    writer.write("xmlns");
                 } else {
                     writer.write("xmlns:");
-                    writer.write(mapping.prefix);                    
+                    writer.write(mapping.prefix);
                 }
                 writer.write('=');
                 writer.write('"');
                 writeAttributeValue(mapping.uri);
                 writer.write('"');
             }
-            
+
             for (int i = 0; i < attLen; i++) {
                 String attUri = atts.getURI(i);
-                if (attUri.length() == 0 || "http://www.w3.org/XML/1998/namespace".equals(attUri) || "http://www.w3.org/2000/xmlns/".equals(attUri) || atts.getLocalName(i).length() == 0 || xmlNsQname(atts.getQName(i))) {
+                if (attUri.length() == 0
+                        || "http://www.w3.org/XML/1998/namespace".equals(attUri)
+                        || "http://www.w3.org/2000/xmlns/".equals(attUri)
+                        || atts.getLocalName(i).length() == 0
+                        || xmlNsQname(atts.getQName(i))) {
                     continue;
                 }
                 writer.write(' ');
@@ -456,92 +617,6 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
         push(uri, qName, prefix);
     }
 
-    private boolean xmlNsQname(String name) {
-        if (name == null) {
-            return false;
-        } else if ("xmlns".equals(name)) {
-            return true;
-        } else if (name.startsWith("xmlns:")) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    private void writeAttributeValue(String val) throws IOException {
-        boolean prevWasSpace = true;
-        int last = val.length() - 1;
-        for (int i = 0; i <= last; i++) {
-            char c = val.charAt(i);
-            switch (c) {
-                case '<':
-                    writer.write("&lt;");
-                    prevWasSpace = false;
-                    break;
-                case '>':
-                    writer.write("&gt;");
-                    prevWasSpace = false;
-                    break;
-                case '&':
-                    writer.write("&amp;");
-                    prevWasSpace = false;
-                    break;
-                case '"':
-                    writer.write("&quot;");
-                    prevWasSpace = false;
-                    break;
-                case '\r':
-                    writer.write("&#xD;");
-                    prevWasSpace = false;
-                    break;
-                case '\t':
-                    writer.write("&#x9;");
-                    prevWasSpace = false;
-                    break;                        
-                case '\n':
-                    writer.write("&#xA;");
-                    prevWasSpace = false;
-                    break;              
-                case ' ':
-                    if (prevWasSpace || i == last) {
-                        writer.write("&#x20;");                        
-                        prevWasSpace = false;
-                    } else {
-                        writer.write(' ');
-                        prevWasSpace = true;                        
-                    }
-                case '\uFFFE':
-                    writer.write('\uFFFD');
-                    prevWasSpace = false;
-                    break;              
-                case '\uFFFF':
-                    writer.write('\uFFFD');
-                    prevWasSpace = false;
-                    break;              
-                default:
-                    if (c < ' ') {
-                        writer.write('\uFFFD');                            
-                    } else {
-                        writer.write(c);
-                    }
-                    prevWasSpace = false;
-                    break;
-            }
-        }
-    }
-
-    private void generatePrefix(String uri) throws SAXException {
-        int counter = 0;
-        String candidate = WELL_KNOWN_ATTRIBUTE_PREFIXES.get(uri);
-        if (candidate == null) {
-            candidate = "p" + (counter++);
-        }
-        while (lookupUri(candidate) != null) {
-            candidate = "p" + (counter++);            
-        }
-        startPrefixMappingPrivate(candidate, uri);
-    }
-
     public void comment(char[] ch, int start, int length) throws SAXException {
         try {
             boolean prevWasHyphen = false;
@@ -551,7 +626,7 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
                 switch (c) {
                     case '-':
                         if (prevWasHyphen) {
-                            writer.write(" -");                            
+                            writer.write(" -");
                         } else {
                             writer.write('-');
                             prevWasHyphen = true;
@@ -564,31 +639,31 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
                     case '\t':
                         writer.write('\t');
                         prevWasHyphen = false;
-                        break;                        
+                        break;
                     case '\n':
                         writer.write('\n');
                         prevWasHyphen = false;
-                        break;              
+                        break;
                     case '\uFFFE':
                         writer.write('\uFFFD');
                         prevWasHyphen = false;
-                        break;              
+                        break;
                     case '\uFFFF':
                         writer.write('\uFFFD');
                         prevWasHyphen = false;
-                        break;              
+                        break;
                     default:
                         if (c < ' ') {
-                            writer.write('\uFFFD');                            
+                            writer.write('\uFFFD');
                         } else {
                             writer.write(c);
                         }
-                    prevWasHyphen = false;
+                        prevWasHyphen = false;
                         break;
                 }
             }
             if (prevWasHyphen) {
-                writer.write(' ');                
+                writer.write(' ');
             }
             writer.write("-->");
         } catch (IOException e) {
@@ -627,16 +702,17 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
             if ("xml".equals(prefix)) {
                 return;
             } else {
-                throw new SAXException("Attempt to a reserved NS uri.");            
+                throw new SAXException("Attempt to a reserved NS uri.");
             }
         }
         if ("http://www.w3.org/2000/xmlns/".equals(uri)) {
-            throw new SAXException("Attempt to a reserved NS uri.");            
-                }
+            throw new SAXException("Attempt to a reserved NS uri.");
+        }
         Set<PrefixMapping> theSet = stack.getFirst().mappings;
         for (PrefixMapping prefixMapping : theSet) {
             if (prefixMapping.prefix.equals(prefix)) {
-                throw new SAXException("Attempt to map one prefix to two URIs on one element.");
+                throw new SAXException(
+                        "Attempt to map one prefix to two URIs on one element.");
             }
         }
         theSet.add(new PrefixMapping(uri, prefix));
@@ -649,7 +725,7 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
         }
         stack.getFirst().mappings.add(new PrefixMapping(uri, prefix));
     }
-    
+
     public void endPrefixMapping(String prefix) throws SAXException {
     }
 
