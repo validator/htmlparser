@@ -484,8 +484,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                              * given in the lists above in a case-insensitive
                              * manner.
                              */
-                            String publicIdentifierLC = StringUtil.toAsciiLowerCase(publicIdentifier);
-                            String systemIdentifierLC = StringUtil.toAsciiLowerCase(systemIdentifier);
+                            String publicIdentifierLC = Portability.toAsciiLowerCase(publicIdentifier);
+                            String systemIdentifierLC = Portability.toAsciiLowerCase(systemIdentifier);
                             switch (doctypeExpectation) {
                                 case HTML:
                                     if (isQuirky(name, publicIdentifierLC,
@@ -1486,7 +1486,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         break starttagloop;
                                     case INPUT:
                                         if (isTainted()
-                                                || !StringUtil.equalsIgnoreAsciiCase(
+                                                || !Portability.equalsIgnoreAsciiCase(
                                                         "hidden",
                                                         attributes.getValue(AttributeName.TYPE))) {
                                             break intableloop;
@@ -2627,7 +2627,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (content != null) {
             internalCharset = TreeBuilder.extractCharsetFromContent(content);
             if (internalCharset != null) {
-                if (!StringUtil.equalsIgnoreAsciiCase("content-type",
+                if (!Portability.equalsIgnoreAsciiCase("content-type",
                         attributes.getValue(AttributeName.HTTP_EQUIV))) {
                     warn("Attribute \u201Ccontent\u201D would be sniffed as an internal character encoding declaration but there was no matching \u201Chttp-equiv='Content-Type'\u201D attribute.");
                 }
