@@ -192,19 +192,19 @@ public class Tokenizer implements Locator {
      * UTF-16 code unit array containing less than and greater than for emitting
      * those characters on certain parse errors.
      */
-    private static final char[] LT_GT = { '<', '>' };
+    private static final @NoLength char[] LT_GT = { '<', '>' };
 
     /**
      * UTF-16 code unit array containing less than and solidus for emitting
      * those characters on certain parse errors.
      */
-    private static final char[] LT_SOLIDUS = { '<', '/' };
+    private static final @NoLength char[] LT_SOLIDUS = { '<', '/' };
 
     /**
      * UTF-16 code unit array containing ]] for emitting those characters on
      * state transitions.
      */
-    private static final char[] RSQB_RSQB = { ']', ']' };
+    private static final @NoLength char[] RSQB_RSQB = { ']', ']' };
 
     /**
      * Array version of U+FFFD.
@@ -227,30 +227,24 @@ public class Tokenizer implements Locator {
     private static final int BUFFER_GROW_BY = 1024;
 
     /**
-     * Lexically sorted void element names
-     */
-    private static final String[] VOID_ELEMENTS = { "area", "base", "br",
-            "col", "embed", "hr", "img", "input", "link", "meta", "param" };
-
-    /**
      * "CDATA[" as <code>char[]</code>
      */
-    private static final char[] CDATA_LSQB = "CDATA[".toCharArray();
+    private static final @NoLength char[] CDATA_LSQB = "CDATA[".toCharArray();
 
     /**
      * "octype" as <code>char[]</code>
      */
-    private static final char[] OCTYPE = "octype".toCharArray();
+    private static final @NoLength char[] OCTYPE = "octype".toCharArray();
 
     /**
      * "ublic" as <code>char[]</code>
      */
-    private static final char[] UBLIC = "ublic".toCharArray();
+    private static final @NoLength char[] UBLIC = "ublic".toCharArray();
 
     /**
      * "ystem" as <code>char[]</code>
      */
-    private static final char[] YSTEM = "ystem".toCharArray();
+    private static final @NoLength char[] YSTEM = "ystem".toCharArray();
 
     /**
      * The token handler.
@@ -432,7 +426,7 @@ public class Tokenizer implements Locator {
     /**
      * The name of the current doctype token.
      */
-    private String doctypeName;
+    private @Local String doctypeName;
 
     /**
      * The public id of the current doctype token.
@@ -444,6 +438,8 @@ public class Tokenizer implements Locator {
      */
     private String systemIdentifier;
 
+    // [NOCPP[
+    
     /**
      * The policy for vertical tab and form feed.
      */
@@ -465,8 +461,10 @@ public class Tokenizer implements Locator {
 
     private boolean html4ModeCompatibleWithXhtml1Schemata;
 
+    // ]NOCPP]
+    
     private int mappingLangToXmlLang;
-
+    
     private boolean shouldSuspend;
     
     protected Confidence confidence;
@@ -515,6 +513,8 @@ public class Tokenizer implements Locator {
 
     }
 
+    // [NOCPP[
+    
     /**
      * Returns the commentPolicy.
      * 
@@ -601,6 +601,8 @@ public class Tokenizer implements Locator {
         this.html4ModeCompatibleWithXhtml1Schemata = html4ModeCompatibleWithXhtml1Schemata;
     }
 
+    // ]NOCPP]
+    
     // For the token handler to call
     /**
      * Sets the content model flag and the associated element name.
@@ -677,10 +679,14 @@ public class Tokenizer implements Locator {
         metaBoundaryPassed = true;
     }
 
+    // [NOCPP[
+    
     void turnOnAdditionalHtml4Errors() {
         html4 = true;
     }
 
+    // ]NOCPP]
+    
     HtmlAttributes newAttributes() {
         return new HtmlAttributes(mappingLangToXmlLang);
     }
@@ -977,10 +983,6 @@ public class Tokenizer implements Locator {
         errorHandler.warning(spe);
     }
 
-    private boolean currentIsVoid() {
-        return Arrays.binarySearch(Tokenizer.VOID_ELEMENTS, tagName) > -1;
-    }
-
     /**
      * 
      */
@@ -1077,10 +1079,12 @@ public class Tokenizer implements Locator {
     }
 
     private void addAttributeWithoutValue() throws SAXException {
+        // [NOCPP[
         if (metaBoundaryPassed && "charset".equals(attributeName)
                 && "meta".equals(tagName)) {
             err("A \u201Ccharset\u201D attribute on a \u201Cmeta\u201D element found after the first 512 bytes.");
         }
+        // ]NOCPP]
         if (shouldAddAttributes) {
             // [NOCPP[
             if (html4) {
@@ -1096,13 +1100,13 @@ public class Tokenizer implements Locator {
                     attributes.addAttribute(attributeName, "", xmlnsPolicy);
                 }
             } else {
-                // ]NOCPP]
                 if (AttributeName.SRC == attributeName
                         || AttributeName.HREF == attributeName) {
                     warn("Attribute \u201C"
                             + attributeName.getLocal(AttributeName.HTML)
                             + "\u201D without an explicit value seen. The attribute may be dropped by IE7.");
                 }
+                // ]NOCPP]
                 attributes.addAttribute(attributeName, "", xmlnsPolicy);
 // [NOCPP[
             }
@@ -2674,7 +2678,7 @@ public class Tokenizer implements Locator {
                         if (c == '\u0000') {
                             break stateloop;
                         }
-                        if (index < Tokenizer.OCTYPE.length) {
+                        if (index < 6) { // OCTYPE.length
                             char folded = c;
                             if (c >= 'A' && c <= 'Z') {
                                 folded += 0x20;
@@ -3111,7 +3115,7 @@ public class Tokenizer implements Locator {
                          * characters and switch to the before DOCTYPE public
                          * identifier state.
                          */
-                        if (index < Tokenizer.UBLIC.length) {
+                        if (index < 5) { // UBLIC.length
                             char folded = c;
                             if (c >= 'A' && c <= 'Z') {
                                 folded += 0x20;
@@ -3142,7 +3146,7 @@ public class Tokenizer implements Locator {
                      * consume those characters and switch to the before DOCTYPE
                      * system identifier state.
                      */
-                    if (index < Tokenizer.YSTEM.length) {
+                    if (index < 5) { // YSTEM.length
                         char folded = c;
                         if (c >= 'A' && c <= 'Z') {
                             folded += 0x20;
@@ -3680,7 +3684,7 @@ public class Tokenizer implements Locator {
                         if (c == '\u0000') {
                             break stateloop;
                         }
-                        if (index < Tokenizer.CDATA_LSQB.length) {
+                        if (index < 6) { // CDATA_LSQB.length
                             if (c == Tokenizer.CDATA_LSQB[index]) {
                                 appendToComment(c);
                             } else {
@@ -4712,7 +4716,6 @@ public class Tokenizer implements Locator {
         if (pos == end) {
             return '\u0000';
         }
-        // [NOCPP[
         
         linePrev = line;
         colPrev = col;
@@ -4723,8 +4726,6 @@ public class Tokenizer implements Locator {
         } else {
             col++;
         }
-
-        // ]NOCPP]
         
         c = buf[pos];
         // [NOCPP[
