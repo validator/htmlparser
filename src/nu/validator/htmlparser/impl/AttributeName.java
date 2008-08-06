@@ -286,6 +286,10 @@ public final class AttributeName
         return local[mode];
     }
 
+    public @Prefix String getPrefix(int mode) {
+        return prefix[mode];
+    }
+    
     boolean equalsAnother(AttributeName another) {
         return this.getLocal(AttributeName.HTML) == another.getLocal(AttributeName.HTML);
     }
