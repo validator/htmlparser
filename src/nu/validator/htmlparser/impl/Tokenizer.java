@@ -613,7 +613,7 @@ public class Tokenizer implements Locator {
     public void setContentModelFlag(ContentModelFlag contentModelFlag,
             @Local String contentModelElement) {
         this.contentModelFlag = contentModelFlag;
-        char[] asArray = StringUtil.localToCharArray(contentModelElement);
+        char[] asArray = Portability.localToCharArray(contentModelElement);
         this.contentModelElement = ElementName.elementNameByBuffer(asArray, 0, asArray.length);
     }
 
@@ -713,7 +713,7 @@ public class Tokenizer implements Locator {
      * @return the smaller buffer as a string
      */
     private String strBufToString() {
-        return StringUtil.stringFromBuffer(strBuf, strBufLen);
+        return Portability.stringFromBuffer(strBuf, strBufLen);
     }
     
     /**
@@ -1120,7 +1120,7 @@ public class Tokenizer implements Locator {
             // [NOCPP[
             if (!endTag && html4 && html4ModeCompatibleWithXhtml1Schemata
                         && attributeName.isCaseFolded()) {
-                    value = StringUtil.toAsciiLowerCase(value);
+                    value = Portability.toAsciiLowerCase(value);
             }
             // ]NOCPP]
             attributes.addAttribute(attributeName, value, xmlnsPolicy);
