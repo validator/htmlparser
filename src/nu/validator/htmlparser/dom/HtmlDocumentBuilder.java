@@ -215,7 +215,7 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
      */
     public DocumentFragment parseFragment(InputSource is, String context)
             throws IOException, SAXException {
-        domTreeBuilder.setFragmentContext(context);
+        domTreeBuilder.setFragmentContext(context.intern());
         tokenize(is);
         return domTreeBuilder.getDocumentFragment();
     }

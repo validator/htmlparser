@@ -26,33 +26,6 @@ import nu.validator.htmlparser.annotation.Local;
 
 public final class Portability {
 
-    public static boolean equalsIgnoreAsciiCase(String one,
-            String other) {
-        if (other == null && one == null) {
-            return true;
-        }
-        if (other == null || one == null) {
-            return false;
-        }
-        if (one.length() != other.length()) {
-            return false;
-        }
-        for (int i = 0; i < other.length(); i++) {
-            char c0 = one.charAt(i);
-            if (c0 >= 'A' && c0 <= 'Z') {
-                c0 += 0x20;
-            }
-            char c1 = other.charAt(i);
-            if (c1 >= 'A' && c1 <= 'Z') {
-                c1 += 0x20;
-            }
-            if (c0 != c1) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     public static String toAsciiLowerCase(String str) {
         if (str == null) {
             return null;
@@ -86,6 +59,33 @@ public final class Portability {
         }
         for (int i = 0; i < length; i++) {
             if (local.charAt(i) != buf[offset + i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    public static boolean equalsIgnoreAsciiCase(String one,
+            String other) {
+        if (other == null && one == null) {
+            return true;
+        }
+        if (other == null || one == null) {
+            return false;
+        }
+        if (one.length() != other.length()) {
+            return false;
+        }
+        for (int i = 0; i < other.length(); i++) {
+            char c0 = one.charAt(i);
+            if (c0 >= 'A' && c0 <= 'Z') {
+                c0 += 0x20;
+            }
+            char c1 = other.charAt(i);
+            if (c1 >= 'A' && c1 <= 'Z') {
+                c1 += 0x20;
+            }
+            if (c0 != c1) {
                 return false;
             }
         }

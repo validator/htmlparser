@@ -134,7 +134,7 @@ public class HtmlParser {
                 (streamLength < CHUNK_SIZE ? streamLength : CHUNK_SIZE));
         bufferStack.clear();
         push(stream);
-        domTreeBuilder.setFragmentContext(context);
+        domTreeBuilder.setFragmentContext(context.intern());
         tokenizer.start();
         pump();
     }
