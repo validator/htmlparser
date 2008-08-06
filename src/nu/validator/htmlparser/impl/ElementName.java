@@ -29,7 +29,7 @@ import nu.validator.htmlparser.annotation.NoLength;
 
 public final class ElementName
 // uncomment when regenerating self
-        implements Comparable<ElementName> 
+//        implements Comparable<ElementName> 
 {
 
     public final static ElementName NULL_ELEMENT_NAME = new ElementName(null);
@@ -112,221 +112,221 @@ public final class ElementName
 
     // START CODE ONLY USED FOR GENERATING CODE uncomment and run to regenerate
 
-    /**
-     * @see java.lang.Object#toString()
-     */
-    @Override public String toString() {
-        return "(\"" + name + "\", \"" + camelCaseName + "\", TreeBuilder."
-                + treeBuilderGroupToName() + ", "
-                + (special ? "true" : "false") + ", "
-                + (scoping ? "true" : "false") + ", "
-                + (fosterParenting ? "true" : "false") + ", " + formatCharArray(null) + ")";
-    }
-    
-    private String formatCharArray(char[] arr) {
-        if (arr == null) {
-            return "null";
-        }
-        StringBuilder sb = new StringBuilder();
-        sb.append("new char[]{");
-        for (int i = 0; i < arr.length; i++) {
-            char c = arr[i];
-            sb.append('\'');
-            sb.append(c);
-            sb.append("\',");
-        }
-        sb.append("}");
-        return sb.toString();
-    }
-
-    private String constName() {
-        char[] buf = new char[name.length()];
-        for (int i = 0; i < name.length(); i++) {
-            char c = name.charAt(i);
-            if (c == '-') {
-                buf[i] = '_';
-            } else if (c >= '0' && c <= '9') {
-                buf[i] = c;
-            } else {
-                buf[i] = (char) (c - 0x20);
-            }
-        }
-        return new String(buf);
-    }
-
-    private int hash() {
-        return bufToHash(name.toCharArray(), name.length());
-    }
-
-    public int compareTo(ElementName other) {
-        int thisHash = this.hash();
-        int otherHash = other.hash();
-        if (thisHash < otherHash) {
-            return -1;
-        } else if (thisHash == otherHash) {
-            return 0;
-        } else {
-            return 1;
-        }
-    }
-
-    private String treeBuilderGroupToName() {
-        switch (group) {
-            case TreeBuilder.OTHER:
-                return "OTHER";
-            case TreeBuilder.A:
-                return "A";
-            case TreeBuilder.BASE:
-                return "BASE";
-            case TreeBuilder.BODY:
-                return "BODY";
-            case TreeBuilder.BR:
-                return "BR";
-            case TreeBuilder.BUTTON:
-                return "BUTTON";
-            case TreeBuilder.CAPTION:
-                return "CAPTION";
-            case TreeBuilder.COL:
-                return "COL";
-            case TreeBuilder.COLGROUP:
-                return "COLGROUP";
-            case TreeBuilder.FORM:
-                return "FORM";
-            case TreeBuilder.FRAME:
-                return "FRAME";
-            case TreeBuilder.FRAMESET:
-                return "FRAMESET";
-            case TreeBuilder.IMAGE:
-                return "IMAGE";
-            case TreeBuilder.INPUT:
-                return "INPUT";
-            case TreeBuilder.ISINDEX:
-                return "ISINDEX";
-            case TreeBuilder.LI:
-                return "LI";
-            case TreeBuilder.LINK:
-                return "LINK";
-            case TreeBuilder.MATH:
-                return "MATH";
-            case TreeBuilder.META:
-                return "META";
-            case TreeBuilder.SVG:
-                return "SVG";
-            case TreeBuilder.HEAD:
-                return "HEAD";
-            case TreeBuilder.HR:
-                return "HR";
-            case TreeBuilder.HTML:
-                return "HTML";
-            case TreeBuilder.NOBR:
-                return "NOBR";
-            case TreeBuilder.NOFRAMES:
-                return "NOFRAMES";
-            case TreeBuilder.NOSCRIPT:
-                return "NOSCRIPT";
-            case TreeBuilder.OPTGROUP:
-                return "OPTGROUP";
-            case TreeBuilder.OPTION:
-                return "OPTION";
-            case TreeBuilder.P:
-                return "P";
-            case TreeBuilder.PLAINTEXT:
-                return "PLAINTEXT";
-            case TreeBuilder.SCRIPT:
-                return "SCRIPT";
-            case TreeBuilder.SELECT:
-                return "SELECT";
-            case TreeBuilder.STYLE:
-                return "STYLE";
-            case TreeBuilder.TABLE:
-                return "TABLE";
-            case TreeBuilder.TEXTAREA:
-                return "TEXTAREA";
-            case TreeBuilder.TITLE:
-                return "TITLE";
-            case TreeBuilder.TR:
-                return "TR";
-            case TreeBuilder.XMP:
-                return "XMP";
-            case TreeBuilder.TBODY_OR_THEAD_OR_TFOOT:
-                return "TBODY_OR_THEAD_OR_TFOOT";
-            case TreeBuilder.TD_OR_TH:
-                return "TD_OR_TH";
-            case TreeBuilder.DD_OR_DT:
-                return "DD_OR_DT";
-            case TreeBuilder.H1_OR_H2_OR_H3_OR_H4_OR_H5_OR_H6:
-                return "H1_OR_H2_OR_H3_OR_H4_OR_H5_OR_H6";
-            case TreeBuilder.OBJECT_OR_MARQUEE_OR_APPLET:
-                return "OBJECT_OR_MARQUEE_OR_APPLET";
-            case TreeBuilder.PRE_OR_LISTING:
-                return "PRE_OR_LISTING";
-            case TreeBuilder.B_OR_BIG_OR_EM_OR_FONT_OR_I_OR_S_OR_SMALL_OR_STRIKE_OR_STRONG_OR_TT_OR_U:
-                return "B_OR_BIG_OR_EM_OR_FONT_OR_I_OR_S_OR_SMALL_OR_STRIKE_OR_STRONG_OR_TT_OR_U";
-            case TreeBuilder.UL_OR_OL_OR_DL:
-                return "UL_OR_OL_OR_DL";
-            case TreeBuilder.IFRAME_OR_NOEMBED:
-                return "IFRAME_OR_NOEMBED";
-            case TreeBuilder.EMBED_OR_IMG:
-                return "EMBED_OR_IMG";
-            case TreeBuilder.AREA_OR_BASEFONT_OR_BGSOUND_OR_SPACER_OR_WBR:
-                return "AREA_OR_BASEFONT_OR_BGSOUND_OR_SPACER_OR_WBR";
-            case TreeBuilder.DIV_OR_BLOCKQUOTE_OR_CENTER_OR_MENU:
-                return "DIV_OR_BLOCKQUOTE_OR_CENTER_OR_MENU";
-            case TreeBuilder.FIELDSET_OR_ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION:
-                return "FIELDSET_OR_ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION";
-            case TreeBuilder.CODE_OR_RUBY_OR_SPAN_OR_SUB_OR_SUP_OR_VAR:
-                return "CODE_OR_RUBY_OR_SPAN_OR_SUB_OR_SUP_OR_VAR";
-            case TreeBuilder.RT_OR_RP:
-                return "RT_OR_RP";
-            case TreeBuilder.COMMAND_OR_EVENT_SOURCE:
-                return "COMMAND_OR_EVENT_SOURCE";
-            case TreeBuilder.PARAM_OR_SOURCE:
-                return "PARAM_OR_SOURCE";
-            case TreeBuilder.MGLYPH_OR_MALIGNMARK:
-                return "MGLYPH_OR_MALIGNMARK";
-            case TreeBuilder.MI_MO_MN_MS_MTEXT:
-                return "MI_MO_MN_MS_MTEXT";
-            case TreeBuilder.ANNOTATION_XML:
-                return "ANNOTATION_XML";
-            case TreeBuilder.FOREIGNOBJECT_OR_DESC:
-                return "FOREIGNOBJECT_OR_DESC";
-        }
-        return null;
-    }
-
-    /**
-     * Regenerate self
-     * 
-     * @param args
-     */
-    public static void main(String[] args) {
-        Arrays.sort(ELEMENT_NAMES);
-        for (int i = 1; i < ELEMENT_NAMES.length; i++) {
-            if (ELEMENT_NAMES[i].hash() == ELEMENT_NAMES[i - 1].hash()) {
-                System.err.println("Hash collision: " + ELEMENT_NAMES[i].name
-                        + ", " + ELEMENT_NAMES[i - 1].name);
-                return;
-            }
-        }
-        for (int i = 0; i < ELEMENT_NAMES.length; i++) {
-            ElementName el = ELEMENT_NAMES[i];
-            System.out.println("public static final ElementName "
-                    + el.constName() + " = new ElementName" + el.toString()
-                    + ";");
-        }
-        System.out.println("private final static @NoLength ElementName[] ELEMENT_NAMES = {");
-        for (int i = 0; i < ELEMENT_NAMES.length; i++) {
-            ElementName el = ELEMENT_NAMES[i];
-            System.out.println(el.constName() + ",");
-        }
-        System.out.println("};");
-        System.out.println("private final static @NoLength int[] ELEMENT_HASHES = {");
-        for (int i = 0; i < ELEMENT_NAMES.length; i++) {
-            ElementName el = ELEMENT_NAMES[i];
-            System.out.println(Integer.toString(el.hash()) + ",");
-        }
-        System.out.println("};");
-    }
+//    /**
+//     * @see java.lang.Object#toString()
+//     */
+//    @Override public String toString() {
+//        return "(\"" + name + "\", \"" + camelCaseName + "\", TreeBuilder."
+//                + treeBuilderGroupToName() + ", "
+//                + (special ? "true" : "false") + ", "
+//                + (scoping ? "true" : "false") + ", "
+//                + (fosterParenting ? "true" : "false") + ", " + formatCharArray(null) + ")";
+//    }
+//    
+//    private String formatCharArray(char[] arr) {
+//        if (arr == null) {
+//            return "null";
+//        }
+//        StringBuilder sb = new StringBuilder();
+//        sb.append("new char[]{");
+//        for (int i = 0; i < arr.length; i++) {
+//            char c = arr[i];
+//            sb.append('\'');
+//            sb.append(c);
+//            sb.append("\',");
+//        }
+//        sb.append("}");
+//        return sb.toString();
+//    }
+//
+//    private String constName() {
+//        char[] buf = new char[name.length()];
+//        for (int i = 0; i < name.length(); i++) {
+//            char c = name.charAt(i);
+//            if (c == '-') {
+//                buf[i] = '_';
+//            } else if (c >= '0' && c <= '9') {
+//                buf[i] = c;
+//            } else {
+//                buf[i] = (char) (c - 0x20);
+//            }
+//        }
+//        return new String(buf);
+//    }
+//
+//    private int hash() {
+//        return bufToHash(name.toCharArray(), name.length());
+//    }
+//
+//    public int compareTo(ElementName other) {
+//        int thisHash = this.hash();
+//        int otherHash = other.hash();
+//        if (thisHash < otherHash) {
+//            return -1;
+//        } else if (thisHash == otherHash) {
+//            return 0;
+//        } else {
+//            return 1;
+//        }
+//    }
+//
+//    private String treeBuilderGroupToName() {
+//        switch (group) {
+//            case TreeBuilder.OTHER:
+//                return "OTHER";
+//            case TreeBuilder.A:
+//                return "A";
+//            case TreeBuilder.BASE:
+//                return "BASE";
+//            case TreeBuilder.BODY:
+//                return "BODY";
+//            case TreeBuilder.BR:
+//                return "BR";
+//            case TreeBuilder.BUTTON:
+//                return "BUTTON";
+//            case TreeBuilder.CAPTION:
+//                return "CAPTION";
+//            case TreeBuilder.COL:
+//                return "COL";
+//            case TreeBuilder.COLGROUP:
+//                return "COLGROUP";
+//            case TreeBuilder.FORM:
+//                return "FORM";
+//            case TreeBuilder.FRAME:
+//                return "FRAME";
+//            case TreeBuilder.FRAMESET:
+//                return "FRAMESET";
+//            case TreeBuilder.IMAGE:
+//                return "IMAGE";
+//            case TreeBuilder.INPUT:
+//                return "INPUT";
+//            case TreeBuilder.ISINDEX:
+//                return "ISINDEX";
+//            case TreeBuilder.LI:
+//                return "LI";
+//            case TreeBuilder.LINK:
+//                return "LINK";
+//            case TreeBuilder.MATH:
+//                return "MATH";
+//            case TreeBuilder.META:
+//                return "META";
+//            case TreeBuilder.SVG:
+//                return "SVG";
+//            case TreeBuilder.HEAD:
+//                return "HEAD";
+//            case TreeBuilder.HR:
+//                return "HR";
+//            case TreeBuilder.HTML:
+//                return "HTML";
+//            case TreeBuilder.NOBR:
+//                return "NOBR";
+//            case TreeBuilder.NOFRAMES:
+//                return "NOFRAMES";
+//            case TreeBuilder.NOSCRIPT:
+//                return "NOSCRIPT";
+//            case TreeBuilder.OPTGROUP:
+//                return "OPTGROUP";
+//            case TreeBuilder.OPTION:
+//                return "OPTION";
+//            case TreeBuilder.P:
+//                return "P";
+//            case TreeBuilder.PLAINTEXT:
+//                return "PLAINTEXT";
+//            case TreeBuilder.SCRIPT:
+//                return "SCRIPT";
+//            case TreeBuilder.SELECT:
+//                return "SELECT";
+//            case TreeBuilder.STYLE:
+//                return "STYLE";
+//            case TreeBuilder.TABLE:
+//                return "TABLE";
+//            case TreeBuilder.TEXTAREA:
+//                return "TEXTAREA";
+//            case TreeBuilder.TITLE:
+//                return "TITLE";
+//            case TreeBuilder.TR:
+//                return "TR";
+//            case TreeBuilder.XMP:
+//                return "XMP";
+//            case TreeBuilder.TBODY_OR_THEAD_OR_TFOOT:
+//                return "TBODY_OR_THEAD_OR_TFOOT";
+//            case TreeBuilder.TD_OR_TH:
+//                return "TD_OR_TH";
+//            case TreeBuilder.DD_OR_DT:
+//                return "DD_OR_DT";
+//            case TreeBuilder.H1_OR_H2_OR_H3_OR_H4_OR_H5_OR_H6:
+//                return "H1_OR_H2_OR_H3_OR_H4_OR_H5_OR_H6";
+//            case TreeBuilder.OBJECT_OR_MARQUEE_OR_APPLET:
+//                return "OBJECT_OR_MARQUEE_OR_APPLET";
+//            case TreeBuilder.PRE_OR_LISTING:
+//                return "PRE_OR_LISTING";
+//            case TreeBuilder.B_OR_BIG_OR_EM_OR_FONT_OR_I_OR_S_OR_SMALL_OR_STRIKE_OR_STRONG_OR_TT_OR_U:
+//                return "B_OR_BIG_OR_EM_OR_FONT_OR_I_OR_S_OR_SMALL_OR_STRIKE_OR_STRONG_OR_TT_OR_U";
+//            case TreeBuilder.UL_OR_OL_OR_DL:
+//                return "UL_OR_OL_OR_DL";
+//            case TreeBuilder.IFRAME_OR_NOEMBED:
+//                return "IFRAME_OR_NOEMBED";
+//            case TreeBuilder.EMBED_OR_IMG:
+//                return "EMBED_OR_IMG";
+//            case TreeBuilder.AREA_OR_BASEFONT_OR_BGSOUND_OR_SPACER_OR_WBR:
+//                return "AREA_OR_BASEFONT_OR_BGSOUND_OR_SPACER_OR_WBR";
+//            case TreeBuilder.DIV_OR_BLOCKQUOTE_OR_CENTER_OR_MENU:
+//                return "DIV_OR_BLOCKQUOTE_OR_CENTER_OR_MENU";
+//            case TreeBuilder.FIELDSET_OR_ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION:
+//                return "FIELDSET_OR_ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION";
+//            case TreeBuilder.CODE_OR_RUBY_OR_SPAN_OR_SUB_OR_SUP_OR_VAR:
+//                return "CODE_OR_RUBY_OR_SPAN_OR_SUB_OR_SUP_OR_VAR";
+//            case TreeBuilder.RT_OR_RP:
+//                return "RT_OR_RP";
+//            case TreeBuilder.COMMAND_OR_EVENT_SOURCE:
+//                return "COMMAND_OR_EVENT_SOURCE";
+//            case TreeBuilder.PARAM_OR_SOURCE:
+//                return "PARAM_OR_SOURCE";
+//            case TreeBuilder.MGLYPH_OR_MALIGNMARK:
+//                return "MGLYPH_OR_MALIGNMARK";
+//            case TreeBuilder.MI_MO_MN_MS_MTEXT:
+//                return "MI_MO_MN_MS_MTEXT";
+//            case TreeBuilder.ANNOTATION_XML:
+//                return "ANNOTATION_XML";
+//            case TreeBuilder.FOREIGNOBJECT_OR_DESC:
+//                return "FOREIGNOBJECT_OR_DESC";
+//        }
+//        return null;
+//    }
+//
+//    /**
+//     * Regenerate self
+//     * 
+//     * @param args
+//     */
+//    public static void main(String[] args) {
+//        Arrays.sort(ELEMENT_NAMES);
+//        for (int i = 1; i < ELEMENT_NAMES.length; i++) {
+//            if (ELEMENT_NAMES[i].hash() == ELEMENT_NAMES[i - 1].hash()) {
+//                System.err.println("Hash collision: " + ELEMENT_NAMES[i].name
+//                        + ", " + ELEMENT_NAMES[i - 1].name);
+//                return;
+//            }
+//        }
+//        for (int i = 0; i < ELEMENT_NAMES.length; i++) {
+//            ElementName el = ELEMENT_NAMES[i];
+//            System.out.println("public static final ElementName "
+//                    + el.constName() + " = new ElementName" + el.toString()
+//                    + ";");
+//        }
+//        System.out.println("private final static @NoLength ElementName[] ELEMENT_NAMES = {");
+//        for (int i = 0; i < ELEMENT_NAMES.length; i++) {
+//            ElementName el = ELEMENT_NAMES[i];
+//            System.out.println(el.constName() + ",");
+//        }
+//        System.out.println("};");
+//        System.out.println("private final static @NoLength int[] ELEMENT_HASHES = {");
+//        for (int i = 0; i < ELEMENT_NAMES.length; i++) {
+//            ElementName el = ELEMENT_NAMES[i];
+//            System.out.println(Integer.toString(el.hash()) + ",");
+//        }
+//        System.out.println("};");
+//    }
 
     // START GENERATED CODE
     public static final ElementName A = new ElementName("a", "a", TreeBuilder.A, false, false, false, null);
