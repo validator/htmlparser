@@ -180,7 +180,7 @@ public class HtmlBuilder extends Builder {
      */
     public Nodes buildFragment(InputSource is, String context)
             throws IOException, ParsingException {
-        xomTreeBuilder.setFragmentContext(context);
+        xomTreeBuilder.setFragmentContext(context.intern());
         tokenize(is);
         return xomTreeBuilder.getDocumentFragment();
     }

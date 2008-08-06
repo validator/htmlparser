@@ -424,7 +424,7 @@ public class HtmlParser implements XMLReader {
             throws IOException, SAXException {
         lazyInit();
         try {
-            treeBuilder.setFragmentContext(context);
+            treeBuilder.setFragmentContext(context.intern());
             tokenize(input);
         } finally {
             if (saxTreeBuilder != null) {

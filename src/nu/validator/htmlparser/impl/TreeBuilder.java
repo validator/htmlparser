@@ -175,11 +175,13 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     private enum CharsetState {
-        INITIAL, C, H, A, R, S, E, T, EQUALS, SINGLE_QUOTED, DOUBLE_QUOTED, UNQUOTED
+        INITIAL, C, H, @SuppressWarnings("hiding") A, R, S, E, T, EQUALS, SINGLE_QUOTED, DOUBLE_QUOTED, UNQUOTED
     }
 
     private final static char[] ISINDEX_PROMPT = "This is a searchable index. Insert your search keywords here: ".toCharArray();
 
+    // [NOCPP[
+    
     private final static String[] HTML4_PUBLIC_IDS = {
             "-//W3C//DTD HTML 4.0 Frameset//EN",
             "-//W3C//DTD HTML 4.0 Transitional//EN",
@@ -187,6 +189,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             "-//W3C//DTD HTML 4.01 Transitional//EN",
             "-//W3C//DTD HTML 4.01//EN" };
 
+    // ]NOCPP]
+    
     private final static String[] QUIRKY_PUBLIC_IDS = {
             "+//silmaril//dtd html pro v0r11 19970101//",
             "-//advasoft ltd//dtd html 3.0 aswedit + extensions//",
@@ -248,8 +252,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     private final StackNode<T> MARKER = new StackNode<T>(null,
             ElementName.NULL_ELEMENT_NAME, null);
 
-    private final boolean nonConformingAndStreaming;
-
     private final boolean conformingAndStreaming;
 
     private final boolean coalescingText;
@@ -278,7 +280,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private boolean wantingComments;
 
-    private String context;
+    private @Local String context;
 
     private StackNode<T>[] stack;
 
@@ -308,8 +310,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     protected TreeBuilder(XmlViolationPolicy streamabilityViolationPolicy,
             boolean coalescingText) {
-        this.conformingAndStreaming = streamabilityViolationPolicy == XmlViolationPolicy.FATAL;
-        this.nonConformingAndStreaming = streamabilityViolationPolicy == XmlViolationPolicy.ALTER_INFOSET;
+        this.conformingAndStreaming = (streamabilityViolationPolicy == XmlViolationPolicy.FATAL);
         this.coalescingText = coalescingText;
         if (coalescingText) {
             charBuffer = new char[1024];
@@ -324,6 +325,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
      * @throws SAXParseException
      */
     protected final void fatal() throws SAXException {
+        // [NOCPP[
         SAXParseException spe = new SAXParseException(
                 "Cannot recover after last error. Any further errors will be ignored.",
                 tokenizer);
@@ -331,8 +333,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             errorHandler.fatalError(spe);
         }
         throw spe;
+        // ]NOCPP]
     }
 
+    // [NOCPP[
+    
     protected final void fatal(Exception e) throws SAXException {
         SAXParseException spe = new SAXParseException(e.getMessage(),
                 tokenizer, e);
@@ -351,6 +356,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         throw spe;
     }
     
+    // ]NOCPP]
+    
     /**
      * Reports a Parse Error.
      * 
@@ -359,11 +366,13 @@ public abstract class TreeBuilder<T> implements TokenHandler {
      * @throws SAXException
      */
     final void err(String message) throws SAXException {
+        // [NOCPP[
         if (errorHandler == null) {
             return;
         }
         SAXParseException spe = new SAXParseException(message, tokenizer);
         errorHandler.error(spe);
+        // ]NOCPP]
     }
 
     /**
@@ -374,11 +383,13 @@ public abstract class TreeBuilder<T> implements TokenHandler {
      * @throws SAXException
      */
     final void warn(String message) throws SAXException {
+        // [NOCPP[
         if (errorHandler == null) {
             return;
         }
         SAXParseException spe = new SAXParseException(message, tokenizer);
         errorHandler.warning(spe);
+        // ]NOCPP]
     }
 
     public final void startTokenization(Tokenizer self) throws SAXException {
@@ -668,6 +679,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         return;
     }
 
+    // [NOCPP[
+    
     private boolean isHtml4Doctype(String publicIdentifier) {
         if (publicIdentifier != null
                 && (Arrays.binarySearch(TreeBuilder.HTML4_PUBLIC_IDS,
@@ -676,6 +689,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
         return false;
     }
+    
+    // ]NOCPP]
 
     public final void comment(char[] buf, int length) throws SAXException {
         needToDropLF = false;
@@ -2336,54 +2351,39 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     break starttagloop;
                                 case BASE:
                                     err("\u201Cbase\u201D element outside \u201Chead\u201D.");
-                                    if (!nonConformingAndStreaming) {
-                                        pushHeadPointerOntoStack();
-                                    }
+                                    pushHeadPointerOntoStack();
                                     appendVoidElementToCurrentMayFoster(
                                             "http://www.w3.org/1999/xhtml",
                                             elementName, attributes);
                                     selfClosing = false;
-                                    if (!nonConformingAndStreaming) {
-                                        pop(); // head
-                                    }
+                                    pop(); // head
                                     break starttagloop;
                                 case LINK:
                                     err("\u201Clink\u201D element outside \u201Chead\u201D.");
-                                    if (!nonConformingAndStreaming) {
                                         pushHeadPointerOntoStack();
-                                    }
                                     appendVoidElementToCurrentMayFoster(
                                             "http://www.w3.org/1999/xhtml",
                                             elementName, attributes);
                                     selfClosing = false;
-                                    if (!nonConformingAndStreaming) {
                                         pop(); // head
-                                    }
                                     break starttagloop;
                                 case META:
                                     err("\u201Cmeta\u201D element outside \u201Chead\u201D.");
                                     checkMetaCharset(attributes);
-                                    if (!nonConformingAndStreaming) {
                                         pushHeadPointerOntoStack();
-                                    }
                                     appendVoidElementToCurrentMayFoster(
                                             "http://www.w3.org/1999/xhtml",
                                             elementName, attributes);
                                     selfClosing = false;
-                                    if (!nonConformingAndStreaming) {
                                         pop(); // head
-                                    }
                                     break starttagloop;
                                 case SCRIPT:
                                     err("\u201Cscript\u201D element between \u201Chead\u201D and \u201Cbody\u201D.");
-                                    if (!nonConformingAndStreaming) {
                                         pushHeadPointerOntoStack();
-                                    }
                                     appendToCurrentNodeAndPushElement(
                                             "http://www.w3.org/1999/xhtml",
                                             elementName, attributes);
-                                    cdataOrRcdataTimesToPop = nonConformingAndStreaming ? 1
-                                            : 2; // pops head
+                                    cdataOrRcdataTimesToPop = 2; // pops head
                                     tokenizer.setContentModelFlag(
                                             ContentModelFlag.CDATA, elementName);
                                     break starttagloop;
@@ -2392,27 +2392,21 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     err("\u201C"
                                             + name
                                             + "\u201D element between \u201Chead\u201D and \u201Cbody\u201D.");
-                                    if (!nonConformingAndStreaming) {
                                         pushHeadPointerOntoStack();
-                                    }
                                     appendToCurrentNodeAndPushElement(
                                             "http://www.w3.org/1999/xhtml",
                                             elementName, attributes);
-                                    cdataOrRcdataTimesToPop = nonConformingAndStreaming ? 1
-                                            : 2; // pops head
+                                    cdataOrRcdataTimesToPop = 2; // pops head
                                     tokenizer.setContentModelFlag(
                                             ContentModelFlag.CDATA, elementName);
                                     break starttagloop;
                                 case TITLE:
                                     err("\u201Ctitle\u201D element outside \u201Chead\u201D.");
-                                    if (!nonConformingAndStreaming) {
-                                        pushHeadPointerOntoStack();
-                                    }
+                                    pushHeadPointerOntoStack();
                                     appendToCurrentNodeAndPushElement(
                                             "http://www.w3.org/1999/xhtml",
                                             elementName, attributes);
-                                    cdataOrRcdataTimesToPop = nonConformingAndStreaming ? 1
-                                            : 2; // pops head
+                                    cdataOrRcdataTimesToPop = 2; // pops head
                                     tokenizer.setContentModelFlag(
                                             ContentModelFlag.RCDATA,
                                             elementName);
@@ -3683,8 +3677,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         } else {
             if (conformingAndStreaming) {
                 fatal();
-            } else if (nonConformingAndStreaming) {
-                throw new UnsupportedOperationException();
             } else {
                 System.arraycopy(stack, pos + 1, stack, pos, currentPtr - pos);
                 assert clearLastStackSlot();
@@ -3707,8 +3699,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             }
             if (conformingAndStreaming) {
                 fatal();
-            } else if (nonConformingAndStreaming) {
-                throw new UnsupportedOperationException();
             } else {
                 System.arraycopy(stack, pos + 1, stack, pos, currentPtr - pos);
                 currentPtr--;
@@ -4053,8 +4043,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (current.fosterParenting) {
             if (conformingAndStreaming) {
                 fatal();
-            } else if (nonConformingAndStreaming) {
-                return;
             } else {
                 int eltPos = findLastOrRoot(TreeBuilder.TABLE);
                 StackNode<T> node = stack[eltPos];
@@ -4165,8 +4153,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (current.fosterParenting) {
             if (conformingAndStreaming) {
                 fatal();
-            } else if (nonConformingAndStreaming) {
-                return;
             } else {
                 insertIntoFosterParent(elt);
             }
@@ -4191,8 +4177,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (current.fosterParenting) {
             if (conformingAndStreaming) {
                 fatal();
-            } else if (nonConformingAndStreaming) {
-                return;
             } else {
                 insertIntoFosterParent(elt);
             }
@@ -4234,8 +4218,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (current.fosterParenting) {
             if (conformingAndStreaming) {
                 fatal();
-            } else if (nonConformingAndStreaming) {
-                return;
             } else {
                 insertIntoFosterParent(elt);
             }
@@ -4262,8 +4244,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (current.fosterParenting) {
             if (conformingAndStreaming) {
                 fatal();
-            } else if (nonConformingAndStreaming) {
-                return;
             } else {
                 insertIntoFosterParent(elt);
             }
@@ -4290,8 +4270,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (current.fosterParenting) {
             if (conformingAndStreaming) {
                 fatal();
-            } else if (nonConformingAndStreaming) {
-                return;
             } else {
                 insertIntoFosterParent(elt);
             }
@@ -4315,8 +4293,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (current.fosterParenting) {
             if (conformingAndStreaming) {
                 fatal();
-            } else if (nonConformingAndStreaming) {
-                return;
             } else {
                 insertIntoFosterParent(elt);
             }
@@ -4339,15 +4315,13 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (current.fosterParenting) {
             if (conformingAndStreaming) {
                 fatal();
-            } else if (nonConformingAndStreaming) {
-                return;
             } else {
                 insertIntoFosterParent(elt);
             }
         } else {
             detachFromParentAndAppendToNewParent(elt, current.node);
         }
-        if (conformingAndStreaming || nonConformingAndStreaming) {
+        if (conformingAndStreaming) {
             elementPushed(ns, name, (T) attributes);
             elementPopped(ns, name, null);
         }
@@ -4368,15 +4342,13 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (current.fosterParenting) {
             if (conformingAndStreaming) {
                 fatal();
-            } else if (nonConformingAndStreaming) {
-                return;
             } else {
                 insertIntoFosterParent(elt);
             }
         } else {
             detachFromParentAndAppendToNewParent(elt, current.node);
         }
-        if (conformingAndStreaming || nonConformingAndStreaming) {
+        if (conformingAndStreaming) {
             elementPushed(ns, popName, (T) attributes);
             elementPopped(ns, popName, null);
         }
@@ -4397,15 +4369,13 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (current.fosterParenting) {
             if (conformingAndStreaming) {
                 fatal();
-            } else if (nonConformingAndStreaming) {
-                return;
             } else {
                 insertIntoFosterParent(elt);
             }
         } else {
             detachFromParentAndAppendToNewParent(elt, current.node);
         }
-        if (conformingAndStreaming || nonConformingAndStreaming) {
+        if (conformingAndStreaming) {
             elementPushed(ns, popName, (T) attributes);
             elementPopped(ns, popName, null);
         }
@@ -4422,7 +4392,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 formPointer);
         StackNode<T> current = stack[currentPtr];
         detachFromParentAndAppendToNewParent(elt, current.node);
-        if (conformingAndStreaming || nonConformingAndStreaming) {
+        if (conformingAndStreaming) {
             elementPushed(ns, name, (T) attributes);
             elementPopped(ns, name, null);
         }
@@ -4573,8 +4543,13 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         return errorHandler;
     }
 
-    public final void setFragmentContext(String context) {
-        this.context = context == null ? null : context.intern();
+    /**
+     * The argument MUST be an interned string or <code>null</code>.
+     * 
+     * @param context
+     */
+    public final void setFragmentContext(@Local String context) {
+        this.context = context;
     }
 
     protected final T currentNode() {
