@@ -709,13 +709,12 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
             throw new SAXException("Attempt to declare a reserved NS uri.");
         }
         Set<PrefixMapping> theSet = stack.getFirst().mappings;
-        for (PrefixMapping prefixMapping : theSet) {
-            if (prefixMapping.prefix.equals(prefix)) {
-                throw new SAXException(
-                        "Attempt to map one prefix to two URIs on one element.");
-            }
+        PrefixMapping mapping = new PrefixMapping(uri, prefix);
+        if (theSet.contains(mapping)) {
+            throw new SAXException(
+                    "Attempt to map one prefix to two URIs on one element.");
         }
-        theSet.add(new PrefixMapping(uri, prefix));
+        theSet.add(mapping);
     }
 
     public void startPrefixMappingPrivate(String prefix, String uri)
