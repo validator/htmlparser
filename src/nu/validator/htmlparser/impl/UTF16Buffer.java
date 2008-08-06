@@ -65,7 +65,7 @@ public final class UTF16Buffer {
      * 
      * @return the buffer
      */
-    public char[] getBuffer() {
+    public @NoLength char[] getBuffer() {
         return buffer;
     }
 
