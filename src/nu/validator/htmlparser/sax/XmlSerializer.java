@@ -702,11 +702,11 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
             if ("xml".equals(prefix)) {
                 return;
             } else {
-                throw new SAXException("Attempt to a reserved NS uri.");
+                throw new SAXException("Attempt to declare a reserved NS uri.");
             }
         }
         if ("http://www.w3.org/2000/xmlns/".equals(uri)) {
-            throw new SAXException("Attempt to a reserved NS uri.");
+            throw new SAXException("Attempt to declare a reserved NS uri.");
         }
         Set<PrefixMapping> theSet = stack.getFirst().mappings;
         for (PrefixMapping prefixMapping : theSet) {
