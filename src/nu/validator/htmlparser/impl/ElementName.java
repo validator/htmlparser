@@ -58,7 +58,7 @@ public final class ElementName
         } else {
             ElementName rv = ElementName.ELEMENT_NAMES[index];
             @Local String name = rv.name;
-            if (!Portability.stringEqualsBuffer(name, buf, offset, length)) {
+            if (!Portability.localEqualsBuffer(name, buf, offset, length)) {
                 return new ElementName(Portability.newLocalNameFromBuffer(buf,
                         offset, length));                
             }

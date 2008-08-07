@@ -77,7 +77,7 @@ public final class AttributeName
         } else {
             AttributeName rv = AttributeName.ATTRIBUTE_NAMES[index];
             @Local String name = rv.getLocal(AttributeName.HTML);
-            if (!Portability.stringEqualsBuffer(name, buf, offset, length)) {
+            if (!Portability.localEqualsBuffer(name, buf, offset, length)) {
                 return AttributeName.create(Portability.newLocalNameFromBuffer(buf,
                         offset, length), checkNcName);                
             }

@@ -29,21 +29,6 @@ import nu.validator.htmlparser.annotation.QName;
 public final class Portability {
 
     // Allocating methods
-    
-    public static String newAsciiLowerCaseStringFromString(String str) {
-        if (str == null) {
-            return null;
-        }
-        char[] buf = new char[str.length()];
-        for (int i = 0; i < str.length(); i++) {
-            char c = str.charAt(i);
-            if (c >= 'A' && c <= 'Z') {
-                c += 0x20;
-            }
-            buf[i] = c;
-        }
-        return new String(buf);
-    }
 
     public static @Local String newLocalNameFromBuffer(char[] buf, int offset, int length) {
         return new String(buf, offset, length).intern();
@@ -73,7 +58,7 @@ public final class Portability {
     
     // Comparison methods
     
-    public static boolean stringEqualsBuffer(@Local String local, char[] buf, int offset, int length) {
+    public static boolean localEqualsBuffer(@Local String local, char[] buf, int offset, int length) {
         if (local.length() != length) {
             return false;
         }
@@ -84,28 +69,39 @@ public final class Portability {
         }
         return true;
     }
-    
-    public static boolean stringEqualsString(String one, String other) {
-        return one.equals(other);
-    }
 
-    public static boolean stringEqualsIgnoreAsciiCaseString(String one,
-            String other) {
-        if (other == null && one == null) {
-            return true;
-        }
-        if (other == null || one == null) {
+    public static boolean lowerCaseLiteralIsPrefixOfIgnoreAsciiCaseString(String lowerCaseLiteral,
+            String string) {
+        if (string == null) {
             return false;
         }
-        if (one.length() != other.length()) {
+        if (lowerCaseLiteral.length() > string.length()) {
             return false;
         }
-        for (int i = 0; i < other.length(); i++) {
-            char c0 = one.charAt(i);
-            if (c0 >= 'A' && c0 <= 'Z') {
-                c0 += 0x20;
+        for (int i = 0; i < lowerCaseLiteral.length(); i++) {
+            char c0 = lowerCaseLiteral.charAt(i);
+            char c1 = string.charAt(i);
+            if (c1 >= 'A' && c1 <= 'Z') {
+                c1 += 0x20;
             }
-            char c1 = other.charAt(i);
+            if (c0 != c1) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    public static boolean lowerCaseLiteralEqualsIgnoreAsciiCaseString(String lowerCaseLiteral,
+            String string) {
+        if (string == null) {
+            return false;
+        }
+        if (lowerCaseLiteral.length() != string.length()) {
+            return false;
+        }
+        for (int i = 0; i < lowerCaseLiteral.length(); i++) {
+            char c0 = lowerCaseLiteral.charAt(i);
+            char c1 = string.charAt(i);
             if (c1 >= 'A' && c1 <= 'Z') {
                 c1 += 0x20;
             }
