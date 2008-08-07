@@ -115,7 +115,7 @@ public interface TokenHandler {
      * @throws SAXException
      *             if something went wrong
      */
-    public void comment(char[] buf, int length) throws SAXException;
+    public void comment(@NoLength char[] buf, int length) throws SAXException;
 
     /**
      * Receive character tokens. This method has the same semantics as the SAX

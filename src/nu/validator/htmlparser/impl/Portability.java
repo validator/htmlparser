@@ -57,6 +57,10 @@ public final class Portability {
     public static void releaseCharArray(char[] buf) {
         // No-op in Java
     }    
+
+    public static void releaseStackNodeArray(StackNode[] stack) {
+        // No-op in Java
+    }    
     
     // Comparison methods
     
