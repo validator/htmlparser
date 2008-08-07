@@ -54,11 +54,7 @@ public final class Portability {
         // No-op in Java
     }
     
-    public static void releaseCharArray(char[] buf) {
-        // No-op in Java
-    }    
-
-    public static void releaseStackNodeArray(StackNode[] stack) {
+    public static void releaseArray(Object arr) {
         // No-op in Java
     }    
     

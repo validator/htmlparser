@@ -203,6 +203,10 @@ public final class AttributeName
         // ]NOCPP]
     }
 
+    public void release() {
+        // No-op in Java. be sure to release the local name
+    }
+    
     // [NOCPP[
     static AttributeName create(@Local String name) {
         return new AttributeName(AttributeName.ALL_NO_NS,
