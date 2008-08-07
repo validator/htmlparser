@@ -35,8 +35,6 @@
 
 package nu.validator.htmlparser.impl;
 
-import java.util.Arrays;
-
 import nu.validator.htmlparser.annotation.Local;
 import nu.validator.htmlparser.annotation.NoLength;
 import nu.validator.htmlparser.common.TokenHandler;
