@@ -39,7 +39,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import nu.validator.htmlparser.annotation.IdType;
 import nu.validator.htmlparser.annotation.Local;
+import nu.validator.htmlparser.annotation.NoLength;
+import nu.validator.htmlparser.annotation.NsUri;
 import nu.validator.htmlparser.common.DoctypeExpectation;
 import nu.validator.htmlparser.common.DocumentMode;
 import nu.validator.htmlparser.common.DocumentModeHandler;
@@ -694,7 +697,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     
     // ]NOCPP]
 
-    public final void comment(char[] buf, int length) throws SAXException {
+    public final void comment(@NoLength char[] buf, int length) throws SAXException {
         needToDropLF = false;
         if (wantingComments) {
             commentloop: for (;;) {
@@ -746,7 +749,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
      * @see nu.validator.htmlparser.common.TokenHandler#characters(char[], int,
      *      int)
      */
-    public final void characters(char[] buf, int start, int length)
+    public final void characters(@NoLength char[] buf, int start, int length)
             throws SAXException {
         if (needToDropLF) {
             if (buf[start] == '\n') {
@@ -1272,7 +1275,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             HtmlAttributes attributes, boolean selfClosing) throws SAXException {
         if (errorHandler != null) {
             // ID uniqueness
-            String id = attributes.getId();
+            @IdType String id = attributes.getId();
             if (id != null) {
                 LocatorImpl oldLoc = idLocations.get(id);
                 if (oldLoc != null) {
@@ -1291,7 +1294,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         boolean needsPostProcessing = false;
         starttagloop: for (;;) {
             int group = elementName.group;
-            String name = elementName.name;
+            @Local String name = elementName.name;
             switch (foreignFlag) {
                 case IN_FOREIGN:
                     StackNode<T> currentNode = stack[currentPtr];
@@ -2627,21 +2630,25 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     private void checkMetaCharset(HtmlAttributes attributes)
             throws SAXException {
         String content = attributes.getValue(AttributeName.CONTENT);
-        String internalCharset = null;
+        String internalCharsetLegacy = null;
         if (content != null) {
-            internalCharset = TreeBuilder.extractCharsetFromContent(content);
-            if (internalCharset != null) {
-                if (!Portability.lowerCaseLiteralEqualsIgnoreAsciiCaseString("content-type",
-                        attributes.getValue(AttributeName.HTTP_EQUIV))) {
-                    warn("Attribute \u201Ccontent\u201D would be sniffed as an internal character encoding declaration but there was no matching \u201Chttp-equiv='Content-Type'\u201D attribute.");
-                }
+            internalCharsetLegacy = TreeBuilder.extractCharsetFromContent(content);
+            if (errorHandler != null
+                    && internalCharsetLegacy != null
+                    && !Portability.lowerCaseLiteralEqualsIgnoreAsciiCaseString(
+                            "content-type",
+                            attributes.getValue(AttributeName.HTTP_EQUIV))) {
+                warn("Attribute \u201Ccontent\u201D would be sniffed as an internal character encoding declaration but there was no matching \u201Chttp-equiv='Content-Type'\u201D attribute.");
             }
         }
-        if (internalCharset == null) {
-            internalCharset = attributes.getValue(AttributeName.CHARSET);
-        }
-        if (internalCharset != null) {
-            tokenizer.internalEncodingDeclaration(internalCharset);
+        if (internalCharsetLegacy == null) {
+            String internalCharsetHtml5 = attributes.getValue(AttributeName.CHARSET);
+            if (internalCharsetHtml5 != null) {
+                tokenizer.internalEncodingDeclaration(internalCharsetHtml5);
+            }
+        } else {
+            tokenizer.internalEncodingDeclaration(internalCharsetLegacy);
+            Portability.releaseString(internalCharsetLegacy);
         }
     }
 
@@ -2658,7 +2665,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         int eltPos;
         endtagloop: for (;;) {
             int group = elementName.group;
-            String name = elementName.name;
+            @Local String name = elementName.name;
             switch (mode) {
                 case IN_ROW:
                     switch (group) {
@@ -3361,7 +3368,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         return 0;
     }
 
-    private int findLast(String name) {
+    private int findLast(@Local String name) {
         for (int i = currentPtr; i > 0; i--) {
             if (stack[i].name == name) {
                 return i;
@@ -3370,7 +3377,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         return TreeBuilder.NOT_FOUND_ON_STACK;
     }
 
-    private int findLastInTableScope(String name) {
+    private int findLastInTableScope(@Local String name) {
         for (int i = currentPtr; i > 0; i--) {
             if (stack[i].name == name) {
                 return i;
@@ -3381,7 +3388,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         return TreeBuilder.NOT_FOUND_ON_STACK;
     }
 
-    private int findLastInScope(String name) {
+    private int findLastInScope(@Local String name) {
         for (int i = currentPtr; i > 0; i--) {
             if (stack[i].name == name) {
                 return i;
@@ -3414,7 +3421,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         return false;
     }
 
-    private void generateImpliedEndTagsExceptFor(String name)
+    private void generateImpliedEndTagsExceptFor(@Local String name)
             throws SAXException {
         for (;;) {
             StackNode<T> node = stack[currentPtr];
@@ -3457,14 +3464,14 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         return currentPtr >= 1 && stack[1].group == TreeBuilder.BODY;
     }
 
-    private void documentModeInternal(DocumentMode mode,
+    private void documentModeInternal(DocumentMode m,
             String publicIdentifier, String systemIdentifier,
             boolean html4SpecificAdditionalErrorChecks) throws SAXException {
         if (documentModeHandler != null) {
-            documentModeHandler.documentMode(mode, publicIdentifier,
+            documentModeHandler.documentMode(m, publicIdentifier,
                     systemIdentifier, html4SpecificAdditionalErrorChecks);
         }
-        documentMode(mode, publicIdentifier, systemIdentifier,
+        documentMode(m, publicIdentifier, systemIdentifier,
                 html4SpecificAdditionalErrorChecks);
     }
 
@@ -3492,7 +3499,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (forceQuirks) {
             return true;
         }
-        if (!"HTML".equalsIgnoreCase(name)) {
+        if (!Portability.lowerCaseLiteralEqualsIgnoreAsciiCaseString("html", name)) {
             return true;
         }
         if (publicIdentifier != null) {
@@ -3555,7 +3562,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     private void resetTheInsertionMode() {
         foreignFlag = TreeBuilder.NOT_IN_FOREIGN;
         StackNode<T> node;
-        String name;
+        @Local String name;
         for (int i = currentPtr; i >= 0; i--) {
             node = stack[i];
             name = node.name;
@@ -3648,6 +3655,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (currentPtr == stack.length) {
             StackNode<T>[] newStack = new StackNode[stack.length + 64];
             System.arraycopy(stack, 0, newStack, 0, stack.length);
+            Portability.releaseStackNodeArray(stack);
             stack = newStack;
         }
         stack[currentPtr] = node;
@@ -3660,6 +3668,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             StackNode<T>[] newList = new StackNode[listOfActiveFormattingElements.length + 64];
             System.arraycopy(listOfActiveFormattingElements, 0, newList, 0,
                     listOfActiveFormattingElements.length);
+            Portability.releaseStackNodeArray(listOfActiveFormattingElements);
             listOfActiveFormattingElements = newList;
         }
         listOfActiveFormattingElements[listPtr] = node;
@@ -3677,7 +3686,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
     }
 
-    private boolean isCurrent(String name) {
+    private boolean isCurrent(@Local String name) {
         return name == stack[currentPtr].name;
     }
 
@@ -3729,7 +3738,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         listPtr--;
     }
 
-    private void adoptionAgencyEndTag(String name) throws SAXException {
+    private void adoptionAgencyEndTag(@Local String name) throws SAXException {
         flushCharacters();
         for (;;) {
             int formattingEltListPos = listPtr;
@@ -3888,7 +3897,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     private int findInListOfActiveFormattingElementsContainsBetweenEndAndLastMarker(
-            String name) {
+            @Local String name) {
         for (int i = listPtr; i >= 0; i--) {
             StackNode<T> node = listOfActiveFormattingElements[i];
             if (node.name == name) {
@@ -3900,33 +3909,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         return -1;
     }
 
-    private int findDdOrDtToPop() {
-        for (int i = currentPtr; i >= 0; i--) {
-            StackNode<T> node = stack[i];
-            if (TreeBuilder.DD_OR_DT == node.group) {
-                return i;
-            } else if ((node.scoping || node.special)
-                    && !("div" == node.name || "address" == node.name)) {
-                return TreeBuilder.NOT_FOUND_ON_STACK;
-            }
-        }
-        return TreeBuilder.NOT_FOUND_ON_STACK;
-    }
-
-    private int findLiToPop() {
-        for (int i = currentPtr; i >= 0; i--) {
-            StackNode<T> node = stack[i];
-            if (TreeBuilder.LI == node.group) {
-                return i;
-            } else if ((node.scoping || node.special)
-                    && !("div" == node.name || "address" == node.name)) {
-                return TreeBuilder.NOT_FOUND_ON_STACK;
-            }
-        }
-        return TreeBuilder.NOT_FOUND_ON_STACK;
-    }
-
-    private int findLastOrRoot(String name) {
+    private int findLastOrRoot(@Local String name) {
         for (int i = currentPtr; i > 0; i--) {
             if (stack[i].name == name) {
                 return i;
@@ -4048,7 +4031,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         elementPopped(node.ns, node.popName, node.node);
     }
 
-    private void appendCharMayFoster(char[] buf, int i) throws SAXException {
+    private void appendCharMayFoster(@NoLength char[] buf, int i) throws SAXException {
         StackNode<T> current = stack[currentPtr];
         if (current.fosterParenting) {
             if (conformingAndStreaming) {
@@ -4081,7 +4064,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     // [NOCPP[
-    private void checkAttributes(HtmlAttributes attributes, String ns) throws SAXException {
+    private void checkAttributes(HtmlAttributes attributes, @NsUri String ns) throws SAXException {
         if (errorHandler != null) {
             String xmlns = attributes.getXmlnsValue(AttributeName.XMLNS);
             if (xmlns != null && !ns.equals(xmlns)) {
@@ -4091,7 +4074,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         attributes.processNonNcNames(this, namePolicy);
     }
     
-    private String checkPopName(String name) throws SAXException {
+    private String checkPopName(@Local String name) throws SAXException {
         switch (namePolicy) {
             case ALLOW:
                 warn("Element name \u201C" + name + "\u201D cannot be represented as XML 1.0.");
@@ -4175,7 +4158,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     private void appendToCurrentNodeAndPushFormattingElementMayFoster(
-            String ns, ElementName elementName, HtmlAttributes attributes)
+            @NsUri String ns, ElementName elementName, HtmlAttributes attributes)
             throws SAXException {
         flushCharacters();
         // [NOCPP[
@@ -4198,7 +4181,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         append(node);
     }
 
-    private void appendToCurrentNodeAndPushElement(String ns,
+    private void appendToCurrentNodeAndPushElement(@NsUri String ns,
             ElementName elementName, HtmlAttributes attributes)
             throws SAXException {
         flushCharacters();
@@ -4212,7 +4195,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         push(node);
     }
 
-    private void appendToCurrentNodeAndPushElementMayFoster(String ns,
+    private void appendToCurrentNodeAndPushElementMayFoster(@NsUri String ns,
             ElementName elementName, HtmlAttributes attributes)
             throws SAXException {
         flushCharacters();
@@ -4238,7 +4221,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         push(node);
     }
 
-    private void appendToCurrentNodeAndPushElementMayFosterNoScoping(String ns,
+    private void appendToCurrentNodeAndPushElementMayFosterNoScoping(@NsUri String ns,
             ElementName elementName, HtmlAttributes attributes)
             throws SAXException {
         flushCharacters();
@@ -4264,7 +4247,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         push(node);
     }
     
-    private void appendToCurrentNodeAndPushElementMayFosterCamelCase(String ns,
+    private void appendToCurrentNodeAndPushElementMayFosterCamelCase(@NsUri String ns,
             ElementName elementName, HtmlAttributes attributes)
             throws SAXException {
         flushCharacters();
@@ -4290,7 +4273,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         push(node);
     }
 
-    private void appendToCurrentNodeAndPushElementMayFoster(String ns,
+    private void appendToCurrentNodeAndPushElementMayFoster(@NsUri String ns,
             ElementName elementName, HtmlAttributes attributes, T form)
             throws SAXException {
         flushCharacters();
@@ -4313,7 +4296,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         push(node);
     }
 
-    @SuppressWarnings("unchecked") private void appendVoidElementToCurrentMayFoster(String ns, String name,
+    @SuppressWarnings("unchecked") private void appendVoidElementToCurrentMayFoster(@NsUri String ns, @Local String name,
             HtmlAttributes attributes, T form) throws SAXException {
         flushCharacters();
         // [NOCPP[
@@ -4337,7 +4320,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
     }
 
-    @SuppressWarnings("unchecked") private void appendVoidElementToCurrentMayFoster(String ns, ElementName elementName,
+    @SuppressWarnings("unchecked") private void appendVoidElementToCurrentMayFoster(@NsUri String ns, ElementName elementName,
             HtmlAttributes attributes) throws SAXException {
         flushCharacters();
         @Local String popName = elementName.name;
@@ -4364,7 +4347,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
     }
 
-    @SuppressWarnings("unchecked") private void appendVoidElementToCurrentMayFosterCamelCase(String ns, ElementName elementName,
+    @SuppressWarnings("unchecked") private void appendVoidElementToCurrentMayFosterCamelCase(@NsUri String ns, ElementName elementName,
             HtmlAttributes attributes) throws SAXException {
         flushCharacters();
         @Local String popName = elementName.camelCaseName;
@@ -4391,7 +4374,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
     }
     
-    @SuppressWarnings("unchecked") private void appendVoidElementToCurrent(String ns, String name,
+    @SuppressWarnings("unchecked") private void appendVoidElementToCurrent(@NsUri String ns, @Local String name,
             HtmlAttributes attributes, T form) throws SAXException {
         flushCharacters();
         // [NOCPP[
@@ -4408,13 +4391,14 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
     }
 
-    private void accumulateCharacters(char[] buf, int start, int length)
+    private void accumulateCharacters(@NoLength char[] buf, int start, int length)
             throws SAXException {
         if (coalescingText) {
             int newLen = charBufferLen + length;
             if (newLen > charBuffer.length) {
                 char[] newBuf = new char[newLen];
                 System.arraycopy(charBuffer, 0, newBuf, 0, charBuffer.length);
+                Portability.releaseCharArray(charBuffer);
                 charBuffer = newBuf;
             }
             System.arraycopy(buf, start, charBuffer, charBufferLen, length);
@@ -4438,10 +4422,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         tokenizer.requestSuspension();
     }
 
-    protected abstract T createElement(String ns, String name,
+    protected abstract T createElement(@NsUri String ns, @Local String name,
             HtmlAttributes attributes) throws SAXException;
 
-    protected T createElement(String ns, String name,
+    protected T createElement(@NsUri String ns, @Local String name,
             HtmlAttributes attributes, T form) throws SAXException {
         return createElement("http://www.w3.org/1999/xhtml", name, attributes);
     }
@@ -4470,16 +4454,16 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     protected abstract void insertBefore(T child, T sibling, T parent)
             throws SAXException;
 
-    protected abstract void insertCharactersBefore(char[] buf, int start,
+    protected abstract void insertCharactersBefore(@NoLength char[] buf, int start,
             int length, T sibling, T parent) throws SAXException;
 
-    protected abstract void appendCharacters(T parent, char[] buf, int start,
+    protected abstract void appendCharacters(T parent, @NoLength char[] buf, int start,
             int length) throws SAXException;
 
-    protected abstract void appendComment(T parent, char[] buf, int start,
+    protected abstract void appendComment(T parent, @NoLength char[] buf, int start,
             int length) throws SAXException;
 
-    protected abstract void appendCommentToDocument(char[] buf, int start,
+    protected abstract void appendCommentToDocument(@NoLength char[] buf, int start,
             int length) throws SAXException;
 
     protected abstract void addAttributesToElement(T element,
@@ -4507,12 +4491,12 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     }
 
-    protected void elementPushed(String ns, String name, T node)
+    protected void elementPushed(@NsUri String ns, @Local String name, T node)
             throws SAXException {
 
     }
 
-    protected void elementPopped(String ns, String name, T node)
+    protected void elementPopped(@NsUri String ns, @Local String name, T node)
             throws SAXException {
 
     }
