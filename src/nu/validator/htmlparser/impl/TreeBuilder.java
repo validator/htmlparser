@@ -2467,13 +2467,16 @@ public abstract class TreeBuilder<T> implements TokenHandler {
      * @throws SAXException
      * @throws StopSniffingException
      */
-    public static String extractCharsetFromContent(CharSequence attributeValue) {
+    public static String extractCharsetFromContent(String attributeValue) {
+        // This is a bit ugly. Converting the string to char array in order to
+        // make the portability layer smaller.
         CharsetState charsetState = CharsetState.INITIAL;
-        StringBuilder sb = new StringBuilder();
-        boolean canReturn = false;
+        int start = -1;
+        int end = -1;
+        char[] buffer = Portability.newCharArrayFromString(attributeValue);
 
-        for (int i = 0; i < attributeValue.length(); i++) {
-            char c = attributeValue.charAt(i);
+        charsetloop: for (int i = 0; i < buffer.length; i++) {
+            char c = buffer[i];
             switch (charsetState) {
                 case INITIAL:
                     switch (c) {
@@ -2567,31 +2570,32 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         case ' ':
                             continue;
                         case '\'':
+                            start = i + 1;
                             charsetState = CharsetState.SINGLE_QUOTED;
                             continue;
                         case '\"':
+                            start = i + 1;
                             charsetState = CharsetState.DOUBLE_QUOTED;
                             continue;
                         default:
-                            sb.append(c);
-                            canReturn = true;
+                            start = i;
                             charsetState = CharsetState.UNQUOTED;
                             continue;
                     }
                 case SINGLE_QUOTED:
                     switch (c) {
                         case '\'':
-                            return sb.toString();
+                            end = i;
+                            break charsetloop;
                         default:
-                            sb.append(c);
                             continue;
                     }
                 case DOUBLE_QUOTED:
                     switch (c) {
                         case '\"':
-                            return sb.toString();
+                            end = i;
+                            break charsetloop;
                         default:
-                            sb.append(c);
                             continue;
                     }
                 case UNQUOTED:
@@ -2602,18 +2606,22 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         case '\r':
                         case ' ':
                         case ';':
-                            return sb.toString();
+                            end = i;
+                            break charsetloop;
                         default:
-                            sb.append(c);
                             continue;
                     }
             }
         }
-        if (canReturn) {
-            return sb.toString();
-        } else {
-            return null;
+        String rv = null;
+        if (start != -1) {
+            if (end == -1) {
+                end = buffer.length;
+            }
+            rv = Portability.newStringFromBuffer(buffer, end - start);
         }
+        Portability.releaseCharArray(buffer);
+        return rv;
     }
 
     private void checkMetaCharset(HtmlAttributes attributes)
