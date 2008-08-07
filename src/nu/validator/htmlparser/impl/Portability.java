@@ -23,8 +23,6 @@
 package nu.validator.htmlparser.impl;
 
 import nu.validator.htmlparser.annotation.Local;
-import nu.validator.htmlparser.annotation.NsUri;
-import nu.validator.htmlparser.annotation.QName;
 
 public final class Portability {
 
@@ -40,6 +38,10 @@ public final class Portability {
     
     public static char[] newCharArrayFromLocal(@Local String local) {
         return local.toCharArray();
+    }
+
+    public static char[] newCharArrayFromString(String string) {
+        return string.toCharArray();
     }
     
     // Deallocation methods
