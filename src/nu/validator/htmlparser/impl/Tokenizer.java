@@ -615,7 +615,7 @@ public class Tokenizer implements Locator {
     public void setContentModelFlag(ContentModelFlag contentModelFlag,
             @Local String contentModelElement) {
         this.contentModelFlag = contentModelFlag;
-        char[] asArray = Portability.localToCharArray(contentModelElement);
+        char[] asArray = Portability.newCharArrayFromLocal(contentModelElement);
         this.contentModelElement = ElementName.elementNameByBuffer(asArray, 0, asArray.length);
     }
 
@@ -719,7 +719,7 @@ public class Tokenizer implements Locator {
      * @return the smaller buffer as a string
      */
     private String strBufToString() {
-        return Portability.stringFromBuffer(strBuf, strBufLen);
+        return Portability.newStringFromBuffer(strBuf, strBufLen);
     }
     
     /**
@@ -1115,16 +1115,18 @@ public class Tokenizer implements Locator {
     }
 
     private void addAttributeWithValue() throws SAXException {
+        // [NOCPP[
         if (metaBoundaryPassed && "meta" == tagName.name
                 && "charset".equals(attributeName)) {
             err("A \u201Ccharset\u201D attribute on a \u201Cmeta\u201D element found after the first 512 bytes.");
         }
+        // ]NOCPP]
         if (shouldAddAttributes) {
             String value = longStrBufToString();
             // [NOCPP[
             if (!endTag && html4 && html4ModeCompatibleWithXhtml1Schemata
                         && attributeName.isCaseFolded()) {
-                    value = Portability.toAsciiLowerCase(value);
+                    value = Portability.newAsciiLowerCaseStringFromString(value);
             }
             // ]NOCPP]
             attributes.addAttribute(attributeName, value, xmlnsPolicy);
@@ -1678,6 +1680,7 @@ public class Tokenizer implements Locator {
                             if (folded != e) {
                                 if (index > 0
                                         || (folded >= 'a' && folded <= 'z')) {
+                                    // [NOCPP[
                                     if (html4) {
                                         if (!"iframe".equals(contentModelElement)) {
                                             err((contentModelFlag == ContentModelFlag.CDATA ? "CDATA"
@@ -1687,12 +1690,15 @@ public class Tokenizer implements Locator {
                                                     + "\u201D contained the string \u201C</\u201D, but it was not the start of the end tag. (HTML4-only error)");
                                         }
                                     } else {
+                                        // ]NOCPP]
                                         warn((contentModelFlag == ContentModelFlag.CDATA ? "CDATA"
                                                 : "RCDATA")
                                                 + " element \u201C"
                                                 + contentModelElement
                                                 + "\u201D contained the string \u201C</\u201D, but this did not close the element.");
+                                        // [NOCPP[
                                     }
+                                    // ]NOCPP]
                                 }
                                 tokenHandler.characters(Tokenizer.LT_SOLIDUS,
                                         0, 2);

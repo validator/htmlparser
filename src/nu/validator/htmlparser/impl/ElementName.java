@@ -54,12 +54,12 @@ public final class ElementName
         int hash = ElementName.bufToHash(buf, length);
         int index = Arrays.binarySearch(ElementName.ELEMENT_HASHES, hash);
         if (index < 0) {
-            return new ElementName(Portability.localNameFromBuffer(buf, offset, length));
+            return new ElementName(Portability.newLocalNameFromBuffer(buf, offset, length));
         } else {
             ElementName rv = ElementName.ELEMENT_NAMES[index];
             @Local String name = rv.name;
-            if (!Portability.equals(name, buf, offset, length)) {
-                return new ElementName(Portability.localNameFromBuffer(buf,
+            if (!Portability.stringEqualsBuffer(name, buf, offset, length)) {
+                return new ElementName(Portability.newLocalNameFromBuffer(buf,
                         offset, length));                
             }
             return rv;
