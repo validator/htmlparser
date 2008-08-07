@@ -1080,8 +1080,8 @@ public class Tokenizer implements Locator {
 
     private void addAttributeWithoutValue() throws SAXException {
         // [NOCPP[
-        if (metaBoundaryPassed && "charset".equals(attributeName)
-                && "meta".equals(tagName)) {
+        if (metaBoundaryPassed && AttributeName.CHARSET == attributeName
+                && ElementName.META == tagName) {
             err("A \u201Ccharset\u201D attribute on a \u201Cmeta\u201D element found after the first 512 bytes.");
         }
         // ]NOCPP]
@@ -1116,8 +1116,8 @@ public class Tokenizer implements Locator {
 
     private void addAttributeWithValue() throws SAXException {
         // [NOCPP[
-        if (metaBoundaryPassed && "meta" == tagName.name
-                && "charset".equals(attributeName)) {
+        if (metaBoundaryPassed && ElementName.META == tagName
+                && AttributeName.CHARSET == attributeName) {
             err("A \u201Ccharset\u201D attribute on a \u201Cmeta\u201D element found after the first 512 bytes.");
         }
         // ]NOCPP]
@@ -1682,7 +1682,7 @@ public class Tokenizer implements Locator {
                                         || (folded >= 'a' && folded <= 'z')) {
                                     // [NOCPP[
                                     if (html4) {
-                                        if (!"iframe".equals(contentModelElement)) {
+                                        if (ElementName.IFRAME != contentModelElement) {
                                             err((contentModelFlag == ContentModelFlag.CDATA ? "CDATA"
                                                     : "RCDATA")
                                                     + " element \u201C"
