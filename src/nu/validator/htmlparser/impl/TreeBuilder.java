@@ -2623,7 +2623,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             }
             rv = Portability.newStringFromBuffer(buffer, end - start);
         }
-        Portability.releaseCharArray(buffer);
+        Portability.releaseArray(buffer);
         return rv;
     }
 
@@ -3655,7 +3655,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (currentPtr == stack.length) {
             StackNode<T>[] newStack = new StackNode[stack.length + 64];
             System.arraycopy(stack, 0, newStack, 0, stack.length);
-            Portability.releaseStackNodeArray(stack);
+            Portability.releaseArray(stack);
             stack = newStack;
         }
         stack[currentPtr] = node;
@@ -3668,7 +3668,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             StackNode<T>[] newList = new StackNode[listOfActiveFormattingElements.length + 64];
             System.arraycopy(listOfActiveFormattingElements, 0, newList, 0,
                     listOfActiveFormattingElements.length);
-            Portability.releaseStackNodeArray(listOfActiveFormattingElements);
+            Portability.releaseArray(listOfActiveFormattingElements);
             listOfActiveFormattingElements = newList;
         }
         listOfActiveFormattingElements[listPtr] = node;
@@ -4398,7 +4398,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             if (newLen > charBuffer.length) {
                 char[] newBuf = new char[newLen];
                 System.arraycopy(charBuffer, 0, newBuf, 0, charBuffer.length);
-                Portability.releaseCharArray(charBuffer);
+                Portability.releaseArray(charBuffer);
                 charBuffer = newBuf;
             }
             System.arraycopy(buf, start, charBuffer, charBufferLen, length);

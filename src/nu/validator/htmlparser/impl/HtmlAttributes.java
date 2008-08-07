@@ -295,7 +295,7 @@ public final class HtmlAttributes implements Attributes {
 
         if (name.isXmlns()) {
             if (xmlnsNames.length == xmlnsLength) {
-                int newLen = xmlnsNames.length + 2;
+                int newLen = xmlnsLength == 0 ? 2 : xmlnsLength << 1;
                 AttributeName[] newNames = new AttributeName[newLen];
                 System.arraycopy(xmlnsNames, 0, newNames, 0, xmlnsNames.length);
                 xmlnsNames = newNames;
@@ -320,7 +320,7 @@ public final class HtmlAttributes implements Attributes {
         // ]NOCPP]
 
         if (names.length == length) {
-            int newLen = names.length + 10; // The first growth covers virtually
+            int newLen = length << 1; // The first growth covers virtually
             // 100% of elements according to
             // Hixie
             AttributeName[] newNames = new AttributeName[newLen];
