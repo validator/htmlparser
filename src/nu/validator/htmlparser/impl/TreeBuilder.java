@@ -495,22 +495,20 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                              * given in the lists above in a case-insensitive
                              * manner.
                              */
-                            String publicIdentifierLC = Portability.newAsciiLowerCaseStringFromString(publicIdentifier);
-                            String systemIdentifierLC = Portability.newAsciiLowerCaseStringFromString(systemIdentifier);
                             // [NOCPP[
                             switch (doctypeExpectation) {
                                 case HTML:
                                     // ]NOCPP]
-                                    if (isQuirky(name, publicIdentifierLC,
-                                            systemIdentifierLC, forceQuirks)) {
+                                    if (isQuirky(name, publicIdentifier,
+                                            systemIdentifier, forceQuirks)) {
                                         err("Quirky doctype. Expected \u201C<!DOCTYPE html>\u201D.");
                                         documentModeInternal(
                                                 DocumentMode.QUIRKS_MODE,
                                                 publicIdentifier,
                                                 systemIdentifier, false);
                                     } else if (isAlmostStandards(
-                                            publicIdentifierLC,
-                                            systemIdentifierLC)) {
+                                            publicIdentifier,
+                                            systemIdentifier)) {
                                         err("Almost standards mode doctype. Expected \u201C<!DOCTYPE html>\u201D.");
                                         documentModeInternal(
                                                 DocumentMode.ALMOST_STANDARDS_MODE,
@@ -529,16 +527,16 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     break;
                                 case HTML401_STRICT:
                                     tokenizer.turnOnAdditionalHtml4Errors();
-                                    if (isQuirky(name, publicIdentifierLC,
-                                            systemIdentifierLC, forceQuirks)) {
+                                    if (isQuirky(name, publicIdentifier,
+                                            systemIdentifier, forceQuirks)) {
                                         err("Quirky doctype. Expected \u201C<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\u201D.");
                                         documentModeInternal(
                                                 DocumentMode.QUIRKS_MODE,
                                                 publicIdentifier,
                                                 systemIdentifier, true);
                                     } else if (isAlmostStandards(
-                                            publicIdentifierLC,
-                                            systemIdentifierLC)) {
+                                            publicIdentifier,
+                                            systemIdentifier)) {
                                         err("Almost standards mode doctype. Expected \u201C<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\u201D.");
                                         documentModeInternal(
                                                 DocumentMode.ALMOST_STANDARDS_MODE,
@@ -560,16 +558,16 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     break;
                                 case HTML401_TRANSITIONAL:
                                     tokenizer.turnOnAdditionalHtml4Errors();
-                                    if (isQuirky(name, publicIdentifierLC,
-                                            systemIdentifierLC, forceQuirks)) {
+                                    if (isQuirky(name, publicIdentifier,
+                                            systemIdentifier, forceQuirks)) {
                                         err("Quirky doctype. Expected \u201C<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\u201D.");
                                         documentModeInternal(
                                                 DocumentMode.QUIRKS_MODE,
                                                 publicIdentifier,
                                                 systemIdentifier, true);
                                     } else if (isAlmostStandards(
-                                            publicIdentifierLC,
-                                            systemIdentifierLC)) {
+                                            publicIdentifier,
+                                            systemIdentifier)) {
                                         if ("-//W3C//DTD HTML 4.01 Transitional//EN".equals(publicIdentifier)
                                                 && systemIdentifier != null) {
                                             if (!"http://www.w3.org/TR/html4/loose.dtd".equals(systemIdentifier)) {
@@ -595,16 +593,16 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     if (html4) {
                                         tokenizer.turnOnAdditionalHtml4Errors();
                                     }
-                                    if (isQuirky(name, publicIdentifierLC,
-                                            systemIdentifierLC, forceQuirks)) {
+                                    if (isQuirky(name, publicIdentifier,
+                                            systemIdentifier, forceQuirks)) {
                                         err("Quirky doctype. Expected e.g. \u201C<!DOCTYPE html>\u201D.");
                                         documentModeInternal(
                                                 DocumentMode.QUIRKS_MODE,
                                                 publicIdentifier,
                                                 systemIdentifier, html4);
                                     } else if (isAlmostStandards(
-                                            publicIdentifierLC,
-                                            systemIdentifierLC)) {
+                                            publicIdentifier,
+                                            systemIdentifier)) {
                                         if ("-//W3C//DTD HTML 4.01 Transitional//EN".equals(publicIdentifier)) {
                                             tokenizer.turnOnAdditionalHtml4Errors();
                                             if (!"http://www.w3.org/TR/html4/loose.dtd".equals(systemIdentifier)) {
@@ -635,15 +633,15 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     }
                                     break;
                                 case NO_DOCTYPE_ERRORS:
-                                    if (isQuirky(name, publicIdentifierLC,
-                                            systemIdentifierLC, forceQuirks)) {
+                                    if (isQuirky(name, publicIdentifier,
+                                            systemIdentifier, forceQuirks)) {
                                         documentModeInternal(
                                                 DocumentMode.QUIRKS_MODE,
                                                 publicIdentifier,
                                                 systemIdentifier, false);
                                     } else if (isAlmostStandards(
-                                            publicIdentifierLC,
-                                            systemIdentifierLC)) {
+                                            publicIdentifier,
+                                            systemIdentifier)) {
                                         documentModeInternal(
                                                 DocumentMode.ALMOST_STANDARDS_MODE,
                                                 publicIdentifier,
@@ -1505,7 +1503,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         break starttagloop;
                                     case INPUT:
                                         if (isTainted()
-                                                || !Portability.stringEqualsIgnoreAsciiCaseString(
+                                                || !Portability.lowerCaseLiteralEqualsIgnoreAsciiCaseString(
                                                         "hidden",
                                                         attributes.getValue(AttributeName.TYPE))) {
                                             break intableloop;
@@ -1806,7 +1804,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         for (int i = 0; i < attributes.getLength(); i++) {
                                             AttributeName attributeQName = attributes.getAttributeName(i);
                                             if (!(AttributeName.NAME == attributeQName
-                                                    || "action".equals(attributeQName) || "prompt".equals(attributeQName))) {
+                                                    || AttributeName.ACTION == attributeQName || AttributeName.PROMPT == attributeQName)) {
                                                 inputAttributes.addAttribute(
                                                         attributeQName,
                                                         attributes.getValue(i), XmlViolationPolicy.ALLOW);
@@ -2625,7 +2623,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (content != null) {
             internalCharset = TreeBuilder.extractCharsetFromContent(content);
             if (internalCharset != null) {
-                if (!Portability.stringEqualsIgnoreAsciiCaseString("content-type",
+                if (!Portability.lowerCaseLiteralEqualsIgnoreAsciiCaseString("content-type",
                         attributes.getValue(AttributeName.HTTP_EQUIV))) {
                     warn("Attribute \u201Ccontent\u201D would be sniffed as an internal character encoding declaration but there was no matching \u201Chttp-equiv='Content-Type'\u201D attribute.");
                 }
@@ -3462,52 +3460,52 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 html4SpecificAdditionalErrorChecks);
     }
 
-    private boolean isAlmostStandards(String publicIdentifierLC,
-            String systemIdentifierLC) {
-        if ("-//w3c//dtd xhtml 1.0 transitional//en".equals(publicIdentifierLC)) {
+    private boolean isAlmostStandards(String publicIdentifier,
+            String systemIdentifier) {
+        if (Portability.lowerCaseLiteralEqualsIgnoreAsciiCaseString("-//w3c//dtd xhtml 1.0 transitional//en", publicIdentifier)) {
             return true;
         }
-        if ("-//w3c//dtd xhtml 1.0 frameset//en".equals(publicIdentifierLC)) {
+        if (Portability.lowerCaseLiteralEqualsIgnoreAsciiCaseString("-//w3c//dtd xhtml 1.0 frameset//en", publicIdentifier)) {
             return true;
         }
-        if (systemIdentifierLC != null) {
-            if ("-//w3c//dtd html 4.01 transitional//en".equals(publicIdentifierLC)) {
+        if (systemIdentifier != null) {
+            if (Portability.lowerCaseLiteralEqualsIgnoreAsciiCaseString("-//w3c//dtd html 4.01 transitional//en", publicIdentifier)) {
                 return true;
             }
-            if ("-//w3c//dtd html 4.01 frameset//en".equals(publicIdentifierLC)) {
+            if (Portability.lowerCaseLiteralEqualsIgnoreAsciiCaseString("-//w3c//dtd html 4.01 frameset//en", publicIdentifier)) {
                 return true;
             }
         }
         return false;
     }
 
-    private boolean isQuirky(String name, String publicIdentifierLC,
-            String systemIdentifierLC, boolean forceQuirks) {
+    private boolean isQuirky(String name, String publicIdentifier,
+            String systemIdentifier, boolean forceQuirks) {
         if (forceQuirks) {
             return true;
         }
         if (!"HTML".equalsIgnoreCase(name)) {
             return true;
         }
-        if (publicIdentifierLC != null) {
+        if (publicIdentifier != null) {
             for (int i = 0; i < TreeBuilder.QUIRKY_PUBLIC_IDS.length; i++) {
-                if (publicIdentifierLC.startsWith(TreeBuilder.QUIRKY_PUBLIC_IDS[i])) {
+                if (Portability.lowerCaseLiteralIsPrefixOfIgnoreAsciiCaseString(TreeBuilder.QUIRKY_PUBLIC_IDS[i], publicIdentifier)) {
                     return true;
                 }
             }
-            if ("-//w3o//dtd w3 html strict 3.0//en//".equals(publicIdentifierLC)
-                    || "-/w3c/dtd html 4.0 transitional/en".equals(publicIdentifierLC)
-                    || "html".equals(publicIdentifierLC)) {
+            if (Portability.lowerCaseLiteralEqualsIgnoreAsciiCaseString("-//w3o//dtd w3 html strict 3.0//en//", publicIdentifier)
+                    || Portability.lowerCaseLiteralEqualsIgnoreAsciiCaseString("-/w3c/dtd html 4.0 transitional/en", publicIdentifier)
+                    || Portability.lowerCaseLiteralEqualsIgnoreAsciiCaseString("html", publicIdentifier)) {
                 return true;
             }
         }
-        if (systemIdentifierLC == null) {
-            if ("-//w3c//dtd html 4.01 transitional//en".equals(publicIdentifierLC)) {
+        if (systemIdentifier == null) {
+            if (Portability.lowerCaseLiteralEqualsIgnoreAsciiCaseString("-//w3c//dtd html 4.01 transitional//en", publicIdentifier)) {
                 return true;
-            } else if ("-//w3c//dtd html 4.01 frameset//en".equals(publicIdentifierLC)) {
+            } else if (Portability.lowerCaseLiteralEqualsIgnoreAsciiCaseString("-//w3c//dtd html 4.01 frameset//en", publicIdentifier)) {
                 return true;
             }
-        } else if ("http://www.ibm.com/data/dtd/v11/ibmxhtml1-transitional.dtd".equals(systemIdentifierLC)) {
+        } else if (Portability.lowerCaseLiteralEqualsIgnoreAsciiCaseString("http://www.ibm.com/data/dtd/v11/ibmxhtml1-transitional.dtd", systemIdentifier)) {
             return true;
         }
         return false;

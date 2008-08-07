@@ -1126,13 +1126,32 @@ public class Tokenizer implements Locator {
             // [NOCPP[
             if (!endTag && html4 && html4ModeCompatibleWithXhtml1Schemata
                         && attributeName.isCaseFolded()) {
-                    value = Portability.newAsciiLowerCaseStringFromString(value);
+                    value = newAsciiLowerCaseStringFromString(value);
             }
             // ]NOCPP]
             attributes.addAttribute(attributeName, value, xmlnsPolicy);
         }
     }
+    
+    // [NOCPP[
+    
+    private static String newAsciiLowerCaseStringFromString(String str) {
+        if (str == null) {
+            return null;
+        }
+        char[] buf = new char[str.length()];
+        for (int i = 0; i < str.length(); i++) {
+            char c = str.charAt(i);
+            if (c >= 'A' && c <= 'Z') {
+                c += 0x20;
+            }
+            buf[i] = c;
+        }
+        return new String(buf);
+    }
 
+    // ]NOCPP]
+    
     public void start() throws SAXException {
         alreadyComplainedAboutNonAscii = false;
         contentModelFlag = ContentModelFlag.PCDATA;
