@@ -72,13 +72,13 @@ public final class AttributeName
         int hash = AttributeName.bufToHash(buf, length);
         int index = Arrays.binarySearch(AttributeName.ATTRIBUTE_HASHES, hash);
         if (index < 0) {
-            return AttributeName.create(Portability.localNameFromBuffer(buf,
+            return AttributeName.create(Portability.newLocalNameFromBuffer(buf,
                     offset, length), checkNcName);
         } else {
             AttributeName rv = AttributeName.ATTRIBUTE_NAMES[index];
             @Local String name = rv.getLocal(AttributeName.HTML);
-            if (!Portability.equals(name, buf, offset, length)) {
-                return AttributeName.create(Portability.localNameFromBuffer(buf,
+            if (!Portability.stringEqualsBuffer(name, buf, offset, length)) {
+                return AttributeName.create(Portability.newLocalNameFromBuffer(buf,
                         offset, length), checkNcName);                
             }
             return rv;

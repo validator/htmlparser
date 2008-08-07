@@ -495,10 +495,12 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                              * given in the lists above in a case-insensitive
                              * manner.
                              */
-                            String publicIdentifierLC = Portability.toAsciiLowerCase(publicIdentifier);
-                            String systemIdentifierLC = Portability.toAsciiLowerCase(systemIdentifier);
+                            String publicIdentifierLC = Portability.newAsciiLowerCaseStringFromString(publicIdentifier);
+                            String systemIdentifierLC = Portability.newAsciiLowerCaseStringFromString(systemIdentifier);
+                            // [NOCPP[
                             switch (doctypeExpectation) {
                                 case HTML:
+                                    // ]NOCPP]
                                     if (isQuirky(name, publicIdentifierLC,
                                             systemIdentifierLC, forceQuirks)) {
                                         err("Quirky doctype. Expected \u201C<!DOCTYPE html>\u201D.");
@@ -523,6 +525,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                                 publicIdentifier,
                                                 systemIdentifier, false);
                                     }
+                                    // [NOCPP[
                                     break;
                                 case HTML401_STRICT:
                                     tokenizer.turnOnAdditionalHtml4Errors();
@@ -653,7 +656,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     }
                                     break;
                             }
-
+                            // ]NOCPP]
+                          
                             /*
                              * 
                              * Then, switch to the root element mode of the tree
@@ -1501,7 +1505,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         break starttagloop;
                                     case INPUT:
                                         if (isTainted()
-                                                || !Portability.equalsIgnoreAsciiCase(
+                                                || !Portability.stringEqualsIgnoreAsciiCaseString(
                                                         "hidden",
                                                         attributes.getValue(AttributeName.TYPE))) {
                                             break intableloop;
@@ -1762,7 +1766,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         }
                                         implicitlyCloseP();
                                         HtmlAttributes formAttrs = tokenizer.newAttributes();
-                                        int actionIndex = attributes.getIndex("action");
+                                        int actionIndex = attributes.getIndex(AttributeName.ACTION);
                                         if (actionIndex > -1) {
                                             formAttrs.addAttribute(
                                                     AttributeName.ACTION,
@@ -1781,7 +1785,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                                 "http://www.w3.org/1999/xhtml",
                                                 ElementName.LABEL,
                                                 HtmlAttributes.EMPTY_ATTRIBUTES);
-                                        int promptIndex = attributes.getIndex("prompt");
+                                        int promptIndex = attributes.getIndex(AttributeName.PROMPT);
                                         if (promptIndex > -1) {
                                             char[] prompt = attributes.getValue(
                                                     promptIndex).toCharArray();
@@ -2621,7 +2625,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (content != null) {
             internalCharset = TreeBuilder.extractCharsetFromContent(content);
             if (internalCharset != null) {
-                if (!Portability.equalsIgnoreAsciiCase("content-type",
+                if (!Portability.stringEqualsIgnoreAsciiCaseString("content-type",
                         attributes.getValue(AttributeName.HTTP_EQUIV))) {
                     warn("Attribute \u201Ccontent\u201D would be sniffed as an internal character encoding declaration but there was no matching \u201Chttp-equiv='Content-Type'\u201D attribute.");
                 }

@@ -23,10 +23,14 @@
 package nu.validator.htmlparser.impl;
 
 import nu.validator.htmlparser.annotation.Local;
+import nu.validator.htmlparser.annotation.NsUri;
+import nu.validator.htmlparser.annotation.QName;
 
 public final class Portability {
 
-    public static String toAsciiLowerCase(String str) {
+    // Allocating methods
+    
+    public static String newAsciiLowerCaseStringFromString(String str) {
         if (str == null) {
             return null;
         }
@@ -41,19 +45,35 @@ public final class Portability {
         return new String(buf);
     }
 
-    public static @Local String localNameFromBuffer(char[] buf, int offset, int length) {
+    public static @Local String newLocalNameFromBuffer(char[] buf, int offset, int length) {
         return new String(buf, offset, length).intern();
     }
 
-    public static String stringFromBuffer(char[] buf, int length) {
+    public static String newStringFromBuffer(char[] buf, int length) {
         return new String(buf, 0, length);
     }
     
-    public static char[] localToCharArray(@Local String local) {
+    public static char[] newCharArrayFromLocal(@Local String local) {
         return local.toCharArray();
     }
     
-    public static boolean equals(@Local String local, char[] buf, int offset, int length) {
+    // Deallocation methods
+    
+    public static void releaseString(String str) {
+        // No-op in Java
+    }
+    
+    public static void releaseLocal(@Local String local) {
+        // No-op in Java
+    }
+    
+    public static void releaseCharArray(char[] buf) {
+        // No-op in Java
+    }    
+    
+    // Comparison methods
+    
+    public static boolean stringEqualsBuffer(@Local String local, char[] buf, int offset, int length) {
         if (local.length() != length) {
             return false;
         }
@@ -65,7 +85,11 @@ public final class Portability {
         return true;
     }
     
-    public static boolean equalsIgnoreAsciiCase(String one,
+    public static boolean stringEqualsString(String one, String other) {
+        return one.equals(other);
+    }
+
+    public static boolean stringEqualsIgnoreAsciiCaseString(String one,
             String other) {
         if (other == null && one == null) {
             return true;

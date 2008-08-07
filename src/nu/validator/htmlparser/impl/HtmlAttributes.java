@@ -93,15 +93,6 @@ public final class HtmlAttributes implements Attributes {
         // ]NOCPP]
     }
 
-    public int getIndex(@QName String qName) {
-        for (int i = 0; i < length; i++) {
-            if (names[i].getQName(mode).equals(qName)) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
     /**
      * Only use with a static argument
      * 
@@ -116,8 +107,19 @@ public final class HtmlAttributes implements Attributes {
         }
         return -1;
     }
+
+    // [NOCPP[
     
-    public int getIndex(@NsUri String uri, @Local String localName) {
+    public int getIndex(String qName) {
+        for (int i = 0; i < length; i++) {
+            if (names[i].getQName(mode).equals(qName)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    
+    public int getIndex(String uri, String localName) {
         for (int i = 0; i < length; i++) {
             if (names[i].getLocal(mode).equals(localName)
                     && names[i].getUri(mode).equals(uri)) {
@@ -127,6 +129,44 @@ public final class HtmlAttributes implements Attributes {
         return -1;
     }
 
+    public @IdType String getType(String qName) {
+        int index = getIndex(qName);
+        if (index == -1) {
+            return null;
+        } else {
+            return getType(index);
+        }
+    }
+
+    public @IdType String getType(String uri, String localName) {
+        int index = getIndex(uri, localName);
+        if (index == -1) {
+            return null;
+        } else {
+            return getType(index);
+        }
+    }
+    
+    public String getValue(String qName) {
+        int index = getIndex(qName);
+        if (index == -1) {
+            return null;
+        } else {
+            return getValue(index);
+        }
+    }
+
+    public String getValue(String uri, String localName) {
+        int index = getIndex(uri, localName);
+        if (index == -1) {
+            return null;
+        } else {
+            return getValue(index);
+        }
+    }
+    
+    // ]NOCPP]
+    
     public int getLength() {
         return length;
     }
@@ -163,24 +203,6 @@ public final class HtmlAttributes implements Attributes {
         }
     }
 
-    public @IdType String getType(String qName) {
-        int index = getIndex(qName);
-        if (index == -1) {
-            return null;
-        } else {
-            return getType(index);
-        }
-    }
-
-    public @IdType String getType(String uri, String localName) {
-        int index = getIndex(uri, localName);
-        if (index == -1) {
-            return null;
-        } else {
-            return getType(index);
-        }
-    }
-
     public @NsUri String getURI(int index) {
         if (index < length) {
             return names[index].getUri(mode);
@@ -194,24 +216,6 @@ public final class HtmlAttributes implements Attributes {
             return values[index];
         } else {
             return null;
-        }
-    }
-
-    public String getValue(String qName) {
-        int index = getIndex(qName);
-        if (index == -1) {
-            return null;
-        } else {
-            return getValue(index);
-        }
-    }
-
-    public String getValue(String uri, String localName) {
-        int index = getIndex(uri, localName);
-        if (index == -1) {
-            return null;
-        } else {
-            return getValue(index);
         }
     }
 
