@@ -172,7 +172,7 @@ public final class HtmlAttributes implements Attributes {
     }
 
     public @Local String getLocalName(int index) {
-        if (index < length) {
+        if (index < length && index >= 0) {
             return names[index].getLocal(mode);
         } else {
             return null;
@@ -180,7 +180,7 @@ public final class HtmlAttributes implements Attributes {
     }
 
     public @QName String getQName(int index) {
-        if (index < length) {
+        if (index < length && index >= 0) {
             return names[index].getQName(mode);
         } else {
             return null;
@@ -188,7 +188,7 @@ public final class HtmlAttributes implements Attributes {
     }
 
     public AttributeName getAttributeName(int index) {
-        if (index < length) {
+        if (index < length && index >= 0) {
             return names[index];
         } else {
             return null;
@@ -196,7 +196,7 @@ public final class HtmlAttributes implements Attributes {
     }
 
     public @IdType String getType(int index) {
-        if (index < length) {
+        if (index < length && index >= 0) {
             return names[index].getType(mode);
         } else {
             return null;
@@ -204,7 +204,7 @@ public final class HtmlAttributes implements Attributes {
     }
 
     public @NsUri String getURI(int index) {
-        if (index < length) {
+        if (index < length && index >= 0) {
             return names[index].getUri(mode);
         } else {
             return null;
@@ -212,7 +212,7 @@ public final class HtmlAttributes implements Attributes {
     }
 
     public String getValue(int index) {
-        if (index < length) {
+        if (index < length && index >= 0) {
             return values[index];
         } else {
             return null;
@@ -244,7 +244,7 @@ public final class HtmlAttributes implements Attributes {
     }
 
     public @Local String getXmlnsLocalName(int index) {
-        if (index < xmlnsLength) {
+        if (index < xmlnsLength && index >= 0) {
             return xmlnsNames[index].getLocal(mode);
         } else {
             return null;
@@ -252,7 +252,7 @@ public final class HtmlAttributes implements Attributes {
     }
 
     public @NsUri String getXmlnsURI(int index) {
-        if (index < xmlnsLength) {
+        if (index < xmlnsLength && index >= 0) {
             return xmlnsNames[index].getUri(mode);
         } else {
             return null;
@@ -260,7 +260,7 @@ public final class HtmlAttributes implements Attributes {
     }
 
     public String getXmlnsValue(int index) {
-        if (index < xmlnsLength) {
+        if (index < xmlnsLength && index >= 0) {
             return xmlnsValues[index];
         } else {
             return null;
