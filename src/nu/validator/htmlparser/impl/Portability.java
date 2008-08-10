@@ -32,8 +32,8 @@ public final class Portability {
         return new String(buf, offset, length).intern();
     }
 
-    public static String newStringFromBuffer(char[] buf, int length) {
-        return new String(buf, 0, length);
+    public static String newStringFromBuffer(char[] buf, int offset, int length) {
+        return new String(buf, offset, length);
     }
     
     public static char[] newCharArrayFromLocal(@Local String local) {

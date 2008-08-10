@@ -717,7 +717,7 @@ public class Tokenizer implements Locator {
      * @return the smaller buffer as a string
      */
     private String strBufToString() {
-        return Portability.newStringFromBuffer(strBuf, strBufLen);
+        return Portability.newStringFromBuffer(strBuf, 0, strBufLen);
     }
     
     /**
