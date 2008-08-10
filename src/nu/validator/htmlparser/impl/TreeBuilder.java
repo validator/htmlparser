@@ -2621,7 +2621,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             if (end == -1) {
                 end = buffer.length;
             }
-            rv = Portability.newStringFromBuffer(buffer, end - start);
+            rv = Portability.newStringFromBuffer(buffer, start, end - start);
         }
         Portability.releaseArray(buffer);
         return rv;
