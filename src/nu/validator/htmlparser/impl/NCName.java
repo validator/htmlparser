@@ -25,6 +25,10 @@ package nu.validator.htmlparser.impl;
 public final class NCName {
     // [NOCPP[
 
+    private static final int SURROGATE_OFFSET = 0x10000 - (0xD800 << 10) - 0xDC00;
+    
+    private static final char[] HEX_TABLE = "0123456789ABCDEF".toCharArray();
+    
     public static boolean isNCNameStart(char c) {
         return ((c >= '\u0041' && c <= '\u005A')
                 || (c >= '\u0061' && c <= '\u007A')
@@ -462,27 +466,29 @@ public final class NCName {
         }
     }
     
+    private static void appendUHexTo(StringBuilder sb, int c) {
+        sb.append('U');
+        for (int i = 0; i < 5; i++) {
+            sb.append(HEX_TABLE[(c & 0xF0000) >> 16]);
+            c <<= 4;
+        }
+    }
+    
     public static String escapeName(String str) {
         StringBuilder sb = new StringBuilder();
-        sb.append("_NONXML_");
         for (int i = 0; i < str.length(); i++) {
-            int c = str.charAt(i) & 0xFF;
-            if ((c >= 'a' && c <= 'z') || c == '-') {
-                sb.append(c);
-            } else if (c <= 0xf) {
-                sb.append("000");
-                sb.append(Integer.toHexString(c).toUpperCase());
-            } else if (c <= 0xff) {
-                sb.append("00");
-                sb.append(Integer.toHexString(c).toUpperCase());
-            } else if (c <= 0xfff) {
-                sb.append("0");
-                sb.append(Integer.toHexString(c).toUpperCase());
+            char c = str.charAt(i);
+            if ((c & 0xFC00) == 0xD800) {
+                char next = str.charAt(++i);
+                appendUHexTo(sb, (c << 10) + next + SURROGATE_OFFSET);          
+            } else if (i == 0 && !isNCNameStart(c)) {
+                appendUHexTo(sb, c);
+            } else if (i != 0 && !isNCNameTrail(c)) {
+                appendUHexTo(sb, c);                
             } else {
-                sb.append(Integer.toHexString(c).toUpperCase());                
+                sb.append(c);
             }
         }
-        sb.append('_');
         return sb.toString().intern();
     }
     // ]NOCPP]
