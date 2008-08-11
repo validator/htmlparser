@@ -4075,22 +4075,30 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
     
     private String checkPopName(@Local String name) throws SAXException {
-        switch (namePolicy) {
-            case ALLOW:
-                warn("Element name \u201C" + name + "\u201D cannot be represented as XML 1.0.");
-                return name;
-            case ALTER_INFOSET:
-                warn("Element name \u201C" + name + "\u201D cannot be represented as XML 1.0.");
-                if (NCName.isNCName(name)) {
+        if (NCName.isNCName(name)) {
+            return name;
+        } else {
+            switch (namePolicy) {
+                case ALLOW:
+                    warn("Element name \u201C" + name
+                            + "\u201D cannot be represented as XML 1.0.");
                     return name;
-                } else {
-                    return NCName.escapeName(name);                    
-                }
-            case FATAL:
-                fatal("Element name \u201C" + name + "\u201D cannot be represented as XML 1.0.");
+                case ALTER_INFOSET:
+                    warn("Element name \u201C" + name
+                            + "\u201D cannot be represented as XML 1.0.");
+                    if (NCName.isNCName(name)) {
+                        return name;
+                    } else {
+                        return NCName.escapeName(name);
+                    }
+                case FATAL:
+                    fatal("Element name \u201C" + name
+                            + "\u201D cannot be represented as XML 1.0.");
+            }
         }
         return null; // keep compiler happy
     }
+
     // ]NOCPP]
     
     private void appendHtmlElementToDocumentAndPush(HtmlAttributes attributes)
