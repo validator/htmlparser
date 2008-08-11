@@ -75,6 +75,10 @@ public class Driver extends Tokenizer {
         super(tokenHandler);
     }
 
+    public Driver(TokenHandler tokenHandler, boolean newAttributesEachTime) {
+        super(tokenHandler, newAttributesEachTime);
+    }
+    
     /**
      * Returns the allowRewinding.
      * 

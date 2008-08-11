@@ -459,6 +459,8 @@ public class Tokenizer implements Locator {
 
     private boolean html4ModeCompatibleWithXhtml1Schemata;
 
+    private final boolean newAttributesEachTime;
+    
     // ]NOCPP]
     
     private int mappingLangToXmlLang;
@@ -475,8 +477,18 @@ public class Tokenizer implements Locator {
      */
     public Tokenizer(TokenHandler tokenHandler) {
         this.tokenHandler = tokenHandler;
+        this.newAttributesEachTime = false;
     }
 
+    // [NOCPP[
+    
+    public Tokenizer(TokenHandler tokenHandler, boolean newAttributesEachTime) {
+        this.tokenHandler = tokenHandler;
+        this.newAttributesEachTime = newAttributesEachTime;
+    }
+    
+    // ]NOCPP]
+    
     /**
      * Returns the mappingLangToXmlLang.
      * 
@@ -685,8 +697,16 @@ public class Tokenizer implements Locator {
 
     // ]NOCPP]
     
-    HtmlAttributes newAttributes() {
-        return new HtmlAttributes(mappingLangToXmlLang);
+    HtmlAttributes emptyAttributes() {
+        // [NOCPP[
+        if (newAttributesEachTime) {
+            return new HtmlAttributes(mappingLangToXmlLang);
+        } else {
+            // ]NOCPP]
+            return HtmlAttributes.EMPTY_ATTRIBUTES;
+            // [NOCPP[
+        }
+        // ]NOCPP]
     }
 
     /**
@@ -985,7 +1005,15 @@ public class Tokenizer implements Locator {
      * 
      */
     private void resetAttributes() {
-        attributes = null; // XXX figure out reuse
+        // [NOCPP[
+        if (newAttributesEachTime) {
+            attributes = null;            
+        } else {
+            // ]NOCPP]
+            attributes.clear();
+            // [NOCPP[
+        }
+        // ]NOCPP]
     }
 
     private ElementName strBufToElementNameString() {
@@ -1038,7 +1066,7 @@ public class Tokenizer implements Locator {
 
         // [NOCPP[
         if (attributes == null) {
-            attributes = newAttributes();
+            attributes = new HtmlAttributes(mappingLangToXmlLang);
         }
         // ]NOCPP]
 
@@ -1187,6 +1215,13 @@ public class Tokenizer implements Locator {
         value = 0;
         seenDigits = false;
         shouldSuspend = false;
+        // [NOCPP[
+        if (!newAttributesEachTime) {
+            // ]NOCPP]
+            attributes = new HtmlAttributes(mappingLangToXmlLang);
+            // [NOCPP[
+        }
+        // ]NOCPP]
     }
 
     public boolean tokenizeBuffer(UTF16Buffer buffer) throws SAXException {
@@ -4892,6 +4927,9 @@ public class Tokenizer implements Locator {
         tagName = null;
         attributeName = null;
         tokenHandler.endTokenization();
+        if (attributes != null) {
+            attributes.release();
+        }
     }
 
     public void requestSuspension() {

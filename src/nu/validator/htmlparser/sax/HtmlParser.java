@@ -162,12 +162,13 @@ public class HtmlParser implements XMLReader {
                 this.saxTreeBuilder = new SAXTreeBuilder();
                 this.treeBuilder = this.saxTreeBuilder;
                 this.saxStreamer = null;
+                this.tokenizer = new Driver(treeBuilder);
             } else {
                 this.saxStreamer = new SAXStreamer();
                 this.treeBuilder = this.saxStreamer;
                 this.saxTreeBuilder = null;
+                this.tokenizer = new Driver(treeBuilder, true);
             }
-            this.tokenizer = new Driver(treeBuilder);
             this.tokenizer.setErrorHandler(errorHandler);
             this.treeBuilder.setErrorHandler(treeBuilderErrorHandler);
             this.tokenizer.setCheckingNormalization(checkingNormalization);

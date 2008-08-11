@@ -408,4 +408,7 @@ public final class HtmlAttributes implements Attributes {
 
     // ]NOCPP]
     
+    public void release() {
+        
+    }
 }

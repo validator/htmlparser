@@ -409,7 +409,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             mode = InsertionMode.INITIAL;
             foreignFlag = TreeBuilder.NOT_IN_FOREIGN;
         } else {
-            T elt = createHtmlElementSetAsRoot(tokenizer.newAttributes());
+            T elt = createHtmlElementSetAsRoot(tokenizer.emptyAttributes());
             StackNode<T> node = new StackNode<T>(
                     "http://www.w3.org/1999/xhtml", ElementName.HTML, elt);
             currentPtr++;
@@ -1766,7 +1766,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                             break starttagloop;
                                         }
                                         implicitlyCloseP();
-                                        HtmlAttributes formAttrs = tokenizer.newAttributes();
+                                        HtmlAttributes formAttrs = tokenizer.emptyAttributes();
                                         int actionIndex = attributes.getIndex(AttributeName.ACTION);
                                         if (actionIndex > -1) {
                                             formAttrs.addAttribute(
@@ -1801,7 +1801,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                                     0,
                                                     TreeBuilder.ISINDEX_PROMPT.length);
                                         }
-                                        HtmlAttributes inputAttributes = tokenizer.newAttributes();
+                                        HtmlAttributes inputAttributes = tokenizer.emptyAttributes();
                                         inputAttributes.addAttribute(
                                                 AttributeName.NAME, "isindex", XmlViolationPolicy.ALLOW);
                                         for (int i = 0; i < attributes.getLength(); i++) {
@@ -4109,7 +4109,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     private void appendHtmlElementToDocumentAndPush() throws SAXException {
-        appendHtmlElementToDocumentAndPush(tokenizer.newAttributes());
+        appendHtmlElementToDocumentAndPush(tokenizer.emptyAttributes());
     }
 
     private void appendToCurrentNodeAndPushHeadElement(HtmlAttributes attributes)
@@ -4134,7 +4134,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     private void appendToCurrentNodeAndPushBodyElement() throws SAXException {
-        appendToCurrentNodeAndPushBodyElement(tokenizer.newAttributes());
+        appendToCurrentNodeAndPushBodyElement(tokenizer.emptyAttributes());
     }
 
     private void appendToCurrentNodeAndPushFormElementMayFoster(
