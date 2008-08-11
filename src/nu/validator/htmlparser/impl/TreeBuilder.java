@@ -4086,11 +4086,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 case ALTER_INFOSET:
                     warn("Element name \u201C" + name
                             + "\u201D cannot be represented as XML 1.0.");
-                    if (NCName.isNCName(name)) {
-                        return name;
-                    } else {
-                        return NCName.escapeName(name);
-                    }
+                    return NCName.escapeName(name);
                 case FATAL:
                     fatal("Element name \u201C" + name
                             + "\u201D cannot be represented as XML 1.0.");
