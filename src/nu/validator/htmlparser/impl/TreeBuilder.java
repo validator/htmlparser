@@ -697,7 +697,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     
     // ]NOCPP]
 
-    public final void comment(@NoLength char[] buf, int length) throws SAXException {
+    public final void comment(@NoLength char[] buf, int start, int length) throws SAXException {
         needToDropLF = false;
         if (wantingComments) {
             commentloop: for (;;) {
@@ -715,7 +715,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                  * Document object with the data attribute set
                                  * to the data given in the comment token.
                                  */
-                                appendCommentToDocument(buf, 0, length);
+                                appendCommentToDocument(buf, start, length);
                                 return;
                             case AFTER_BODY:
                                 /*
@@ -727,7 +727,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                  * 
                                  */
                                 flushCharacters();
-                                appendComment(stack[0].node, buf, 0, length);
+                                appendComment(stack[0].node, buf, start, length);
                                 return;
                             default:
                                 break commentloop;
@@ -741,7 +741,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
          * 
          */
         flushCharacters();
-        appendComment(stack[currentPtr].node, buf, 0, length);
+        appendComment(stack[currentPtr].node, buf, start, length);
         return;
     }
 

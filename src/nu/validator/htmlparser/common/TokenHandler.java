@@ -110,12 +110,13 @@ public interface TokenHandler {
      * 
      * @param buf
      *            a buffer holding the data
+     * @param start the offset into the buffer
      * @param length
      *            the number of code units to read
      * @throws SAXException
      *             if something went wrong
      */
-    public void comment(@NoLength char[] buf, int length) throws SAXException;
+    public void comment(@NoLength char[] buf, int start, int length) throws SAXException;
 
     /**
      * Receive character tokens. This method has the same semantics as the SAX
