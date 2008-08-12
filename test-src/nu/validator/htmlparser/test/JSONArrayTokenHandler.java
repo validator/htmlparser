@@ -81,11 +81,11 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
         }
     }
 
-    public void comment(char[] buf, int length) throws SAXException {
+    public void comment(char[] buf, int start, int length) throws SAXException {
         flushCharacters();
         JSONArray token = new JSONArray();
         token.getValue().add(COMMENT);
-        token.getValue().add(new JSONString(new String(buf, 0, length)));
+        token.getValue().add(new JSONString(new String(buf, start, length)));
         array.getValue().add(token);
     }
 
