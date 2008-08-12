@@ -719,48 +719,52 @@ public class Tokenizer implements Locator {
     }
 
     private void detachStrBuf() {
-        if (strBufOffset == -1) {
-            return;
-        }
-        if (strBufLen > 0) {
-            if (strBuf.length < strBufLen) {
-                Portability.releaseArray(strBuf);
-                strBuf = new char[strBufLen + (strBufLen >> 1)];
-            }
-            System.arraycopy(buf, strBufOffset, strBuf, 0, strBufLen);
-        }
-        strBufOffset = -1;
+//        if (strBufOffset == -1) {
+//            return;
+//        }
+//        if (strBufLen > 0) {
+//            if (strBuf.length < strBufLen) {
+//                Portability.releaseArray(strBuf);
+//                strBuf = new char[strBufLen + (strBufLen >> 1)];
+//            }
+//            System.arraycopy(buf, strBufOffset, strBuf, 0, strBufLen);
+//        }
+//        strBufOffset = -1;
     }
 
     private void detachLongStrBuf() {
-        if (longStrBufOffset == -1) {
-            return;
-        }
-        if (longStrBufLen > 0) {
-            if (longStrBuf.length < longStrBufLen) {
-                Portability.releaseArray(longStrBuf);
-                longStrBuf = new char[longStrBufLen + (longStrBufLen >> 1)];
-            }
-            System.arraycopy(buf, longStrBufOffset, longStrBuf, 0,
-                    longStrBufLen);
-        }
-        longStrBufOffset = -1;
+//        if (longStrBufOffset == -1) {
+//            return;
+//        }
+//        if (longStrBufLen > 0) {
+//            if (longStrBuf.length < longStrBufLen) {
+//                Portability.releaseArray(longStrBuf);
+//                longStrBuf = new char[longStrBufLen + (longStrBufLen >> 1)];
+//            }
+//            System.arraycopy(buf, longStrBufOffset, longStrBuf, 0,
+//                    longStrBufLen);
+//        }
+//        longStrBufOffset = -1;
     }
 
     private void clearStrBufAndAppendCurrentC() {
+        strBuf[0] = buf[pos]; // test
+        
         strBufLen = 1;
-        strBufOffset = pos;
+//        strBufOffset = pos;
     }
 
     private void clearStrBufAndAppendForceWrite(char c) {
+        strBuf[0] = c; // test
+
         strBufLen = 1;
-        strBufOffset = pos;
-        buf[pos] = c;
+//        strBufOffset = pos;
+//        buf[pos] = c;
     }
 
     private void clearStrBufForNextState() {
         strBufLen = 0;
-        strBufOffset = pos + 1;
+//        strBufOffset = pos + 1;
     }
 
     /**
@@ -770,9 +774,9 @@ public class Tokenizer implements Locator {
      *            the UTF-16 code unit to append
      */
     private void appendStrBuf(char c) {
-        if (strBufOffset != -1) {
-            strBufLen++;
-        } else {
+//        if (strBufOffset != -1) {
+//            strBufLen++;
+//        } else {
             if (strBufLen == strBuf.length) {
                 char[] newBuf = new char[strBuf.length
                         + Tokenizer.BUFFER_GROW_BY];
@@ -780,7 +784,7 @@ public class Tokenizer implements Locator {
                 strBuf = newBuf;
             }
             strBuf[strBufLen++] = c;
-        }
+//        }
     }
 
     /**
@@ -790,10 +794,10 @@ public class Tokenizer implements Locator {
      *            the UTF-16 code unit to append
      */
     private void appendStrBufForceWrite(char c) {
-        if (strBufOffset != -1) {
-            strBufLen++;
-            buf[pos] = c;
-        } else {
+//        if (strBufOffset != -1) {
+//            strBufLen++;
+//            buf[pos] = c;
+//        } else {
             if (strBufLen == strBuf.length) {
                 char[] newBuf = new char[strBuf.length
                         + Tokenizer.BUFFER_GROW_BY];
@@ -801,7 +805,7 @@ public class Tokenizer implements Locator {
                 strBuf = newBuf;
             }
             strBuf[strBufLen++] = c;
-        }
+//        }
     }
 
     /**
@@ -810,11 +814,11 @@ public class Tokenizer implements Locator {
      * @return the smaller buffer as a string
      */
     private String strBufToString() {
-        if (strBufOffset != -1) {
-            return Portability.newStringFromBuffer(buf, strBufOffset, strBufLen);
-        } else {
+//        if (strBufOffset != -1) {
+//            return Portability.newStringFromBuffer(buf, strBufOffset, strBufLen);
+//        } else {
             return Portability.newStringFromBuffer(strBuf, 0, strBufLen);
-        }
+//        }
     }
 
     /**
@@ -825,31 +829,33 @@ public class Tokenizer implements Locator {
      */
     private void emitStrBuf() throws SAXException {
         if (strBufLen > 0) {
-            if (strBufOffset != -1) {
-                tokenHandler.characters(buf, strBufOffset, strBufLen);
-            } else {
+//            if (strBufOffset != -1) {
+//                tokenHandler.characters(buf, strBufOffset, strBufLen);
+//            } else {
                 tokenHandler.characters(strBuf, 0, strBufLen);
-            }
+//            }
         }
     }
 
     private void clearLongStrBufForNextState() {
-        longStrBufOffset = pos + 1;
+//        longStrBufOffset = pos + 1;
         longStrBufLen = 0;
     }
 
     private void clearLongStrBuf() {
-        longStrBufOffset = pos;
+//        longStrBufOffset = pos;
         longStrBufLen = 0;
     }
 
     private void clearLongStrBufAndAppendCurrentC() {
+        longStrBuf[0] = buf[pos];
         longStrBufLen = 1;
-        longStrBufOffset = pos;
+//        longStrBufOffset = pos;
     }
 
     private void clearLongStrBufAndAppendToComment(char c) {
-        longStrBufOffset = pos;
+        longStrBuf[0] = c;
+//        longStrBufOffset = pos;
         longStrBufLen = 1;
     }
 
@@ -860,9 +866,9 @@ public class Tokenizer implements Locator {
      *            the UTF-16 code unit to append
      */
     private void appendLongStrBuf(char c) {
-        if (longStrBufOffset != -1) {
-            longStrBufLen++;
-        } else {
+//        if (longStrBufOffset != -1) {
+//            longStrBufLen++;
+//        } else {
             if (longStrBufLen == longStrBuf.length) {
                 char[] newBuf = new char[longStrBufLen + (longStrBufLen >> 1)];
                 System.arraycopy(longStrBuf, 0, newBuf, 0, longStrBuf.length);
@@ -870,13 +876,13 @@ public class Tokenizer implements Locator {
                 longStrBuf = newBuf;
             }
             longStrBuf[longStrBufLen++] = c;
-        }
+//        }
     }
 
     private void appendSecondHyphenToBogusComment() throws SAXException {
         switch (commentPolicy) {
             case ALTER_INFOSET:
-                detachLongStrBuf();
+//                detachLongStrBuf();
                 appendLongStrBuf(' ');
                 // FALLTHROUGH
             case ALLOW:
@@ -892,7 +898,7 @@ public class Tokenizer implements Locator {
     private void maybeAppendSpaceToBogusComment() throws SAXException {
         switch (commentPolicy) {
             case ALTER_INFOSET:
-                detachLongStrBuf();
+//                detachLongStrBuf();
                 appendLongStrBuf(' ');
                 // FALLTHROUGH
             case ALLOW:
@@ -908,7 +914,7 @@ public class Tokenizer implements Locator {
             throws SAXException {
         switch (commentPolicy) {
             case ALTER_INFOSET:
-                detachLongStrBuf();
+//                detachLongStrBuf();
                 longStrBufLen--;
                 appendLongStrBuf(' ');
                 appendLongStrBuf('-');
@@ -942,7 +948,7 @@ public class Tokenizer implements Locator {
      *            the UTF-16 code units to append
      */
     private void appendLongStrBuf(char[] arr) {
-        assert longStrBufOffset == -1;
+//        assert longStrBufOffset == -1;
         appendLongStrBuf(arr, 0, arr.length);
     }
 
@@ -950,12 +956,12 @@ public class Tokenizer implements Locator {
      * Append the contents of the smaller buffer to the larger one.
      */
     private void appendStrBufToLongStrBuf() {
-        assert longStrBufOffset == -1;
-        if (strBufOffset != -1) {
-            appendLongStrBuf(buf, strBufOffset, strBufLen);
-        } else {
+//        assert longStrBufOffset == -1;
+//        if (strBufOffset != -1) {
+//            appendLongStrBuf(buf, strBufOffset, strBufLen);
+//        } else {
             appendLongStrBuf(strBuf, 0, strBufLen);
-        }
+//        }
     }
 
     /**
@@ -964,12 +970,12 @@ public class Tokenizer implements Locator {
      * @return the larger buffer as a string
      */
     private String longStrBufToString() {
-        if (longStrBufOffset != -1) {
-            return Portability.newStringFromBuffer(buf, longStrBufOffset,
-                    longStrBufLen);
-        } else {
+//        if (longStrBufOffset != -1) {
+//            return Portability.newStringFromBuffer(buf, longStrBufOffset,
+//                    longStrBufLen);
+//        } else {
             return Portability.newStringFromBuffer(longStrBuf, 0, longStrBufLen);
-        }
+//        }
     }
 
     /**
@@ -979,14 +985,13 @@ public class Tokenizer implements Locator {
      */
     private void emitComment(int provisionalHyphens) throws SAXException {
         if (wantsComments) {
-            // XXX deal with trailing hyphen
-            if (longStrBufOffset != -1) {
-                tokenHandler.comment(buf, longStrBufOffset, longStrBufLen
-                        - provisionalHyphens);
-            } else {
+//            if (longStrBufOffset != -1) {
+//                tokenHandler.comment(buf, longStrBufOffset, longStrBufLen
+//                        - provisionalHyphens);
+//            } else {
                 tokenHandler.comment(longStrBuf, 0, longStrBufLen
                         - provisionalHyphens);
-            }
+//            }
         }
         cstart = pos + 1;
     }
@@ -1139,11 +1144,11 @@ public class Tokenizer implements Locator {
     }
 
     private ElementName strBufToElementNameString() {
-        if (strBufOffset != -1) {
-            return ElementName.elementNameByBuffer(buf, strBufOffset, strBufLen);
-        } else {
+//        if (strBufOffset != -1) {
+//            return ElementName.elementNameByBuffer(buf, strBufOffset, strBufLen);
+//        } else {
             return ElementName.elementNameByBuffer(strBuf, 0, strBufLen);
-        }
+//        }
     }
 
     private int emitCurrentTagToken(boolean selfClosing) throws SAXException {
@@ -1188,13 +1193,13 @@ public class Tokenizer implements Locator {
     }
 
     private void attributeNameComplete() throws SAXException {
-        if (strBufOffset != -1) {
-            attributeName = AttributeName.nameByBuffer(buf, strBufOffset,
-                    strBufLen, namePolicy != XmlViolationPolicy.ALLOW);
-        } else {
+//        if (strBufOffset != -1) {
+//            attributeName = AttributeName.nameByBuffer(buf, strBufOffset,
+//                    strBufLen, namePolicy != XmlViolationPolicy.ALLOW);
+//        } else {
             attributeName = AttributeName.nameByBuffer(strBuf, 0, strBufLen,
                     namePolicy != XmlViolationPolicy.ALLOW);
-        }
+//        }
 
         // [NOCPP[
         if (attributes == null) {
@@ -3737,11 +3742,11 @@ public class Tokenizer implements Locator {
                                 if (strBufMark == strBufLen) {
                                     ch = c;
                                 } else {
-                                    if (strBufOffset != -1) {
-                                        ch = buf[strBufOffset + strBufMark];
-                                    } else {
+//                                    if (strBufOffset != -1) {
+//                                        ch = buf[strBufOffset + strBufMark];
+//                                    } else {
                                         ch = strBuf[strBufMark];
-                                    }
+//                                    }
                                 }
                                 if ((ch >= '0' && ch <= '9')
                                         || (ch >= 'A' && ch <= 'Z')
