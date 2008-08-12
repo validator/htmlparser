@@ -68,10 +68,10 @@ public class TokenPrinter implements TokenHandler, ErrorHandler {
         }
     }
 
-    public void comment(char[] buf, int length) throws SAXException {
+    public void comment(char[] buf, int start, int length) throws SAXException {
         try {
             writer.write('!');
-            writer.write(buf, 0, length);
+            writer.write(buf, start, length);
             writer.write('\n');
         } catch (IOException e) {
             throw new SAXException(e);
