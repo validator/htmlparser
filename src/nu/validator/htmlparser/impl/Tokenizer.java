@@ -1142,7 +1142,7 @@ public final class Tokenizer implements Locator {
     private void resetAttributes() {
         // [NOCPP[
         if (newAttributesEachTime) {
-            attributes = new HtmlAttributes(mappingLangToXmlLang);
+            attributes = null;
         } else {
             // ]NOCPP]
             attributes.clear();
@@ -1165,13 +1165,15 @@ public final class Tokenizer implements Locator {
             err("Stray \u201C/\u201D at the end of an end tag.");
         }
         int rv = Tokenizer.DATA;
+        HtmlAttributes attrs = (attributes == null ? HtmlAttributes.EMPTY_ATTRIBUTES
+                : attributes);
         if (endTag) {
             /*
              * When an end tag token is emitted, the content model flag must be
              * switched to the PCDATA state.
              */
             contentModelFlag = ContentModelFlag.PCDATA;
-            if (attributes.getLength() != 0) {
+            if (attrs.getLength() != 0) {
                 /*
                  * When an end tag token is emitted with attributes, that is a
                  * parse error.
@@ -1180,7 +1182,7 @@ public final class Tokenizer implements Locator {
             }
             tokenHandler.endTag(tagName);
         } else {
-            tokenHandler.startTag(tagName, attributes, selfClosing);
+            tokenHandler.startTag(tagName, attrs, selfClosing);
             switch (contentModelFlag) {
                 case PCDATA:
                     rv = Tokenizer.DATA;
@@ -1197,7 +1199,7 @@ public final class Tokenizer implements Locator {
         }
         return rv;
     }
-
+    
     private void attributeNameComplete() throws SAXException {
 //        if (strBufOffset != -1) {
 //            attributeName = AttributeName.nameByBuffer(buf, strBufOffset,
@@ -1207,6 +1209,12 @@ public final class Tokenizer implements Locator {
                     namePolicy != XmlViolationPolicy.ALLOW);
 //        }
 
+            // [NOCPP[
+            if (attributes == null) {
+                attributes = new HtmlAttributes(mappingLangToXmlLang);
+            }
+            // ]NOCPP]
+            
         /*
          * When the user agent leaves the attribute name state (and before
          * emitting the tag token, if appropriate), the complete attribute's
