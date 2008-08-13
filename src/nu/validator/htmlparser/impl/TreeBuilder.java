@@ -2645,10 +2645,12 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             String internalCharsetHtml5 = attributes.getValue(AttributeName.CHARSET);
             if (internalCharsetHtml5 != null) {
                 tokenizer.internalEncodingDeclaration(internalCharsetHtml5);
+                requestSuspension();
             }
         } else {
             tokenizer.internalEncodingDeclaration(internalCharsetLegacy);
             Portability.releaseString(internalCharsetLegacy);
+            requestSuspension();
         }
     }
 

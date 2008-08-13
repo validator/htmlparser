@@ -37,6 +37,7 @@ package nu.validator.htmlparser.impl;
 
 import nu.validator.htmlparser.annotation.Local;
 import nu.validator.htmlparser.annotation.NoLength;
+import nu.validator.htmlparser.common.EncodingDeclarationHandler;
 import nu.validator.htmlparser.common.TokenHandler;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
 
@@ -60,7 +61,7 @@ import org.xml.sax.SAXParseException;
  * @version $Id$
  * @author hsivonen
  */
-public class Tokenizer implements Locator {
+public final class Tokenizer implements Locator {
 
     private static final int DATA = 0;
 
@@ -246,15 +247,17 @@ public class Tokenizer implements Locator {
      */
     private static final @NoLength char[] YSTEM = "ystem".toCharArray();
 
+    private final EncodingDeclarationHandler encodingDeclarationHandler;
+    
     /**
      * The token handler.
      */
-    protected final TokenHandler tokenHandler;
+    private final TokenHandler tokenHandler;
 
     /**
      * The error handler.
      */
-    protected ErrorHandler errorHandler;
+    private ErrorHandler errorHandler;
 
     /**
      * The previous <code>char</code> read from the buffer with infoset
@@ -319,13 +322,13 @@ public class Tokenizer implements Locator {
      * The SAX public id for the resource being tokenized. (Only passed to back
      * as part of locator data.)
      */
-    protected String publicId;
+    private String publicId;
 
     /**
      * The SAX system id for the resource being tokenized. (Only passed to back
      * as part of locator data.)
      */
-    protected String systemId;
+    private String systemId;
 
     /**
      * Buffer for short identifiers.
@@ -422,7 +425,7 @@ public class Tokenizer implements Locator {
     /**
      * Used together with <code>nonAsciiProhibited</code>.
      */
-    protected boolean alreadyComplainedAboutNonAscii;
+    private boolean alreadyComplainedAboutNonAscii;
 
     /**
      * Whether the stream is past the first 512 bytes.
@@ -475,7 +478,9 @@ public class Tokenizer implements Locator {
 
     private boolean shouldSuspend;
 
-    protected Confidence confidence;
+    private Confidence confidence;
+    
+    private PushedLocation pushedLocation;
 
     /**
      * The constructor.
@@ -485,13 +490,27 @@ public class Tokenizer implements Locator {
      */
     public Tokenizer(TokenHandler tokenHandler) {
         this.tokenHandler = tokenHandler;
+        this.encodingDeclarationHandler = null;
         this.newAttributesEachTime = false;
     }
 
+    public Tokenizer(TokenHandler tokenHandler, EncodingDeclarationHandler encodingDeclarationHandler) {
+        this.tokenHandler = tokenHandler;
+        this.encodingDeclarationHandler = encodingDeclarationHandler;
+        this.newAttributesEachTime = false;
+    }
+
+    public void initLocation(String newPublicId, String newSystemId) {
+        this.systemId = newSystemId;
+        this.publicId = newPublicId;
+        
+    }
+    
     // [NOCPP[
 
-    public Tokenizer(TokenHandler tokenHandler, boolean newAttributesEachTime) {
+    public Tokenizer(TokenHandler tokenHandler, EncodingDeclarationHandler encodingDeclarationHandler, boolean newAttributesEachTime) {
         this.tokenHandler = tokenHandler;
+        this.encodingDeclarationHandler = encodingDeclarationHandler;
         this.newAttributesEachTime = newAttributesEachTime;
     }
 
@@ -524,23 +543,13 @@ public class Tokenizer implements Locator {
      */
     public void setErrorHandler(ErrorHandler eh) {
         this.errorHandler = eh;
-        setCharacterHandlerErrorHandler(eh);
     }
 
-    protected void setCharacterHandlerErrorHandler(ErrorHandler eh) {
-
+    public ErrorHandler getErrorHandler() {
+        return this.errorHandler;
     }
-
+    
     // [NOCPP[
-
-    /**
-     * Returns the commentPolicy.
-     * 
-     * @return the commentPolicy
-     */
-    public XmlViolationPolicy getCommentPolicy() {
-        return commentPolicy;
-    }
 
     /**
      * Sets the commentPolicy.
@@ -553,15 +562,6 @@ public class Tokenizer implements Locator {
     }
 
     /**
-     * Returns the contentNonXmlCharPolicy.
-     * 
-     * @return the contentNonXmlCharPolicy
-     */
-    public XmlViolationPolicy getContentNonXmlCharPolicy() {
-        return contentNonXmlCharPolicy;
-    }
-
-    /**
      * Sets the contentNonXmlCharPolicy.
      * 
      * @param contentNonXmlCharPolicy
@@ -570,15 +570,6 @@ public class Tokenizer implements Locator {
     public void setContentNonXmlCharPolicy(
             XmlViolationPolicy contentNonXmlCharPolicy) {
         this.contentNonXmlCharPolicy = contentNonXmlCharPolicy;
-    }
-
-    /**
-     * Returns the contentSpacePolicy.
-     * 
-     * @return the contentSpacePolicy
-     */
-    public XmlViolationPolicy getContentSpacePolicy() {
-        return contentSpacePolicy;
     }
 
     /**
@@ -1090,7 +1081,7 @@ public class Tokenizer implements Locator {
      * @throws SAXException
      * @throws SAXParseException
      */
-    protected void fatal(String message) throws SAXException {
+    public void fatal(String message) throws SAXException {
         SAXParseException spe = new SAXParseException(message, this);
         if (errorHandler != null) {
             errorHandler.fatalError(spe);
@@ -1105,7 +1096,7 @@ public class Tokenizer implements Locator {
      *            the message
      * @throws SAXException
      */
-    protected void err(String message) throws SAXException {
+    public void err(String message) throws SAXException {
         if (errorHandler == null) {
             return;
         }
@@ -1113,6 +1104,23 @@ public class Tokenizer implements Locator {
         errorHandler.error(spe);
     }
 
+    public void errTreeBuilder(String message) throws SAXException {
+        ErrorHandler eh = null;
+        if (tokenHandler instanceof TreeBuilder<?>) {
+            TreeBuilder<?> treeBuilder = (TreeBuilder<?>) tokenHandler;
+            eh = treeBuilder.getErrorHandler();
+        }
+        if (eh == null) {
+            eh = errorHandler;
+        }
+        if (eh == null) {
+            return;
+        }
+        SAXParseException spe = new SAXParseException(message, this);
+        eh.error(spe);
+    }
+
+    
     /**
      * Reports a warning
      * 
@@ -1120,7 +1128,7 @@ public class Tokenizer implements Locator {
      *            the message
      * @throws SAXException
      */
-    protected void warn(String message) throws SAXException {
+    public void warn(String message) throws SAXException {
         if (errorHandler == null) {
             return;
         }
@@ -1134,7 +1142,7 @@ public class Tokenizer implements Locator {
     private void resetAttributes() {
         // [NOCPP[
         if (newAttributesEachTime) {
-            attributes = null;
+            attributes = new HtmlAttributes(mappingLangToXmlLang);
         } else {
             // ]NOCPP]
             attributes.clear();
@@ -1157,15 +1165,13 @@ public class Tokenizer implements Locator {
             err("Stray \u201C/\u201D at the end of an end tag.");
         }
         int rv = Tokenizer.DATA;
-        HtmlAttributes attrs = (attributes == null ? HtmlAttributes.EMPTY_ATTRIBUTES
-                : attributes);
         if (endTag) {
             /*
              * When an end tag token is emitted, the content model flag must be
              * switched to the PCDATA state.
              */
             contentModelFlag = ContentModelFlag.PCDATA;
-            if (attrs.getLength() != 0) {
+            if (attributes.getLength() != 0) {
                 /*
                  * When an end tag token is emitted with attributes, that is a
                  * parse error.
@@ -1174,7 +1180,7 @@ public class Tokenizer implements Locator {
             }
             tokenHandler.endTag(tagName);
         } else {
-            tokenHandler.startTag(tagName, attrs, selfClosing);
+            tokenHandler.startTag(tagName, attributes, selfClosing);
             switch (contentModelFlag) {
                 case PCDATA:
                     rv = Tokenizer.DATA;
@@ -1200,12 +1206,6 @@ public class Tokenizer implements Locator {
             attributeName = AttributeName.nameByBuffer(strBuf, 0, strBufLen,
                     namePolicy != XmlViolationPolicy.ALLOW);
 //        }
-
-        // [NOCPP[
-        if (attributes == null) {
-            attributes = new HtmlAttributes(mappingLangToXmlLang);
-        }
-        // ]NOCPP]
 
         /*
          * When the user agent leaves the attribute name state (and before
@@ -5193,8 +5193,15 @@ public class Tokenizer implements Locator {
         return c;
     }
 
-    protected void complainAboutNonAscii() throws SAXException {
-        err("The character encoding of the document was not explicit but the document contains non-ASCII.");
+    private void complainAboutNonAscii() throws SAXException {
+        String encoding = "";
+        if (true) {
+            err("The character encoding of the document was not explicit but the document contains non-ASCII.");
+        } else {
+            err("No explicit character encoding declaration has been seen yet (assumed \u201C"
+                    + encoding + "\u201D) but the document contains non-ASCII.");
+
+        }
     }
 
     public void internalEncodingDeclaration(String internalCharset)
@@ -5228,6 +5235,15 @@ public class Tokenizer implements Locator {
 
     public void requestSuspension() {
         shouldSuspend = true;
+    }
+
+    /**
+     * Returns the alreadyComplainedAboutNonAscii.
+     * 
+     * @return the alreadyComplainedAboutNonAscii
+     */
+    public boolean isAlreadyComplainedAboutNonAscii() {
+        return alreadyComplainedAboutNonAscii;
     }
 
 }

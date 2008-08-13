@@ -29,8 +29,10 @@ import java.io.Reader;
 import java.nio.charset.UnsupportedCharsetException;
 
 import nu.validator.htmlparser.common.CharacterHandler;
+import nu.validator.htmlparser.common.EncodingDeclarationHandler;
 import nu.validator.htmlparser.common.Heuristics;
 import nu.validator.htmlparser.common.TokenHandler;
+import nu.validator.htmlparser.common.XmlViolationPolicy;
 import nu.validator.htmlparser.extra.NormalizationChecker;
 import nu.validator.htmlparser.impl.Confidence;
 import nu.validator.htmlparser.impl.Tokenizer;
@@ -40,10 +42,11 @@ import nu.validator.htmlparser.rewindable.RewindableInputStream;
 
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
+import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
-public class Driver extends Tokenizer {
+public class Driver implements EncodingDeclarationHandler {
 
     /**
      * The input UTF-16 code unit stream. If a byte stream was given, this
@@ -64,6 +67,10 @@ public class Driver extends Tokenizer {
     private boolean allowRewinding = true;
 
     private Heuristics heuristics = Heuristics.NONE;
+    
+    private final Tokenizer tokenizer;
+    
+    private Confidence confidence;
 
     /**
      * Used for NFC checking if non-<code>null</code>, source code capture,
@@ -72,11 +79,11 @@ public class Driver extends Tokenizer {
     private CharacterHandler[] characterHandlers = new CharacterHandler[0];
 
     public Driver(TokenHandler tokenHandler) {
-        super(tokenHandler);
+        this.tokenizer = new Tokenizer(tokenHandler, this);
     }
 
     public Driver(TokenHandler tokenHandler, boolean newAttributesEachTime) {
-        super(tokenHandler, newAttributesEachTime);
+        this.tokenizer = new Tokenizer(tokenHandler, this, newAttributesEachTime);
     }
     
     /**
@@ -109,9 +116,8 @@ public class Driver extends Tokenizer {
             if (isCheckingNormalization()) {
                 return;
             } else {
-                NormalizationChecker normalizationChecker = new NormalizationChecker(
-                        this);
-                normalizationChecker.setErrorHandler(errorHandler);
+                NormalizationChecker normalizationChecker = new NormalizationChecker(tokenizer);
+                normalizationChecker.setErrorHandler(tokenizer.getErrorHandler());
 
             }
         } else {
@@ -177,8 +183,7 @@ public class Driver extends Tokenizer {
         confidence = Confidence.TENTATIVE;
         swallowBom = true;
         rewindableInputStream = null;
-        this.systemId = is.getSystemId();
-        this.publicId = is.getPublicId();
+        tokenizer.initLocation(is.getPublicId(), is.getSystemId());
         this.reader = is.getCharacterStream();
         this.characterEncoding = encodingFromExternalDeclaration(is.getEncoding());
         if (this.reader == null) {
@@ -192,11 +197,11 @@ public class Driver extends Tokenizer {
                             inputStream);
                 }
                 this.reader = new HtmlInputStreamReader(inputStream,
-                        errorHandler, this, this, heuristics);
+                        tokenizer.getErrorHandler(), tokenizer, this, heuristics);
             } else {
                 becomeConfident();
                 this.reader = new HtmlInputStreamReader(inputStream,
-                        errorHandler, this, this, this.characterEncoding);
+                        tokenizer.getErrorHandler(), tokenizer, this, this.characterEncoding);
             }
         } else {
             becomeConfident();
@@ -211,18 +216,18 @@ public class Driver extends Tokenizer {
                     }
                     runStates();
                     if (confidence == Confidence.TENTATIVE
-                            && !alreadyComplainedAboutNonAscii) {
+                            && !tokenizer.isAlreadyComplainedAboutNonAscii()) {
                         warnWithoutLocation("The character encoding of the document was not declared.");
                     }
                     break;
                 } catch (ReparseException e) {
                     if (rewindableInputStream == null) {
-                        fatal("Changing encoding at this point would need non-streamable behavior.");
+                        tokenizer.fatal("Changing encoding at this point would need non-streamable behavior.");
                     } else {
                         rewindableInputStream.rewind();
                         becomeConfident();
                         this.reader = new HtmlInputStreamReader(
-                                rewindableInputStream, errorHandler, this,
+                                rewindableInputStream, tokenizer.getErrorHandler(), tokenizer,
                                 this, this.characterEncoding);
                     }
                     continue;
@@ -232,7 +237,7 @@ public class Driver extends Tokenizer {
             t = tr;
         } finally {
             try {
-                end();
+                tokenizer.end();
                 characterEncoding = null;
                 for (int i = 0; i < characterHandlers.length; i++) {
                     CharacterHandler ch = characterHandlers[i];
@@ -268,7 +273,7 @@ public class Driver extends Tokenizer {
     }
 
     private void runStates() throws SAXException, IOException {
-        start();
+        tokenizer.start();
 
         char[] buffer = new char[2048];
         UTF16Buffer bufr = new UTF16Buffer(buffer, 0, 0);
@@ -295,7 +300,7 @@ public class Driver extends Tokenizer {
                     bufr.adjust(lastWasCR);
                     lastWasCR = false;
                     if (bufr.hasMore()) {
-                        lastWasCR = tokenizeBuffer(bufr);                    
+                        lastWasCR = tokenizer.tokenizeBuffer(bufr);                    
                     }
                 }
             }
@@ -311,22 +316,12 @@ public class Driver extends Tokenizer {
                     bufr.adjust(lastWasCR);
                     lastWasCR = false;
                     if (bufr.hasMore()) {
-                        lastWasCR = tokenizeBuffer(bufr);                    
+                        lastWasCR = tokenizer.tokenizeBuffer(bufr);                    
                     }
                 }
             }
         }
-        eof();
-    }
-
-    protected void setCharacterHandlerErrorHandler(ErrorHandler eh) {
-        for (int i = 0; i < characterHandlers.length; i++) {
-            CharacterHandler ch = characterHandlers[i];
-            if (ch instanceof NormalizationChecker) {
-                NormalizationChecker nc = (NormalizationChecker) ch;
-                nc.setErrorHandler(eh);
-            }
-        }
+        tokenizer.eof();
     }
 
     public void setEncoding(Encoding encoding, Confidence confidence) {
@@ -344,7 +339,7 @@ public class Driver extends Tokenizer {
             if ("utf-16".equals(internalCharset)
                     || "utf-16be".equals(internalCharset)
                     || "utf-16le".equals(internalCharset)) {
-                errTreeBuilder("Internal encoding declaration specified \u201C"
+                tokenizer.errTreeBuilder("Internal encoding declaration specified \u201C"
                         + internalCharset
                         + "\u201D which is not an ASCII superset. Continuing as if the encoding had been \u201Cutf-8\u201D.");
                 cs = Encoding.UTF8;
@@ -357,7 +352,7 @@ public class Driver extends Tokenizer {
                 actual = cs;
             }
             if (!actual.isAsciiSuperset()) {
-                errTreeBuilder("Internal encoding declaration specified \u201C"
+                tokenizer.errTreeBuilder("Internal encoding declaration specified \u201C"
                         + internalCharset
                         + "\u201D which is not an ASCII superset. Not changing the encoding.");
                 return;
@@ -371,20 +366,20 @@ public class Driver extends Tokenizer {
                 return;
             }
             if (confidence == Confidence.CERTAIN && actual != characterEncoding) {
-                errTreeBuilder("Internal encoding declaration \u201C"
+                tokenizer.errTreeBuilder("Internal encoding declaration \u201C"
                         + internalCharset
                         + "\u201D disagrees with the actual encoding of the document (\u201C"
                         + characterEncoding.getCanonName() + "\u201D).");
             } else {
                 Encoding newEnc = whineAboutEncodingAndReturnActual(
                         internalCharset, cs);
-                errTreeBuilder("Changing character encoding \u201C"
+                tokenizer.errTreeBuilder("Changing character encoding \u201C"
                         + internalCharset + "\u201D and reparsing.");
                 characterEncoding = newEnc;
                 throw new ReparseException();
             }
         } catch (UnsupportedCharsetException e) {
-            errTreeBuilder("Internal encoding declaration named an unsupported chararacter encoding \u201C"
+            tokenizer.errTreeBuilder("Internal encoding declaration named an unsupported chararacter encoding \u201C"
                     + internalCharset + "\u201D.");
         }
     }
@@ -409,22 +404,6 @@ public class Driver extends Tokenizer {
         this.heuristics = heuristics;
     }
 
-    protected void errTreeBuilder(String message) throws SAXException {
-        ErrorHandler eh = null;
-        if (tokenHandler instanceof TreeBuilder<?>) {
-            TreeBuilder<?> treeBuilder = (TreeBuilder<?>) tokenHandler;
-            eh = treeBuilder.getErrorHandler();
-        }
-        if (eh == null) {
-            eh = errorHandler;
-        }
-        if (eh == null) {
-            return;
-        }
-        SAXParseException spe = new SAXParseException(message, this);
-        eh.error(spe);
-    }
-
     /**
      * Reports a warning without line/col
      * 
@@ -433,11 +412,12 @@ public class Driver extends Tokenizer {
      * @throws SAXException
      */
     protected void warnWithoutLocation(String message) throws SAXException {
+        ErrorHandler errorHandler = tokenizer.getErrorHandler();
         if (errorHandler == null) {
             return;
         }
         SAXParseException spe = new SAXParseException(message, null,
-                getSystemId(), -1, -1);
+                tokenizer.getSystemId(), -1, -1);
         errorHandler.warning(spe);
     }
 
@@ -458,7 +438,7 @@ public class Driver extends Tokenizer {
             }
             return whineAboutEncodingAndReturnActual(encoding, cs);
         } catch (UnsupportedCharsetException e) {
-            err("Unsupported character encoding name: \u201C" + encoding
+            tokenizer.err("Unsupported character encoding name: \u201C" + encoding
                     + "\u201D. Will sniff.");
             swallowBom = true;
         }
@@ -476,28 +456,28 @@ public class Driver extends Tokenizer {
         String canonName = cs.getCanonName();
         if (!cs.isRegistered()) {
             if (encoding.startsWith("x-")) {
-                err("The encoding \u201C"
+                tokenizer.err("The encoding \u201C"
                         + encoding
                         + "\u201D is not an IANA-registered encoding. (Charmod C022)");
             } else {
-                err("The encoding \u201C"
+                tokenizer.err("The encoding \u201C"
                         + encoding
                         + "\u201D is not an IANA-registered encoding and did not use the \u201Cx-\u201D prefix. (Charmod C023)");
             }
         } else if (!canonName.equals(encoding)) {
-            err("The encoding \u201C"
+            tokenizer.err("The encoding \u201C"
                     + encoding
                     + "\u201D is not the preferred name of the character encoding in use. The preferred name is \u201C"
                     + canonName + "\u201D. (Charmod C024)");
         }
         if (cs.isShouldNot()) {
-            warn("Authors should not use the character encoding \u201C"
+            tokenizer.warn("Authors should not use the character encoding \u201C"
                     + encoding
                     + "\u201D. It is recommended to use \u201CUTF-8\u201D.");
         } else if (cs.isLikelyEbcdic()) {
-            warn("Authors should not use EBCDIC-based encodings. It is recommended to use \u201CUTF-8\u201D.");
+            tokenizer.warn("Authors should not use EBCDIC-based encodings. It is recommended to use \u201CUTF-8\u201D.");
         } else if (cs.isObscure()) {
-            warn("The character encoding \u201C"
+            tokenizer.warn("The character encoding \u201C"
                     + encoding
                     + "\u201D is not widely supported. Better interoperability may be achieved by using \u201CUTF-8\u201D.");
         }
@@ -505,20 +485,99 @@ public class Driver extends Tokenizer {
         if (actual == null) {
             return cs;
         } else {
-            warn("Using \u201C" + actual.getCanonName()
+            tokenizer.warn("Using \u201C" + actual.getCanonName()
                     + "\u201D instead of the declared encoding \u201C"
                     + encoding + "\u201D.");
             return actual;
         }
     }
 
-    protected void complainAboutNonAscii() throws SAXException {
-        err("No explicit character encoding declaration has been seen yet (assumed \u201C"
-                + characterEncoding.getCanonName()
-                + "\u201D) but the document contains non-ASCII.");
-    }
-
     private class ReparseException extends SAXException {
 
+    }
+
+    void notifyAboutMetaBoundary() {
+        tokenizer.notifyAboutMetaBoundary();
+    }
+
+    /**
+     * @param commentPolicy
+     * @see nu.validator.htmlparser.impl.Tokenizer#setCommentPolicy(nu.validator.htmlparser.common.XmlViolationPolicy)
+     */
+    public void setCommentPolicy(XmlViolationPolicy commentPolicy) {
+        tokenizer.setCommentPolicy(commentPolicy);
+    }
+
+    /**
+     * @param contentNonXmlCharPolicy
+     * @see nu.validator.htmlparser.impl.Tokenizer#setContentNonXmlCharPolicy(nu.validator.htmlparser.common.XmlViolationPolicy)
+     */
+    public void setContentNonXmlCharPolicy(
+            XmlViolationPolicy contentNonXmlCharPolicy) {
+        tokenizer.setContentNonXmlCharPolicy(contentNonXmlCharPolicy);
+    }
+
+    /**
+     * @param contentSpacePolicy
+     * @see nu.validator.htmlparser.impl.Tokenizer#setContentSpacePolicy(nu.validator.htmlparser.common.XmlViolationPolicy)
+     */
+    public void setContentSpacePolicy(XmlViolationPolicy contentSpacePolicy) {
+        tokenizer.setContentSpacePolicy(contentSpacePolicy);
+    }
+
+    /**
+     * @param eh
+     * @see nu.validator.htmlparser.impl.Tokenizer#setErrorHandler(org.xml.sax.ErrorHandler)
+     */
+    public void setErrorHandler(ErrorHandler eh) {
+        tokenizer.setErrorHandler(eh);
+        for (int i = 0; i < characterHandlers.length; i++) {
+            CharacterHandler ch = characterHandlers[i];
+            if (ch instanceof NormalizationChecker) {
+                NormalizationChecker nc = (NormalizationChecker) ch;
+                nc.setErrorHandler(eh);
+            }
+        }
+    }
+
+    /**
+     * @param html4ModeCompatibleWithXhtml1Schemata
+     * @see nu.validator.htmlparser.impl.Tokenizer#setHtml4ModeCompatibleWithXhtml1Schemata(boolean)
+     */
+    public void setHtml4ModeCompatibleWithXhtml1Schemata(
+            boolean html4ModeCompatibleWithXhtml1Schemata) {
+        tokenizer.setHtml4ModeCompatibleWithXhtml1Schemata(html4ModeCompatibleWithXhtml1Schemata);
+    }
+
+    /**
+     * @param mappingLangToXmlLang
+     * @see nu.validator.htmlparser.impl.Tokenizer#setMappingLangToXmlLang(boolean)
+     */
+    public void setMappingLangToXmlLang(boolean mappingLangToXmlLang) {
+        tokenizer.setMappingLangToXmlLang(mappingLangToXmlLang);
+    }
+
+    /**
+     * @param namePolicy
+     * @see nu.validator.htmlparser.impl.Tokenizer#setNamePolicy(nu.validator.htmlparser.common.XmlViolationPolicy)
+     */
+    public void setNamePolicy(XmlViolationPolicy namePolicy) {
+        tokenizer.setNamePolicy(namePolicy);
+    }
+
+    /**
+     * @param xmlnsPolicy
+     * @see nu.validator.htmlparser.impl.Tokenizer#setXmlnsPolicy(nu.validator.htmlparser.common.XmlViolationPolicy)
+     */
+    public void setXmlnsPolicy(XmlViolationPolicy xmlnsPolicy) {
+        tokenizer.setXmlnsPolicy(xmlnsPolicy);
+    }
+
+    public String getCharacterEncoding() throws SAXException {
+        return characterEncoding.getCanonName();
+    }
+
+    public Locator getDocumentLocator() {
+        return tokenizer;
     }
 }

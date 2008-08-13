@@ -66,7 +66,7 @@ public final class HtmlInputStreamReader extends Reader implements
 
     private final Locator locator;
 
-    private final Tokenizer tokenizer;
+    private final Driver tokenizer;
 
     private CharsetDecoder decoder = null;
 
@@ -162,7 +162,7 @@ public final class HtmlInputStreamReader extends Reader implements
     }
 
     public HtmlInputStreamReader(InputStream inputStream,
-            ErrorHandler errorHandler, Locator locator, Tokenizer tokenizer,
+            ErrorHandler errorHandler, Locator locator, Driver tokenizer,
             Encoding encoding) throws SAXException, IOException {
         this.inputStream = inputStream;
         this.errorHandler = errorHandler;
