@@ -824,7 +824,7 @@ public class HtmlParser implements XMLReader {
      * @return the <code>Locator</code>
      */
     public Locator getDocumentLocator() {
-        return tokenizer;
+        return tokenizer.getDocumentLocator();
     }
 
     /**
