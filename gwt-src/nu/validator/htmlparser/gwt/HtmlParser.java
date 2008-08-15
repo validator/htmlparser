@@ -99,12 +99,12 @@ public class HtmlParser {
     public HtmlParser(JavaScriptObject document) {
         this.domTreeBuilder = new BrowserTreeBuilder(document);
         this.tokenizer = new Tokenizer(domTreeBuilder);
-        this.domTreeBuilder.setNamePolicy(XmlViolationPolicy.ALLOW);
-        this.tokenizer.setCommentPolicy(XmlViolationPolicy.ALLOW);
-        this.tokenizer.setContentNonXmlCharPolicy(XmlViolationPolicy.ALLOW);
-        this.tokenizer.setContentSpacePolicy(XmlViolationPolicy.ALLOW);
-        this.tokenizer.setNamePolicy(XmlViolationPolicy.ALLOW);
-        this.tokenizer.setXmlnsPolicy(XmlViolationPolicy.ALLOW);
+        this.domTreeBuilder.setNamePolicy(XmlViolationPolicy.ALTER_INFOSET);
+        this.tokenizer.setCommentPolicy(XmlViolationPolicy.ALTER_INFOSET);
+        this.tokenizer.setContentNonXmlCharPolicy(XmlViolationPolicy.ALTER_INFOSET);
+        this.tokenizer.setContentSpacePolicy(XmlViolationPolicy.ALTER_INFOSET);
+        this.tokenizer.setNamePolicy(XmlViolationPolicy.ALTER_INFOSET);
+        this.tokenizer.setXmlnsPolicy(XmlViolationPolicy.ALTER_INFOSET);
     }
 
     /**

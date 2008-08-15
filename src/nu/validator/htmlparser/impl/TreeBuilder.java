@@ -403,6 +403,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         cdataOrRcdataTimesToPop = 0;
         currentPtr = -1;
         formPointer = null;
+        // [NOCPP[
+        idLocations.clear();
+        // ]NOCPP]
         wantingComments = wantsComments();
         start(context != null);
         if (context == null) {
