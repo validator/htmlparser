@@ -36,9 +36,9 @@ import com.google.gwt.core.client.JavaScriptObject;
 class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
 
     private JavaScriptObject document;
-    
+
     private JavaScriptObject script;
-    
+
     private JavaScriptObject placeholder;
 
     protected BrowserTreeBuilder(JavaScriptObject document) {
@@ -46,18 +46,18 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
         this.document = document;
     }
 
-    private static native boolean hasAttributeNS(JavaScriptObject element, String uri, String localName) /*-{
-        return element.hasAttributeNS(uri, localName); 
-    }-*/;
+    private static native boolean hasAttributeNS(JavaScriptObject element,
+            String uri, String localName) /*-{
+           return element.hasAttributeNS(uri, localName); 
+       }-*/;
 
-    private static native void setAttributeNS(JavaScriptObject element, String uri, String localName, String value) /*-{
-        element.setAttributeNS(uri, localName, value); 
-    }-*/;
-    
-    
-    @Override
-    protected void addAttributesToElement(JavaScriptObject element, HtmlAttributes attributes)
-            throws SAXException {
+    private static native void setAttributeNS(JavaScriptObject element,
+            String uri, String localName, String value) /*-{
+           element.setAttributeNS(uri, localName, value); 
+       }-*/;
+
+    @Override protected void addAttributesToElement(JavaScriptObject element,
+            HtmlAttributes attributes) throws SAXException {
         try {
             for (int i = 0; i < attributes.getLength(); i++) {
                 String localName = attributes.getLocalName(i);
@@ -72,25 +72,26 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
         }
     }
 
-    private static native void appendChild(JavaScriptObject parent, JavaScriptObject child) /*-{
-        parent.appendChild(child); 
-    }-*/;
+    private static native void appendChild(JavaScriptObject parent,
+            JavaScriptObject child) /*-{
+           parent.appendChild(child); 
+       }-*/;
 
-    private static native JavaScriptObject createTextNode(JavaScriptObject doc, String text) /*-{
-        return doc.createTextNode(text); 
-    }-*/;
-    
-    @Override
-    protected void appendCharacters(JavaScriptObject parent, char[] buf, int start,
-            int length) throws SAXException {
+    private static native JavaScriptObject createTextNode(JavaScriptObject doc,
+            String text) /*-{
+           return doc.createTextNode(text); 
+       }-*/;
+
+    @Override protected void appendCharacters(JavaScriptObject parent,
+            char[] buf, int start, int length) throws SAXException {
         try {
             if (parent == placeholder) {
-                appendChild(script, createTextNode(document, new String(buf, start,
-                        length)));
-                
+                appendChild(script, createTextNode(document, new String(buf,
+                        start, length)));
+
             } else {
-                appendChild(parent, createTextNode(document, new String(buf, start,
-                    length)));
+                appendChild(parent, createTextNode(document, new String(buf,
+                        start, length)));
             }
         } catch (JavaScriptException e) {
             fatal(e);
@@ -98,16 +99,17 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
     }
 
     private static native boolean hasChildNodes(JavaScriptObject element) /*-{
-        return element.hasChildNodes(); 
-    }-*/;
-    
-    private static native JavaScriptObject getFirstChild(JavaScriptObject element) /*-{
-        return element.firstChild; 
-    }-*/;
-    
-    @Override
-    protected void appendChildrenToNewParent(JavaScriptObject oldParent,
-            JavaScriptObject newParent) throws SAXException {
+           return element.hasChildNodes(); 
+       }-*/;
+
+    private static native JavaScriptObject getFirstChild(
+            JavaScriptObject element) /*-{
+           return element.firstChild; 
+       }-*/;
+
+    @Override protected void appendChildrenToNewParent(
+            JavaScriptObject oldParent, JavaScriptObject newParent)
+            throws SAXException {
         try {
             while (hasChildNodes(oldParent)) {
                 appendChild(newParent, getFirstChild(oldParent));
@@ -117,53 +119,57 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
         }
     }
 
-    private static native JavaScriptObject createComment(JavaScriptObject doc, String text) /*-{
-        return doc.createComment(text); 
-    }-*/;
-    
-    @Override
-    protected void appendComment(JavaScriptObject parent, char[] buf, int start,
+    private static native JavaScriptObject createComment(JavaScriptObject doc,
+            String text) /*-{
+           return doc.createComment(text); 
+       }-*/;
+
+    @Override protected void appendComment(JavaScriptObject parent, char[] buf,
+            int start, int length) throws SAXException {
+        try {
+            if (parent == placeholder) {
+                appendChild(script, createComment(document, new String(buf,
+                        start, length)));
+            } else {
+                appendChild(parent, createComment(document, new String(buf,
+                        start, length)));
+            }
+        } catch (JavaScriptException e) {
+            fatal(e);
+        }
+    }
+
+    @Override protected void appendCommentToDocument(char[] buf, int start,
             int length) throws SAXException {
         try {
-            appendChild(parent, createComment(document, new String(buf, start,
-                    length)));
+            appendChild(document, createComment(document, new String(buf,
+                    start, length)));
         } catch (JavaScriptException e) {
             fatal(e);
         }
     }
 
-    @Override
-    protected void appendCommentToDocument(char[] buf, int start, int length)
-            throws SAXException {
-        try {
-            appendChild(document, createComment(document, new String(buf, start,
-                    length)));
-        } catch (JavaScriptException e) {
-            fatal(e);
-        }
-    }
+    private static native JavaScriptObject createElementNS(
+            JavaScriptObject doc, String ns, String local) /*-{
+           return doc.createElementNS(ns, local); 
+       }-*/;
 
-    private static native JavaScriptObject createElementNS(JavaScriptObject doc, String ns, String local) /*-{
-        return doc.createElementNS(ns, local); 
-    }-*/;
-    
-    @Override
-    protected JavaScriptObject createElement(String ns, String name, HtmlAttributes attributes)
-            throws SAXException {
+    @Override protected JavaScriptObject createElement(String ns, String name,
+            HtmlAttributes attributes) throws SAXException {
         try {
-            JavaScriptObject rv = createElementNS(document,
-                    ns, name);
+            JavaScriptObject rv = createElementNS(document, ns, name);
             for (int i = 0; i < attributes.getLength(); i++) {
                 setAttributeNS(rv, attributes.getURI(i),
                         attributes.getLocalName(i), attributes.getValue(i));
             }
-            
+
             if ("script" == name) {
                 script = rv;
-                placeholder = createElementNS(document, "http://n.validator.nu/placeholder/", "__placeholder__");
+                placeholder = createElementNS(document,
+                        "http://n.validator.nu/placeholder/", "__placeholder__");
                 rv = placeholder;
             }
-            
+
             return rv;
         } catch (JavaScriptException e) {
             fatal(e);
@@ -171,9 +177,8 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
         }
     }
 
-    @Override
-    protected JavaScriptObject createHtmlElementSetAsRoot(HtmlAttributes attributes)
-            throws SAXException {
+    @Override protected JavaScriptObject createHtmlElementSetAsRoot(
+            HtmlAttributes attributes) throws SAXException {
         try {
             JavaScriptObject rv = createElementNS(document,
                     "http://www.w3.org/1999/xhtml", "html");
@@ -189,17 +194,18 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
         }
     }
 
-    private static native JavaScriptObject getParentNode(JavaScriptObject element) /*-{
-        return element.parentNode; 
-    }-*/;
-    
-    private static native void removeChild(JavaScriptObject parent, JavaScriptObject child) /*-{
-        parent.removeChild(child); 
-    }-*/;
-    
-    
-    @Override
-    protected void detachFromParent(JavaScriptObject element) throws SAXException {
+    private static native JavaScriptObject getParentNode(
+            JavaScriptObject element) /*-{
+           return element.parentNode; 
+       }-*/;
+
+    private static native void removeChild(JavaScriptObject parent,
+            JavaScriptObject child) /*-{
+           parent.removeChild(child); 
+       }-*/;
+
+    @Override protected void detachFromParent(JavaScriptObject element)
+            throws SAXException {
         try {
             JavaScriptObject parent = getParentNode(element);
             if (parent != null) {
@@ -210,18 +216,22 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
         }
     }
 
-    @Override
-    protected void detachFromParentAndAppendToNewParent(JavaScriptObject child,
-            JavaScriptObject newParent) throws SAXException {
+    @Override protected void detachFromParentAndAppendToNewParent(
+            JavaScriptObject child, JavaScriptObject newParent)
+            throws SAXException {
         try {
-            appendChild(newParent, child);
+            if (newParent == placeholder) {
+                appendChild(script, child);                
+            } else {
+                appendChild(newParent, child);
+            }
         } catch (JavaScriptException e) {
             fatal(e);
         }
     }
 
-    @Override
-    protected boolean hasChildren(JavaScriptObject element) throws SAXException {
+    @Override protected boolean hasChildren(JavaScriptObject element)
+            throws SAXException {
         try {
             return hasChildNodes(element);
         } catch (JavaScriptException e) {
@@ -230,12 +240,13 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
         }
     }
 
-    private static native void insertBeforeNative(JavaScriptObject parent, JavaScriptObject child, JavaScriptObject sibling) /*-{
-        parent.insertBefore(child, sibling);
-    }-*/;
-    
-    @Override
-    protected void insertBefore(JavaScriptObject child, JavaScriptObject sibling, JavaScriptObject parent)
+    private static native void insertBeforeNative(JavaScriptObject parent,
+            JavaScriptObject child, JavaScriptObject sibling) /*-{
+           parent.insertBefore(child, sibling);
+       }-*/;
+
+    @Override protected void insertBefore(JavaScriptObject child,
+            JavaScriptObject sibling, JavaScriptObject parent)
             throws SAXException {
         try {
             insertBeforeNative(parent, child, sibling);
@@ -244,22 +255,23 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
         }
     }
 
-    @Override
-    protected void insertCharactersBefore(char[] buf, int start, int length,
-            JavaScriptObject sibling, JavaScriptObject parent) throws SAXException {
+    @Override protected void insertCharactersBefore(char[] buf, int start,
+            int length, JavaScriptObject sibling, JavaScriptObject parent)
+            throws SAXException {
         try {
-            insertBeforeNative(parent, createTextNode(document, new String(buf, start, length)), sibling);
+            insertBeforeNative(parent, createTextNode(document, new String(buf,
+                    start, length)), sibling);
         } catch (JavaScriptException e) {
             fatal(e);
         }
     }
 
     private static native int getNodeType(JavaScriptObject node) /*-{
-        return node.nodeType;
-    }-*/;
-    
-    @Override
-    protected JavaScriptObject parentElementFor(JavaScriptObject child) throws SAXException {
+           return node.nodeType;
+       }-*/;
+
+    @Override protected JavaScriptObject parentElementFor(JavaScriptObject child)
+            throws SAXException {
         try {
             JavaScriptObject parent = getParentNode(child);
             if (parent != null && getNodeType(parent) == 1 /* ELEMENT_NODE */) {
@@ -274,11 +286,11 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
     }
 
     private static native JavaScriptObject cloneNode(JavaScriptObject node) /*-{
-        return node.cloneNode(false);
-    }-*/;
-    
-    @Override
-    protected JavaScriptObject shallowClone(JavaScriptObject element) throws SAXException {
+           return node.cloneNode(false);
+       }-*/;
+
+    @Override protected JavaScriptObject shallowClone(JavaScriptObject element)
+            throws SAXException {
         try {
             return cloneNode(element);
         } catch (JavaScriptException e) {
@@ -298,9 +310,10 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
         return rv;
     }
 
-    private static native JavaScriptObject createDocumentFragment(JavaScriptObject doc) /*-{
-        return doc.createDocumentFragment(); 
-    }-*/;
+    private static native JavaScriptObject createDocumentFragment(
+            JavaScriptObject doc) /*-{
+           return doc.createDocumentFragment(); 
+       }-*/;
 
     JavaScriptObject getDocumentFragment() {
         JavaScriptObject rv = createDocumentFragment(document);
@@ -313,14 +326,15 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
     }
 
     /**
-     * @see nu.validator.htmlparser.impl.TreeBuilder#createJavaScriptObject(String, java.lang.String, org.xml.sax.Attributes, java.lang.Object)
+     * @see nu.validator.htmlparser.impl.TreeBuilder#createJavaScriptObject(String,
+     *      java.lang.String, org.xml.sax.Attributes, java.lang.Object)
      */
-    @Override
-    protected JavaScriptObject createElement(String ns, String name,
-            HtmlAttributes attributes, JavaScriptObject form) throws SAXException {
+    @Override protected JavaScriptObject createElement(String ns, String name,
+            HtmlAttributes attributes, JavaScriptObject form)
+            throws SAXException {
         try {
             JavaScriptObject rv = createElement(ns, name, attributes);
-//            rv.setUserData("nu.validator.form-pointer", form, null);
+            // rv.setUserData("nu.validator.form-pointer", form, null);
             return rv;
         } catch (JavaScriptException e) {
             fatal(e);
@@ -331,18 +345,20 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
     /**
      * @see nu.validator.htmlparser.impl.TreeBuilder#start()
      */
-    @Override
-    protected void start(boolean fragment) throws SAXException {
+    @Override protected void start(boolean fragment) throws SAXException {
         script = null;
         placeholder = null;
     }
 
-    protected void documentMode(DocumentMode mode, String publicIdentifier, String systemIdentifier, boolean html4SpecificAdditionalErrorChecks) throws SAXException {
-//        document.setUserData("nu.validator.document-mode", mode, null);
+    protected void documentMode(DocumentMode mode, String publicIdentifier,
+            String systemIdentifier, boolean html4SpecificAdditionalErrorChecks)
+            throws SAXException {
+        // document.setUserData("nu.validator.document-mode", mode, null);
     }
 
     /**
-     * @see nu.validator.htmlparser.impl.TreeBuilder#elementPopped(java.lang.String, java.lang.String, java.lang.Object)
+     * @see nu.validator.htmlparser.impl.TreeBuilder#elementPopped(java.lang.String,
+     *      java.lang.String, java.lang.Object)
      */
     @Override protected void elementPopped(String ns, String name,
             JavaScriptObject node) throws SAXException {
@@ -350,11 +366,12 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
             requestSuspension();
         }
     }
-    
-    private static native void replace(JavaScriptObject oldNode, JavaScriptObject newNode) /*-{
-        oldNode.parentNode.replaceChild(newNode, oldNode);
-    }-*/;
-    
+
+    private static native void replace(JavaScriptObject oldNode,
+            JavaScriptObject newNode) /*-{
+           oldNode.parentNode.replaceChild(newNode, oldNode);
+       }-*/;
+
     void maybeRunScript() {
         if (script != null) {
             replace(placeholder, script);
