@@ -866,7 +866,12 @@ public final class Tokenizer implements Locator {
                 Portability.releaseArray(longStrBuf);
                 longStrBuf = newBuf;
             }
+            try {
             longStrBuf[longStrBufLen++] = c;
+            } catch (ArrayIndexOutOfBoundsException e) {
+                int i = 0;     
+                i++;
+            }
 //        }
     }
 
@@ -929,7 +934,7 @@ public final class Tokenizer implements Locator {
             longStrBuf = newBuf;
         }
         System.arraycopy(buffer, offset, longStrBuf, longStrBufLen, length);
-        longStrBufLen += reqLen;
+        longStrBufLen = reqLen;
     }
 
     /**
