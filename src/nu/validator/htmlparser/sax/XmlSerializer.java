@@ -592,8 +592,7 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
 
             for (int i = 0; i < attLen; i++) {
                 String attUri = atts.getURI(i);
-                if (attUri.length() == 0
-                        || "http://www.w3.org/XML/1998/namespace".equals(attUri)
+                if ("http://www.w3.org/XML/1998/namespace".equals(attUri)
                         || "http://www.w3.org/2000/xmlns/".equals(attUri)
                         || atts.getLocalName(i).length() == 0
                         || xmlNsQname(atts.getQName(i))) {
