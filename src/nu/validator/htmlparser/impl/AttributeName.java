@@ -325,7 +325,7 @@ public final class AttributeName
 //        if (str == null) {
 //            return null;
 //        } else {
-//            return "\"" + str + "\"";
+//            return "\"" + str.trim() + "\"";
 //        }
 //    }
 //    
@@ -390,10 +390,10 @@ public final class AttributeName
 //            char c = name.charAt(i);
 //            if (c == '-' || c == ':') {
 //                buf[i] = '_';
-//            } else if (c >= '0' && c <= '9') {
-//                buf[i] = c;
-//            } else {
+//            } else if (c >= 'a' && c <= 'z') {
 //                buf[i] = (char) (c - 0x20);
+//            } else {
+//                buf[i] = c;
 //            }
 //        }
 //        return new String(buf);
@@ -490,7 +490,6 @@ public final class AttributeName
     public static final AttributeName CODE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("code"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName BIAS = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("bias"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName COLS = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("cols"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName END  = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("end "), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName CLIP = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("clip"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName CHAR = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("char"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName BASE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("base"), ALL_NO_PREFIX, ALL_NCNAME, false);
@@ -661,7 +660,6 @@ public final class AttributeName
     public static final AttributeName VERSION = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("version"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName PATTERN = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("pattern"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName PROFILE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("profile"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName START   = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("start  "), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName SPACING = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("spacing"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName RESTART = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("restart"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ROWSPAN = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("rowspan"), ALL_NO_PREFIX, ALL_NCNAME, false);
@@ -683,7 +681,7 @@ public final class AttributeName
     public static final AttributeName DISABLED = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("disabled"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName FONTSIZE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("fontsize"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName KEYTIMES = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("keytimes", "keyTimes"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName LOOPEND  = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("loopend "), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName LOOPEND  = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("loopend "), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName PANOSE_1 = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("panose-1"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName HREFLANG = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("hreflang"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ONRESIZE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onresize"), ALL_NO_PREFIX, ALL_NCNAME, false);
@@ -716,7 +714,7 @@ public final class AttributeName
     public static final AttributeName XML_BASE = new AttributeName(NAMESPACE("http://www.w3.org/XML/1998/namespace"), COLONIFIED_LOCAL("xml:base", "base"), PREFIX("xml"), new boolean[]{false, true, true, false}, false);
     public static final AttributeName XML_LANG = new AttributeName(NAMESPACE("http://www.w3.org/XML/1998/namespace"), COLONIFIED_LOCAL("xml:lang", "lang"), PREFIX("xml"), new boolean[]{false, true, true, false}, false);
     public static final AttributeName X_HEIGHT = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("x-height"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName CONTROLS  = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("controls "), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName CONTROLS  = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("controls "), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ARIA_OWNS = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-owns"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName AUTOFOCUS = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("autofocus"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ARIA_SORT = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-sort"), ALL_NO_PREFIX, ALL_NCNAME, false);
@@ -760,10 +758,10 @@ public final class AttributeName
     public static final AttributeName REPEATDUR = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("repeatdur", "repeatDur"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName SELECTION = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("selection"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName SEPARATOR = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("separator"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName AUTOPLAY   = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("autoplay  "), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName AUTOPLAY   = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("autoplay  "), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName XML_SPACE = new AttributeName(NAMESPACE("http://www.w3.org/XML/1998/namespace"), COLONIFIED_LOCAL("xml:space", "space"), PREFIX("xml"), new boolean[]{false, true, true, false}, false);
-    public static final AttributeName ARIA_GRAB  = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-grab "), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName ARIA_BUSY  = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-busy "), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName ARIA_GRAB  = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-grab "), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName ARIA_BUSY  = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-busy "), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName AUTOSUBMIT = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("autosubmit"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ALPHABETIC = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("alphabetic"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ACTIONTYPE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("actiontype"), ALL_NO_PREFIX, ALL_NCNAME, false);
@@ -778,8 +776,8 @@ public final class AttributeName
     public static final AttributeName FONTWEIGHT = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("fontweight"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName FONT_STYLE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("font-style"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName KEYSPLINES = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("keysplines", "keySplines"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName LOOPSTART  = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("loopstart "), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName PLAYCOUNT  = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("playcount "), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName LOOPSTART  = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("loopstart "), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName PLAYCOUNT  = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("playcount "), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName HTTP_EQUIV = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("http-equiv"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ONACTIVATE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onactivate"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName OCCURRENCE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("occurrence"), ALL_NO_PREFIX, ALL_NCNAME, false);
@@ -852,7 +850,7 @@ public final class AttributeName
     public static final AttributeName SCROLLDELAY = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("scrolldelay"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName XMLNS_XLINK = new AttributeName(NAMESPACE("http://www.w3.org/2000/xmlns/"), COLONIFIED_LOCAL("xmlns:xlink", "xlink"), PREFIX("xmlns"), new boolean[]{false, false, false, false}, true);
     public static final AttributeName XLINK_TITLE = new AttributeName(NAMESPACE("http://www.w3.org/1999/xlink"), COLONIFIED_LOCAL("xlink:title", "title"), PREFIX("xlink"), new boolean[]{false, true, true, false}, false);
-    public static final AttributeName ARIA_HIDDEN  = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-hidden "), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName ARIA_HIDDEN  = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-hidden "), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName AUTOCOMPLETE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("autocomplete"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ARIA_SETSIZE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-setsize"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ARIA_CHANNEL = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-channel"), ALL_NO_PREFIX, ALL_NCNAME, false);
@@ -891,9 +889,9 @@ public final class AttributeName
     public static final AttributeName REPEAT_START = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("repeat-start"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName STDDEVIATION = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("stddeviation", "stdDeviation"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName STOP_OPACITY = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("stop-opacity"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName ARIA_CHECKED  = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-checked "), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName ARIA_PRESSED  = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-pressed "), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName ARIA_INVALID  = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-invalid "), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName ARIA_CHECKED  = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-checked "), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName ARIA_PRESSED  = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-pressed "), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName ARIA_INVALID  = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-invalid "), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ARIA_CONTROLS = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-controls"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ARIA_HASPOPUP = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-haspopup"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ACCENT_HEIGHT = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("accent-height"), ALL_NO_PREFIX, ALL_NCNAME, false);
@@ -933,9 +931,9 @@ public final class AttributeName
     public static final AttributeName SPECIFICATION = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("specification"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName XLINK_ACTUATE = new AttributeName(NAMESPACE("http://www.w3.org/1999/xlink"), COLONIFIED_LOCAL("xlink:actuate", "actuate"), PREFIX("xlink"), new boolean[]{false, true, true, false}, false);
     public static final AttributeName XLINK_ARCROLE = new AttributeName(NAMESPACE("http://www.w3.org/1999/xlink"), COLONIFIED_LOCAL("xlink:arcrole", "arcrole"), PREFIX("xlink"), new boolean[]{false, true, true, false}, false);
-    public static final AttributeName ARIA_EXPANDED  = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-expanded "), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName ARIA_DISABLED  = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-disabled "), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName ARIA_SELECTED  = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-selected "), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName ARIA_EXPANDED  = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-expanded "), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName ARIA_DISABLED  = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-disabled "), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName ARIA_SELECTED  = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-selected "), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ACCEPT_CHARSET = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("accept-charset"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ALIGNMENTSCOPE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("alignmentscope"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ARIA_MULTILINE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-multiline"), ALL_NO_PREFIX, ALL_NCNAME, false);
@@ -1074,7 +1072,6 @@ public final class AttributeName
     CODE,
     BIAS,
     COLS,
-    END ,
     CLIP,
     CHAR,
     BASE,
@@ -1245,7 +1242,6 @@ public final class AttributeName
     VERSION,
     PATTERN,
     PROFILE,
-    START  ,
     SPACING,
     RESTART,
     ROWSPAN,
@@ -1267,7 +1263,7 @@ public final class AttributeName
     DISABLED,
     FONTSIZE,
     KEYTIMES,
-    LOOPEND ,
+    LOOPEND ,
     PANOSE_1,
     HREFLANG,
     ONRESIZE,
@@ -1300,7 +1296,7 @@ public final class AttributeName
     XML_BASE,
     XML_LANG,
     X_HEIGHT,
-    CONTROLS ,
+    CONTROLS ,
     ARIA_OWNS,
     AUTOFOCUS,
     ARIA_SORT,
@@ -1344,10 +1340,10 @@ public final class AttributeName
     REPEATDUR,
     SELECTION,
     SEPARATOR,
-    AUTOPLAY  ,
+    AUTOPLAY  ,
     XML_SPACE,
-    ARIA_GRAB ,
-    ARIA_BUSY ,
+    ARIA_GRAB ,
+    ARIA_BUSY ,
     AUTOSUBMIT,
     ALPHABETIC,
     ACTIONTYPE,
@@ -1362,8 +1358,8 @@ public final class AttributeName
     FONTWEIGHT,
     FONT_STYLE,
     KEYSPLINES,
-    LOOPSTART ,
-    PLAYCOUNT ,
+    LOOPSTART ,
+    PLAYCOUNT ,
     HTTP_EQUIV,
     ONACTIVATE,
     OCCURRENCE,
@@ -1436,7 +1432,7 @@ public final class AttributeName
     SCROLLDELAY,
     XMLNS_XLINK,
     XLINK_TITLE,
-    ARIA_HIDDEN ,
+    ARIA_HIDDEN ,
     AUTOCOMPLETE,
     ARIA_SETSIZE,
     ARIA_CHANNEL,
@@ -1475,9 +1471,9 @@ public final class AttributeName
     REPEAT_START,
     STDDEVIATION,
     STOP_OPACITY,
-    ARIA_CHECKED ,
-    ARIA_PRESSED ,
-    ARIA_INVALID ,
+    ARIA_CHECKED ,
+    ARIA_PRESSED ,
+    ARIA_INVALID ,
     ARIA_CONTROLS,
     ARIA_HASPOPUP,
     ACCENT_HEIGHT,
@@ -1517,9 +1513,9 @@ public final class AttributeName
     SPECIFICATION,
     XLINK_ACTUATE,
     XLINK_ARCROLE,
-    ARIA_EXPANDED ,
-    ARIA_DISABLED ,
-    ARIA_SELECTED ,
+    ARIA_EXPANDED ,
+    ARIA_DISABLED ,
+    ARIA_SELECTED ,
     ACCEPT_CHARSET,
     ALIGNMENTSCOPE,
     ARIA_MULTILINE,
@@ -1659,7 +1655,6 @@ public final class AttributeName
     136548517,
     136652214,
     136884919,
-    136896708,
     136902418,
     136942992,
     137292068,
@@ -1830,7 +1825,6 @@ public final class AttributeName
     255547879,
     256077281,
     256345377,
-    257839617,
     258124199,
     258354465,
     258605063,
