@@ -502,11 +502,11 @@ public final class ElementName
     public static final ElementName PARAM = new ElementName("param", "param", TreeBuilder.PARAM_OR_SOURCE, true, false, false, null);
     public static final ElementName POWER = new ElementName("power", "power", TreeBuilder.OTHER, false, false, false, null);
     public static final ElementName REALS = new ElementName("reals", "reals", TreeBuilder.OTHER, false, false, false, null);
-    public static final ElementName STYLE = new ElementName("style", "style", TreeBuilder.STYLE, true, false, false, new char[] {'s','t','y','l','e'});
+    public static final ElementName STYLE = new ElementName("style", "style", TreeBuilder.STYLE, true, false, false, null);
     public static final ElementName SMALL = new ElementName("small", "small", TreeBuilder.B_OR_BIG_OR_EM_OR_FONT_OR_I_OR_S_OR_SMALL_OR_STRIKE_OR_STRONG_OR_TT_OR_U, false, false, false, null);
     public static final ElementName THEAD = new ElementName("thead", "thead", TreeBuilder.TBODY_OR_THEAD_OR_TFOOT, true, false, true, null);
     public static final ElementName TABLE = new ElementName("table", "table", TreeBuilder.TABLE, false, true, true, null);
-    public static final ElementName TITLE = new ElementName("title", "title", TreeBuilder.TITLE, true, false, false, new char[] {'t','i','t','l','e'});
+    public static final ElementName TITLE = new ElementName("title", "title", TreeBuilder.TITLE, true, false, false, null);
     public static final ElementName TSPAN = new ElementName("tspan", "tspan", TreeBuilder.OTHER, false, false, false, null);
     public static final ElementName TIMES = new ElementName("times", "times", TreeBuilder.OTHER, false, false, false, null);
     public static final ElementName TFOOT = new ElementName("tfoot", "tfoot", TreeBuilder.TBODY_OR_THEAD_OR_TFOOT, true, false, true, null);
@@ -564,7 +564,7 @@ public final class ElementName
     public static final ElementName SPACER = new ElementName("spacer", "spacer", TreeBuilder.AREA_OR_BASEFONT_OR_BGSOUND_OR_SPACER_OR_WBR, true, false, false, null);
     public static final ElementName SELECT = new ElementName("select", "select", TreeBuilder.SELECT, true, false, false, null);
     public static final ElementName SUBSET = new ElementName("subset", "subset", TreeBuilder.OTHER, false, false, false, null);
-    public static final ElementName SCRIPT = new ElementName("script", "script", TreeBuilder.SCRIPT, true, false, false, new char[] {'s','c','r','i','p','t'});
+    public static final ElementName SCRIPT = new ElementName("script", "script", TreeBuilder.SCRIPT, true, false, false, null);
     public static final ElementName TBREAK = new ElementName("tbreak", "tbreak", TreeBuilder.OTHER, false, false, false, null);
     public static final ElementName VECTOR = new ElementName("vector", "vector", TreeBuilder.OTHER, false, false, false, null);
     public static final ElementName ARTICLE = new ElementName("article", "article", TreeBuilder.FIELDSET_OR_ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION, true, false, false, null);
@@ -676,6 +676,7 @@ public final class ElementName
     public static final ElementName SOLIDCOLOR = new ElementName("solidcolor", "solidcolor", TreeBuilder.OTHER, false, false, false, null);
     public static final ElementName ALTGLYPHDEF = new ElementName("altglyphdef", "altGlyphDef", TreeBuilder.OTHER, false, false, false, null);
     public static final ElementName DETERMINANT = new ElementName("determinant", "determinant", TreeBuilder.OTHER, false, false, false, null);
+    public static final ElementName EVENTSOURCE = new ElementName("eventsource", "eventsource", TreeBuilder.COMMAND_OR_EVENT_SOURCE, true, false, false, null);
     public static final ElementName FEMERGENODE = new ElementName("femergenode", "feMergeNode", TreeBuilder.OTHER, false, false, false, null);
     public static final ElementName FECOMPOSITE = new ElementName("fecomposite", "feComposite", TreeBuilder.OTHER, false, false, false, null);
     public static final ElementName FESPOTLIGHT = new ElementName("fespotlight", "feSpotLight", TreeBuilder.OTHER, false, false, false, null);
@@ -687,7 +688,6 @@ public final class ElementName
     public static final ElementName ALTGLYPHITEM = new ElementName("altglyphitem", "altGlyphItem", TreeBuilder.OTHER, false, false, false, null);
     public static final ElementName ANIMATECOLOR = new ElementName("animatecolor", "animateColor", TreeBuilder.OTHER, false, false, false, null);
     public static final ElementName DATATEMPLATE = new ElementName("datatemplate", "datatemplate", TreeBuilder.OTHER, false, false, false, null);
-    public static final ElementName EVENT_SOURCE = new ElementName("event-source", "event-source", TreeBuilder.COMMAND_OR_EVENT_SOURCE, true, false, false, null);
     public static final ElementName EXPONENTIALE = new ElementName("exponentiale", "exponentiale", TreeBuilder.OTHER, false, false, false, null);
     public static final ElementName FETURBULENCE = new ElementName("feturbulence", "feTurbulence", TreeBuilder.OTHER, false, false, false, null);
     public static final ElementName FEPOINTLIGHT = new ElementName("fepointlight", "fePointLight", TreeBuilder.OTHER, false, false, false, null);
@@ -1068,6 +1068,7 @@ public final class ElementName
     SOLIDCOLOR,
     ALTGLYPHDEF,
     DETERMINANT,
+    EVENTSOURCE,
     FEMERGENODE,
     FECOMPOSITE,
     FESPOTLIGHT,
@@ -1079,7 +1080,6 @@ public final class ElementName
     ALTGLYPHITEM,
     ANIMATECOLOR,
     DATATEMPLATE,
-    EVENT_SOURCE,
     EXPONENTIALE,
     FETURBULENCE,
     FEPOINTLIGHT,
@@ -1461,6 +1461,7 @@ public final class ElementName
     356072847,
     370349192,
     373962798,
+    374509141,
     375558638,
     375574835,
     376053993,
@@ -1472,7 +1473,6 @@ public final class ElementName
     404133513,
     404307343,
     407031852,
-    408063573,
     408072233,
     409112005,
     409608425,
@@ -1506,5 +1506,6 @@ public final class ElementName
     642202932,
     644420819,
     };
+
 
 }
