@@ -5214,7 +5214,9 @@ public final class Tokenizer implements Locator {
 
     public void internalEncodingDeclaration(String internalCharset)
             throws SAXException {
-        // XXX NOP
+        if (encodingDeclarationHandler != null) {
+            encodingDeclarationHandler.internalEncodingDeclaration(internalCharset);
+        }
     }
 
     /**
