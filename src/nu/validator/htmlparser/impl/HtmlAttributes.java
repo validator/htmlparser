@@ -379,7 +379,7 @@ public final class HtmlAttributes implements Attributes {
     
     void processNonNcNames(TreeBuilder<?> treeBuilder, XmlViolationPolicy namePolicy) throws SAXException {
         for (int i = 0; i < length; i++) {
-            if (!names[i].isNcName(mode)) {
+            if (!names[i].isNcName(mode) && names[i] != AttributeName.XML_LANG) {
                 String name = names[i].getLocal(mode);
                 switch (namePolicy) {
                     case ALTER_INFOSET:
