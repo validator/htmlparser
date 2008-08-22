@@ -379,14 +379,17 @@ public final class HtmlAttributes implements Attributes {
     
     void processNonNcNames(TreeBuilder<?> treeBuilder, XmlViolationPolicy namePolicy) throws SAXException {
         for (int i = 0; i < length; i++) {
-            if (!names[i].isNcName(mode) && names[i] != AttributeName.XML_LANG) {
-                String name = names[i].getLocal(mode);
+            AttributeName attName = names[i];
+            if (!attName.isNcName(mode)) {
+                String name = attName.getLocal(mode);
                 switch (namePolicy) {
                     case ALTER_INFOSET:
                         names[i] = AttributeName.create(NCName.escapeName(name));
                         // fall through
                     case ALLOW:
-                        treeBuilder.warn("Attribute \u201C" + name + "\u201D is not serializable as XML 1.0.");
+                        if (attName == AttributeName.XML_LANG) {
+                            treeBuilder.warn("Attribute \u201C" + name + "\u201D is not serializable as XML 1.0.");
+                        }
                         break;
                     case FATAL:
                         treeBuilder.fatal("Attribute \u201C" + name + "\u201D is not serializable as XML 1.0.");
