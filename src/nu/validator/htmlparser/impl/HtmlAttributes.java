@@ -387,7 +387,7 @@ public final class HtmlAttributes implements Attributes {
                         names[i] = AttributeName.create(NCName.escapeName(name));
                         // fall through
                     case ALLOW:
-                        if (attName == AttributeName.XML_LANG) {
+                        if (attName != AttributeName.XML_LANG) {
                             treeBuilder.warn("Attribute \u201C" + name + "\u201D is not serializable as XML 1.0.");
                         }
                         break;
