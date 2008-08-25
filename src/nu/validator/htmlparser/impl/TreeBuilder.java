@@ -307,7 +307,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private XmlViolationPolicy namePolicy = XmlViolationPolicy.ALTER_INFOSET;
 
-    private Map<String, LocatorImpl> idLocations = new HashMap<String, LocatorImpl>();
+    private final Map<String, LocatorImpl> idLocations = new HashMap<String, LocatorImpl>();
 
     // ]NOCPP]
 
@@ -315,9 +315,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             boolean coalescingText) {
         this.conformingAndStreaming = (streamabilityViolationPolicy == XmlViolationPolicy.FATAL);
         this.coalescingText = coalescingText;
-        if (coalescingText) {
-            charBuffer = new char[1024];
-        }
     }
 
     /**
@@ -398,9 +395,13 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         tokenizer = self;
         stack = new StackNode[64];
         listOfActiveFormattingElements = new StackNode[64];
+        if (coalescingText) {
+            charBuffer = new char[1024];
+        }
         needToDropLF = false;
         cdataOrRcdataTimesToPop = 0;
         currentPtr = -1;
+        listPtr = -1;
         formPointer = null;
         // [NOCPP[
         idLocations.clear();
@@ -1272,6 +1273,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     public final void endTokenization() throws SAXException {
         stack = null;
         listOfActiveFormattingElements = null;
+        charBuffer = null;
+        // [NOCPP[
+        idLocations.clear();
+        // ]NOCPP]
         end();
     }
 

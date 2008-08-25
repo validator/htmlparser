@@ -333,7 +333,7 @@ public final class Tokenizer implements Locator {
     /**
      * Buffer for short identifiers.
      */
-    private char[] strBuf = new char[64];
+    private char[] strBuf;
 
     /**
      * Number of significant <code>char</code>s in <code>strBuf</code>.
@@ -349,7 +349,7 @@ public final class Tokenizer implements Locator {
     /**
      * Buffer for long strings.
      */
-    private char[] longStrBuf = new char[1024];
+    private char[] longStrBuf;
 
     /**
      * Number of significant <code>char</code>s in <code>longStrBuf</code>.
@@ -1325,6 +1325,8 @@ public final class Tokenizer implements Locator {
     // ]NOCPP]
 
     public void start() throws SAXException {
+        strBuf = new char[64];
+        longStrBuf = new char[1024];
         alreadyComplainedAboutNonAscii = false;
         contentModelFlag = ContentModelFlag.PCDATA;
         line = linePrev = 0;
@@ -5232,6 +5234,8 @@ public final class Tokenizer implements Locator {
     }
 
     public void end() throws SAXException {
+        strBuf = null;
+        longStrBuf = null;
         systemIdentifier = null;
         publicIdentifier = null;
         doctypeName = null;
@@ -5239,6 +5243,7 @@ public final class Tokenizer implements Locator {
         attributeName = null;
         tokenHandler.endTokenization();
         if (attributes != null) {
+            attributes.clear();
             attributes.release();
         }
     }
