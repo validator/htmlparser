@@ -738,8 +738,8 @@ public final class Tokenizer implements Locator {
 //        longStrBufOffset = -1;
     }
 
-    private void clearStrBufAndAppendCurrentC() {
-        strBuf[0] = buf[pos]; // test
+    private void clearStrBufAndAppendCurrentC(char c) {
+        strBuf[0] = c;
         
         strBufLen = 1;
 //        strBufOffset = pos;
@@ -1197,6 +1197,7 @@ public final class Tokenizer implements Locator {
                     rv = Tokenizer.PLAINTEXT;
             }
         }
+        resetAttributes();
         return rv;
     }
     
@@ -1459,7 +1460,7 @@ public final class Tokenizer implements Locator {
                                  * else" entry below.
                                  */
                                 flushChars();
-                                clearStrBufAndAppendCurrentC();
+                                clearStrBufAndAppendCurrentC(c);
                                 additional = '\u0000';
                                 returnState = state;
                                 state = Tokenizer.CONSUME_CHARACTER_REFERENCE;
@@ -1476,7 +1477,6 @@ public final class Tokenizer implements Locator {
                                  * below.
                                  */
                                 flushChars();
-                                resetAttributes();
 
                                 state = Tokenizer.TAG_OPEN;
                                 break dataloop; // FALL THROUGH continue
@@ -1535,7 +1535,7 @@ public final class Tokenizer implements Locator {
                             /*
                              * set its tag name to the input character,
                              */
-                            clearStrBufAndAppendCurrentC();
+                            clearStrBufAndAppendCurrentC(c);
                             /* then switch to the tag name state. */
                             state = Tokenizer.TAG_NAME;
                             /*
@@ -1761,7 +1761,7 @@ public final class Tokenizer implements Locator {
                                      * Set that attribute's name to the current
                                      * input character,
                                      */
-                                    clearStrBufAndAppendCurrentC();
+                                    clearStrBufAndAppendCurrentC(c);
                                 }
                                 /*
                                  * and its value to the empty string.
@@ -1995,7 +1995,7 @@ public final class Tokenizer implements Locator {
                                  * QUOTATION MARK (").
                                  */
                                 detachLongStrBuf();
-                                clearStrBufAndAppendCurrentC();
+                                clearStrBufAndAppendCurrentC(c);
                                 additional = '\"';
                                 returnState = state;
                                 state = Tokenizer.CONSUME_CHARACTER_REFERENCE;
@@ -2139,7 +2139,7 @@ public final class Tokenizer implements Locator {
                                  * additional allowed character.
                                  */
                                 detachLongStrBuf();
-                                clearStrBufAndAppendCurrentC();
+                                clearStrBufAndAppendCurrentC(c);
                                 additional = '\u0000';
                                 returnState = state;
                                 state = Tokenizer.CONSUME_CHARACTER_REFERENCE;
@@ -2269,7 +2269,7 @@ public final class Tokenizer implements Locator {
                                      * Set that attribute's name to the current
                                      * input character,
                                      */
-                                    clearStrBufAndAppendCurrentC();
+                                    clearStrBufAndAppendCurrentC(c);
                                 }
                                 /*
                                  * and its value to the empty string.
@@ -2759,7 +2759,7 @@ public final class Tokenizer implements Locator {
                                  * Set the token's name name to the current
                                  * input character.
                                  */
-                                clearStrBufAndAppendCurrentC();
+                                clearStrBufAndAppendCurrentC(c);
                                 /*
                                  * Switch to the DOCTYPE name state.
                                  */
@@ -3584,7 +3584,7 @@ public final class Tokenizer implements Locator {
                                  * APOSTROPHE (').
                                  */
                                 detachLongStrBuf();
-                                clearStrBufAndAppendCurrentC();
+                                clearStrBufAndAppendCurrentC(c);
                                 additional = '\'';
                                 returnState = state;
                                 state = Tokenizer.CONSUME_CHARACTER_REFERENCE;
@@ -4085,7 +4085,6 @@ public final class Tokenizer implements Locator {
                                  * below.
                                  */
                                 flushChars();
-                                resetAttributes();
 
                                 returnState = state;
                                 state = Tokenizer.TAG_OPEN_NON_PCDATA;
@@ -4413,7 +4412,7 @@ public final class Tokenizer implements Locator {
                         /*
                          * set its tag name to the input character,
                          */
-                        clearStrBufAndAppendCurrentC();
+                        clearStrBufAndAppendCurrentC(c);
                         /*
                          * then switch to the tag name state. (Don't emit the
                          * token yet; further details will be filled in before
@@ -4461,7 +4460,7 @@ public final class Tokenizer implements Locator {
                                  * else" entry below.
                                  */
                                 flushChars();
-                                clearStrBufAndAppendCurrentC();
+                                clearStrBufAndAppendCurrentC(c);
                                 additional = '\u0000';
                                 returnState = state;
                                 state = Tokenizer.CONSUME_CHARACTER_REFERENCE;
@@ -4478,7 +4477,6 @@ public final class Tokenizer implements Locator {
                                  * below.
                                  */
                                 flushChars();
-                                resetAttributes();
 
                                 returnState = state;
                                 state = Tokenizer.TAG_OPEN_NON_PCDATA;
