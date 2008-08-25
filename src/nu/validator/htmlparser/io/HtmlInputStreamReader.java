@@ -100,6 +100,8 @@ public final class HtmlInputStreamReader extends Reader implements
 
     private int lineColPos;
 
+    private boolean hasPendingReplacementCharacter = false;
+
     /**
      * @param inputStream
      * @param errorHandler
@@ -108,8 +110,8 @@ public final class HtmlInputStreamReader extends Reader implements
      * @throws SAXException
      */
     public HtmlInputStreamReader(InputStream inputStream,
-            ErrorHandler errorHandler, Locator locator, Driver tokenizer, Heuristics heuristics)
-            throws SAXException, IOException {
+            ErrorHandler errorHandler, Locator locator, Driver tokenizer,
+            Heuristics heuristics) throws SAXException, IOException {
         this.inputStream = inputStream;
         this.errorHandler = errorHandler;
         this.locator = locator;
@@ -119,10 +121,12 @@ public final class HtmlInputStreamReader extends Reader implements
         if (encoding == null) {
             position = 0;
             encoding = (new MetaSniffer(this, errorHandler, this)).sniff();
-            if (encoding == null && (heuristics == Heuristics.CHARDET || heuristics == Heuristics.ALL)) {
-               encoding = (new ChardetSniffer(byteArray, limit)).sniff();
+            if (encoding == null
+                    && (heuristics == Heuristics.CHARDET || heuristics == Heuristics.ALL)) {
+                encoding = (new ChardetSniffer(byteArray, limit)).sniff();
             }
-            if (encoding == null && (heuristics == Heuristics.ICU || heuristics == Heuristics.ALL)) {
+            if (encoding == null
+                    && (heuristics == Heuristics.ICU || heuristics == Heuristics.ALL)) {
                 position = 0;
                 encoding = (new IcuDetectorSniffer(this)).sniff();
             }
@@ -131,17 +135,17 @@ public final class HtmlInputStreamReader extends Reader implements
                 encoding = Encoding.WINDOWS1252;
             }
             if (tokenizer != null) {
-                tokenizer.setEncoding(encoding, Confidence.TENTATIVE);           
-            }            
+                tokenizer.setEncoding(encoding, Confidence.TENTATIVE);
+            }
         } else {
             if (encoding == Encoding.UTF8) {
                 if (tokenizer != null) {
-                    tokenizer.setEncoding(Encoding.UTF8, Confidence.CERTAIN);           
-                }                            
+                    tokenizer.setEncoding(Encoding.UTF8, Confidence.CERTAIN);
+                }
             } else {
                 if (tokenizer != null) {
-                    tokenizer.setEncoding(Encoding.UTF16, Confidence.CERTAIN);           
-                }                                            
+                    tokenizer.setEncoding(Encoding.UTF16, Confidence.CERTAIN);
+                }
             }
         }
         this.decoder = encoding.newDecoder();
@@ -178,13 +182,11 @@ public final class HtmlInputStreamReader extends Reader implements
         initDecoder();
     }
 
-    @Override
-    public void close() throws IOException {
+    @Override public void close() throws IOException {
         inputStream.close();
     }
 
-    @Override
-    public int read(char[] charArray) throws IOException {
+    @Override public int read(char[] charArray) throws IOException {
         lineColPos = 0;
         assert !sniffing;
         assert charArray.length >= 2;
@@ -202,6 +204,10 @@ public final class HtmlInputStreamReader extends Reader implements
             // return -1 if zero
             int cPos = charBuffer.position();
             return cPos == 0 ? -1 : cPos;
+        }
+        if (hasPendingReplacementCharacter) {
+            charBuffer.put('\uFFFD');
+            hasPendingReplacementCharacter = false;
         }
         for (;;) {
             if (shouldReadBytes) {
@@ -242,7 +248,7 @@ public final class HtmlInputStreamReader extends Reader implements
 
                     // XXX what happens if the entire byte buffer consists of 
                     // a pathologically long malformed sequence?
-                    
+
                     // If the buffer was not fully consumed, there may be an
                     // incomplete byte sequence that needs to seed the next
                     // buffer.
@@ -287,7 +293,11 @@ public final class HtmlInputStreamReader extends Reader implements
                         bytesRead++;
                         sb.append('\u201D');
                     }
-                    charBuffer.put('\uFFFD');
+                    if (charBuffer.hasRemaining()) {
+                        charBuffer.put('\uFFFD');                     
+                    } else {
+                        hasPendingReplacementCharacter = true;
+                    }
                     calculateLineAndCol(charBuffer);
                     if (cr.isMalformed()) {
                         err("Malformed byte sequence: " + sb + ".");
@@ -447,24 +457,21 @@ public final class HtmlInputStreamReader extends Reader implements
     /**
      * @see java.io.Reader#read()
      */
-    @Override
-    public int read() throws IOException {
+    @Override public int read() throws IOException {
         throw new UnsupportedOperationException();
     }
 
     /**
      * @see java.io.Reader#read(char[], int, int)
      */
-    @Override
-    public int read(char[] cbuf, int off, int len) throws IOException {
+    @Override public int read(char[] cbuf, int off, int len) throws IOException {
         throw new UnsupportedOperationException();
     }
 
     /**
      * @see java.io.Reader#read(java.nio.CharBuffer)
      */
-    @Override
-    public int read(CharBuffer target) throws IOException {
+    @Override public int read(CharBuffer target) throws IOException {
         throw new UnsupportedOperationException();
     }
 
