@@ -4369,7 +4369,7 @@ public final class Tokenizer implements Locator {
                                             Tokenizer.LT_SOLIDUS, 0, 2);
                                     emitStrBuf();
                                     cstart = pos; // don't drop the character
-                                    state = Tokenizer.DATA;
+                                    state = returnState;
                                     continue stateloop;
                             }
                         }
