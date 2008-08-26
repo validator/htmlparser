@@ -4265,8 +4265,8 @@ public final class Tokenizer implements Locator {
                         // fails.
                         // Duplicating the relevant part of tag name state here
                         // as well.
-                        if (index < contentModelElement.nameAsArray.length) {
-                            char e = contentModelElement.nameAsArray[index];
+                        if (index < contentModelElement.name.length()) {
+                            char e = contentModelElement.name.charAt(index);
                             char folded = c;
                             if (c >= 'A' && c <= 'Z') {
                                 folded += 0x20;
