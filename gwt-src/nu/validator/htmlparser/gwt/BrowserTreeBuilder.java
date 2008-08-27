@@ -41,6 +41,8 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
 
     private JavaScriptObject placeholder;
 
+    private boolean readyToRun;
+
     protected BrowserTreeBuilder(JavaScriptObject document) {
         super(XmlViolationPolicy.ALLOW, true);
         this.document = document;
@@ -348,6 +350,7 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
     @Override protected void start(boolean fragment) throws SAXException {
         script = null;
         placeholder = null;
+        readyToRun = false;
     }
 
     protected void documentMode(DocumentMode mode, String publicIdentifier,
@@ -363,6 +366,7 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
     @Override protected void elementPopped(String ns, String name,
             JavaScriptObject node) throws SAXException {
         if (node == placeholder) {
+            readyToRun = true;
             requestSuspension();
         }
     }
@@ -373,7 +377,8 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
        }-*/;
 
     void maybeRunScript() {
-        if (script != null) {
+        if (readyToRun) {
+            readyToRun = false;
             replace(placeholder, script);
             script = null;
             placeholder = null;
