@@ -158,6 +158,9 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
             for (int i = 0; i < attributes.getLength(); i++) {
                 rv.setAttributeNS(attributes.getURI(i),
                         attributes.getLocalName(i), attributes.getValue(i));
+                if (attributes.getType(i) == "ID") {
+                    rv.setIdAttributeNS(attributes.getURI(i), attributes.getLocalName(i), true);
+                }
             }
             return rv;
         } catch (DOMException e) {
