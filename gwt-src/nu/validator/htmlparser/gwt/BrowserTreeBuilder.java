@@ -23,6 +23,8 @@
 
 package nu.validator.htmlparser.gwt;
 
+import java.util.LinkedList;
+
 import nu.validator.htmlparser.common.DocumentMode;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
 import nu.validator.htmlparser.impl.HtmlAttributes;
@@ -42,6 +44,42 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
     private JavaScriptObject placeholder;
 
     private boolean readyToRun;
+    
+    private final LinkedList<ScriptHolder> scriptStack = new LinkedList<ScriptHolder>();
+    
+    private class ScriptHolder {
+        private final JavaScriptObject script;
+
+        private final JavaScriptObject placeholder;
+
+        /**
+         * @param script
+         * @param placeholder
+         */
+        public ScriptHolder(JavaScriptObject script,
+                JavaScriptObject placeholder) {
+            this.script = script;
+            this.placeholder = placeholder;
+        }
+
+        /**
+         * Returns the script.
+         * 
+         * @return the script
+         */
+        public JavaScriptObject getScript() {
+            return script;
+        }
+
+        /**
+         * Returns the placeholder.
+         * 
+         * @return the placeholder
+         */
+        public JavaScriptObject getPlaceholder() {
+            return placeholder;
+        }        
+    }
 
     protected BrowserTreeBuilder(JavaScriptObject document) {
         super(XmlViolationPolicy.ALLOW, true);
@@ -50,13 +88,13 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
 
     private static native boolean hasAttributeNS(JavaScriptObject element,
             String uri, String localName) /*-{
-           return element.hasAttributeNS(uri, localName); 
-       }-*/;
+              return element.hasAttributeNS(uri, localName); 
+          }-*/;
 
     private static native void setAttributeNS(JavaScriptObject element,
             String uri, String localName, String value) /*-{
-           element.setAttributeNS(uri, localName, value); 
-       }-*/;
+              element.setAttributeNS(uri, localName, value); 
+          }-*/;
 
     @Override protected void addAttributesToElement(JavaScriptObject element,
             HtmlAttributes attributes) throws SAXException {
@@ -76,13 +114,13 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
 
     private static native void appendChild(JavaScriptObject parent,
             JavaScriptObject child) /*-{
-           parent.appendChild(child); 
-       }-*/;
+              parent.appendChild(child); 
+          }-*/;
 
     private static native JavaScriptObject createTextNode(JavaScriptObject doc,
             String text) /*-{
-           return doc.createTextNode(text); 
-       }-*/;
+              return doc.createTextNode(text); 
+          }-*/;
 
     @Override protected void appendCharacters(JavaScriptObject parent,
             char[] buf, int start, int length) throws SAXException {
@@ -91,23 +129,22 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
                 appendChild(script, createTextNode(document, new String(buf,
                         start, length)));
 
-            } else {
-                appendChild(parent, createTextNode(document, new String(buf,
-                        start, length)));
             }
+            appendChild(parent, createTextNode(document, new String(buf, start,
+                    length)));
         } catch (JavaScriptException e) {
             fatal(e);
         }
     }
 
     private static native boolean hasChildNodes(JavaScriptObject element) /*-{
-           return element.hasChildNodes(); 
-       }-*/;
+              return element.hasChildNodes(); 
+          }-*/;
 
     private static native JavaScriptObject getFirstChild(
             JavaScriptObject element) /*-{
-           return element.firstChild; 
-       }-*/;
+              return element.firstChild; 
+          }-*/;
 
     @Override protected void appendChildrenToNewParent(
             JavaScriptObject oldParent, JavaScriptObject newParent)
@@ -123,8 +160,8 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
 
     private static native JavaScriptObject createComment(JavaScriptObject doc,
             String text) /*-{
-           return doc.createComment(text); 
-       }-*/;
+              return doc.createComment(text); 
+          }-*/;
 
     @Override protected void appendComment(JavaScriptObject parent, char[] buf,
             int start, int length) throws SAXException {
@@ -132,10 +169,9 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
             if (parent == placeholder) {
                 appendChild(script, createComment(document, new String(buf,
                         start, length)));
-            } else {
-                appendChild(parent, createComment(document, new String(buf,
-                        start, length)));
             }
+            appendChild(parent, createComment(document, new String(buf, start,
+                    length)));
         } catch (JavaScriptException e) {
             fatal(e);
         }
@@ -153,8 +189,8 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
 
     private static native JavaScriptObject createElementNS(
             JavaScriptObject doc, String ns, String local) /*-{
-           return doc.createElementNS(ns, local); 
-       }-*/;
+              return doc.createElementNS(ns, local); 
+          }-*/;
 
     @Override protected JavaScriptObject createElement(String ns, String name,
             HtmlAttributes attributes) throws SAXException {
@@ -166,10 +202,17 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
             }
 
             if ("script" == name) {
+                if (placeholder != null) {
+                    scriptStack.addLast(new ScriptHolder(script, placeholder));
+                }
                 script = rv;
                 placeholder = createElementNS(document,
-                        "http://n.validator.nu/placeholder/", "__placeholder__");
+                        "http://n.validator.nu/placeholder/", "script");
                 rv = placeholder;
+                for (int i = 0; i < attributes.getLength(); i++) {
+                    setAttributeNS(rv, attributes.getURI(i),
+                            attributes.getLocalName(i), attributes.getValue(i));
+                }
             }
 
             return rv;
@@ -198,13 +241,13 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
 
     private static native JavaScriptObject getParentNode(
             JavaScriptObject element) /*-{
-           return element.parentNode; 
-       }-*/;
+              return element.parentNode; 
+          }-*/;
 
     private static native void removeChild(JavaScriptObject parent,
             JavaScriptObject child) /*-{
-           parent.removeChild(child); 
-       }-*/;
+              parent.removeChild(child); 
+          }-*/;
 
     @Override protected void detachFromParent(JavaScriptObject element)
             throws SAXException {
@@ -223,10 +266,9 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
             throws SAXException {
         try {
             if (newParent == placeholder) {
-                appendChild(script, child);                
-            } else {
-                appendChild(newParent, child);
+                appendChild(script, cloneNodeDeep(child));
             }
+            appendChild(newParent, child);
         } catch (JavaScriptException e) {
             fatal(e);
         }
@@ -244,8 +286,8 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
 
     private static native void insertBeforeNative(JavaScriptObject parent,
             JavaScriptObject child, JavaScriptObject sibling) /*-{
-           parent.insertBefore(child, sibling);
-       }-*/;
+              parent.insertBefore(child, sibling);
+          }-*/;
 
     @Override protected void insertBefore(JavaScriptObject child,
             JavaScriptObject sibling, JavaScriptObject parent)
@@ -269,8 +311,8 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
     }
 
     private static native int getNodeType(JavaScriptObject node) /*-{
-           return node.nodeType;
-       }-*/;
+              return node.nodeType;
+          }-*/;
 
     @Override protected JavaScriptObject parentElementFor(JavaScriptObject child)
             throws SAXException {
@@ -288,9 +330,14 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
     }
 
     private static native JavaScriptObject cloneNode(JavaScriptObject node) /*-{
-           return node.cloneNode(false);
-       }-*/;
+              return node.cloneNode(false);
+          }-*/;
 
+    private static native JavaScriptObject cloneNodeDeep(JavaScriptObject node) /*-{
+    return node.cloneNode(true);
+}-*/;
+
+    
     @Override protected JavaScriptObject shallowClone(JavaScriptObject element)
             throws SAXException {
         try {
@@ -314,8 +361,8 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
 
     private static native JavaScriptObject createDocumentFragment(
             JavaScriptObject doc) /*-{
-           return doc.createDocumentFragment(); 
-       }-*/;
+              return doc.createDocumentFragment(); 
+          }-*/;
 
     JavaScriptObject getDocumentFragment() {
         JavaScriptObject rv = createDocumentFragment(document);
@@ -373,15 +420,21 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
 
     private static native void replace(JavaScriptObject oldNode,
             JavaScriptObject newNode) /*-{
-           oldNode.parentNode.replaceChild(newNode, oldNode);
-       }-*/;
+              oldNode.parentNode.replaceChild(newNode, oldNode);
+          }-*/;
 
     void maybeRunScript() {
         if (readyToRun) {
             readyToRun = false;
             replace(placeholder, script);
-            script = null;
-            placeholder = null;
+            if (scriptStack.isEmpty()) {
+                script = null;
+                placeholder = null;                
+            } else {
+                ScriptHolder scriptHolder = scriptStack.removeLast();
+                script = scriptHolder.getScript();
+                placeholder = scriptHolder.getPlaceholder();
+            }
         }
     }
 }
