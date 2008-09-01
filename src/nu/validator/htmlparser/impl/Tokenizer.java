@@ -4957,7 +4957,7 @@ public final class Tokenizer implements Locator {
                         /*
                          * If no match can be made, then this is a parse error.
                          */
-                        err("Text after \u201C&\u201D did not match an entity name. Probable cause: \u201C&\u201D should have been escaped as \u201C&amp;\201D.");
+                        err("Text after \u201C&\u201D did not match an entity name. Probable cause: \u201C&\u201D should have been escaped as \u201C&amp;\u201D.");
                         emitOrAppendStrBuf(returnState);
                         state = returnState;
                         continue eofloop;
