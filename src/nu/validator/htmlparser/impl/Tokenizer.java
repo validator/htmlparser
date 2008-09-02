@@ -1733,9 +1733,7 @@ public final class Tokenizer implements Locator {
                                 if (c == '=') {
                                     err("Saw \u201C=\u201D when expecting an attribute name. Probable cause: Attribute name missing.");
                                 } else {
-                                    err("Saw \u201C"
-                                            + c
-                                            + "\u201D when expecting an attribute name. Probable cause: \u201C=\u201D missing immediately before.");
+                                    errQuoteBeforeAttributeName(c);
                                 }
                                 /*
                                  * Treat it as per the "anything else" entry
@@ -1835,9 +1833,7 @@ public final class Tokenizer implements Locator {
                                  * U+0022 QUOTATION MARK (") U+0027 APOSTROPHE
                                  * (') Parse error.
                                  */
-                                err("Quote \u201C"
-                                        + c
-                                        + "\u201D in attribute name. Probable cause: Matching quote missing somewhere earlier.");
+                                errQuoteInAttributeName(c);
                                 /*
                                  * Treat it as per the "anything else" entry
                                  * below.
@@ -1880,7 +1876,6 @@ public final class Tokenizer implements Locator {
                             case ' ':
                             case '\t':
                             case '\n':
-
                             case '\u000C':
                                 /*
                                  * U+0009 CHARACTER TABULATION U+000A LINE FEED
@@ -2250,13 +2245,7 @@ public final class Tokenizer implements Locator {
                                 continue stateloop;
                             case '\"':
                             case '\'':
-                                /*
-                                 * U+0022 QUOTATION MARK (") U+0027 APOSTROPHE
-                                 * (') Parse error.
-                                 */
-                                err("Quote \u201C"
-                                        + c
-                                        + "\u201D in attribute name. Probable cause: Matching quote missing somewhere earlier.");
+                                errQuoteInAttributeName(c);
                                 /*
                                  * Treat it as per the "anything else" entry
                                  * below.
@@ -4515,6 +4504,18 @@ public final class Tokenizer implements Locator {
         // Save locals
         stateSave = state;
         returnStateSave = returnState;
+    }
+
+    private void errQuoteBeforeAttributeName(char c) throws SAXException {
+        err("Saw \u201C"
+                + c
+                + "\u201D when expecting an attribute name. Probable cause: \u201C=\u201D missing immediately before.");
+    }
+
+    private void errQuoteInAttributeName(char c) throws SAXException {
+        err("Quote \u201C"
+                + c
+                + "\u201D in attribute name. Probable cause: Matching quote missing somewhere earlier.");
     }
 
     private void bogusDoctype() throws SAXException {
