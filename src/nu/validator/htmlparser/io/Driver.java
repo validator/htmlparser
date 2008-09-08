@@ -180,6 +180,7 @@ public class Driver implements EncodingDeclarationHandler {
         if (is == null) {
             throw new IllegalArgumentException("InputSource was null.");
         }
+        tokenizer.start();
         confidence = Confidence.TENTATIVE;
         swallowBom = true;
         rewindableInputStream = null;
@@ -273,8 +274,6 @@ public class Driver implements EncodingDeclarationHandler {
     }
 
     private void runStates() throws SAXException, IOException {
-        tokenizer.start();
-
         char[] buffer = new char[2048];
         UTF16Buffer bufr = new UTF16Buffer(buffer, 0, 0);
         boolean lastWasCR = false;
@@ -392,6 +391,7 @@ public class Driver implements EncodingDeclarationHandler {
             rewindableInputStream.willNotRewind();
         }
         confidence = Confidence.CERTAIN;
+        tokenizer.becomeConfident();
     }
 
     /**
