@@ -33,7 +33,7 @@ import nu.validator.htmlparser.annotation.QName;
 
 public final class AttributeName
 // Uncomment to regenerate
-//        implements Comparable<AttributeName> 
+        implements Comparable<AttributeName> 
 {
     
 
@@ -49,11 +49,16 @@ public final class AttributeName
         return new String[] { "", ns, ns, "" };
     }
 
-    private static @Local String[] CAMEL_CASE_LOCAL(@Local String name,
+    private static @Local String[] SVG_DIFFERENT(@Local String name,
             @Local String camel) {
         return new String[] { name, name, camel, name };
     }
 
+    private static @Local String[] MATH_DIFFERENT(@Local String name,
+            @Local String camel) {
+        return new String[] { name, camel, name, name };
+    }
+    
     private static @Local String[] COLONIFIED_LOCAL(@Local String name,
             @Local String suffix) {
         return new String[] { name, suffix, suffix, name };
@@ -299,145 +304,150 @@ public final class AttributeName
     }
 
     // START CODE ONLY USED FOR GENERATING CODE uncomment to regenerate
-//
-//    /**
-//     * @see java.lang.Object#toString()
-//     */
-//    @Override public String toString() {
-//        return "(" + ("ID" == type ? "\"ID\", " : "") + formatNs() + ", "
-//                + formatLocal() + ", " + formatPrefix() + ", " + formatNcname()
-//                + ", " + (xmlns ? "true" : "false") + ")";
-//    }
-//    
-//    public int compareTo(AttributeName other) {
-//        int thisHash = this.hash();
-//        int otherHash = other.hash();
-//        if (thisHash < otherHash) {
-//            return -1;
-//        } else if (thisHash == otherHash) {
-//            return 0;
-//        } else {
-//            return 1;
-//        }
-//    }
-//
-//    private String formatString(String str) {
-//        if (str == null) {
-//            return null;
-//        } else {
-//            return "\"" + str.trim() + "\"";
-//        }
-//    }
-//    
-//    private String formatPrefix() {
-//            if (prefix[0] == null && prefix[1] == null && prefix[2] == null && prefix[3] == null) {
-//                return "ALL_NO_PREFIX";
-//            } else if (prefix[0] == null && prefix[1] == prefix[2] && prefix[3] == null) {
-//                return "PREFIX(\"" + prefix[1] + "\")";
-//            } else {
-//                return "new String[]{" + formatString(prefix[0]) + ", " + formatString(prefix[1])
-//                        + ", " + formatString(prefix[2]) + ", " + formatString(prefix[3]) + "}";
-//            }
-//    }
-//
-//    private String formatLocal() {
-//        if (local[0] == local[1] && local[0] == local[3]
-//                && local[0] != local[2]) {
-//            return "CAMEL_CASE_LOCAL(\"" + local[0] + "\", \"" + local[2]
-//                    + "\")";
-//        }
-//        if (local[0] == local[3] && local[1] == local[2]
-//                && local[0] != local[1]) {
-//            return "COLONIFIED_LOCAL(\"" + local[0] + "\", \"" + local[1]
-//                    + "\")";
-//        }
-//        for (int i = 1; i < local.length; i++) {
-//            if (local[0] != local[i]) {
-//                return "new String[]{\"" + local[0] + "\", \"" + local[1]
-//                        + "\", \"" + local[2] + "\", \"" + local[3] + "\"}";
-//            }
-//        }
-//        return "SAME_LOWER_CASE_LOCAL(\"" + local[0] + "\")";
-//    }
-//
-//    private String formatNs() {
-//        if (uri[1] != "" && uri[0] == "" && uri[3] == "" && uri[1] == uri[2]) {
-//            return "NAMESPACE(\"" + uri[1] + "\")";
-//        }
-//        for (int i = 0; i < uri.length; i++) {
-//            if ("" != uri[i]) {
-//                return "new String[]{\"" + uri[0] + "\", \"" + uri[1]
-//                        + "\", \"" + uri[2] + "\", \"" + uri[3] + "\"}";
-//            }
-//        }
-//        return "ALL_NO_NS";
-//    }
-//
-//    private String formatNcname() {
-//        for (int i = 0; i < ncname.length; i++) {
-//            if (!ncname[i]) {
-//                return "new boolean[]{" + ncname[0] + ", " + ncname[1] + ", "
-//                        + ncname[2] + ", " + ncname[3] + "}";
-//            }
-//        }
-//        return "ALL_NCNAME";
-//    }
-//
-//    private String constName() {
-//        String name = getLocal(HTML);
-//        char[] buf = new char[name.length()];
-//        for (int i = 0; i < name.length(); i++) {
-//            char c = name.charAt(i);
-//            if (c == '-' || c == ':') {
-//                buf[i] = '_';
-//            } else if (c >= 'a' && c <= 'z') {
-//                buf[i] = (char) (c - 0x20);
-//            } else {
-//                buf[i] = c;
-//            }
-//        }
-//        return new String(buf);
-//    }
-//
-//    private int hash() {
-//        String name = getLocal(HTML);
-//        return bufToHash(name.toCharArray(), name.length());
-//    }
-//
-//    /**
-//     * Regenerate self
-//     * 
-//     * @param args
-//     */
-//    public static void main(String[] args) {
-//        Arrays.sort(ATTRIBUTE_NAMES);
-//        for (int i = 1; i < ATTRIBUTE_NAMES.length; i++) {
-//            if (ATTRIBUTE_NAMES[i].hash() == ATTRIBUTE_NAMES[i - 1].hash()) {
-//                System.err.println("Hash collision: "
-//                        + ATTRIBUTE_NAMES[i].getLocal(HTML) + ", "
-//                        + ATTRIBUTE_NAMES[i - 1].getLocal(HTML));
-//                return;
-//            }
-//        }
-//        for (int i = 0; i < ATTRIBUTE_NAMES.length; i++) {
-//            AttributeName att = ATTRIBUTE_NAMES[i];
-//            System.out.println("public static final AttributeName "
-//                    + att.constName() + " = new AttributeName" + att.toString()
-//                    + ";");
-//        }
-//        System.out.println("private final static @NoLength AttributeName[] ATTRIBUTE_NAMES = {");
-//        for (int i = 0; i < ATTRIBUTE_NAMES.length; i++) {
-//            AttributeName att = ATTRIBUTE_NAMES[i];
-//            System.out.println(att.constName() + ",");
-//        }
-//        System.out.println("};");
-//        System.out.println("private final static @NoLength int[] ATTRIBUTE_HASHES = {");
-//        for (int i = 0; i < ATTRIBUTE_NAMES.length; i++) {
-//            AttributeName att = ATTRIBUTE_NAMES[i];
-//            System.out.println(Integer.toString(att.hash()) + ",");
-//        }
-//        System.out.println("};");
-//    }
+
+    /**
+     * @see java.lang.Object#toString()
+     */
+    @Override public String toString() {
+        return "(" + ("ID" == type ? "\"ID\", " : "") + formatNs() + ", "
+                + formatLocal() + ", " + formatPrefix() + ", " + formatNcname()
+                + ", " + (xmlns ? "true" : "false") + ")";
+    }
+    
+    public int compareTo(AttributeName other) {
+        int thisHash = this.hash();
+        int otherHash = other.hash();
+        if (thisHash < otherHash) {
+            return -1;
+        } else if (thisHash == otherHash) {
+            return 0;
+        } else {
+            return 1;
+        }
+    }
+
+    private String formatString(String str) {
+        if (str == null) {
+            return null;
+        } else {
+            return "\"" + str.trim() + "\"";
+        }
+    }
+    
+    private String formatPrefix() {
+            if (prefix[0] == null && prefix[1] == null && prefix[2] == null && prefix[3] == null) {
+                return "ALL_NO_PREFIX";
+            } else if (prefix[0] == null && prefix[1] == prefix[2] && prefix[3] == null) {
+                return "PREFIX(\"" + prefix[1] + "\")";
+            } else {
+                return "new String[]{" + formatString(prefix[0]) + ", " + formatString(prefix[1])
+                        + ", " + formatString(prefix[2]) + ", " + formatString(prefix[3]) + "}";
+            }
+    }
+
+    private String formatLocal() {
+        if (local[0] == local[1] && local[0] == local[3]
+                && local[0] != local[2]) {
+            return "SVG_DIFFERENT(\"" + local[0] + "\", \"" + local[2]
+                    + "\")";
+        }
+        if (local[0] == local[2] && local[0] == local[3]
+                                                      && local[0] != local[1]) {
+                                                  return "MATH_DIFFERENT(\"" + local[0] + "\", \"" + local[1]
+                                                          + "\")";
+                                              }
+        if (local[0] == local[3] && local[1] == local[2]
+                && local[0] != local[1]) {
+            return "COLONIFIED_LOCAL(\"" + local[0] + "\", \"" + local[1]
+                    + "\")";
+        }
+        for (int i = 1; i < local.length; i++) {
+            if (local[0] != local[i]) {
+                return "new String[]{\"" + local[0] + "\", \"" + local[1]
+                        + "\", \"" + local[2] + "\", \"" + local[3] + "\"}";
+            }
+        }
+        return "SAME_LOWER_CASE_LOCAL(\"" + local[0] + "\")";
+    }
+
+    private String formatNs() {
+        if (uri[1] != "" && uri[0] == "" && uri[3] == "" && uri[1] == uri[2]) {
+            return "NAMESPACE(\"" + uri[1] + "\")";
+        }
+        for (int i = 0; i < uri.length; i++) {
+            if ("" != uri[i]) {
+                return "new String[]{\"" + uri[0] + "\", \"" + uri[1]
+                        + "\", \"" + uri[2] + "\", \"" + uri[3] + "\"}";
+            }
+        }
+        return "ALL_NO_NS";
+    }
+
+    private String formatNcname() {
+        for (int i = 0; i < ncname.length; i++) {
+            if (!ncname[i]) {
+                return "new boolean[]{" + ncname[0] + ", " + ncname[1] + ", "
+                        + ncname[2] + ", " + ncname[3] + "}";
+            }
+        }
+        return "ALL_NCNAME";
+    }
+
+    private String constName() {
+        String name = getLocal(HTML);
+        char[] buf = new char[name.length()];
+        for (int i = 0; i < name.length(); i++) {
+            char c = name.charAt(i);
+            if (c == '-' || c == ':') {
+                buf[i] = '_';
+            } else if (c >= 'a' && c <= 'z') {
+                buf[i] = (char) (c - 0x20);
+            } else {
+                buf[i] = c;
+            }
+        }
+        return new String(buf);
+    }
+
+    private int hash() {
+        String name = getLocal(HTML);
+        return bufToHash(name.toCharArray(), name.length());
+    }
+
+    /**
+     * Regenerate self
+     * 
+     * @param args
+     */
+    public static void main(String[] args) {
+        Arrays.sort(ATTRIBUTE_NAMES);
+        for (int i = 1; i < ATTRIBUTE_NAMES.length; i++) {
+            if (ATTRIBUTE_NAMES[i].hash() == ATTRIBUTE_NAMES[i - 1].hash()) {
+                System.err.println("Hash collision: "
+                        + ATTRIBUTE_NAMES[i].getLocal(HTML) + ", "
+                        + ATTRIBUTE_NAMES[i - 1].getLocal(HTML));
+                return;
+            }
+        }
+        for (int i = 0; i < ATTRIBUTE_NAMES.length; i++) {
+            AttributeName att = ATTRIBUTE_NAMES[i];
+            System.out.println("public static final AttributeName "
+                    + att.constName() + " = new AttributeName" + att.toString()
+                    + ";");
+        }
+        System.out.println("private final static @NoLength AttributeName[] ATTRIBUTE_NAMES = {");
+        for (int i = 0; i < ATTRIBUTE_NAMES.length; i++) {
+            AttributeName att = ATTRIBUTE_NAMES[i];
+            System.out.println(att.constName() + ",");
+        }
+        System.out.println("};");
+        System.out.println("private final static @NoLength int[] ATTRIBUTE_HASHES = {");
+        for (int i = 0; i < ATTRIBUTE_NAMES.length; i++) {
+            AttributeName att = ATTRIBUTE_NAMES[i];
+            System.out.println(Integer.toString(att.hash()) + ",");
+        }
+        System.out.println("};");
+    }
 
     // START GENERATED CODE
     public static final AttributeName D = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("d"), ALL_NO_PREFIX, ALL_NCNAME, false);
@@ -515,8 +525,8 @@ public final class AttributeName
     public static final AttributeName TEXT = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("text"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName PATH = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("path"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName PING = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("ping"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName REFX = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("refx", "refX"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName REFY = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("refy", "refY"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName REFX = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("refx", "refX"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName REFY = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("refy", "refY"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName SIZE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("size"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName SEED = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("seed"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ROWS = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("rows"), ALL_NO_PREFIX, ALL_NCNAME, false);
@@ -654,9 +664,9 @@ public final class AttributeName
     public static final AttributeName MAXSIZE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("maxsize"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName LARGEOP = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("largeop"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName UNICODE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("unicode"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName TARGETX = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("targetx", "targetX"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName TARGETY = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("targety", "targetY"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName VIEWBOX = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("viewbox", "viewBox"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName TARGETX = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("targetx", "targetX"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName TARGETY = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("targety", "targetY"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName VIEWBOX = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("viewbox", "viewBox"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName VERSION = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("version"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName PATTERN = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("pattern"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName PROFILE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("profile"), ALL_NO_PREFIX, ALL_NCNAME, false);
@@ -668,19 +678,19 @@ public final class AttributeName
     public static final AttributeName STANDBY = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("standby"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName REPLACE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("replace"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ADDITIVE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("additive"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName CALCMODE = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("calcmode", "calcMode"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName CALCMODE = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("calcmode", "calcMode"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName CODETYPE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("codetype"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName CODEBASE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("codebase"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName BEVELLED = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("bevelled"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName BASELINE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("baseline"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName EXPONENT = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("exponent"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName EDGEMODE = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("edgemode", "edgeMode"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName EDGEMODE = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("edgemode", "edgeMode"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ENCODING = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("encoding"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName GLYPHREF = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("glyphref", "glyphRef"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName GLYPHREF = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("glyphref", "glyphRef"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName DATETIME = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("datetime"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName DISABLED = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("disabled"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName FONTSIZE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("fontsize"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName KEYTIMES = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("keytimes", "keyTimes"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName KEYTIMES = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("keytimes", "keyTimes"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName LOOPEND  = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("loopend "), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName PANOSE_1 = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("panose-1"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName HREFLANG = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("hreflang"), ALL_NO_PREFIX, ALL_NCNAME, false);
@@ -727,11 +737,11 @@ public final class AttributeName
     public static final AttributeName ELEVATION = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("elevation"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName DIRECTION = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("direction"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName DRAGGABLE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("draggable"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName FILTERRES = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("filterres", "filterRes"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName FILTERRES = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("filterres", "filterRes"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName FILL_RULE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("fill-rule"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName FONTSTYLE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("fontstyle"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName FONT_SIZE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("font-size"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName KEYPOINTS = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("keypoints", "keyPoints"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName KEYPOINTS = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("keypoints", "keyPoints"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName HIDEFOCUS = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("hidefocus"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ONMESSAGE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onmessage"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName INTERCEPT = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("intercept"), ALL_NO_PREFIX, ALL_NCNAME, false);
@@ -744,18 +754,18 @@ public final class AttributeName
     public static final AttributeName INPUTMODE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("inputmode"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ONROWEXIT = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onrowexit"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName MATHCOLOR = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("mathcolor"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName MASKUNITS = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("maskunits", "maskUnits"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName MASKUNITS = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("maskunits", "maskUnits"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName MAXLENGTH = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("maxlength"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName LINEBREAK = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("linebreak"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName TRANSFORM = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("transform"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName V_HANGING = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("v-hanging"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName VALUETYPE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("valuetype"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName POINTSATZ = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("pointsatz", "pointsAtZ"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName POINTSATX = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("pointsatx", "pointsAtX"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName POINTSATY = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("pointsaty", "pointsAtY"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName POINTSATZ = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("pointsatz", "pointsAtZ"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName POINTSATX = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("pointsatx", "pointsAtX"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName POINTSATY = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("pointsaty", "pointsAtY"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName SYMMETRIC = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("symmetric"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName SCROLLING = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("scrolling"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName REPEATDUR = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("repeatdur", "repeatDur"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName REPEATDUR = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("repeatdur", "repeatDur"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName SELECTION = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("selection"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName SEPARATOR = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("separator"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName AUTOPLAY   = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("autoplay  "), ALL_NO_PREFIX, ALL_NCNAME, false);
@@ -775,7 +785,7 @@ public final class AttributeName
     public static final AttributeName FONTFAMILY = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("fontfamily"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName FONTWEIGHT = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("fontweight"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName FONT_STYLE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("font-style"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName KEYSPLINES = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("keysplines", "keySplines"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName KEYSPLINES = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("keysplines", "keySplines"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName LOOPSTART  = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("loopstart "), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName PLAYCOUNT  = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("playcount "), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName HTTP_EQUIV = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("http-equiv"), ALL_NO_PREFIX, ALL_NCNAME, false);
@@ -789,21 +799,21 @@ public final class AttributeName
     public static final AttributeName ONDRAGOVER = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("ondragover"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ONFOCUSOUT = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onfocusout"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ONMOUSEOUT = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onmouseout"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName NUMOCTAVES = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("numoctaves", "numOctaves"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName NUMOCTAVES = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("numoctaves", "numOctaves"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName MARKER_MID = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("marker-mid"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName MARKER_END = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("marker-end"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName TEXTLENGTH = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("textlength", "textLength"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName TEXTLENGTH = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("textlength", "textLength"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName VISIBILITY = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("visibility"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName VIEWTARGET = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("viewtarget", "viewTarget"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName VIEWTARGET = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("viewtarget", "viewTarget"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName VERT_ADV_Y = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("vert-adv-y"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName PATHLENGTH = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("pathlength", "pathLength"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName PATHLENGTH = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("pathlength", "pathLength"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName REPEAT_MAX = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("repeat-max"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName RADIOGROUP = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("radiogroup"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName STOP_COLOR = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("stop-color"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName SEPARATORS = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("separators"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName REPEAT_MIN = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("repeat-min"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ROWSPACING = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("rowspacing"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName ZOOMANDPAN = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("zoomandpan", "zoomAndPan"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName ZOOMANDPAN = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("zoomandpan", "zoomAndPan"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName XLINK_TYPE = new AttributeName(NAMESPACE("http://www.w3.org/1999/xlink"), COLONIFIED_LOCAL("xlink:type", "type"), PREFIX("xlink"), new boolean[]{false, true, true, false}, false);
     public static final AttributeName XLINK_ROLE = new AttributeName(NAMESPACE("http://www.w3.org/1999/xlink"), COLONIFIED_LOCAL("xlink:role", "role"), PREFIX("xlink"), new boolean[]{false, true, true, false}, false);
     public static final AttributeName XLINK_HREF = new AttributeName(NAMESPACE("http://www.w3.org/1999/xlink"), COLONIFIED_LOCAL("xlink:href", "href"), PREFIX("xlink"), new boolean[]{false, true, true, false}, false);
@@ -819,10 +829,10 @@ public final class AttributeName
     public static final AttributeName COLUMNALIGN = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("columnalign"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName COLUMNLINES = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("columnlines"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName CONTEXTMENU = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("contextmenu"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName BASEPROFILE = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("baseprofile", "baseProfile"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName BASEPROFILE = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("baseprofile", "baseProfile"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName FONT_FAMILY = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("font-family"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName FRAMEBORDER = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("frameborder"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName FILTERUNITS = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("filterunits", "filterUnits"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName FILTERUNITS = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("filterunits", "filterUnits"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName FLOOD_COLOR = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("flood-color"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName FONT_WEIGHT = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("font-weight"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName HORIZ_ADV_X = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("horiz-adv-x"), ALL_NO_PREFIX, ALL_NCNAME, false);
@@ -837,16 +847,16 @@ public final class AttributeName
     public static final AttributeName ONFORMINPUT = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onforminput"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ONDRAGSTART = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("ondragstart"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ONMOVESTART = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onmovestart"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName MARKERUNITS = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("markerunits", "markerUnits"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName MARKERUNITS = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("markerunits", "markerUnits"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName MATHVARIANT = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("mathvariant"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName MARGINWIDTH = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("marginwidth"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName MARKERWIDTH = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("markerwidth", "markerWidth"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName MARKERWIDTH = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("markerwidth", "markerWidth"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName TEXT_ANCHOR = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("text-anchor"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName TABLEVALUES = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("tablevalues", "tableValues"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName TABLEVALUES = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("tablevalues", "tableValues"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName SCRIPTLEVEL = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("scriptlevel"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName REPEATCOUNT = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("repeatcount", "repeatCount"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName STITCHTILES = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("stitchtiles", "stitchTiles"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName STARTOFFSET = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("startoffset", "startOffset"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName REPEATCOUNT = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("repeatcount", "repeatCount"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName STITCHTILES = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("stitchtiles", "stitchTiles"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName STARTOFFSET = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("startoffset", "startOffset"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName SCROLLDELAY = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("scrolldelay"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName XMLNS_XLINK = new AttributeName(NAMESPACE("http://www.w3.org/2000/xmlns/"), COLONIFIED_LOCAL("xmlns:xlink", "xlink"), PREFIX("xmlns"), new boolean[]{false, false, false, false}, true);
     public static final AttributeName XLINK_TITLE = new AttributeName(NAMESPACE("http://www.w3.org/1999/xlink"), COLONIFIED_LOCAL("xlink:title", "title"), PREFIX("xlink"), new boolean[]{false, true, true, false}, false);
@@ -861,7 +871,7 @@ public final class AttributeName
     public static final AttributeName FONT_VARIANT = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("font-variant"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName FONT_STRETCH = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("font-stretch"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName FRAMESPACING = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("framespacing"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName KERNELMATRIX = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("kernelmatrix", "kernelMatrix"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName KERNELMATRIX = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("kernelmatrix", "kernelMatrix"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ONDEACTIVATE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("ondeactivate"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ONROWSDELETE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onrowsdelete"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ONMOUSELEAVE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onmouseleave"), ALL_NO_PREFIX, ALL_NCNAME, false);
@@ -872,22 +882,22 @@ public final class AttributeName
     public static final AttributeName ONAFTERPRINT = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onafterprint"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ONBEFORECOPY = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onbeforecopy"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName MARGINHEIGHT = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("marginheight"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName MARKERHEIGHT = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("markerheight", "markerHeight"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName MARKERHEIGHT = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("markerheight", "markerHeight"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName MARKER_START = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("marker-start"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName MATHEMATICAL = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("mathematical"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName LENGTHADJUST = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("lengthadjust", "lengthAdjust"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName LENGTHADJUST = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("lengthadjust", "lengthAdjust"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName UNSELECTABLE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("unselectable"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName UNICODE_BIDI = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("unicode-bidi"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName UNITS_PER_EM = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("units-per-em"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName WORD_SPACING = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("word-spacing"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName WRITING_MODE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("writing-mode"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName V_ALPHABETIC = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("v-alphabetic"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName PATTERNUNITS = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("patternunits", "patternUnits"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName SPREADMETHOD = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("spreadmethod", "spreadMethod"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName SURFACESCALE = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("surfacescale", "surfaceScale"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName PATTERNUNITS = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("patternunits", "patternUnits"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName SPREADMETHOD = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("spreadmethod", "spreadMethod"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName SURFACESCALE = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("surfacescale", "surfaceScale"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName STROKE_WIDTH = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("stroke-width"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName REPEAT_START = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("repeat-start"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName STDDEVIATION = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("stddeviation", "stdDeviation"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName STDDEVIATION = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("stddeviation", "stdDeviation"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName STOP_OPACITY = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("stop-opacity"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ARIA_CHECKED  = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-checked "), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ARIA_PRESSED  = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-pressed "), ALL_NO_PREFIX, ALL_NCNAME, false);
@@ -901,16 +911,16 @@ public final class AttributeName
     public static final AttributeName ARIA_VALUEMAX = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-valuemax"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ARIA_READONLY = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-readonly"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ARIA_REQUIRED = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-required"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName ATTRIBUTETYPE = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("attributetype", "attributeType"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName ATTRIBUTENAME = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("attributename", "attributeName"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName ATTRIBUTETYPE = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("attributetype", "attributeType"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName ATTRIBUTENAME = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("attributename", "attributeName"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ARIA_DATATYPE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-datatype"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ARIA_VALUEMIN = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-valuemin"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName BASEFREQUENCY = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("basefrequency", "baseFrequency"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName BASEFREQUENCY = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("basefrequency", "baseFrequency"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName COLUMNSPACING = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("columnspacing"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName COLOR_PROFILE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("color-profile"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName CLIPPATHUNITS = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("clippathunits", "clipPathUnits"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName DEFINITIONURL = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("definitionurl"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName GRADIENTUNITS = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("gradientunits", "gradientUnits"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName CLIPPATHUNITS = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("clippathunits", "clipPathUnits"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName DEFINITIONURL = new AttributeName(ALL_NO_NS, MATH_DIFFERENT("definitionurl", "definitionURL"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName GRADIENTUNITS = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("gradientunits", "gradientUnits"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName FLOOD_OPACITY = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("flood-opacity"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ONAFTERUPDATE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onafterupdate"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ONERRORUPDATE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onerrorupdate"), ALL_NO_PREFIX, ALL_NCNAME, false);
@@ -926,7 +936,7 @@ public final class AttributeName
     public static final AttributeName VERT_ORIGIN_X = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("vert-origin-x"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName VERT_ORIGIN_Y = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("vert-origin-y"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName V_IDEOGRAPHIC = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("v-ideographic"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName PRESERVEALPHA = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("preservealpha", "preserveAlpha"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName PRESERVEALPHA = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("preservealpha", "preserveAlpha"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName SCRIPTMINSIZE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("scriptminsize"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName SPECIFICATION = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("specification"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName XLINK_ACTUATE = new AttributeName(NAMESPACE("http://www.w3.org/1999/xlink"), COLONIFIED_LOCAL("xlink:actuate", "actuate"), PREFIX("xlink"), new boolean[]{false, true, true, false}, false);
@@ -951,8 +961,8 @@ public final class AttributeName
     public static final AttributeName TEXT_RENDERING = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("text-rendering"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName V_MATHEMATICAL = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("v-mathematical"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName POINTER_EVENTS = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("pointer-events"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName PRIMITIVEUNITS = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("primitiveunits", "primitiveUnits"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName SYSTEMLANGUAGE = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("systemlanguage", "systemLanguage"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName PRIMITIVEUNITS = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("primitiveunits", "primitiveUnits"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName SYSTEMLANGUAGE = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("systemlanguage", "systemLanguage"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName STROKE_LINECAP = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("stroke-linecap"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName SUBSCRIPTSHIFT = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("subscriptshift"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName STROKE_OPACITY = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("stroke-opacity"), ALL_NO_PREFIX, ALL_NCNAME, false);
@@ -961,7 +971,7 @@ public final class AttributeName
     public static final AttributeName ARIA_TEMPLATEID = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-templateid"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName COLOR_RENDERING = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("color-rendering"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName CONTENTEDITABLE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("contenteditable"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName DIFFUSECONSTANT = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("diffuseconstant", "diffuseConstant"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName DIFFUSECONSTANT = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("diffuseconstant", "diffuseConstant"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ONDATAAVAILABLE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("ondataavailable"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ONCONTROLSELECT = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("oncontrolselect"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName IMAGE_RENDERING = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("image-rendering"), ALL_NO_PREFIX, ALL_NCNAME, false);
@@ -971,32 +981,32 @@ public final class AttributeName
     public static final AttributeName STROKE_LINEJOIN = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("stroke-linejoin"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName REPEAT_TEMPLATE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("repeat-template"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ARIA_DESCRIBEDBY = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-describedby"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName CONTENTSTYLETYPE = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("contentstyletype", "contentStyleType"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName CONTENTSTYLETYPE = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("contentstyletype", "contentStyleType"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName FONT_SIZE_ADJUST = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("font-size-adjust"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName KERNELUNITLENGTH = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("kernelunitlength", "kernelUnitLength"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName KERNELUNITLENGTH = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("kernelunitlength", "kernelUnitLength"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ONBEFOREACTIVATE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onbeforeactivate"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ONPROPERTYCHANGE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onpropertychange"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ONDATASETCHANGED = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("ondatasetchanged"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName MASKCONTENTUNITS = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("maskcontentunits", "maskContentUnits"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName PATTERNTRANSFORM = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("patterntransform", "patternTransform"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName REQUIREDFEATURES = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("requiredfeatures", "requiredFeatures"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName MASKCONTENTUNITS = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("maskcontentunits", "maskContentUnits"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName PATTERNTRANSFORM = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("patterntransform", "patternTransform"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName REQUIREDFEATURES = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("requiredfeatures", "requiredFeatures"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName RENDERING_INTENT = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("rendering-intent"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName SPECULAREXPONENT = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("specularexponent", "specularExponent"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName SPECULARCONSTANT = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("specularconstant", "specularConstant"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName SPECULAREXPONENT = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("specularexponent", "specularExponent"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName SPECULARCONSTANT = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("specularconstant", "specularConstant"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName SUPERSCRIPTSHIFT = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("superscriptshift"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName STROKE_DASHARRAY = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("stroke-dasharray"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName XCHANNELSELECTOR = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("xchannelselector", "xChannelSelector"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName YCHANNELSELECTOR = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("ychannelselector", "yChannelSelector"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName XCHANNELSELECTOR = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("xchannelselector", "xChannelSelector"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName YCHANNELSELECTOR = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("ychannelselector", "yChannelSelector"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ARIA_AUTOCOMPLETE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-autocomplete"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName CONTENTSCRIPTTYPE = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("contentscripttype", "contentScriptType"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName CONTENTSCRIPTTYPE = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("contentscripttype", "contentScriptType"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ENABLE_BACKGROUND = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("enable-background"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName DOMINANT_BASELINE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("dominant-baseline"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName GRADIENTTRANSFORM = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("gradienttransform", "gradientTransform"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName GRADIENTTRANSFORM = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("gradienttransform", "gradientTransform"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ONBEFORDEACTIVATE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onbefordeactivate"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ONDATASETCOMPLETE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("ondatasetcomplete"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName OVERLINE_POSITION = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("overline-position"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ONBEFOREEDITFOCUS = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("onbeforeeditfocus"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName LIMITINGCONEANGLE = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("limitingconeangle", "limitingConeAngle"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName LIMITINGCONEANGLE = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("limitingconeangle", "limitingConeAngle"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName VERYTHINMATHSPACE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("verythinmathspace"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName STROKE_DASHOFFSET = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("stroke-dashoffset"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName STROKE_MITERLIMIT = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("stroke-miterlimit"), ALL_NO_PREFIX, ALL_NCNAME, false);
@@ -1005,11 +1015,11 @@ public final class AttributeName
     public static final AttributeName OVERLINE_THICKNESS = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("overline-thickness"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName UNDERLINE_POSITION = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("underline-position"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName VERYTHICKMATHSPACE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("verythickmathspace"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName REQUIREDEXTENSIONS = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("requiredextensions", "requiredExtensions"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName REQUIREDEXTENSIONS = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("requiredextensions", "requiredExtensions"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName COLOR_INTERPOLATION = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("color-interpolation"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName UNDERLINE_THICKNESS = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("underline-thickness"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName PRESERVEASPECTRATIO = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("preserveaspectratio", "preserveAspectRatio"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName PATTERNCONTENTUNITS = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("patterncontentunits", "patternContentUnits"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName PRESERVEASPECTRATIO = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("preserveaspectratio", "preserveAspectRatio"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName PATTERNCONTENTUNITS = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("patterncontentunits", "patternContentUnits"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ARIA_MULTISELECTABLE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-multiselectable"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName SCRIPTSIZEMULTIPLIER = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("scriptsizemultiplier"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName ARIA_ACTIVEDESCENDANT = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("aria-activedescendant"), ALL_NO_PREFIX, ALL_NCNAME, false);
@@ -1017,7 +1027,7 @@ public final class AttributeName
     public static final AttributeName VERYVERYTHICKMATHSPACE = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("veryverythickmathspace"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName STRIKETHROUGH_POSITION = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("strikethrough-position"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName STRIKETHROUGH_THICKNESS = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("strikethrough-thickness"), ALL_NO_PREFIX, ALL_NCNAME, false);
-    public static final AttributeName EXTERNALRESOURCESREQUIRED = new AttributeName(ALL_NO_NS, CAMEL_CASE_LOCAL("externalresourcesrequired", "externalResourcesRequired"), ALL_NO_PREFIX, ALL_NCNAME, false);
+    public static final AttributeName EXTERNALRESOURCESREQUIRED = new AttributeName(ALL_NO_NS, SVG_DIFFERENT("externalresourcesrequired", "externalResourcesRequired"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName GLYPH_ORIENTATION_VERTICAL = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("glyph-orientation-vertical"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName COLOR_INTERPOLATION_FILTERS = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("color-interpolation-filters"), ALL_NO_PREFIX, ALL_NCNAME, false);
     public static final AttributeName GLYPH_ORIENTATION_HORIZONTAL = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("glyph-orientation-horizontal"), ALL_NO_PREFIX, ALL_NCNAME, false);

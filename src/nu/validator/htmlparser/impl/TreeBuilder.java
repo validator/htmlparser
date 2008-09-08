@@ -174,7 +174,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     final static int FOREIGNOBJECT_OR_DESC = 59;
 
     private enum InsertionMode {
-        INITIAL, BEFORE_HTML, BEFORE_HEAD, IN_HEAD, IN_HEAD_NOSCRIPT, AFTER_HEAD, IN_BODY, IN_TABLE, IN_CAPTION, IN_COLUMN_GROUP, IN_TABLE_BODY, IN_ROW, IN_CELL, IN_SELECT, IN_SELECT_IN_TABLE, AFTER_BODY, IN_FRAMESET, AFTER_FRAMESET, AFTER_AFTER_BODY, AFTER_AFTER_FRAMESET
+        INITIAL, BEFORE_HTML, BEFORE_HEAD, IN_HEAD, IN_HEAD_NOSCRIPT, AFTER_HEAD, IN_BODY, IN_TABLE, IN_CAPTION, IN_COLUMN_GROUP, IN_TABLE_BODY, IN_ROW, IN_CELL, IN_SELECT, IN_SELECT_IN_TABLE, AFTER_BODY, IN_FRAMESET, AFTER_FRAMESET, AFTER_AFTER_BODY, AFTER_AFTER_FRAMESET, IN_CDATA_RCDATA
     }
 
     private enum CharsetState {
@@ -265,6 +265,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private InsertionMode mode = InsertionMode.INITIAL;
 
+    private InsertionMode originalMode = InsertionMode.INITIAL;
+
     private int foreignFlag = TreeBuilder.NOT_IN_FOREIGN;
 
     protected Tokenizer tokenizer;
@@ -274,8 +276,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     private DocumentModeHandler documentModeHandler;
 
     private DoctypeExpectation doctypeExpectation = DoctypeExpectation.HTML;
-
-    private int cdataOrRcdataTimesToPop;
 
     private boolean scriptingEnabled = false;
 
@@ -399,7 +399,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             charBuffer = new char[1024];
         }
         needToDropLF = false;
-        cdataOrRcdataTimesToPop = 0;
+        originalMode = InsertionMode.INITIAL;
         currentPtr = -1;
         listPtr = -1;
         formPointer = null;
@@ -520,7 +520,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                                 publicIdentifier,
                                                 systemIdentifier, false);
                                     } else {
-                                        if (!(publicIdentifier == null && systemIdentifier == null)) {
+                                        if (!((publicIdentifier == null || Portability.literalEqualsString(
+                                                "XSLT-generated",
+                                                publicIdentifier)) && systemIdentifier == null)) {
                                             err("Legacy doctype. Expected \u201C<!DOCTYPE html>\u201D.");
                                         }
                                         documentModeInternal(
@@ -698,40 +700,40 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     public final void comment(@NoLength char[] buf, int start, int length)
             throws SAXException {
         needToDropLF = false;
-        if (wantingComments) {
-            commentloop: for (;;) {
-                switch (foreignFlag) {
-                    case IN_FOREIGN:
-                        break commentloop;
-                    default:
-                        switch (mode) {
-                            case INITIAL:
-                            case BEFORE_HTML:
-                            case AFTER_AFTER_BODY:
-                            case AFTER_AFTER_FRAMESET:
-                                /*
-                                 * A comment token Append a Comment node to the
-                                 * Document object with the data attribute set
-                                 * to the data given in the comment token.
-                                 */
-                                appendCommentToDocument(buf, start, length);
-                                return;
-                            case AFTER_BODY:
-                                /*
-                                 * * A comment token Append a Comment node to
-                                 * the first element in the stack of open
-                                 * elements (the html element), with the data
-                                 * attribute set to the data given in the
-                                 * comment token.
-                                 * 
-                                 */
-                                flushCharacters();
-                                appendComment(stack[0].node, buf, start, length);
-                                return;
-                            default:
-                                break commentloop;
-                        }
-                }
+        if (!wantingComments) {
+            return;
+        }
+        commentloop: for (;;) {
+            switch (foreignFlag) {
+                case IN_FOREIGN:
+                    break commentloop;
+                default:
+                    switch (mode) {
+                        case INITIAL:
+                        case BEFORE_HTML:
+                        case AFTER_AFTER_BODY:
+                        case AFTER_AFTER_FRAMESET:
+                            /*
+                             * A comment token Append a Comment node to the
+                             * Document object with the data attribute set to
+                             * the data given in the comment token.
+                             */
+                            appendCommentToDocument(buf, start, length);
+                            return;
+                        case AFTER_BODY:
+                            /*
+                             * * A comment token Append a Comment node to the
+                             * first element in the stack of open elements (the
+                             * html element), with the data attribute set to the
+                             * data given in the comment token.
+                             * 
+                             */
+                            flushCharacters();
+                            appendComment(stack[0].node, buf, start, length);
+                            return;
+                        default:
+                            break commentloop;
+                    }
             }
         }
         /*
@@ -759,362 +761,390 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 }
             }
             needToDropLF = false;
-        } else if (cdataOrRcdataTimesToPop > 0) {
-            accumulateCharacters(buf, start, length);
-            return;
         }
 
         // optimize the most common case
-        if (foreignFlag == TreeBuilder.IN_FOREIGN
-                || mode == InsertionMode.IN_BODY
-                || mode == InsertionMode.IN_CELL
-                || mode == InsertionMode.IN_CAPTION) {
-            reconstructTheActiveFormattingElements();
-            accumulateCharacters(buf, start, length);
-            return;
-        }
+        // XXX should there be an IN FOREIGN check here?
+        switch (mode) {
+            case IN_BODY:
+            case IN_CELL:
+            case IN_CAPTION:
+                reconstructTheActiveFormattingElements();
+                // fall through
+            case IN_CDATA_RCDATA:
+                accumulateCharacters(buf, start, length);
+                return;
+            default:
+                int end = start + length;
+                loop: for (int i = start; i < end; i++) {
+                    switch (buf[i]) {
+                        case ' ':
+                        case '\t':
+                        case '\n':
+                        case '\u000C':
+                            /*
+                             * A character token that is one of one of U+0009
+                             * CHARACTER TABULATION, U+000A LINE FEED (LF),
+                             * U+000C FORM FEED (FF), or U+0020 SPACE
+                             */
+                            switch (mode) {
+                                case INITIAL:
+                                case BEFORE_HTML:
+                                case BEFORE_HEAD:
+                                    /*
+                                     * Ignore the token.
+                                     */
+                                    start = i + 1;
+                                    continue;
+                                case IN_TABLE:
+                                case IN_TABLE_BODY:
+                                case IN_ROW:
+                                    if (isTainted()) {
+                                        if (start < i) {
+                                            accumulateCharacters(buf, start, i
+                                                    - start);
+                                        }
+                                        reconstructTheActiveFormattingElements();
+                                        appendCharMayFoster(buf, i);
+                                        start = i + 1;
+                                    }
+                                    continue;
+                                case IN_HEAD:
+                                case IN_HEAD_NOSCRIPT:
+                                case AFTER_HEAD:
+                                case IN_COLUMN_GROUP:
+                                case IN_FRAMESET:
+                                case AFTER_FRAMESET:
+                                    /*
+                                     * Append the character to the current node.
+                                     */
+                                    continue;
+                                case IN_BODY:
+                                case IN_CELL:
+                                case IN_CAPTION:
+                                    // XXX is this dead code?
+                                    if (start < i) {
+                                        accumulateCharacters(buf, start, i
+                                                - start);
+                                        start = i;
+                                    }
 
-        int end = start + length;
-        loop: for (int i = start; i < end; i++) {
-            switch (buf[i]) {
-                case ' ':
-                case '\t':
-                case '\n':
-                case '\u000C':
-                    /*
-                     * A character token that is one of one of U+0009 CHARACTER
-                     * TABULATION, U+000A LINE FEED (LF), U+000C FORM FEED (FF),
-                     * or U+0020 SPACE
-                     */
-                    switch (mode) {
-                        case INITIAL:
-                        case BEFORE_HTML:
-                        case BEFORE_HEAD:
-                            /*
-                             * Ignore the token.
-                             */
-                            start = i + 1;
-                            continue;
-                        case IN_TABLE:
-                        case IN_TABLE_BODY:
-                        case IN_ROW:
-                            if (isTainted()) {
-                                if (start < i) {
-                                    accumulateCharacters(buf, start, i - start);
-                                }
-                                reconstructTheActiveFormattingElements();
-                                appendCharMayFoster(buf, i);
-                                start = i + 1;
+                                    /*
+                                     * Reconstruct the active formatting
+                                     * elements, if any.
+                                     */
+                                    reconstructTheActiveFormattingElements();
+                                    /*
+                                     * Append the token's character to the
+                                     * current node.
+                                     */
+                                    break loop;
+                                case IN_SELECT:
+                                case IN_SELECT_IN_TABLE:
+                                    break loop;
+                                case AFTER_BODY:
+                                    if (start < i) {
+                                        accumulateCharacters(buf, start, i
+                                                - start);
+                                        start = i;
+                                    }
+                                    /*
+                                     * Reconstruct the active formatting
+                                     * elements, if any.
+                                     */
+                                    // XXX bug?
+                                    reconstructTheActiveFormattingElements();
+                                    /*
+                                     * Append the token's character to the
+                                     * current node.
+                                     */
+                                    continue;
+                                case AFTER_AFTER_BODY:
+                                case AFTER_AFTER_FRAMESET:
+                                    if (conformingAndStreaming) {
+                                        // XXX why? is this a bug?
+                                        return;
+                                    }
+                                    if (start < i) {
+                                        accumulateCharacters(buf, start, i
+                                                - start);
+                                        start = i;
+                                    }
+                                    /*
+                                     * Reconstruct the active formatting
+                                     * elements, if any.
+                                     */
+                                    // XXX bug?
+                                    reconstructTheActiveFormattingElements();
+                                    /*
+                                     * Append the token's character to the
+                                     * current node.
+                                     */
+                                    continue;
                             }
-                            continue;
-                        case IN_HEAD:
-                        case IN_HEAD_NOSCRIPT:
-                        case AFTER_HEAD:
-                        case IN_COLUMN_GROUP:
-                        case IN_FRAMESET:
-                        case AFTER_FRAMESET:
+                        default:
                             /*
-                             * Append the character to the current node.
+                             * A character token that is not one of one of
+                             * U+0009 CHARACTER TABULATION, U+000A LINE FEED
+                             * (LF), U+000C FORM FEED (FF), or U+0020 SPACE
                              */
-                            continue;
-                        case IN_BODY:
-                        case IN_CELL:
-                        case IN_CAPTION:
-                            // XXX is this dead code?
-                            if (start < i) {
-                                accumulateCharacters(buf, start, i - start);
-                                start = i;
+                            switch (mode) {
+                                case INITIAL:
+                                    /*
+                                     * Parse error.
+                                     */
+                                    switch (doctypeExpectation) {
+                                        case AUTO:
+                                            err("Non-space characters found without seeing a doctype first. Expected e.g. \u201C<!DOCTYPE html>\u201D.");
+                                            break;
+                                        case HTML:
+                                            err("Non-space characters found without seeing a doctype first. Expected \u201C<!DOCTYPE html>\u201D.");
+                                            break;
+                                        case HTML401_STRICT:
+                                            err("Non-space characters found without seeing a doctype first. Expected \u201C<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\u201D.");
+                                            break;
+                                        case HTML401_TRANSITIONAL:
+                                            err("Non-space characters found without seeing a doctype first. Expected \u201C<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\u201D.");
+                                            break;
+                                        case NO_DOCTYPE_ERRORS:
+                                    }
+                                    /*
+                                     * 
+                                     * Set the document to quirks mode.
+                                     */
+                                    documentModeInternal(
+                                            DocumentMode.QUIRKS_MODE, null,
+                                            null, false);
+                                    /*
+                                     * Then, switch to the root element mode of
+                                     * the tree construction stage
+                                     */
+                                    mode = InsertionMode.BEFORE_HTML;
+                                    /*
+                                     * and reprocess the current token.
+                                     * 
+                                     * 
+                                     */
+                                    i--;
+                                    continue;
+                                case BEFORE_HTML:
+                                    /*
+                                     * Create an HTMLElement node with the tag
+                                     * name html, in the HTML namespace. Append
+                                     * it to the Document object.
+                                     */
+                                    appendHtmlElementToDocumentAndPush();
+                                    /* Switch to the main mode */
+                                    mode = InsertionMode.BEFORE_HEAD;
+                                    /*
+                                     * reprocess the current token.
+                                     * 
+                                     */
+                                    i--;
+                                    continue;
+                                case BEFORE_HEAD:
+                                    if (start < i) {
+                                        accumulateCharacters(buf, start, i
+                                                - start);
+                                        start = i;
+                                    }
+                                    /*
+                                     * /*Act as if a start tag token with the
+                                     * tag name "head" and no attributes had
+                                     * been seen,
+                                     */
+                                    appendToCurrentNodeAndPushHeadElement(HtmlAttributes.EMPTY_ATTRIBUTES);
+                                    mode = InsertionMode.IN_HEAD;
+                                    /*
+                                     * then reprocess the current token.
+                                     * 
+                                     * This will result in an empty head element
+                                     * being generated, with the current token
+                                     * being reprocessed in the "after head"
+                                     * insertion mode.
+                                     */
+                                    i--;
+                                    continue;
+                                case IN_HEAD:
+                                    if (start < i) {
+                                        accumulateCharacters(buf, start, i
+                                                - start);
+                                        start = i;
+                                    }
+                                    /*
+                                     * Act as if an end tag token with the tag
+                                     * name "head" had been seen,
+                                     */
+                                    pop();
+                                    mode = InsertionMode.AFTER_HEAD;
+                                    /*
+                                     * and reprocess the current token.
+                                     */
+                                    i--;
+                                    continue;
+                                case IN_HEAD_NOSCRIPT:
+                                    if (start < i) {
+                                        accumulateCharacters(buf, start, i
+                                                - start);
+                                        start = i;
+                                    }
+                                    /*
+                                     * Parse error. Act as if an end tag with
+                                     * the tag name "noscript" had been seen
+                                     */
+                                    err("Non-space character inside \u201Cnoscript\u201D inside \u201Chead\u201D.");
+                                    pop();
+                                    mode = InsertionMode.IN_HEAD;
+                                    /*
+                                     * and reprocess the current token.
+                                     */
+                                    i--;
+                                    continue;
+                                case AFTER_HEAD:
+                                    if (start < i) {
+                                        accumulateCharacters(buf, start, i
+                                                - start);
+                                        start = i;
+                                    }
+                                    /*
+                                     * Act as if a start tag token with the tag
+                                     * name "body" and no attributes had been
+                                     * seen,
+                                     */
+                                    appendToCurrentNodeAndPushBodyElement();
+                                    mode = InsertionMode.IN_BODY;
+                                    /*
+                                     * and then reprocess the current token.
+                                     */
+                                    i--;
+                                    continue;
+                                case IN_BODY:
+                                case IN_CELL:
+                                case IN_CAPTION:
+                                    if (start < i) {
+                                        accumulateCharacters(buf, start, i
+                                                - start);
+                                        start = i;
+                                    }
+                                    /*
+                                     * Reconstruct the active formatting
+                                     * elements, if any.
+                                     */
+                                    reconstructTheActiveFormattingElements();
+                                    /*
+                                     * Append the token's character to the
+                                     * current node.
+                                     */
+                                    break loop;
+                                case IN_TABLE:
+                                case IN_TABLE_BODY:
+                                case IN_ROW:
+                                    if (start < i) {
+                                        accumulateCharacters(buf, start, i
+                                                - start);
+                                    }
+                                    reconstructTheActiveFormattingElements();
+                                    appendCharMayFoster(buf, i);
+                                    start = i + 1;
+                                    continue;
+                                case IN_COLUMN_GROUP:
+                                    if (start < i) {
+                                        accumulateCharacters(buf, start, i
+                                                - start);
+                                        start = i;
+                                    }
+                                    /*
+                                     * Act as if an end tag with the tag name
+                                     * "colgroup" had been seen, and then, if
+                                     * that token wasn't ignored, reprocess the
+                                     * current token.
+                                     */
+                                    if (currentPtr == 0) {
+                                        err("Non-space in \u201Ccolgroup\u201D when parsing fragment.");
+                                        start = i + 1;
+                                        continue;
+                                    }
+                                    pop();
+                                    mode = InsertionMode.IN_TABLE;
+                                    i--;
+                                    continue;
+                                case IN_SELECT:
+                                case IN_SELECT_IN_TABLE:
+                                    break loop;
+                                case AFTER_BODY:
+                                    err("Non-space character after body.");
+                                    if (conformingAndStreaming) {
+                                        fatal();
+                                    }
+                                    mode = InsertionMode.IN_BODY;
+                                    i--;
+                                    continue;
+                                case IN_FRAMESET:
+                                    if (start < i) {
+                                        accumulateCharacters(buf, start, i
+                                                - start);
+                                        start = i;
+                                    }
+                                    /*
+                                     * Parse error.
+                                     */
+                                    err("Non-space in \u201Cframeset\u201D.");
+                                    /*
+                                     * Ignore the token.
+                                     */
+                                    start = i + 1;
+                                    continue;
+                                case AFTER_FRAMESET:
+                                    if (start < i) {
+                                        accumulateCharacters(buf, start, i
+                                                - start);
+                                        start = i;
+                                    }
+                                    /*
+                                     * Parse error.
+                                     */
+                                    err("Non-space after \u201Cframeset\u201D.");
+                                    /*
+                                     * Ignore the token.
+                                     */
+                                    start = i + 1;
+                                    continue;
+                                case AFTER_AFTER_BODY:
+                                    /*
+                                     * Parse error.
+                                     */
+                                    err("Non-space character in page trailer.");
+                                    if (conformingAndStreaming) {
+                                        fatal();
+                                    }
+                                    /*
+                                     * Switch back to the main mode and
+                                     * reprocess the token.
+                                     */
+                                    mode = InsertionMode.IN_BODY;
+                                    i--;
+                                    continue;
+                                case AFTER_AFTER_FRAMESET:
+                                    /*
+                                     * Parse error.
+                                     */
+                                    err("Non-space character in page trailer.");
+                                    if (conformingAndStreaming) {
+                                        fatal();
+                                    }
+                                    /*
+                                     * Switch back to the main mode and
+                                     * reprocess the token.
+                                     */
+                                    mode = InsertionMode.IN_FRAMESET;
+                                    i--;
+                                    continue;
                             }
-
-                            /*
-                             * Reconstruct the active formatting elements, if
-                             * any.
-                             */
-                            reconstructTheActiveFormattingElements();
-                            /* Append the token's character to the current node. */
-                            break loop;
-                        case IN_SELECT:
-                        case IN_SELECT_IN_TABLE:
-                            break loop;
-                        case AFTER_BODY:
-                            if (start < i) {
-                                accumulateCharacters(buf, start, i - start);
-                                start = i;
-                            }
-                            /*
-                             * Reconstruct the active formatting elements, if
-                             * any.
-                             */
-                            // XXX bug?
-                            reconstructTheActiveFormattingElements();
-                            /* Append the token's character to the current node. */
-                            continue;
-                        case AFTER_AFTER_BODY:
-                        case AFTER_AFTER_FRAMESET:
-                            if (conformingAndStreaming) {
-                                // XXX why? is this a bug?
-                                return;
-                            }
-                            if (start < i) {
-                                accumulateCharacters(buf, start, i - start);
-                                start = i;
-                            }
-                            /*
-                             * Reconstruct the active formatting elements, if
-                             * any.
-                             */
-                            // XXX bug?
-                            reconstructTheActiveFormattingElements();
-                            /*
-                             * Append the token's character to the current node.
-                             */
-                            continue;
                     }
-                default:
-                    /*
-                     * A character token that is not one of one of U+0009
-                     * CHARACTER TABULATION, U+000A LINE FEED (LF), U+000C FORM
-                     * FEED (FF), or U+0020 SPACE
-                     */
-                    switch (mode) {
-                        case INITIAL:
-                            /*
-                             * Parse error.
-                             */
-                            switch (doctypeExpectation) {
-                                case AUTO:
-                                    err("Non-space characters found without seeing a doctype first. Expected e.g. \u201C<!DOCTYPE html>\u201D.");
-                                    break;
-                                case HTML:
-                                    err("Non-space characters found without seeing a doctype first. Expected \u201C<!DOCTYPE html>\u201D.");
-                                    break;
-                                case HTML401_STRICT:
-                                    err("Non-space characters found without seeing a doctype first. Expected \u201C<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\u201D.");
-                                    break;
-                                case HTML401_TRANSITIONAL:
-                                    err("Non-space characters found without seeing a doctype first. Expected \u201C<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\u201D.");
-                                    break;
-                                case NO_DOCTYPE_ERRORS:
-                            }
-                            /*
-                             * 
-                             * Set the document to quirks mode.
-                             */
-                            documentModeInternal(DocumentMode.QUIRKS_MODE,
-                                    null, null, false);
-                            /*
-                             * Then, switch to the root element mode of the tree
-                             * construction stage
-                             */
-                            mode = InsertionMode.BEFORE_HTML;
-                            /*
-                             * and reprocess the current token.
-                             * 
-                             * 
-                             */
-                            i--;
-                            continue;
-                        case BEFORE_HTML:
-                            /*
-                             * Create an HTMLElement node with the tag name
-                             * html, in the HTML namespace. Append it to the
-                             * Document object.
-                             */
-                            appendHtmlElementToDocumentAndPush();
-                            /* Switch to the main mode */
-                            mode = InsertionMode.BEFORE_HEAD;
-                            /*
-                             * reprocess the current token.
-                             * 
-                             */
-                            i--;
-                            continue;
-                        case BEFORE_HEAD:
-                            if (start < i) {
-                                accumulateCharacters(buf, start, i - start);
-                                start = i;
-                            }
-                            /*
-                             * /*Act as if a start tag token with the tag name
-                             * "head" and no attributes had been seen,
-                             */
-                            appendToCurrentNodeAndPushHeadElement(HtmlAttributes.EMPTY_ATTRIBUTES);
-                            mode = InsertionMode.IN_HEAD;
-                            /*
-                             * then reprocess the current token.
-                             * 
-                             * This will result in an empty head element being
-                             * generated, with the current token being
-                             * reprocessed in the "after head" insertion mode.
-                             */
-                            i--;
-                            continue;
-                        case IN_HEAD:
-                            if (start < i) {
-                                accumulateCharacters(buf, start, i - start);
-                                start = i;
-                            }
-                            /*
-                             * Act as if an end tag token with the tag name
-                             * "head" had been seen,
-                             */
-                            pop();
-                            mode = InsertionMode.AFTER_HEAD;
-                            /*
-                             * and reprocess the current token.
-                             */
-                            i--;
-                            continue;
-                        case IN_HEAD_NOSCRIPT:
-                            if (start < i) {
-                                accumulateCharacters(buf, start, i - start);
-                                start = i;
-                            }
-                            /*
-                             * Parse error. Act as if an end tag with the tag
-                             * name "noscript" had been seen
-                             */
-                            err("Non-space character inside \u201Cnoscript\u201D inside \u201Chead\u201D.");
-                            pop();
-                            mode = InsertionMode.IN_HEAD;
-                            /*
-                             * and reprocess the current token.
-                             */
-                            i--;
-                            continue;
-                        case AFTER_HEAD:
-                            if (start < i) {
-                                accumulateCharacters(buf, start, i - start);
-                                start = i;
-                            }
-                            /*
-                             * Act as if a start tag token with the tag name
-                             * "body" and no attributes had been seen,
-                             */
-                            appendToCurrentNodeAndPushBodyElement();
-                            mode = InsertionMode.IN_BODY;
-                            /*
-                             * and then reprocess the current token.
-                             */
-                            i--;
-                            continue;
-                        case IN_BODY:
-                        case IN_CELL:
-                        case IN_CAPTION:
-                            if (start < i) {
-                                accumulateCharacters(buf, start, i - start);
-                                start = i;
-                            }
-                            /*
-                             * Reconstruct the active formatting elements, if
-                             * any.
-                             */
-                            reconstructTheActiveFormattingElements();
-                            /* Append the token's character to the current node. */
-                            break loop;
-                        case IN_TABLE:
-                        case IN_TABLE_BODY:
-                        case IN_ROW:
-                            if (start < i) {
-                                accumulateCharacters(buf, start, i - start);
-                            }
-                            reconstructTheActiveFormattingElements();
-                            appendCharMayFoster(buf, i);
-                            start = i + 1;
-                            continue;
-                        case IN_COLUMN_GROUP:
-                            if (start < i) {
-                                accumulateCharacters(buf, start, i - start);
-                                start = i;
-                            }
-                            /*
-                             * Act as if an end tag with the tag name "colgroup"
-                             * had been seen, and then, if that token wasn't
-                             * ignored, reprocess the current token.
-                             */
-                            if (currentPtr == 0) {
-                                err("Non-space in \u201Ccolgroup\u201D when parsing fragment.");
-                                start = i + 1;
-                                continue;
-                            }
-                            pop();
-                            mode = InsertionMode.IN_TABLE;
-                            i--;
-                            continue;
-                        case IN_SELECT:
-                        case IN_SELECT_IN_TABLE:
-                            break loop;
-                        case AFTER_BODY:
-                            err("Non-space character after body.");
-                            if (conformingAndStreaming) {
-                                fatal();
-                            }
-                            mode = InsertionMode.IN_BODY;
-                            i--;
-                            continue;
-                        case IN_FRAMESET:
-                            if (start < i) {
-                                accumulateCharacters(buf, start, i - start);
-                                start = i;
-                            }
-                            /*
-                             * Parse error.
-                             */
-                            err("Non-space in \u201Cframeset\u201D.");
-                            /*
-                             * Ignore the token.
-                             */
-                            start = i + 1;
-                            continue;
-                        case AFTER_FRAMESET:
-                            if (start < i) {
-                                accumulateCharacters(buf, start, i - start);
-                                start = i;
-                            }
-                            /*
-                             * Parse error.
-                             */
-                            err("Non-space after \u201Cframeset\u201D.");
-                            /*
-                             * Ignore the token.
-                             */
-                            start = i + 1;
-                            continue;
-                        case AFTER_AFTER_BODY:
-                            /*
-                             * Parse error.
-                             */
-                            err("Non-space character in page trailer.");
-                            if (conformingAndStreaming) {
-                                fatal();
-                            }
-                            /*
-                             * Switch back to the main mode and reprocess the
-                             * token.
-                             */
-                            mode = InsertionMode.IN_BODY;
-                            i--;
-                            continue;
-                        case AFTER_AFTER_FRAMESET:
-                            /*
-                             * Parse error.
-                             */
-                            err("Non-space character in page trailer.");
-                            if (conformingAndStreaming) {
-                                fatal();
-                            }
-                            /*
-                             * Switch back to the main mode and reprocess the
-                             * token.
-                             */
-                            mode = InsertionMode.IN_FRAMESET;
-                            i--;
-                            continue;
-                    }
-            }
-        }
-        if (start < end) {
-            accumulateCharacters(buf, start, end - start);
+                }
+                if (start < end) {
+                    accumulateCharacters(buf, start, end - start);
+                }
         }
     }
 
@@ -1226,6 +1256,15 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         }
                     }
                     break eofloop;
+                case IN_CDATA_RCDATA:
+                    err("End of file seen inside an [R]CDATA element.");
+                    // XXX mark script as already executed
+                    if (originalMode == InsertionMode.AFTER_HEAD) {
+                        pop();
+                    }
+                    pop();
+                    mode = originalMode;
+                    continue;
                 case IN_TABLE_BODY:
                 case IN_ROW:
                 case IN_TABLE:
@@ -1242,7 +1281,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 case AFTER_AFTER_FRAMESET:
                 default:
                     // [NOCPP[
-                    if (currentPtr == 0) { // This silliness is here to poison buggy compiler optimizations in GWT
+                    if (currentPtr == 0) { // This silliness is here to poison
+                        // buggy compiler optimizations in
+                        // GWT
                         System.currentTimeMillis();
                     }
                     // ]NOCPP]
@@ -1505,7 +1546,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         appendToCurrentNodeAndPushElement(
                                                 "http://www.w3.org/1999/xhtml",
                                                 elementName, attributes);
-                                        cdataOrRcdataTimesToPop = 1;
+                                        originalMode = mode;
+                                        mode = InsertionMode.IN_CDATA_RCDATA;
                                         tokenizer.setContentModelFlag(
                                                 ContentModelFlag.CDATA,
                                                 elementName);
@@ -1630,7 +1672,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         for (;;) {
                                             StackNode<T> node = stack[eltPos];
                                             if (node.group == group) { // LI or
-                                                                        // DD_OR_DT
+                                                // DD_OR_DT
                                                 generateImpliedEndTagsExceptFor(node.name);
                                                 if (eltPos != currentPtr) {
                                                     err("Unclosed elements inside a list.");
@@ -1729,7 +1771,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         appendToCurrentNodeAndPushElementMayFoster(
                                                 "http://www.w3.org/1999/xhtml",
                                                 elementName, attributes);
-                                        cdataOrRcdataTimesToPop = 1;
+                                        originalMode = mode;
+                                        mode = InsertionMode.IN_CDATA_RCDATA;
                                         tokenizer.setContentModelFlag(
                                                 ContentModelFlag.CDATA,
                                                 elementName);
@@ -1848,7 +1891,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         tokenizer.setContentModelFlag(
                                                 ContentModelFlag.RCDATA,
                                                 elementName);
-                                        cdataOrRcdataTimesToPop = 1;
+                                        originalMode = mode;
+                                        mode = InsertionMode.IN_CDATA_RCDATA;
                                         needToDropLF = true;
                                         break starttagloop;
                                     case NOSCRIPT:
@@ -1866,7 +1910,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         appendToCurrentNodeAndPushElementMayFoster(
                                                 "http://www.w3.org/1999/xhtml",
                                                 elementName, attributes);
-                                        cdataOrRcdataTimesToPop = 1;
+                                        originalMode = mode;
+                                        mode = InsertionMode.IN_CDATA_RCDATA;
                                         tokenizer.setContentModelFlag(
                                                 ContentModelFlag.CDATA,
                                                 elementName);
@@ -1890,6 +1935,51 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                                 mode = InsertionMode.IN_SELECT;
                                                 break;
                                         }
+                                        break starttagloop;
+                                    case OPTGROUP:
+                                    case OPTION:
+                                        /*
+                                         * If the stack of open elements has an
+                                         * option element in scope, then act as
+                                         * if an end tag with the tag name
+                                         * "option" had been seen.
+                                         */
+                                        if (findLastInScope("option") != TreeBuilder.NOT_FOUND_ON_STACK) {
+                                            optionendtagloop: for (;;) {
+                                                if (isCurrent("option")) {
+                                                    pop();
+                                                    break optionendtagloop;
+                                                }
+
+                                                eltPos = currentPtr;
+                                                for (;;) {
+                                                    StackNode<T> node = stack[eltPos];
+                                                    if (node.name == "option") {
+                                                        generateImpliedEndTags();
+                                                        if (!isCurrent("option")) {
+                                                            err("End tag \u201C"
+                                                                    + name
+                                                                    + "\u201D seen but there were unclosed elements.");
+                                                        }
+                                                        while (currentPtr >= eltPos) {
+                                                            pop();
+                                                        }
+                                                        break optionendtagloop;
+                                                    }
+                                                    eltPos--;
+                                                }
+                                            }
+                                        }
+                                        /*
+                                         * Reconstruct the active formatting
+                                         * elements, if any.
+                                         */
+                                        reconstructTheActiveFormattingElements();
+                                        /* Insert an HTML element for the token.
+                                         */
+                                        appendToCurrentNodeAndPushElementMayFoster(
+                                                "http://www.w3.org/1999/xhtml",
+                                                elementName, attributes);
                                         break starttagloop;
                                     case RT_OR_RP:
                                         /*
@@ -1992,7 +2082,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         appendToCurrentNodeAndPushElementMayFoster(
                                                 "http://www.w3.org/1999/xhtml",
                                                 elementName, attributes);
-                                        cdataOrRcdataTimesToPop = 1;
+                                        originalMode = mode;
+                                        mode = InsertionMode.IN_CDATA_RCDATA;
                                         tokenizer.setContentModelFlag(
                                                 ContentModelFlag.RCDATA,
                                                 elementName);
@@ -2002,7 +2093,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                             appendToCurrentNodeAndPushElement(
                                                     "http://www.w3.org/1999/xhtml",
                                                     elementName, attributes);
-                                            cdataOrRcdataTimesToPop = 1;
+                                            originalMode = mode;
+                                            mode = InsertionMode.IN_CDATA_RCDATA;
                                             tokenizer.setContentModelFlag(
                                                     ContentModelFlag.CDATA,
                                                     elementName);
@@ -2023,7 +2115,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         appendToCurrentNodeAndPushElementMayFoster(
                                                 "http://www.w3.org/1999/xhtml",
                                                 elementName, attributes);
-                                        cdataOrRcdataTimesToPop = 1;
+                                        originalMode = mode;
+                                        mode = InsertionMode.IN_CDATA_RCDATA;
                                         tokenizer.setContentModelFlag(
                                                 ContentModelFlag.CDATA,
                                                 elementName);
@@ -2066,7 +2159,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     appendToCurrentNodeAndPushElement(
                                             "http://www.w3.org/1999/xhtml",
                                             elementName, attributes);
-                                    cdataOrRcdataTimesToPop = 1;
+                                    originalMode = mode;
+                                    mode = InsertionMode.IN_CDATA_RCDATA;
                                     tokenizer.setContentModelFlag(
                                             ContentModelFlag.CDATA, elementName);
                                     break starttagloop;
@@ -2215,7 +2309,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     appendToCurrentNodeAndPushElement(
                                             "http://www.w3.org/1999/xhtml",
                                             elementName, attributes);
-                                    cdataOrRcdataTimesToPop = 1;
+                                    originalMode = mode;
+                                    mode = InsertionMode.IN_CDATA_RCDATA;
                                     tokenizer.setContentModelFlag(
                                             ContentModelFlag.CDATA, elementName);
                                     break starttagloop;
@@ -2401,7 +2496,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     appendToCurrentNodeAndPushElement(
                                             "http://www.w3.org/1999/xhtml",
                                             elementName, attributes);
-                                    cdataOrRcdataTimesToPop = 2; // pops head
+                                    originalMode = mode;
+                                    mode = InsertionMode.IN_CDATA_RCDATA;
                                     tokenizer.setContentModelFlag(
                                             ContentModelFlag.CDATA, elementName);
                                     break starttagloop;
@@ -2414,7 +2510,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     appendToCurrentNodeAndPushElement(
                                             "http://www.w3.org/1999/xhtml",
                                             elementName, attributes);
-                                    cdataOrRcdataTimesToPop = 2; // pops head
+                                    originalMode = mode;
+                                    mode = InsertionMode.IN_CDATA_RCDATA;
                                     tokenizer.setContentModelFlag(
                                             ContentModelFlag.CDATA, elementName);
                                     break starttagloop;
@@ -2424,7 +2521,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     appendToCurrentNodeAndPushElement(
                                             "http://www.w3.org/1999/xhtml",
                                             elementName, attributes);
-                                    cdataOrRcdataTimesToPop = 2; // pops head
+                                    originalMode = mode;
+                                    mode = InsertionMode.IN_CDATA_RCDATA;
                                     tokenizer.setContentModelFlag(
                                             ContentModelFlag.RCDATA,
                                             elementName);
@@ -2454,12 +2552,23 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     continue;
                             }
                         case AFTER_AFTER_FRAMESET:
-                            err("Stray \u201C" + name + "\u201D start tag.");
-                            if (conformingAndStreaming) {
-                                fatal();
+                            switch (group) {
+                                case NOFRAMES:
+                                    appendToCurrentNodeAndPushElementMayFoster(
+                                            "http://www.w3.org/1999/xhtml",
+                                            elementName, attributes);
+                                    originalMode = mode;
+                                    mode = InsertionMode.IN_CDATA_RCDATA;
+                                    tokenizer.setContentModelFlag(
+                                            ContentModelFlag.CDATA, elementName);
+                                    break starttagloop;
+                                default:
+                                    err("Stray \u201C" + name
+                                            + "\u201D start tag.");
+                                    break starttagloop;
                             }
-                            mode = InsertionMode.IN_FRAMESET;
-                            continue;
+                        case IN_CDATA_RCDATA:
+                            assert false;
                     }
             }
         }
@@ -2669,14 +2778,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     public final void endTag(ElementName elementName) throws SAXException {
         needToDropLF = false;
-        if (cdataOrRcdataTimesToPop > 0) {
-            while (cdataOrRcdataTimesToPop > 0) {
-                pop();
-                cdataOrRcdataTimesToPop--;
-            }
-            return;
-        }
-
         int eltPos;
         endtagloop: for (;;) {
             int group = elementName.group;
@@ -3012,15 +3113,16 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         + name
                                         + "\u201D element in scope but a \u201C"
                                         + name + "\u201D end tag seen.");
-                                break endtagloop; // XXX
-                                                    // http://www.w3.org/Bugs/Public/show_bug.cgi?id=5792
-                            }
-                            generateImpliedEndTagsExceptFor(name);
-                            if (eltPos != currentPtr) {
-                                err("End tag for \u201Cp\u201D seen, but there were unclosed elements.");
-                            }
-                            while (currentPtr >= eltPos) {
-                                pop();
+                            } else {
+                                generateImpliedEndTagsExceptFor(name);
+                                if (eltPos != currentPtr) {
+                                    err("End tag for \u201C"
+                                            + name
+                                            + "\u201D seen, but there were unclosed elements.");
+                                }
+                                while (currentPtr >= eltPos) {
+                                    pop();
+                                }
                             }
                             break endtagloop;
                         case H1_OR_H2_OR_H3_OR_H4_OR_H5_OR_H6:
@@ -3360,6 +3462,14 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     }
                     mode = InsertionMode.IN_FRAMESET;
                     continue;
+                case IN_CDATA_RCDATA:
+                    // XXX need to manage insertion point here
+                    if (originalMode == InsertionMode.AFTER_HEAD) {
+                        pop();
+                    }
+                    pop();
+                    mode = originalMode;
+                    break endtagloop;
             }
         }
         if (foreignFlag == TreeBuilder.IN_FOREIGN && !hasForeignInScope()) {

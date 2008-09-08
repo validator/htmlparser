@@ -506,7 +506,7 @@ public final class ElementName
     public static final ElementName SMALL = new ElementName("small", "small", TreeBuilder.B_OR_BIG_OR_EM_OR_FONT_OR_I_OR_S_OR_SMALL_OR_STRIKE_OR_STRONG_OR_TT_OR_U, false, false, false, null);
     public static final ElementName THEAD = new ElementName("thead", "thead", TreeBuilder.TBODY_OR_THEAD_OR_TFOOT, true, false, true, null);
     public static final ElementName TABLE = new ElementName("table", "table", TreeBuilder.TABLE, false, true, true, null);
-    public static final ElementName TITLE = new ElementName("title", "title", TreeBuilder.TITLE, true, false, false, null);
+    public static final ElementName TITLE = new ElementName("title", "title", TreeBuilder.TITLE, true, false, false, new char[] {'t','i','t','l','e'});
     public static final ElementName TSPAN = new ElementName("tspan", "tspan", TreeBuilder.OTHER, false, false, false, null);
     public static final ElementName TIMES = new ElementName("times", "times", TreeBuilder.OTHER, false, false, false, null);
     public static final ElementName TFOOT = new ElementName("tfoot", "tfoot", TreeBuilder.TBODY_OR_THEAD_OR_TFOOT, true, false, true, null);
@@ -643,7 +643,7 @@ public final class ElementName
     public static final ElementName PRSUBSET = new ElementName("prsubset", "prsubset", TreeBuilder.OTHER, false, false, false, null);
     public static final ElementName QUOTIENT = new ElementName("quotient", "quotient", TreeBuilder.OTHER, false, false, false, null);
     public static final ElementName SELECTOR = new ElementName("selector", "selector", TreeBuilder.OTHER, false, false, false, null);
-    public static final ElementName TEXTAREA = new ElementName("textarea", "textarea", TreeBuilder.TEXTAREA, true, false, false, null);
+    public static final ElementName TEXTAREA = new ElementName("textarea", "textarea", TreeBuilder.TEXTAREA, true, false, false, new char[] {'t','e','x','t','a','r','e','a'});
     public static final ElementName TEXTPATH = new ElementName("textpath", "textPath", TreeBuilder.OTHER, false, false, false, null);
     public static final ElementName VARIANCE = new ElementName("variance", "variance", TreeBuilder.OTHER, false, false, false, null);
     public static final ElementName ANIMATION = new ElementName("animation", "animation", TreeBuilder.OTHER, false, false, false, null);
