@@ -478,7 +478,7 @@ public final class Tokenizer implements Locator {
 
     private boolean shouldSuspend;
 
-    private Confidence confidence;
+    private boolean confident;
 
     private PushedLocation pushedLocation;
 
@@ -1326,6 +1326,7 @@ public final class Tokenizer implements Locator {
     // ]NOCPP]
 
     public void start() throws SAXException {
+        confident = false;
         strBuf = new char[64];
         longStrBuf = new char[1024];
         alreadyComplainedAboutNonAscii = false;
@@ -5121,7 +5122,7 @@ public final class Tokenizer implements Locator {
             }
             // [NOCPP[
         } else {
-            if (confidence == Confidence.TENTATIVE
+            if (!confident
                     && !alreadyComplainedAboutNonAscii && c > '\u007F') {
                 complainAboutNonAscii();
                 alreadyComplainedAboutNonAscii = true;
@@ -5208,13 +5209,15 @@ public final class Tokenizer implements Locator {
     }
 
     private void complainAboutNonAscii() throws SAXException {
-        String encoding = "";
-        if (true) {
+        String encoding = null;
+        if (encodingDeclarationHandler != null) {
+            encoding = encodingDeclarationHandler.getCharacterEncoding();
+        }
+        if (encoding == null) {
             err("The character encoding of the document was not explicit but the document contains non-ASCII.");
         } else {
             err("No explicit character encoding declaration has been seen yet (assumed \u201C"
                     + encoding + "\u201D) but the document contains non-ASCII.");
-
         }
     }
 
@@ -5263,6 +5266,10 @@ public final class Tokenizer implements Locator {
      */
     public boolean isAlreadyComplainedAboutNonAscii() {
         return alreadyComplainedAboutNonAscii;
+    }
+    
+    public void becomeConfident() {
+        confident = true;
     }
 
 }
