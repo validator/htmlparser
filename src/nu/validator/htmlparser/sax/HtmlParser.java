@@ -414,7 +414,7 @@ public class HtmlParser implements XMLReader {
     }
 
     /**
-     * Parser a fragment.
+     * Parses a fragment.
      * 
      * @param input the input to parse
      * @param context the name of the context element

@@ -113,4 +113,8 @@ public final class Portability {
         }
         return true;
     }
+    
+    public static boolean literalEqualsString(String literal, String string) {
+        return literal.equals(string);
+    }
 }
