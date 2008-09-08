@@ -84,8 +84,42 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
     protected BrowserTreeBuilder(JavaScriptObject document) {
         super(XmlViolationPolicy.ALLOW, true);
         this.document = document;
+        installExplorerCreateElementNS(document);
     }
 
+    private static native boolean installExplorerCreateElementNS(JavaScriptObject doc) /*-{
+        if (!doc.createElementNS) {
+            doc.createElementNS = function (uri, local) {
+                if ("http://www.w3.org/1999/xhtml" == uri) {
+                    return doc.createElement(local);
+                } else if ("http://www.w3.org/1998/Math/MathML" == uri) {
+                    if (!doc.mathplayerinitialized) {
+                        var obj = document.createElement("object");
+                        obj.setAttribute("id", "mathplayer");
+                        obj.setAttribute("classid", "clsid:32F66A20-7614-11D4-BD11-00104BD3F987");
+                        document.getElementsByTagName("head")[0].appendChild(obj);
+                        document.namespaces.add("m", "http://www.w3.org/1998/Math/MathML", "#mathplayer");  
+                        doc.mathplayerinitialized = true;
+                    }
+                    return doc.createElement("m:" + local);
+                } else if ("http://www.w3.org/2000/svg" == uri) {
+                    if (!doc.renesisinitialized) {
+                        var obj = document.createElement("object");
+                        obj.setAttribute("id", "renesis");
+                        obj.setAttribute("classid", "clsid:AC159093-1683-4BA2-9DCF-0C350141D7F2");
+                        document.getElementsByTagName("head")[0].appendChild(obj);
+                        document.namespaces.add("s", "http://www.w3.org/2000/svg", "#renesis");  
+                        doc.renesisinitialized = true;
+                    }
+                    return doc.createElement("s:" + local);
+                } else {
+                    // throw
+                }
+            }
+        }
+    }-*/;
+
+    
     private static native boolean hasAttributeNS(JavaScriptObject element,
             String uri, String localName) /*-{
               return element.hasAttributeNS(uri, localName); 
