@@ -2081,6 +2081,9 @@ public final class Tokenizer implements Locator {
                              * flag of the current tag token. Emit the current
                              * tag token.
                              */
+                            if (html4) {
+                                err("The \u201C/>\u201D syntax on void elements is not allowed.  (This is an HTML4-only error.)");
+                            }
                             state = emitCurrentTagToken(true);
                             if (shouldSuspend) {
                                 break stateloop;
@@ -5272,4 +5275,36 @@ public final class Tokenizer implements Locator {
         confident = true;
     }
 
+    /**
+     * Returns the nextCharOnNewLine.
+     * 
+     * @return the nextCharOnNewLine
+     */
+    public boolean isNextCharOnNewLine() {
+        return nextCharOnNewLine;
+    }
+
+    public boolean isPrevCR() {
+        return prev == '\r';
+    }
+
+    /**
+     * Returns the line.
+     * 
+     * @return the line
+     */
+    public int getLine() {
+        return line;
+    }
+
+    /**
+     * Returns the col.
+     * 
+     * @return the col
+     */
+    public int getCol() {
+        return col;
+    }
+    
+    
 }
