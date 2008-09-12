@@ -33,6 +33,7 @@ import java.nio.charset.CoderResult;
 import java.nio.charset.CodingErrorAction;
 
 import nu.validator.htmlparser.common.Heuristics;
+import nu.validator.htmlparser.common.XmlViolationPolicy;
 import nu.validator.htmlparser.extra.ChardetSniffer;
 import nu.validator.htmlparser.extra.IcuDetectorSniffer;
 import nu.validator.htmlparser.impl.Confidence;
@@ -64,9 +65,9 @@ public final class HtmlInputStreamReader extends Reader implements
 
     private final ErrorHandler errorHandler;
 
-    private final Locator locator;
+    private final Tokenizer tokenizer;
 
-    private final Driver tokenizer;
+    private final Driver driver;
 
     private CharsetDecoder decoder = null;
 
@@ -102,6 +103,10 @@ public final class HtmlInputStreamReader extends Reader implements
 
     private boolean hasPendingReplacementCharacter = false;
 
+    private boolean nextCharOnNewLine;
+
+    private boolean prevWasCR;
+
     /**
      * @param inputStream
      * @param errorHandler
@@ -110,12 +115,12 @@ public final class HtmlInputStreamReader extends Reader implements
      * @throws SAXException
      */
     public HtmlInputStreamReader(InputStream inputStream,
-            ErrorHandler errorHandler, Locator locator, Driver tokenizer,
+            ErrorHandler errorHandler, Tokenizer tokenizer, Driver driver,
             Heuristics heuristics) throws SAXException, IOException {
         this.inputStream = inputStream;
         this.errorHandler = errorHandler;
-        this.locator = locator;
         this.tokenizer = tokenizer;
+        this.driver = driver;
         this.sniffing = true;
         Encoding encoding = (new BomSniffer(this)).sniff();
         if (encoding == null) {
@@ -134,17 +139,17 @@ public final class HtmlInputStreamReader extends Reader implements
             if (encoding == null) {
                 encoding = Encoding.WINDOWS1252;
             }
-            if (tokenizer != null) {
-                tokenizer.setEncoding(encoding, Confidence.TENTATIVE);
+            if (driver != null) {
+                driver.setEncoding(encoding, Confidence.TENTATIVE);
             }
         } else {
             if (encoding == Encoding.UTF8) {
-                if (tokenizer != null) {
-                    tokenizer.setEncoding(Encoding.UTF8, Confidence.CERTAIN);
+                if (driver != null) {
+                    driver.setEncoding(Encoding.UTF8, Confidence.CERTAIN);
                 }
             } else {
-                if (tokenizer != null) {
-                    tokenizer.setEncoding(Encoding.UTF16, Confidence.CERTAIN);
+                if (driver != null) {
+                    driver.setEncoding(Encoding.UTF16, Confidence.CERTAIN);
                 }
             }
         }
@@ -166,12 +171,12 @@ public final class HtmlInputStreamReader extends Reader implements
     }
 
     public HtmlInputStreamReader(InputStream inputStream,
-            ErrorHandler errorHandler, Locator locator, Driver tokenizer,
+            ErrorHandler errorHandler, Tokenizer tokenizer, Driver driver,
             Encoding encoding) throws SAXException, IOException {
         this.inputStream = inputStream;
         this.errorHandler = errorHandler;
-        this.locator = locator;
         this.tokenizer = tokenizer;
+        this.driver = driver;
         this.decoder = encoding.newDecoder();
         this.sniffing = false;
         position = 0;
@@ -191,8 +196,8 @@ public final class HtmlInputStreamReader extends Reader implements
         assert !sniffing;
         assert charArray.length >= 2;
         if (needToNotifyTokenizer) {
-            if (tokenizer != null) {
-                tokenizer.notifyAboutMetaBoundary();
+            if (driver != null) {
+                driver.notifyAboutMetaBoundary();
             }
             needToNotifyTokenizer = false;
         }
@@ -320,31 +325,41 @@ public final class HtmlInputStreamReader extends Reader implements
     }
 
     private void calculateLineAndCol(CharBuffer charBuffer) {
-        if (locator != null) {
-            line = locator.getLineNumber();
-            col = locator.getColumnNumber();
+        if (tokenizer != null) {
+            if (lineColPos == 0) {
+                line = tokenizer.getLine();
+                col = tokenizer.getCol();
+                nextCharOnNewLine = tokenizer.isNextCharOnNewLine();
+                prevWasCR = tokenizer.isPrevCR();
+            }
+            
             char[] charArray = charBuffer.array();
-            boolean prevWasCR = false;
-            int i;
-            for (i = lineColPos; i < charBuffer.position(); i++) {
-                switch (charArray[i]) {
-                    case '\n': // LF
-                        if (!prevWasCR) {
-                            line++;
-                            col = 0;
-                        }
-                        prevWasCR = false;
-                        break;
-                    case '\r': // CR
-                        line++;
-                        col = 0;
+            int i = lineColPos;
+            while (i < charBuffer.position()) {
+                char c;
+                if (nextCharOnNewLine) {
+                    line++;
+                    col = 1;
+                    nextCharOnNewLine = false;
+                } else {
+                    col++;
+                }
+
+                c = charArray[i];
+                switch (c) {
+                    case '\r':
+                        nextCharOnNewLine = true;
                         prevWasCR = true;
                         break;
-                    default:
-                        col++;
-                        prevWasCR = false;
+                    case '\n':
+                        if (prevWasCR) {
+                            col--;
+                        } else {
+                            nextCharOnNewLine = true;
+                        }
                         break;
                 }
+                i++;
             }
             lineColPos = i;
         }
@@ -392,29 +407,29 @@ public final class HtmlInputStreamReader extends Reader implements
     }
 
     public int getColumnNumber() {
-        if (locator != null) {
+        if (tokenizer != null) {
             return col;
         }
         return -1;
     }
 
     public int getLineNumber() {
-        if (locator != null) {
+        if (tokenizer != null) {
             return line;
         }
         return -1;
     }
 
     public String getPublicId() {
-        if (locator != null) {
-            return locator.getPublicId();
+        if (tokenizer != null) {
+            return tokenizer.getPublicId();
         }
         return null;
     }
 
     public String getSystemId() {
-        if (locator != null) {
-            return locator.getSystemId();
+        if (tokenizer != null) {
+            return tokenizer.getSystemId();
         }
         return null;
     }
@@ -429,21 +444,6 @@ public final class HtmlInputStreamReader extends Reader implements
             if (errorHandler != null) {
                 SAXParseException spe = new SAXParseException(message, this);
                 errorHandler.error(spe);
-            }
-        } catch (SAXException e) {
-            throw (IOException) new IOException(e.getMessage()).initCause(e);
-        }
-    }
-
-    /**
-     * @param string
-     * @throws SAXException
-     */
-    private void warn(String message) throws IOException {
-        try {
-            if (errorHandler != null) {
-                SAXParseException spe = new SAXParseException(message, this);
-                errorHandler.warning(spe);
             }
         } catch (SAXException e) {
             throw (IOException) new IOException(e.getMessage()).initCause(e);
