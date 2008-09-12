@@ -852,8 +852,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                      * Reconstruct the active formatting
                                      * elements, if any.
                                      */
-                                    // XXX bug?
-                                    reconstructTheActiveFormattingElements();
+                                    if (!conformingAndStreaming) {
+                                        reconstructTheActiveFormattingElements();
+                                    }
                                     /*
                                      * Append the token's character to the
                                      * current node.
