@@ -255,14 +255,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     private final StackNode<T> MARKER = new StackNode<T>(null,
             ElementName.NULL_ELEMENT_NAME, null);
 
-    private final boolean conformingAndStreaming;
-
-    private final boolean coalescingText;
-
-    private boolean bodyCloseReported = false;
-
-    private boolean htmlCloseReported = false;
-
     private InsertionMode mode = InsertionMode.INITIAL;
 
     private InsertionMode originalMode = InsertionMode.INITIAL;
@@ -271,7 +263,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     protected Tokenizer tokenizer;
 
-    private ErrorHandler errorHandler;
+    protected ErrorHandler errorHandler;
 
     private DocumentModeHandler documentModeHandler;
 
@@ -299,10 +291,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private boolean reportingDoctype = true;
 
-    private char[] charBuffer;
-
-    private int charBufferLen = 0;
-
     // [NOCPP[
 
     private XmlViolationPolicy namePolicy = XmlViolationPolicy.ALTER_INFOSET;
@@ -311,10 +299,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     // ]NOCPP]
 
-    protected TreeBuilder(XmlViolationPolicy streamabilityViolationPolicy,
-            boolean coalescingText) {
-        this.conformingAndStreaming = (streamabilityViolationPolicy == XmlViolationPolicy.FATAL);
-        this.coalescingText = coalescingText;
+    protected TreeBuilder() {
     }
 
     /**
@@ -324,16 +309,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
      * @throws SAXException
      * @throws SAXParseException
      */
-    protected final void fatal() throws SAXException {
-        // [NOCPP[
-        SAXParseException spe = new SAXParseException(
-                "Cannot recover after last error. Any further errors will be ignored.",
-                tokenizer);
-        if (errorHandler != null) {
-            errorHandler.fatalError(spe);
-        }
-        throw spe;
-        // ]NOCPP]
+    protected void fatal() throws SAXException {
     }
 
     // [NOCPP[
@@ -395,9 +371,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         tokenizer = self;
         stack = new StackNode[64];
         listOfActiveFormattingElements = new StackNode[64];
-        if (coalescingText) {
-            charBuffer = new char[1024];
-        }
         needToDropLF = false;
         originalMode = InsertionMode.INITIAL;
         currentPtr = -1;
@@ -408,6 +381,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         // ]NOCPP]
         wantingComments = wantsComments();
         start(context != null);
+        startCoalescing();
         if (context == null) {
             mode = InsertionMode.INITIAL;
             foreignFlag = TreeBuilder.NOT_IN_FOREIGN;
@@ -852,9 +826,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                      * Reconstruct the active formatting
                                      * elements, if any.
                                      */
-                                    if (!conformingAndStreaming) {
-                                        reconstructTheActiveFormattingElements();
-                                    }
+                                    reconstructTheActiveFormattingElements();
                                     /*
                                      * Append the token's character to the
                                      * current node.
@@ -862,10 +834,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     continue;
                                 case AFTER_AFTER_BODY:
                                 case AFTER_AFTER_FRAMESET:
-                                    if (conformingAndStreaming) {
-                                        // XXX why? is this a bug?
-                                        return;
-                                    }
                                     if (start < i) {
                                         accumulateCharacters(buf, start, i
                                                 - start);
@@ -875,7 +843,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                      * Reconstruct the active formatting
                                      * elements, if any.
                                      */
-                                    // XXX bug?
                                     reconstructTheActiveFormattingElements();
                                     /*
                                      * Append the token's character to the
@@ -1074,9 +1041,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     break loop;
                                 case AFTER_BODY:
                                     err("Non-space character after body.");
-                                    if (conformingAndStreaming) {
-                                        fatal();
-                                    }
+                                    fatal();
                                     mode = InsertionMode.IN_BODY;
                                     i--;
                                     continue;
@@ -1115,9 +1080,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                      * Parse error.
                                      */
                                     err("Non-space character in page trailer.");
-                                    if (conformingAndStreaming) {
-                                        fatal();
-                                    }
                                     /*
                                      * Switch back to the main mode and
                                      * reprocess the token.
@@ -1130,9 +1092,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                      * Parse error.
                                      */
                                     err("Non-space character in page trailer.");
-                                    if (conformingAndStreaming) {
-                                        fatal();
-                                    }
                                     /*
                                      * Switch back to the main mode and
                                      * reprocess the token.
@@ -1291,20 +1250,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     break eofloop;
             }
         }
-        while (currentPtr > 1) {
+        while (currentPtr > 0) {
             pop();
         }
-        if (currentPtr == 1) {
-            if (stack[1].name == "body") {
-                if (!bodyCloseReported) {
-                    bodyClosed(stack[1].node);
-                }
-            } else {
-                pop();
-            }
-        }
-        if (context == null && !htmlCloseReported) {
-            htmlClosed(stack[0].node);
+        if (context == null) {
+            pop();
         }
         /* Stop parsing. */
     }
@@ -1315,10 +1265,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     public final void endTokenization() throws SAXException {
         stack = null;
         listOfActiveFormattingElements = null;
-        charBuffer = null;
         // [NOCPP[
         idLocations.clear();
         // ]NOCPP]
+        endCoalescing();
         end();
     }
 
@@ -2277,9 +2227,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                 default:
                                     err("Stray \u201C" + name
                                             + "\u201D start tag.");
-                                    if (conformingAndStreaming) {
-                                        fatal();
-                                    }
                                     mode = InsertionMode.IN_BODY;
                                     continue;
                             }
@@ -2546,9 +2493,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                 default:
                                     err("Stray \u201C" + name
                                             + "\u201D start tag.");
-                                    if (conformingAndStreaming) {
-                                        fatal();
-                                    }
+                                    fatal();
                                     mode = InsertionMode.IN_BODY;
                                     continue;
                             }
@@ -3001,15 +2946,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     }
                                 }
                             }
-                            if (conformingAndStreaming) {
-                                while (currentPtr > 1) {
-                                    pop();
-                                }
-                            }
-                            if (context == null) {
-                                bodyCloseReported = true;
-                                bodyClosed(stack[1].node);
-                            }
                             mode = InsertionMode.AFTER_BODY;
                             break endtagloop;
                         case HTML:
@@ -3034,10 +2970,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                             break uncloseloop2;
                                     }
                                 }
-                            }
-                            if (context == null) {
-                                bodyCloseReported = true;
-                                bodyClosed(stack[1].node);
                             }
                             mode = InsertionMode.AFTER_BODY;
                             continue;
@@ -3310,18 +3242,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                 err("Stray end tag \u201Chtml\u201D");
                                 break endtagloop;
                             } else {
-                                if (context == null) {
-                                    htmlCloseReported = true;
-                                    htmlClosed(stack[0].node);
-                                }
                                 mode = InsertionMode.AFTER_AFTER_BODY;
                                 break endtagloop;
                             }
                         default:
                             err("Saw an end tag after \u201Cbody\u201D had been closed.");
-                            if (conformingAndStreaming) {
-                                fatal();
-                            }
                             mode = InsertionMode.IN_BODY;
                             continue;
                     }
@@ -3345,10 +3270,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 case AFTER_FRAMESET:
                     switch (group) {
                         case HTML:
-                            if (context == null) {
-                                htmlCloseReported = true;
-                                htmlClosed(stack[0].node);
-                            }
                             mode = InsertionMode.AFTER_AFTER_FRAMESET;
                             break endtagloop;
                         default:
@@ -3451,16 +3372,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 // continue;
                 case AFTER_AFTER_BODY:
                     err("Stray \u201C" + name + "\u201D end tag.");
-                    if (conformingAndStreaming) {
-                        fatal();
-                    }
                     mode = InsertionMode.IN_BODY;
                     continue;
                 case AFTER_AFTER_FRAMESET:
                     err("Stray \u201C" + name + "\u201D end tag.");
-                    if (conformingAndStreaming) {
-                        fatal();
-                    }
                     mode = InsertionMode.IN_FRAMESET;
                     continue;
                 case IN_CDATA_RCDATA:
@@ -3849,13 +3764,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (currentPtr == pos) {
             pop();
         } else {
-            if (conformingAndStreaming) {
-                fatal();
-            } else {
-                System.arraycopy(stack, pos + 1, stack, pos, currentPtr - pos);
-                assert clearLastStackSlot();
-                currentPtr--;
-            }
+            fatal();
+            System.arraycopy(stack, pos + 1, stack, pos, currentPtr - pos);
+            assert clearLastStackSlot();
+            currentPtr--;
         }
     }
 
@@ -3871,12 +3783,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 // dead code?
                 return;
             }
-            if (conformingAndStreaming) {
-                fatal();
-            } else {
-                System.arraycopy(stack, pos + 1, stack, pos, currentPtr - pos);
-                currentPtr--;
-            }
+            fatal();
+            System.arraycopy(stack, pos + 1, stack, pos, currentPtr - pos);
+            currentPtr--;
         }
     }
 
@@ -3990,9 +3899,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 lastNode = node;
             }
             if (commonAncestor.fosterParenting) {
-                if (conformingAndStreaming) {
-                    fatal();
-                }
+                fatal();
                 insertIntoFosterParent(lastNode.node);
             } else {
                 detachFromParentAndAppendToNewParent(lastNode.node,
@@ -4094,9 +4001,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private void pushHeadPointerOntoStack() throws SAXException {
         flushCharacters();
-        if (conformingAndStreaming) {
-            fatal();
-        }
+        fatal();
         if (headPointer == null) {
             assert context != null;
             push(stack[currentPtr]);
@@ -4190,23 +4095,20 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             throws SAXException {
         StackNode<T> current = stack[currentPtr];
         if (current.fosterParenting) {
-            if (conformingAndStreaming) {
-                fatal();
+            fatal();
+            int eltPos = findLastOrRoot(TreeBuilder.TABLE);
+            StackNode<T> node = stack[eltPos];
+            node.tainted = true;
+            T elt = node.node;
+            if (eltPos == 0) {
+                appendCharacters(elt, buf, i, 1);
+                return;
+            }
+            T parent = parentElementFor(elt);
+            if (parent == null) {
+                appendCharacters(stack[eltPos - 1].node, buf, i, 1);
             } else {
-                int eltPos = findLastOrRoot(TreeBuilder.TABLE);
-                StackNode<T> node = stack[eltPos];
-                node.tainted = true;
-                T elt = node.node;
-                if (eltPos == 0) {
-                    appendCharacters(elt, buf, i, 1);
-                    return;
-                }
-                T parent = parentElementFor(elt);
-                if (parent == null) {
-                    appendCharacters(stack[eltPos - 1].node, buf, i, 1);
-                } else {
-                    insertCharactersBefore(buf, i, 1, elt, parent);
-                }
+                insertCharactersBefore(buf, i, 1, elt, parent);
             }
         } else {
             accumulateCharacters(buf, i, 1);
@@ -4308,11 +4210,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         formPointer = elt;
         StackNode<T> current = stack[currentPtr];
         if (current.fosterParenting) {
-            if (conformingAndStreaming) {
-                fatal();
-            } else {
-                insertIntoFosterParent(elt);
-            }
+            fatal();
+            insertIntoFosterParent(elt);
         } else {
             detachFromParentAndAppendToNewParent(elt, current.node);
         }
@@ -4332,11 +4231,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         T elt = createElement(ns, elementName.name, attributes, formPointer);
         StackNode<T> current = stack[currentPtr];
         if (current.fosterParenting) {
-            if (conformingAndStreaming) {
-                fatal();
-            } else {
-                insertIntoFosterParent(elt);
-            }
+            fatal();
+            insertIntoFosterParent(elt);
         } else {
             detachFromParentAndAppendToNewParent(elt, current.node);
         }
@@ -4373,11 +4269,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         T elt = createElement(ns, popName, attributes);
         StackNode<T> current = stack[currentPtr];
         if (current.fosterParenting) {
-            if (conformingAndStreaming) {
-                fatal();
-            } else {
-                insertIntoFosterParent(elt);
-            }
+            fatal();
+            insertIntoFosterParent(elt);
         } else {
             detachFromParentAndAppendToNewParent(elt, current.node);
         }
@@ -4399,11 +4292,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         T elt = createElement(ns, popName, attributes);
         StackNode<T> current = stack[currentPtr];
         if (current.fosterParenting) {
-            if (conformingAndStreaming) {
-                fatal();
-            } else {
-                insertIntoFosterParent(elt);
-            }
+            fatal();
+            insertIntoFosterParent(elt);
         } else {
             detachFromParentAndAppendToNewParent(elt, current.node);
         }
@@ -4426,11 +4316,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         T elt = createElement(ns, popName, attributes);
         StackNode<T> current = stack[currentPtr];
         if (current.fosterParenting) {
-            if (conformingAndStreaming) {
-                fatal();
-            } else {
-                insertIntoFosterParent(elt);
-            }
+            fatal();
+            insertIntoFosterParent(elt);
         } else {
             detachFromParentAndAppendToNewParent(elt, current.node);
         }
@@ -4450,11 +4337,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         T elt = createElement(ns, elementName.name, attributes, formPointer);
         StackNode<T> current = stack[currentPtr];
         if (current.fosterParenting) {
-            if (conformingAndStreaming) {
-                fatal();
-            } else {
-                insertIntoFosterParent(elt);
-            }
+            fatal();
+            insertIntoFosterParent(elt);
         } else {
             detachFromParentAndAppendToNewParent(elt, current.node);
         }
@@ -4473,18 +4357,13 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         T elt = createElement(ns, name, attributes, formPointer);
         StackNode<T> current = stack[currentPtr];
         if (current.fosterParenting) {
-            if (conformingAndStreaming) {
-                fatal();
-            } else {
-                insertIntoFosterParent(elt);
-            }
+            fatal();
+            insertIntoFosterParent(elt);
         } else {
             detachFromParentAndAppendToNewParent(elt, current.node);
         }
-        if (conformingAndStreaming) {
-            elementPushed(ns, name, (T) attributes);
-            elementPopped(ns, name, null);
-        }
+        elementPushed(ns, name, (T) attributes);
+        elementPopped(ns, name, null);
     }
 
     @SuppressWarnings("unchecked") private void appendVoidElementToCurrentMayFoster(
@@ -4501,18 +4380,13 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         T elt = createElement(ns, popName, attributes);
         StackNode<T> current = stack[currentPtr];
         if (current.fosterParenting) {
-            if (conformingAndStreaming) {
-                fatal();
-            } else {
-                insertIntoFosterParent(elt);
-            }
+            fatal();
+            insertIntoFosterParent(elt);
         } else {
             detachFromParentAndAppendToNewParent(elt, current.node);
         }
-        if (conformingAndStreaming) {
-            elementPushed(ns, popName, (T) attributes);
-            elementPopped(ns, popName, null);
-        }
+        elementPushed(ns, popName, (T) attributes);
+        elementPopped(ns, popName, null);
     }
 
     @SuppressWarnings("unchecked") private void appendVoidElementToCurrentMayFosterCamelCase(
@@ -4529,18 +4403,13 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         T elt = createElement(ns, popName, attributes);
         StackNode<T> current = stack[currentPtr];
         if (current.fosterParenting) {
-            if (conformingAndStreaming) {
-                fatal();
-            } else {
-                insertIntoFosterParent(elt);
-            }
+            fatal();
+            insertIntoFosterParent(elt);
         } else {
             detachFromParentAndAppendToNewParent(elt, current.node);
         }
-        if (conformingAndStreaming) {
-            elementPushed(ns, popName, (T) attributes);
-            elementPopped(ns, popName, null);
-        }
+        elementPushed(ns, popName, (T) attributes);
+        elementPopped(ns, popName, null);
     }
 
     @SuppressWarnings("unchecked") private void appendVoidElementToCurrent(
@@ -4554,35 +4423,16 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         T elt = createElement(ns, name, attributes, formPointer);
         StackNode<T> current = stack[currentPtr];
         detachFromParentAndAppendToNewParent(elt, current.node);
-        if (conformingAndStreaming) {
-            elementPushed(ns, name, (T) attributes);
-            elementPopped(ns, name, null);
-        }
+        elementPushed(ns, name, (T) attributes);
+        elementPopped(ns, name, null);
     }
 
-    private void accumulateCharacters(@NoLength char[] buf, int start,
+    protected void accumulateCharacters(@NoLength char[] buf, int start,
             int length) throws SAXException {
-        if (coalescingText) {
-            int newLen = charBufferLen + length;
-            if (newLen > charBuffer.length) {
-                char[] newBuf = new char[newLen];
-                System.arraycopy(charBuffer, 0, newBuf, 0, charBuffer.length);
-                Portability.releaseArray(charBuffer);
-                charBuffer = newBuf;
-            }
-            System.arraycopy(buf, start, charBuffer, charBufferLen, length);
-            charBufferLen = newLen;
-        } else {
             appendCharacters(stack[currentPtr].node, buf, start, length);
-        }
     }
 
-    private void flushCharacters() throws SAXException {
-        if (charBufferLen > 0) {
-            appendCharacters(stack[currentPtr].node, charBuffer, 0,
-                    charBufferLen);
-            charBufferLen = 0;
-        }
+    protected void flushCharacters() throws SAXException {
     }
 
     // ------------------------------- //
@@ -4638,19 +4488,19 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     protected abstract void addAttributesToElement(T element,
             HtmlAttributes attributes) throws SAXException;
 
+    void startCoalescing() throws SAXException {
+        
+    }
+    
     protected void start(boolean fragment) throws SAXException {
 
     }
 
+    void endCoalescing() throws SAXException {
+        
+    }
+    
     protected void end() throws SAXException {
-
-    }
-
-    protected void bodyClosed(T body) throws SAXException {
-
-    }
-
-    protected void htmlClosed(T html) throws SAXException {
 
     }
 

@@ -26,16 +26,15 @@ package nu.validator.htmlparser.gwt;
 import java.util.LinkedList;
 
 import nu.validator.htmlparser.common.DocumentMode;
-import nu.validator.htmlparser.common.XmlViolationPolicy;
+import nu.validator.htmlparser.impl.CoalescingTreeBuilder;
 import nu.validator.htmlparser.impl.HtmlAttributes;
-import nu.validator.htmlparser.impl.TreeBuilder;
 
 import org.xml.sax.SAXException;
 
 import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.core.client.JavaScriptObject;
 
-class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
+class BrowserTreeBuilder extends CoalescingTreeBuilder<JavaScriptObject> {
 
     private JavaScriptObject document;
 
@@ -82,7 +81,7 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
     }
 
     protected BrowserTreeBuilder(JavaScriptObject document) {
-        super(XmlViolationPolicy.ALLOW, true);
+        super();
         this.document = document;
         installExplorerCreateElementNS(document);
     }
@@ -157,15 +156,13 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
           }-*/;
 
     @Override protected void appendCharacters(JavaScriptObject parent,
-            char[] buf, int start, int length) throws SAXException {
+            String text) throws SAXException {
         try {
             if (parent == placeholder) {
-                appendChild(script, createTextNode(document, new String(buf,
-                        start, length)));
+                appendChild(script, createTextNode(document, text));
 
             }
-            appendChild(parent, createTextNode(document, new String(buf, start,
-                    length)));
+            appendChild(parent, createTextNode(document, text));
         } catch (JavaScriptException e) {
             fatal(e);
         }
@@ -197,25 +194,20 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
               return doc.createComment(text); 
           }-*/;
 
-    @Override protected void appendComment(JavaScriptObject parent, char[] buf,
-            int start, int length) throws SAXException {
+    @Override protected void appendComment(JavaScriptObject parent, String comment) throws SAXException {
         try {
             if (parent == placeholder) {
-                appendChild(script, createComment(document, new String(buf,
-                        start, length)));
+                appendChild(script, createComment(document, comment));
             }
-            appendChild(parent, createComment(document, new String(buf, start,
-                    length)));
+            appendChild(parent, createComment(document, comment));
         } catch (JavaScriptException e) {
             fatal(e);
         }
     }
 
-    @Override protected void appendCommentToDocument(char[] buf, int start,
-            int length) throws SAXException {
+    @Override protected void appendCommentToDocument(String comment) throws SAXException {
         try {
-            appendChild(document, createComment(document, new String(buf,
-                    start, length)));
+            appendChild(document, createComment(document, comment));
         } catch (JavaScriptException e) {
             fatal(e);
         }
@@ -333,12 +325,10 @@ class BrowserTreeBuilder extends TreeBuilder<JavaScriptObject> {
         }
     }
 
-    @Override protected void insertCharactersBefore(char[] buf, int start,
-            int length, JavaScriptObject sibling, JavaScriptObject parent)
+    @Override protected void insertCharactersBefore(String text, JavaScriptObject sibling, JavaScriptObject parent)
             throws SAXException {
         try {
-            insertBeforeNative(parent, createTextNode(document, new String(buf,
-                    start, length)), sibling);
+            insertBeforeNative(parent, createTextNode(document, text), sibling);
         } catch (JavaScriptException e) {
             fatal(e);
         }
