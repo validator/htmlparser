@@ -1613,7 +1613,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         break starttagloop;
                                     case FORM:
                                         if (formPointer != null) {
-                                            err("Saw a \u201Cform\u201D start tag, but there was already an active \u201Cform\u201D element. Ignoring the tag.");
+                                            err("Saw a \u201Cform\u201D start tag, but there was already an active \u201Cform\u201D element. Nested forms are not allowed. Ignoring the tag.");
                                             break starttagloop;
                                         } else {
                                             implicitlyCloseP();
