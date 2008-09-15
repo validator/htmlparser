@@ -24,9 +24,8 @@
 package nu.validator.htmlparser.xom;
 
 import nu.validator.htmlparser.common.DocumentMode;
-import nu.validator.htmlparser.common.XmlViolationPolicy;
+import nu.validator.htmlparser.impl.CoalescingTreeBuilder;
 import nu.validator.htmlparser.impl.HtmlAttributes;
-import nu.validator.htmlparser.impl.TreeBuilder;
 import nu.xom.Attribute;
 import nu.xom.Document;
 import nu.xom.Element;
@@ -36,14 +35,14 @@ import nu.xom.XMLException;
 
 import org.xml.sax.SAXException;
 
-class XOMTreeBuilder extends TreeBuilder<Element> {
+class XOMTreeBuilder extends CoalescingTreeBuilder<Element> {
 
     private final SimpleNodeFactory nodeFactory;
 
     private Document document;
 
     protected XOMTreeBuilder(SimpleNodeFactory nodeFactory) {
-        super(XmlViolationPolicy.ALLOW, true);
+        super();
         this.nodeFactory = nodeFactory;
     }
 
@@ -67,11 +66,9 @@ class XOMTreeBuilder extends TreeBuilder<Element> {
     }
 
     @Override
-    protected void appendCharacters(Element parent, char[] buf, int start,
-            int length) throws SAXException {
+    protected void appendCharacters(Element parent, String text) throws SAXException {
         try {
-            parent.appendChild(nodeFactory.makeText(new String(buf, start,
-                    length)));
+            parent.appendChild(nodeFactory.makeText(text));
         } catch (XMLException e) {
             fatal(e);
         }
@@ -91,27 +88,23 @@ class XOMTreeBuilder extends TreeBuilder<Element> {
     }
 
     @Override
-    protected void appendComment(Element parent, char[] buf, int start,
-            int length) throws SAXException {
+    protected void appendComment(Element parent, String comment) throws SAXException {
         try {
-            parent.appendChild(nodeFactory.makeComment(new String(buf, start,
-                    length)));
+            parent.appendChild(nodeFactory.makeComment(comment));
         } catch (XMLException e) {
             fatal(e);
         }
     }
 
     @Override
-    protected void appendCommentToDocument(char[] buf, int start, int length)
+    protected void appendCommentToDocument(String comment)
             throws SAXException {
         try {
             Element root = document.getRootElement();
             if ("http://www.xom.nu/fakeRoot".equals(root.getNamespaceURI())) {
-                document.insertChild(nodeFactory.makeComment(new String(buf,
-                        start, length)), document.indexOf(root));
+                document.insertChild(nodeFactory.makeComment(comment), document.indexOf(root));
             } else {
-                document.appendChild(nodeFactory.makeComment(new String(buf,
-                        start, length)));
+                document.appendChild(nodeFactory.makeComment(comment));
             }
         } catch (XMLException e) {
             fatal(e);
@@ -200,11 +193,10 @@ class XOMTreeBuilder extends TreeBuilder<Element> {
     }
 
     @Override
-    protected void insertCharactersBefore(char[] buf, int start, int length,
+    protected void insertCharactersBefore(String text,
             Element sibling, Element parent) throws SAXException {
         try {
-            parent.insertChild(nodeFactory.makeText(new String(buf, start,
-                    length)), parent.indexOf(sibling));
+            parent.insertChild(nodeFactory.makeText(text), parent.indexOf(sibling));
         } catch (XMLException e) {
             fatal(e);
         }

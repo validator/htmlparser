@@ -23,7 +23,6 @@
 
 package nu.validator.htmlparser.sax;
 
-import nu.validator.htmlparser.common.XmlViolationPolicy;
 import nu.validator.htmlparser.impl.HtmlAttributes;
 import nu.validator.htmlparser.impl.TreeBuilder;
 import nu.validator.saxtree.Characters;
@@ -36,14 +35,13 @@ import nu.validator.saxtree.NodeType;
 import nu.validator.saxtree.ParentNode;
 
 import org.xml.sax.SAXException;
-import org.xml.sax.helpers.AttributesImpl;
 
 class SAXTreeBuilder extends TreeBuilder<Element> {
     
     private Document document;
     
     SAXTreeBuilder() {
-        super(XmlViolationPolicy.ALLOW, false);
+        super();
     }
     
     @Override

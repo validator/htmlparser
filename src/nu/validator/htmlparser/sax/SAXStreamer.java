@@ -23,23 +23,22 @@
 
 package nu.validator.htmlparser.sax;
 
-import nu.validator.htmlparser.common.XmlViolationPolicy;
 import nu.validator.htmlparser.impl.HtmlAttributes;
 import nu.validator.htmlparser.impl.TreeBuilder;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 import org.xml.sax.ext.LexicalHandler;
 
 class SAXStreamer extends TreeBuilder<Attributes>{
 
     private ContentHandler contentHandler = null;
     private LexicalHandler lexicalHandler = null;
-    private int depth = -1;
     
     SAXStreamer() {
-        super(XmlViolationPolicy.FATAL, false);
+        super();
     }
     
     @Override
@@ -74,11 +73,7 @@ class SAXStreamer extends TreeBuilder<Attributes>{
     protected void appendCommentToDocument(char[] buf, int start, int length)
             throws SAXException {
         if (lexicalHandler != null) {
-            if (depth == 0) {
-                lexicalHandler.comment(buf, start, length);
-            } else {
-                fatal();
-            }
+            lexicalHandler.comment(buf, start, length);
         }
     }
 
@@ -147,21 +142,11 @@ class SAXStreamer extends TreeBuilder<Attributes>{
     }
 
     /**
-     * @see nu.validator.htmlparser.impl.TreeBuilder#bodyClosed(java.lang.Object)
-     */
-    @Override
-    protected void bodyClosed(Attributes body) throws SAXException {
-        contentHandler.endElement("http://www.w3.org/1999/xhtml", "body", "body");
-        depth--;
-    }
-
-    /**
      * @see nu.validator.htmlparser.impl.TreeBuilder#elementPopped(String, java.lang.String, java.lang.Object)
      */
     @Override
     protected void elementPopped(String ns, String name, Attributes node) throws SAXException {
         contentHandler.endElement(ns, name, name);
-        depth--;        
     }
 
     /**
@@ -169,12 +154,7 @@ class SAXStreamer extends TreeBuilder<Attributes>{
      */
     @Override
     protected void elementPushed(String ns, String name, Attributes node) throws SAXException {
-        if (depth == 0) {
-            contentHandler.startPrefixMapping("", "http://www.w3.org/1999/xhtml");
-        }
-        // XXX fake other prefix mappings?
         contentHandler.startElement(ns, name, name, node);
-        depth++;
     }
 
     /**
@@ -182,18 +162,7 @@ class SAXStreamer extends TreeBuilder<Attributes>{
      */
     @Override
     protected void end() throws SAXException {
-        depth = -1;
         contentHandler.endDocument();
-    }
-
-    /**
-     * @see nu.validator.htmlparser.impl.TreeBuilder#htmlClosed(java.lang.Object)
-     */
-    @Override
-    protected void htmlClosed(Attributes html) throws SAXException {
-        contentHandler.endElement("http://www.w3.org/1999/xhtml", "html", "html");
-        contentHandler.endPrefixMapping("");
-        depth--;
     }
 
     /**
@@ -201,17 +170,20 @@ class SAXStreamer extends TreeBuilder<Attributes>{
      */
     @Override
     protected void start(boolean fragment) throws SAXException {
-        if (depth > -1) {
-            depth = -1;
-            fatal();
-        }
         contentHandler.setDocumentLocator(tokenizer);
-        if (fragment) {
-            depth = 1;
-        } else {
-            depth = 0;
+        if (!fragment) {
             contentHandler.startDocument();
         }
+    }
+
+    protected void fatal() throws SAXException {
+        SAXParseException spe = new SAXParseException(
+                "Cannot recover after last error. Any further errors will be ignored.",
+                tokenizer);
+        if (errorHandler != null) {
+            errorHandler.fatalError(spe);
+        }
+        throw spe;
     }
 
 }

@@ -24,9 +24,8 @@
 package nu.validator.htmlparser.dom;
 
 import nu.validator.htmlparser.common.DocumentMode;
-import nu.validator.htmlparser.common.XmlViolationPolicy;
+import nu.validator.htmlparser.impl.CoalescingTreeBuilder;
 import nu.validator.htmlparser.impl.HtmlAttributes;
-import nu.validator.htmlparser.impl.TreeBuilder;
 
 import org.w3c.dom.DOMException;
 import org.w3c.dom.DOMImplementation;
@@ -42,7 +41,7 @@ import org.xml.sax.SAXException;
  * @version $Id$
  * @author hsivonen
  */
-class DOMTreeBuilder extends TreeBuilder<Element> {
+class DOMTreeBuilder extends CoalescingTreeBuilder<Element> {
 
     /**
      * The DOM impl.
@@ -59,7 +58,7 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
      * @param implementation the DOM impl.
      */
     protected DOMTreeBuilder(DOMImplementation implementation) {
-        super(XmlViolationPolicy.ALLOW, true);
+        super();
         this.implementation = implementation;
     }
 
@@ -86,14 +85,12 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
 
     /**
      * 
-     * @see nu.validator.htmlparser.impl.TreeBuilder#appendCharacters(java.lang.Object, char[], int, int)
+     * @see nu.validator.htmlparser.impl.CoalescingTreeBuilder#appendCharacters(java.lang.Object, java.lang.String)
      */
     @Override
-    protected void appendCharacters(Element parent, char[] buf, int start,
-            int length) throws SAXException {
+    protected void appendCharacters(Element parent, String text) throws SAXException {
         try {
-            parent.appendChild(document.createTextNode(new String(buf, start,
-                    length)));
+            parent.appendChild(document.createTextNode(text));
         } catch (DOMException e) {
             fatal(e);
         }
@@ -117,14 +114,12 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
 
     /**
      * 
-     * @see nu.validator.htmlparser.impl.TreeBuilder#appendComment(java.lang.Object, char[], int, int)
+     * @see nu.validator.htmlparser.impl.CoalescingTreeBuilder#appendComment(java.lang.Object, java.lang.String)
      */
     @Override
-    protected void appendComment(Element parent, char[] buf, int start,
-            int length) throws SAXException {
+    protected void appendComment(Element parent, String comment) throws SAXException {
         try {
-            parent.appendChild(document.createComment(new String(buf, start,
-                    length)));
+            parent.appendChild(document.createComment(comment));
         } catch (DOMException e) {
             fatal(e);
         }
@@ -132,14 +127,13 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
 
     /**
      * 
-     * @see nu.validator.htmlparser.impl.TreeBuilder#appendCommentToDocument(char[], int, int)
+     * @see nu.validator.htmlparser.impl.CoalescingTreeBuilder#appendCommentToDocument(java.lang.String)
      */
     @Override
-    protected void appendCommentToDocument(char[] buf, int start, int length)
+    protected void appendCommentToDocument(String comment)
             throws SAXException {
         try {
-            document.appendChild(document.createComment(new String(buf, start,
-                    length)));
+            document.appendChild(document.createComment(comment));
         } catch (DOMException e) {
             fatal(e);
         }
@@ -251,13 +245,13 @@ class DOMTreeBuilder extends TreeBuilder<Element> {
 
     /**
      * 
-     * @see nu.validator.htmlparser.impl.TreeBuilder#insertCharactersBefore(char[], int, int, java.lang.Object, java.lang.Object)
+     * @see nu.validator.htmlparser.impl.CoalescingTreeBuilder#insertCharactersBefore(java.lang.String, java.lang.Object, java.lang.Object)
      */
     @Override
-    protected void insertCharactersBefore(char[] buf, int start, int length,
+    protected void insertCharactersBefore(String comment,
             Element sibling, Element parent) throws SAXException {
         try {
-            parent.insertBefore(document.createTextNode(new String(buf, start, length)), sibling);
+            parent.insertBefore(document.createTextNode(comment), sibling);
         } catch (DOMException e) {
             fatal(e);
         }
