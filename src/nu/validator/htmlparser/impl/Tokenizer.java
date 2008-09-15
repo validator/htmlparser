@@ -2354,6 +2354,7 @@ public final class Tokenizer implements Locator {
                                 continue boguscommenthyphenloop;
                             default:
                                 appendLongStrBuf(c);
+                                state = Tokenizer.BOGUS_COMMENT;
                                 continue stateloop;
                         }
                     }
@@ -3789,7 +3790,11 @@ public final class Tokenizer implements Locator {
                                     continue stateloop;
                                 }
                             }
-                            errNotSemicolonTerminated();
+                            if ((returnState & (~1)) != 0) {
+                                errUnescapedAmpersandInterpretedAsCharacterReference();
+                            } else {
+                                errNotSemicolonTerminated();
+                            }
                         }
 
                         /*
@@ -4517,8 +4522,16 @@ public final class Tokenizer implements Locator {
         returnStateSave = returnState;
     }
 
+    private void errUnescapedAmpersandInterpretedAsCharacterReference() throws SAXException {
+        if (errorHandler == null) {
+            return;
+        }
+        SAXParseException spe = new SAXParseException("The string following \u201C&\u201D was interpreted as a character reference. (\u201C&\u201D probably should have been escaped as \u201C&amp;\u201D.)", ampersandLocation);
+        errorHandler.error(spe);
+    }
+
     private void errNotSemicolonTerminated() throws SAXException {
-        err("Named character reference was not terminated by a semicolon. Probable cause: \u201C&\u201D should have been escaped as \u201C&amp;\u201D.");
+        err("Named character reference was not terminated by a semicolon. (Or \u201C&\u201D should have been escaped as \u201C&amp;\u201D.)");
     }
 
     private void errNotSemicolonMatchInAttribute() throws SAXException {
@@ -4529,7 +4542,7 @@ public final class Tokenizer implements Locator {
         if (errorHandler == null) {
             return;
         }
-        SAXParseException spe = new SAXParseException("\u201C&\u201D should have been escaped as \u201C&amp;\u201D.", ampersandLocation);
+        SAXParseException spe = new SAXParseException("\u201C&\u201D did not start a character reference. (\u201C&\u201D should have been escaped as \u201C&amp;\u201D.)", ampersandLocation);
         errorHandler.error(spe);
     }
 
@@ -5037,7 +5050,11 @@ public final class Tokenizer implements Locator {
                                     continue eofloop;
                                 }
                             }
-                            errNotSemicolonTerminated();
+                            if ((returnState & (~1)) != 0) {
+                                errUnescapedAmpersandInterpretedAsCharacterReference();
+                            } else {
+                                errNotSemicolonTerminated();
+                            }
                         }
 
                         /*
