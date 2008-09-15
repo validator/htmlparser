@@ -297,6 +297,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private final Map<String, LocatorImpl> idLocations = new HashMap<String, LocatorImpl>();
 
+    private boolean html4;
+
     // ]NOCPP]
 
     protected TreeBuilder() {
@@ -369,6 +371,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     public final void startTokenization(Tokenizer self) throws SAXException {
         tokenizer = self;
+        html4 = false;
         stack = new StackNode[64];
         listOfActiveFormattingElements = new StackNode[64];
         needToDropLF = false;
@@ -507,6 +510,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     // [NOCPP[
                                     break;
                                 case HTML401_STRICT:
+                                    html4 = true;
                                     tokenizer.turnOnAdditionalHtml4Errors();
                                     if (isQuirky(name, publicIdentifier,
                                             systemIdentifier, forceQuirks)) {
@@ -537,6 +541,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     }
                                     break;
                                 case HTML401_TRANSITIONAL:
+                                    html4 = true;
                                     tokenizer.turnOnAdditionalHtml4Errors();
                                     if (isQuirky(name, publicIdentifier,
                                             systemIdentifier, forceQuirks)) {
@@ -568,7 +573,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     }
                                     break;
                                 case AUTO:
-                                    boolean html4 = isHtml4Doctype(publicIdentifier);
+                                    html4 = isHtml4Doctype(publicIdentifier);
                                     if (html4) {
                                         tokenizer.turnOnAdditionalHtml4Errors();
                                     }
@@ -582,7 +587,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     } else if (isAlmostStandards(
                                             publicIdentifier, systemIdentifier)) {
                                         if ("-//W3C//DTD HTML 4.01 Transitional//EN".equals(publicIdentifier)) {
-                                            tokenizer.turnOnAdditionalHtml4Errors();
                                             if (!"http://www.w3.org/TR/html4/loose.dtd".equals(systemIdentifier)) {
                                                 warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification. Expected \u201C<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">\u201D.");
                                             }
@@ -595,7 +599,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                                 systemIdentifier, html4);
                                     } else {
                                         if ("-//W3C//DTD HTML 4.01//EN".equals(publicIdentifier)) {
-                                            tokenizer.turnOnAdditionalHtml4Errors();
                                             if (!"http://www.w3.org/TR/html4/strict.dtd".equals(systemIdentifier)) {
                                                 warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification. Expected \u201C<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\u201D.");
                                             }
@@ -2307,7 +2310,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     // optimize error check and streaming SAX by
                                     // hoisting
                                     // "html" handling here.
-                                    if (attributes.getLength() == 0) {
+                                    if (attributes == HtmlAttributes.EMPTY_ATTRIBUTES) {
                                         // This has the right magic side effect
                                         // that
                                         // it
@@ -4126,11 +4129,15 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             throws SAXException {
         if (errorHandler != null) {
             String xmlns = attributes.getXmlnsValue(AttributeName.XMLNS);
-            if (xmlns != null && !ns.equals(xmlns)) {
-                err("Bad value \u201C"
-                        + xmlns
-                        + "\u201D for the attribute \u201Cxmlns\u201D (only \u201C"
-                        + ns + "\u201D permitted here).");
+            if (xmlns != null) {
+                if (html4) {
+                    err("Attribute \u201Cxmlns\u201D not allowed here. (HTML4-only error.)");
+                } else if (!ns.equals(xmlns)) {
+                    err("Bad value \u201C"
+                            + xmlns
+                            + "\u201D for the attribute \u201Cxmlns\u201D (only \u201C"
+                            + ns + "\u201D permitted here).");
+                }
             }
         }
         attributes.processNonNcNames(this, namePolicy);
