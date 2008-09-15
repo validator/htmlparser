@@ -3746,7 +3746,7 @@ public final class Tokenizer implements Locator {
                              * If the last character matched is not a U+003B
                              * SEMICOLON (;), there is a parse error.
                              */
-                            err("Entity reference was not terminated by a semicolon.");
+                            err("Text after \u201C&\u201D was not a full named character reference. Probable cause: \u201C&\u201D should have been escaped as \u201C&amp;\u201D.");
                             if ((returnState & (~1)) != 0) {
                                 /*
                                  * If the entity is being consumed as part of an
@@ -4978,7 +4978,7 @@ public final class Tokenizer implements Locator {
                              * If the last character matched is not a U+003B
                              * SEMICOLON (;), there is a parse error.
                              */
-                            err("Entity reference was not terminated by a semicolon.");
+                            err("Text after \u201C&\u201D was not a full named character reference. Probable cause: \u201C&\u201D should have been escaped as \u201C&amp;\u201D.");
                             if ((returnState & (~1)) != 0) {
                                 /*
                                  * If the entity is being consumed as part of an
