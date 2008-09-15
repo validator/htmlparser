@@ -482,6 +482,8 @@ public final class Tokenizer implements Locator {
 
     private PushedLocation pushedLocation;
 
+    private LocatorImpl ampersandLocation;
+
     /**
      * The constructor.
      * 
@@ -1463,6 +1465,7 @@ public final class Tokenizer implements Locator {
                                 flushChars();
                                 clearStrBufAndAppendCurrentC(c);
                                 additional = '\u0000';
+                                rememberAmpersandLocation();
                                 returnState = state;
                                 state = Tokenizer.CONSUME_CHARACTER_REFERENCE;
                                 continue stateloop;
@@ -1994,6 +1997,7 @@ public final class Tokenizer implements Locator {
                                 detachLongStrBuf();
                                 clearStrBufAndAppendCurrentC(c);
                                 additional = '\"';
+                                rememberAmpersandLocation();
                                 returnState = state;
                                 state = Tokenizer.CONSUME_CHARACTER_REFERENCE;
                                 continue stateloop;
@@ -2140,6 +2144,7 @@ public final class Tokenizer implements Locator {
                                 detachLongStrBuf();
                                 clearStrBufAndAppendCurrentC(c);
                                 additional = '\u0000';
+                                rememberAmpersandLocation();
                                 returnState = state;
                                 state = Tokenizer.CONSUME_CHARACTER_REFERENCE;
                                 continue stateloop;
@@ -3591,6 +3596,7 @@ public final class Tokenizer implements Locator {
                                 detachLongStrBuf();
                                 clearStrBufAndAppendCurrentC(c);
                                 additional = '\'';
+                                rememberAmpersandLocation();
                                 returnState = state;
                                 state = Tokenizer.CONSUME_CHARACTER_REFERENCE;
                                 break attributevaluesinglequotedloop;
@@ -3731,7 +3737,7 @@ public final class Tokenizer implements Locator {
                         /*
                          * If no match can be made, then this is a parse error.
                          */
-                        err("Text after \u201C&\u201D did not match an entity name. Probable cause: \u201C&\u201D should have been escaped as \u201C&amp;\u201D.");
+                        errNoNamedCharacterMatch();
                         emitOrAppendStrBuf(returnState);
                         if ((returnState & (~1)) == 0) {
                             cstart = pos;
@@ -3746,7 +3752,6 @@ public final class Tokenizer implements Locator {
                              * If the last character matched is not a U+003B
                              * SEMICOLON (;), there is a parse error.
                              */
-                            err("Text after \u201C&\u201D was not a full named character reference. Probable cause: \u201C&\u201D should have been escaped as \u201C&amp;\u201D.");
                             if ((returnState & (~1)) != 0) {
                                 /*
                                  * If the entity is being consumed as part of an
@@ -3777,12 +3782,14 @@ public final class Tokenizer implements Locator {
                                      * after the U+0026 AMPERSAND (&) must be
                                      * unconsumed, and nothing is returned.
                                      */
+                                    errNotSemicolonMatchInAttribute();
                                     appendStrBufToLongStrBuf();
                                     state = returnState;
                                     reconsume = true;
                                     continue stateloop;
                                 }
                             }
+                            errNotSemicolonTerminated();
                         }
 
                         /*
@@ -4510,6 +4517,22 @@ public final class Tokenizer implements Locator {
         returnStateSave = returnState;
     }
 
+    private void errNotSemicolonTerminated() throws SAXException {
+        err("Named character reference was not terminated by a semicolon. Probable cause: \u201C&\u201D should have been escaped as \u201C&amp;\u201D.");
+    }
+
+    private void errNotSemicolonMatchInAttribute() throws SAXException {
+        errNoNamedCharacterMatch();
+    }
+
+    private void errNoNamedCharacterMatch() throws SAXException {
+        if (errorHandler == null) {
+            return;
+        }
+        SAXParseException spe = new SAXParseException("\u201C&\u201D should have been escaped as \u201C&amp;\u201D.", ampersandLocation);
+        errorHandler.error(spe);
+    }
+
     private void errQuoteBeforeAttributeName(char c) throws SAXException {
         err("Saw \u201C"
                 + c
@@ -4522,6 +4545,10 @@ public final class Tokenizer implements Locator {
                 + "\u201D in attribute name. Probable cause: Matching quote missing somewhere earlier.");
     }
 
+    private void rememberAmpersandLocation() {
+        ampersandLocation = new LocatorImpl(this);
+    }
+    
     private void bogusDoctype() throws SAXException {
         err("Bogus doctype.");
         forceQuirks = true;
@@ -4967,7 +4994,7 @@ public final class Tokenizer implements Locator {
                         /*
                          * If no match can be made, then this is a parse error.
                          */
-                        err("Text after \u201C&\u201D did not match an entity name. Probable cause: \u201C&\u201D should have been escaped as \u201C&amp;\u201D.");
+                        errNoNamedCharacterMatch();
                         emitOrAppendStrBuf(returnState);
                         state = returnState;
                         continue eofloop;
@@ -4978,7 +5005,6 @@ public final class Tokenizer implements Locator {
                              * If the last character matched is not a U+003B
                              * SEMICOLON (;), there is a parse error.
                              */
-                            err("Text after \u201C&\u201D was not a full named character reference. Probable cause: \u201C&\u201D should have been escaped as \u201C&amp;\u201D.");
                             if ((returnState & (~1)) != 0) {
                                 /*
                                  * If the entity is being consumed as part of an
@@ -5005,11 +5031,13 @@ public final class Tokenizer implements Locator {
                                      * after the U+0026 AMPERSAND (&) must be
                                      * unconsumed, and nothing is returned.
                                      */
+                                    errNotSemicolonMatchInAttribute();
                                     appendStrBufToLongStrBuf();
                                     state = returnState;
                                     continue eofloop;
                                 }
                             }
+                            errNotSemicolonTerminated();
                         }
 
                         /*
