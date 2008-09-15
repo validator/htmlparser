@@ -4542,7 +4542,7 @@ public final class Tokenizer implements Locator {
         if (errorHandler == null) {
             return;
         }
-        SAXParseException spe = new SAXParseException("\u201C&\u201D did not start a character reference. (\u201C&\u201D should have been escaped as \u201C&amp;\u201D.)", ampersandLocation);
+        SAXParseException spe = new SAXParseException("\u201C&\u201D did not start a character reference. (\u201C&\u201D probably should have been escaped as \u201C&amp;\u201D.)", ampersandLocation);
         errorHandler.error(spe);
     }
 
