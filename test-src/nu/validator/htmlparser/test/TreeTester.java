@@ -64,7 +64,7 @@ public class TreeTester {
         UntilHashInputStream stream = null;
         try {
             String context = null;
-            aggregateStream.mark(4096);
+            aggregateStream.mark(12288);
             if (skipLabel()) { // #data
                 return false;
             }
