@@ -4289,28 +4289,17 @@ public final class Tokenizer implements Locator {
                                 folded += 0x20;
                             }
                             if (folded != e) {
-                                if (index > 0
-                                        || (folded >= 'a' && folded <= 'z')) {
-                                    // [NOCPP[
-                                    if (html4) {
-                                        if (ElementName.IFRAME != contentModelElement) {
-                                            err((contentModelFlag == ContentModelFlag.CDATA ? "CDATA"
-                                                    : "RCDATA")
-                                                    + " element \u201C"
-                                                    + contentModelElement.name
-                                                    + "\u201D contained the string \u201C</\u201D, but it was not the start of the end tag. (HTML4-only error)");
-                                        }
-                                    } else {
-                                        // ]NOCPP]
-                                        warn((contentModelFlag == ContentModelFlag.CDATA ? "CDATA"
-                                                : "RCDATA")
-                                                + " element \u201C"
-                                                + contentModelElement.name
-                                                + "\u201D contained the string \u201C</\u201D, but this did not close the element.");
-                                        // [NOCPP[
-                                    }
-                                    // ]NOCPP]
+                                // [NOCPP[
+                                if (html4
+                                        && (index > 0 || (folded >= 'a' && folded <= 'z'))
+                                        && ElementName.IFRAME != contentModelElement) {
+                                    err((contentModelFlag == ContentModelFlag.CDATA ? "CDATA"
+                                            : "RCDATA")
+                                            + " element \u201C"
+                                            + contentModelElement.name
+                                            + "\u201D contained the string \u201C</\u201D, but it was not the start of the end tag. (HTML4-only error)");
                                 }
+                                // ]NOCPP]
                                 tokenHandler.characters(Tokenizer.LT_SOLIDUS,
                                         0, 2);
                                 emitStrBuf();
