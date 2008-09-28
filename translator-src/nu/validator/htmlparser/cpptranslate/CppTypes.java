@@ -70,4 +70,16 @@ public class CppTypes {
     public String nsUriType() {
         return "PRInt32";
     }
+
+    public String falseLiteral() {
+        return "PR_FALSE";
+    }
+
+    public String trueLiteral() {
+        return "PR_TRUE";
+    }
+
+    public String nullLiteral() {
+        return "PR_NULL";
+    }
 }
