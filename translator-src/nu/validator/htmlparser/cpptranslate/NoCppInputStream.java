@@ -61,14 +61,26 @@ public class NoCppInputStream extends InputStream {
     }
 
     @Override public int read() throws IOException {
+        int c;
         if (state == START.length) {
             int endState = 0;
             while (endState != END.length) {
-                return 0; // XXX 
+                c = delegate.read();
+                if (END[endState] == c) {
+                    endState++;
+                } else {
+                    endState = 0;
+                }
             }
             state = 0;
         }
-        return 0; // XXX
+        c = delegate.read();
+        if (START[state] == c) {
+            state++;
+        } else {
+            state = 0;
+        }
+        return c;
     }
 
 }

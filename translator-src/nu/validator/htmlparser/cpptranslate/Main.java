@@ -40,8 +40,9 @@ package nu.validator.htmlparser.cpptranslate;
 import japa.parser.JavaParser;
 import japa.parser.ParseException;
 import japa.parser.ast.CompilationUnit;
-import japa.parser.ast.visitor.DumpVisitor;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -54,7 +55,7 @@ public class Main {
      * @throws IOException 
      */
     public static void main(String[] args) throws ParseException, IOException {
-        CompilationUnit cu = JavaParser.parse(new java.io.File(args[0]), "utf-8");
+        CompilationUnit cu = JavaParser.parse(new NoCppInputStream(new FileInputStream(new File(args[0]))), "utf-8");
         CppVisitor visitor = new CppVisitor(new CppTypes());
         cu.accept(visitor, null);
         FileOutputStream out = new FileOutputStream(args[1]);
