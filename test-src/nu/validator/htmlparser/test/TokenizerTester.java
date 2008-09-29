@@ -33,7 +33,7 @@ import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 
 import nu.validator.htmlparser.common.XmlViolationPolicy;
-import nu.validator.htmlparser.impl.ContentModelFlag;
+import nu.validator.htmlparser.impl.Tokenizer;
 import nu.validator.htmlparser.io.Driver;
 
 import org.xml.sax.InputSource;
@@ -131,21 +131,21 @@ public class TokenizerTester {
         JSONArray contentModelFlags = (JSONArray) test.get("contentModelFlags");
         if (contentModelFlags == null) {
             runTestInner(inputString, expectedTokens, description,
-                    ContentModelFlag.PCDATA, null);
+                    Tokenizer.DATA, null);
         } else {
             for (JSONValue value : contentModelFlags.getValue()) {
                 if (PCDATA.equals(value)) {
                     runTestInner(inputString, expectedTokens, description,
-                            ContentModelFlag.PCDATA, lastStartTag);
+                            Tokenizer.DATA, lastStartTag);
                 } else if (CDATA.equals(value)) {
                     runTestInner(inputString, expectedTokens, description,
-                            ContentModelFlag.CDATA, lastStartTag);
+                            Tokenizer.CDATA, lastStartTag);
                 } else if (RCDATA.equals(value)) {
                     runTestInner(inputString, expectedTokens, description,
-                            ContentModelFlag.RCDATA, lastStartTag);
+                            Tokenizer.RCDATA, lastStartTag);
                 } else if (PLAINTEXT.equals(value)) {
                     runTestInner(inputString, expectedTokens, description,
-                            ContentModelFlag.PLAINTEXT, lastStartTag);
+                            Tokenizer.PLAINTEXT, lastStartTag);
                 } else {
                     throw new RuntimeException("Broken test data.");
                 }
@@ -161,7 +161,7 @@ public class TokenizerTester {
      * @throws IOException
      */
     private void runTestInner(String inputString, JSONArray expectedTokens,
-            String description, ContentModelFlag contentModelFlag,
+            String description, int contentModelFlag,
             String contentModelElement) throws SAXException, IOException {
         tokenHandler.setContentModelFlag(contentModelFlag, contentModelElement);
         InputSource is = new InputSource(new StringReader(inputString));

@@ -43,22 +43,61 @@ import japa.parser.ast.CompilationUnit;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 
 public class Main {
 
+    private static final String[] H_LIST = {
+        "Tokenizer",
+        "TreeBuilder",
+        "AttributeName",
+        "ElementName",
+        "HtmlAttributes",
+        "NamedCharacters",
+        "StackNode",
+        "UTF16Buffer",
+    };
+    
+    private static final String[] CPP_LIST = {
+        "Tokenizer",
+        "TreeBuilder",
+        "AttributeName",
+        "ElementName",
+        "HtmlAttributes",
+        "NamedCharacters",
+        "Portability",
+        "StackNode",
+        "UTF16Buffer",
+    };
+    
     /**
      * @param args
      * @throws ParseException 
      * @throws IOException 
      */
     public static void main(String[] args) throws ParseException, IOException {
-        CompilationUnit cu = JavaParser.parse(new NoCppInputStream(new FileInputStream(new File(args[0]))), "utf-8");
-        CppVisitor visitor = new CppVisitor(new CppTypes());
+        CppTypes cppTypes = new CppTypes();
+        
+        File javaDirectory = new File(args[0]);
+        File cppDirectory = new File(args[1]);
+        
+        for (int i = 0; i < H_LIST.length; i++) {
+            parseFile(cppTypes, javaDirectory, cppDirectory, CPP_LIST[i], ".h", new HVisitor(cppTypes));
+        }
+        for (int i = 0; i < CPP_LIST.length; i++) {
+            parseFile(cppTypes, javaDirectory, cppDirectory, CPP_LIST[i], ".cpp", new CppVisitor(cppTypes));
+        }
+    }
+
+    private static void parseFile(CppTypes cppTypes, File javaDirectory, File cppDirectory, String className, String fne, CppVisitor visitor) throws ParseException,
+            FileNotFoundException, UnsupportedEncodingException, IOException {
+        CompilationUnit cu = JavaParser.parse(new NoCppInputStream(new FileInputStream(new File(javaDirectory, className + ".java"))), "utf-8");
         cu.accept(visitor, null);
-        FileOutputStream out = new FileOutputStream(args[1]);
+        FileOutputStream out = new FileOutputStream(new File(cppDirectory, cppTypes.classPrefix() + className + fne));
         OutputStreamWriter w = new OutputStreamWriter(out, "utf-8");
         w.write(visitor.getSource());
         w.close();

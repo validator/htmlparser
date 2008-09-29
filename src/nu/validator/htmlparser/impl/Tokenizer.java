@@ -63,13 +63,13 @@ import org.xml.sax.SAXParseException;
  */
 public final class Tokenizer implements Locator {
 
-    private static final int DATA = 0;
+    public static final int DATA = 0;
 
-    private static final int RCDATA = 1;
+    public static final int RCDATA = 1;
 
-    private static final int CDATA = 2;
+    public static final int CDATA = 2;
 
-    private static final int PLAINTEXT = 3;
+    public static final int PLAINTEXT = 3;
 
     private static final int TAG_OPEN = 49;
 
@@ -387,11 +387,6 @@ public final class Tokenizer implements Locator {
     private boolean alreadyWarnedAboutPrivateUseCharacters;
 
     /**
-     * http://www.whatwg.org/specs/web-apps/current-work/#content2
-     */
-    private ContentModelFlag contentModelFlag = ContentModelFlag.PCDATA;
-
-    /**
      * The element whose end tag closes the current CDATA or RCDATA element.
      */
     private ElementName contentModelElement = null;
@@ -642,9 +637,9 @@ public final class Tokenizer implements Locator {
      * @param contentModelElement
      *            the element causing the flag to be set
      */
-    public void setContentModelFlag(ContentModelFlag contentModelFlag,
+    public void setContentModelFlag(int contentModelFlag,
             @Local String contentModelElement) {
-        this.contentModelFlag = contentModelFlag;
+        this.stateSave = contentModelFlag;
         char[] asArray = Portability.newCharArrayFromLocal(contentModelElement);
         this.contentModelElement = ElementName.elementNameByBuffer(asArray, 0,
                 asArray.length);
@@ -658,9 +653,9 @@ public final class Tokenizer implements Locator {
      * @param contentModelElement
      *            the element causing the flag to be set
      */
-    public void setContentModelFlag(ContentModelFlag contentModelFlag,
+    public void setContentModelFlag(int contentModelFlag,
             ElementName contentModelElement) {
-        this.contentModelFlag = contentModelFlag;
+        this.stateSave = contentModelFlag;
         this.contentModelElement = contentModelElement;
     }
 
@@ -1186,7 +1181,7 @@ public final class Tokenizer implements Locator {
         if (selfClosing && endTag) {
             err("Stray \u201C/\u201D at the end of an end tag.");
         }
-        int rv = Tokenizer.DATA;
+        stateSave = Tokenizer.DATA;
         HtmlAttributes attrs = (attributes == null ? HtmlAttributes.EMPTY_ATTRIBUTES
                 : attributes);
         if (endTag) {
@@ -1194,7 +1189,6 @@ public final class Tokenizer implements Locator {
              * When an end tag token is emitted, the content model flag must be
              * switched to the PCDATA state.
              */
-            contentModelFlag = ContentModelFlag.PCDATA;
             if (attrs.getLength() != 0) {
                 /*
                  * When an end tag token is emitted with attributes, that is a
@@ -1205,22 +1199,9 @@ public final class Tokenizer implements Locator {
             tokenHandler.endTag(tagName);
         } else {
             tokenHandler.startTag(tagName, attrs, selfClosing);
-            switch (contentModelFlag) {
-                case PCDATA:
-                    rv = Tokenizer.DATA;
-                    break;
-                case CDATA:
-                    rv = Tokenizer.CDATA;
-                    break;
-                case RCDATA:
-                    rv = Tokenizer.RCDATA;
-                    break;
-                case PLAINTEXT:
-                    rv = Tokenizer.PLAINTEXT;
-            }
         }
         resetAttributes();
-        return rv;
+        return stateSave;
     }
 
     private void attributeNameComplete() throws SAXException {
@@ -1354,7 +1335,7 @@ public final class Tokenizer implements Locator {
         longStrBuf = new char[1024];
         longStrBufLen = 0;
         alreadyComplainedAboutNonAscii = false;
-        contentModelFlag = ContentModelFlag.PCDATA;
+        stateSave = Tokenizer.DATA;        
         line = linePrev = 0;
         col = colPrev = 1;
         nextCharOnNewLine = true;
@@ -1366,19 +1347,6 @@ public final class Tokenizer implements Locator {
         // [NOCPP[
         wantsComments = tokenHandler.wantsComments();
         // ]NOCPP]
-        switch (contentModelFlag) {
-            case PCDATA:
-                stateSave = Tokenizer.DATA;
-                break;
-            case CDATA:
-                stateSave = Tokenizer.CDATA;
-                break;
-            case RCDATA:
-                stateSave = Tokenizer.RCDATA;
-                break;
-            case PLAINTEXT:
-                stateSave = Tokenizer.PLAINTEXT;
-        }
         index = 0;
         forceQuirks = false;
         additional = '\u0000';
@@ -4319,7 +4287,7 @@ public final class Tokenizer implements Locator {
                                 if (html4
                                         && (index > 0 || (folded >= 'a' && folded <= 'z'))
                                         && ElementName.IFRAME != contentModelElement) {
-                                    err((contentModelFlag == ContentModelFlag.CDATA ? "CDATA"
+                                    err((stateSave == Tokenizer.DATA ? "CDATA"
                                             : "RCDATA")
                                             + " element \u201C"
                                             + contentModelElement.name
@@ -4384,13 +4352,13 @@ public final class Tokenizer implements Locator {
                                     continue stateloop;
                                 default:
                                     if (html4) {
-                                        err((contentModelFlag == ContentModelFlag.CDATA ? "CDATA"
+                                        err((stateSave == Tokenizer.DATA ? "CDATA"
                                                 : "RCDATA")
                                                 + " element \u201C"
                                                 + contentModelElement
                                                 + "\u201D contained the string \u201C</\u201D, but it was not the start of the end tag. (HTML4-only error)");
                                     } else {
-                                        warn((contentModelFlag == ContentModelFlag.CDATA ? "CDATA"
+                                        warn((stateSave == Tokenizer.DATA ? "CDATA"
                                                 : "RCDATA")
                                                 + " element \u201C"
                                                 + contentModelElement

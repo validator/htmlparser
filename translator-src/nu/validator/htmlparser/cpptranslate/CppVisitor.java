@@ -114,15 +114,17 @@ import japa.parser.ast.type.WildcardType;
 import japa.parser.ast.visitor.VoidVisitor;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Julio Vilmar Gesser
  * @author Henri Sivonen
  */
 
-public final class CppVisitor implements VoidVisitor<Object> {
+public class CppVisitor implements VoidVisitor<Object> {
 
     private static final String[] CLASS_NAMES = {
         "AttributeName",
@@ -132,7 +134,6 @@ public final class CppVisitor implements VoidVisitor<Object> {
         "HtmlAttributes",
         "LocatorImpl",
         "NamedCharacters",
-        "NCName",
         "StackNode",
         "StringUtil",
         "Tokenizer",
@@ -197,6 +198,10 @@ public final class CppVisitor implements VoidVisitor<Object> {
     private String className = "";
 
     private List<AnnotationExpr> currentAnnotations;
+
+    private int currentArrayCount;
+
+    private Set<String> forLoopsWithCondition = new HashSet<String>(); 
     
     /**
      * @param cppTypes
@@ -400,11 +405,7 @@ public final class CppVisitor implements VoidVisitor<Object> {
 
     public void visit(ReferenceType n, Object arg) {
         if (noLength()) {
-            // XXX special case entity table!
-            n.getType().accept(this, arg);
-            for (int i = 0; i < n.getArrayCount(); i++) {
-                printer.print("[]");
-            }            
+            n.getType().accept(this, arg);          
         } else {
             for (int i = 0; i < n.getArrayCount(); i++) {
                 printer.print("jArray<");
@@ -467,12 +468,18 @@ public final class CppVisitor implements VoidVisitor<Object> {
         } else {
             n.getType().accept(this, arg);
 
+            if (n.getType() instanceof ReferenceType) {
+                ReferenceType rt = (ReferenceType) n.getType();
+                currentArrayCount = rt.getArrayCount();
+            }
+            
             printer.print(" ");
             printer.print(className);
             printer.print("::");
             declarator.accept(this, arg);
             printer.printLn(";");            
             printer.printLn();
+            currentArrayCount = 0;
         }
         currentAnnotations = null;
 
@@ -480,6 +487,7 @@ public final class CppVisitor implements VoidVisitor<Object> {
 
     public void visit(VariableDeclarator n, Object arg) {
         n.getId().accept(this, arg);
+
         if (n.getInit() != null) {
             printer.print(" = ");
             n.getInit().accept(this, arg);
@@ -488,6 +496,11 @@ public final class CppVisitor implements VoidVisitor<Object> {
 
     public void visit(VariableDeclaratorId n, Object arg) {
         printer.print(n.getName());
+        if (noLength()) {
+            for (int i = 0; i < currentArrayCount; i++) {
+                printer.print("[]");
+            }
+        }
         for (int i = 0; i < n.getArrayCount(); i++) {
             printer.print("[]");
         }
@@ -681,9 +694,16 @@ public final class CppVisitor implements VoidVisitor<Object> {
     }
 
     public void visit(FieldAccessExpr n, Object arg) {
-        n.getScope().accept(this, arg);
-        printer.print("->");
-        printer.print(n.getField());
+        Expression scope = n.getScope();
+        String field = n.getField();
+        if ("length".equals(field) && !(scope instanceof ThisExpr)) {
+            scope.accept(this, arg);
+            printer.print(".length");
+        } else {
+            scope.accept(this, arg);
+            printer.print("->");
+            printer.print(field);
+        }
     }
 
     public void visit(InstanceOfExpr n, Object arg) {
@@ -924,9 +944,9 @@ public final class CppVisitor implements VoidVisitor<Object> {
     }
 
     public void visit(ConstructorDeclaration n, Object arg) {
-        if (n.getJavaDoc() != null) {
-            n.getJavaDoc().accept(this, arg);
-        }
+//        if (n.getJavaDoc() != null) {
+//            n.getJavaDoc().accept(this, arg);
+//        }
         currentAnnotations = n.getAnnotations();
         //        if (annotations != null) {
         //            for (AnnotationExpr a : annotations) {
@@ -934,12 +954,15 @@ public final class CppVisitor implements VoidVisitor<Object> {
         //                printer.printLn();
         //            }
         //        }
-        printModifiers(n.getModifiers());
+//        printModifiers(n.getModifiers());
 
         printTypeParameters(n.getTypeParameters(), arg);
         if (n.getTypeParameters() != null) {
             printer.print(" ");
         }
+        printer.print(className);
+        printer.print("::");
+
         printer.print(n.getName());
         currentAnnotations = null;
         
@@ -955,18 +978,20 @@ public final class CppVisitor implements VoidVisitor<Object> {
         }
         printer.print(")");
 
-        if (n.getThrows() != null) {
-            printer.print(" throws ");
-            for (Iterator<NameExpr> i = n.getThrows().iterator(); i.hasNext();) {
-                NameExpr name = i.next();
-                name.accept(this, arg);
-                if (i.hasNext()) {
-                    printer.print(", ");
-                }
-            }
-        }
+//        if (n.getThrows() != null) {
+//            printer.print(" throws ");
+//            for (Iterator<NameExpr> i = n.getThrows().iterator(); i.hasNext();) {
+//                NameExpr name = i.next();
+//                name.accept(this, arg);
+//                if (i.hasNext()) {
+//                    printer.print(", ");
+//                }
+//            }
+//        }
         printer.print(" ");
         n.getBlock().accept(this, arg);
+        printer.printLn();
+        printer.printLn();
     }
 
     public void visit(MethodDeclaration n, Object arg) {
@@ -1113,16 +1138,18 @@ public final class CppVisitor implements VoidVisitor<Object> {
         // Not implementing general Java continue semantics in order 
         // to keep the generated C++ more readable.
         Statement stmt = n.getStmt();
-        if (stmt instanceof ForStmt) {
-            ForStmt forLoop = (ForStmt) stmt;
-            if (!(forLoop.getInit() == null && forLoop.getCompare() == null && forLoop.getUpdate() == null)) {
-                throw new IllegalStateException("Only for(;;) supported as labeled statement. Line: " + n.getBeginLine());                
+            if (stmt instanceof ForStmt) {
+                ForStmt forLoop = (ForStmt) stmt;
+                if (!(forLoop.getInit() == null && forLoop.getCompare() == null && forLoop.getUpdate() == null)) {
+                    forLoopsWithCondition.add(n.getLabel());
+                }
+            } else {
+                throw new IllegalStateException(
+                        "Only for loop supported as labeled statement. Line: "
+                                + n.getBeginLine());
             }
-        } else {
-            throw new IllegalStateException("Only for(;;) supported as labeled statement. Line: " + n.getBeginLine());
-        }
-        printer.print(n.getLabel());
-        printer.print(": ");
+            printer.print(n.getLabel());
+            printer.print(": ");
         stmt.accept(this, arg);
         printer.printLn();
         printer.print(n.getLabel());
@@ -1332,6 +1359,9 @@ public final class CppVisitor implements VoidVisitor<Object> {
         if (n.getId() != null) {
             printer.print("goto ");
             printer.print(n.getId());
+            if (forLoopsWithCondition.contains(n.getId())) {
+                throw new IllegalStateException("Continue attempted with a loop that has a condition. " + className + " " + n.getId());
+            }
         } else {
             printer.print("continue");            
         }

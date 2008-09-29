@@ -24,7 +24,6 @@
 package nu.validator.htmlparser.test;
 
 import nu.validator.htmlparser.common.TokenHandler;
-import nu.validator.htmlparser.impl.ContentModelFlag;
 import nu.validator.htmlparser.impl.ElementName;
 import nu.validator.htmlparser.impl.HtmlAttributes;
 import nu.validator.htmlparser.impl.Tokenizer;
@@ -57,11 +56,11 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
 
     private JSONArray array = null;
 
-    private ContentModelFlag contentModelFlag;
+    private int contentModelFlag;
 
     private String contentModelElement;
     
-    public void setContentModelFlag(ContentModelFlag contentModelFlag, String contentModelElement) {
+    public void setContentModelFlag(int contentModelFlag, String contentModelElement) {
         this.contentModelFlag = contentModelFlag;
         this.contentModelElement = contentModelElement;
     }
