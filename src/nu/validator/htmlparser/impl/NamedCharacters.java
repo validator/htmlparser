@@ -30,7 +30,7 @@ import nu.validator.htmlparser.annotation.NoLength;
  * @author hsivonen
  */
 public final class NamedCharacters {
-    static final @NoLength char[][] NAMES = { "AElig".toCharArray(),
+    static final char[][] NAMES = { "AElig".toCharArray(),
             "AElig;".toCharArray(), "AMP".toCharArray(), "AMP;".toCharArray(),
             "Aacute".toCharArray(), "Aacute;".toCharArray(),
             "Abreve;".toCharArray(), "Acirc".toCharArray(),
