@@ -210,17 +210,21 @@ public final class Tokenizer implements Locator {
     /**
      * Array version of U+FFFD.
      */
-    private static final char[] REPLACEMENT_CHARACTER = { '\uFFFD' };
+    private static final @NoLength char[] REPLACEMENT_CHARACTER = { '\uFFFD' };
 
+    // [NOCPP[
+    
     /**
      * Array version of space.
      */
-    private static final char[] SPACE = { ' ' };
+    private static final @NoLength char[] SPACE = { ' ' };
 
+    // ]NOCPP]
+    
     /**
      * Array version of line feed.
      */
-    private static final char[] LF = { '\n' };
+    private static final @NoLength char[] LF = { '\n' };
 
     /**
      * Buffer growth parameter.
@@ -338,13 +342,13 @@ public final class Tokenizer implements Locator {
     /**
      * Number of significant <code>char</code>s in <code>strBuf</code>.
      */
-    private int strBufLen = 0;
+    private int strBufLen;
 
     /**
      * <code>-1</code> to indicate that <code>strBuf</code> is used or
      * otherwise an offset to the main buffer.
      */
-    private int strBufOffset = -1;
+//    private int strBufOffset = -1;
 
     /**
      * Buffer for long strings.
@@ -354,13 +358,13 @@ public final class Tokenizer implements Locator {
     /**
      * Number of significant <code>char</code>s in <code>longStrBuf</code>.
      */
-    private int longStrBufLen = 0;
+    private int longStrBufLen;
 
     /**
      * <code>-1</code> to indicate that <code>longStrBuf</code> is used or
      * otherwise an offset to the main buffer.
      */
-    private int longStrBufOffset = -1;
+//    private int longStrBufOffset = -1;
 
     /**
      * The attribute holder.
@@ -370,12 +374,12 @@ public final class Tokenizer implements Locator {
     /**
      * Buffer for expanding NCRs falling into the Basic Multilingual Plane.
      */
-    private final char[] bmpChar = new char[1];
+    private final char[] bmpChar;
 
     /**
      * Buffer for expanding astral NCRs.
      */
-    private final char[] astralChar = new char[2];
+    private final char[] astralChar;
 
     /**
      * Keeps track of PUA warnings.
@@ -407,11 +411,15 @@ public final class Tokenizer implements Locator {
      */
     private AttributeName attributeName = null;
 
+    // [NOCPP[
+    
     /**
      * Whether comment tokens are emitted.
      */
     private boolean wantsComments = false;
 
+    // ]NOCPP]
+    
     /**
      * If <code>false</code>, <code>addAttribute*()</code> are no-ops.
      */
@@ -484,6 +492,18 @@ public final class Tokenizer implements Locator {
 
     private LocatorImpl ampersandLocation;
 
+    // [NOCPP[
+
+    public Tokenizer(TokenHandler tokenHandler,
+            EncodingDeclarationHandler encodingDeclarationHandler,
+            boolean newAttributesEachTime) {
+        this.tokenHandler = tokenHandler;
+        this.encodingDeclarationHandler = encodingDeclarationHandler;
+        this.newAttributesEachTime = newAttributesEachTime;
+        this.bmpChar = new char[1];
+        this.astralChar = new char[2];
+    }
+
     /**
      * The constructor.
      * 
@@ -494,13 +514,21 @@ public final class Tokenizer implements Locator {
         this.tokenHandler = tokenHandler;
         this.encodingDeclarationHandler = null;
         this.newAttributesEachTime = false;
+        this.bmpChar = new char[1];
+        this.astralChar = new char[2];
     }
+    
+    // ]NOCPP]
 
     public Tokenizer(TokenHandler tokenHandler,
             EncodingDeclarationHandler encodingDeclarationHandler) {
         this.tokenHandler = tokenHandler;
         this.encodingDeclarationHandler = encodingDeclarationHandler;
+        // [NOCPP[
         this.newAttributesEachTime = false;
+        // ]NOCPP]
+        this.bmpChar = new char[1];
+        this.astralChar = new char[2];
     }
 
     public void initLocation(String newPublicId, String newSystemId) {
@@ -508,19 +536,7 @@ public final class Tokenizer implements Locator {
         this.publicId = newPublicId;
 
     }
-
-    // [NOCPP[
-
-    public Tokenizer(TokenHandler tokenHandler,
-            EncodingDeclarationHandler encodingDeclarationHandler,
-            boolean newAttributesEachTime) {
-        this.tokenHandler = tokenHandler;
-        this.encodingDeclarationHandler = encodingDeclarationHandler;
-        this.newAttributesEachTime = newAttributesEachTime;
-    }
-
-    // ]NOCPP]
-
+    
     /**
      * Returns the mappingLangToXmlLang.
      * 
@@ -978,7 +994,9 @@ public final class Tokenizer implements Locator {
      * @throws SAXException
      */
     private void emitComment(int provisionalHyphens) throws SAXException {
+        // [NOCPP[
         if (wantsComments) {
+        // ]NOCPP]
             // if (longStrBufOffset != -1) {
             // tokenHandler.comment(buf, longStrBufOffset, longStrBufLen
             // - provisionalHyphens);
@@ -986,7 +1004,9 @@ public final class Tokenizer implements Locator {
             tokenHandler.comment(longStrBuf, 0, longStrBufLen
                     - provisionalHyphens);
             // }
+        // [NOCPP[
         }
+        // ]NOCPP]
         cstart = pos + 1;
     }
 
@@ -1330,7 +1350,9 @@ public final class Tokenizer implements Locator {
     public void start() throws SAXException {
         confident = false;
         strBuf = new char[64];
+        strBufLen = 0;
         longStrBuf = new char[1024];
+        longStrBufLen = 0;
         alreadyComplainedAboutNonAscii = false;
         contentModelFlag = ContentModelFlag.PCDATA;
         line = linePrev = 0;
@@ -1341,7 +1363,9 @@ public final class Tokenizer implements Locator {
         alreadyWarnedAboutPrivateUseCharacters = false;
         metaBoundaryPassed = false;
         tokenHandler.startTokenization(this);
+        // [NOCPP[
         wantsComments = tokenHandler.wantsComments();
+        // ]NOCPP]
         switch (contentModelFlag) {
             case PCDATA:
                 stateSave = Tokenizer.DATA;
@@ -1941,6 +1965,7 @@ public final class Tokenizer implements Locator {
                                  * below.
                                  */
                             default:
+                                // [NOCPP[
                                 if (html4
                                         && !((c >= 'a' && c <= 'z')
                                                 || (c >= 'A' && c <= 'Z')
@@ -1949,6 +1974,7 @@ public final class Tokenizer implements Locator {
                                                 || c == '_' || c == ':')) {
                                     err("Non-name character in an unquoted attribute value. (This is an HTML4-only error.)");
                                 }
+                                // ]NOCPP]
                                 /*
                                  * Anything else Append the current input
                                  * character to the current attribute's value.
@@ -3807,17 +3833,17 @@ public final class Tokenizer implements Locator {
                         emitOrAppend(val, returnState);
                         // this is so complicated!
                         if (strBufMark < strBufLen) {
-                            if (strBufOffset != -1) {
-                                if ((returnState & (~1)) != 0) {
-                                    for (int i = strBufMark; i < strBufLen; i++) {
-                                        appendLongStrBuf(buf[strBufOffset + i]);
-                                    }
-                                } else {
-                                    tokenHandler.characters(buf, strBufOffset
-                                            + strBufMark, strBufLen
-                                            - strBufMark);
-                                }
-                            } else {
+//                            if (strBufOffset != -1) {
+//                                if ((returnState & (~1)) != 0) {
+//                                    for (int i = strBufMark; i < strBufLen; i++) {
+//                                        appendLongStrBuf(buf[strBufOffset + i]);
+//                                    }
+//                                } else {
+//                                    tokenHandler.characters(buf, strBufOffset
+//                                            + strBufMark, strBufLen
+//                                            - strBufMark);
+//                                }
+//                            } else {
                                 if ((returnState & (~1)) != 0) {
                                     for (int i = strBufMark; i < strBufLen; i++) {
                                         appendLongStrBuf(strBuf[i]);
@@ -3826,7 +3852,7 @@ public final class Tokenizer implements Locator {
                                     tokenHandler.characters(strBuf, strBufMark,
                                             strBufLen - strBufMark);
                                 }
-                            }
+//                            }
                         }
                         if ((returnState & (~1)) == 0) {
                             cstart = pos;
@@ -4587,17 +4613,19 @@ public final class Tokenizer implements Locator {
              * column of that row.
              */
             char[] val = NamedCharacters.WINDOWS_1252[value - 0x80];
-            emitOrAppend(val, returnState);
+            emitOrAppendOne(val, returnState);
         } else if (value == 0x0D) {
             err("A numeric character reference expanded to carriage return.");
-            emitOrAppend(Tokenizer.LF, returnState);
+            emitOrAppendOne(Tokenizer.LF, returnState);
+        // [NOCPP[    
         } else if (value == 0xC
                 && contentSpacePolicy != XmlViolationPolicy.ALLOW) {
             if (contentSpacePolicy == XmlViolationPolicy.ALTER_INFOSET) {
-                emitOrAppend(Tokenizer.SPACE, returnState);
+                emitOrAppendOne(Tokenizer.SPACE, returnState);
             } else if (contentSpacePolicy == XmlViolationPolicy.FATAL) {
                 fatal("A character reference expanded to a form feed which is not legal XML 1.0 white space.");
             }
+        // ]NOCPP]
         } else if ((value >= 0x0000 && value <= 0x0008) || (value == 0x000B)
                 || (value >= 0x000E && value <= 0x001F) || value == 0x007F) {
             /*
@@ -4614,13 +4642,13 @@ public final class Tokenizer implements Locator {
              */
             err("Character reference expands to a control character ("
                     + toUPlusString((char) value) + ").");
-            emitOrAppend(Tokenizer.REPLACEMENT_CHARACTER, returnState);
+            emitOrAppendOne(Tokenizer.REPLACEMENT_CHARACTER, returnState);
         } else if ((value & 0xF800) == 0xD800) {
             err("Character reference expands to a surrogate.");
-            emitOrAppend(Tokenizer.REPLACEMENT_CHARACTER, returnState);
+            emitOrAppendOne(Tokenizer.REPLACEMENT_CHARACTER, returnState);
         } else if (isNonCharacter(value)) {
             err("Character reference expands to a non-character.");
-            emitOrAppend(Tokenizer.REPLACEMENT_CHARACTER, returnState);
+            emitOrAppendOne(Tokenizer.REPLACEMENT_CHARACTER, returnState);
         } else if (value <= 0xFFFF) {
             /*
              * Otherwise, return a character token for the Unicode character
@@ -4631,7 +4659,7 @@ public final class Tokenizer implements Locator {
                 warnAboutPrivateUseChar();
             }
             bmpChar[0] = ch;
-            emitOrAppend(bmpChar, returnState);
+            emitOrAppendOne(bmpChar, returnState);
         } else if (value <= 0x10FFFF) {
             if (errorHandler != null && isAstralPrivateUse(value)) {
                 warnAboutPrivateUseChar();
@@ -4641,7 +4669,7 @@ public final class Tokenizer implements Locator {
             emitOrAppend(astralChar, returnState);
         } else {
             err("Character reference outside the permissible Unicode range.");
-            emitOrAppend(Tokenizer.REPLACEMENT_CHARACTER, returnState);
+            emitOrAppendOne(Tokenizer.REPLACEMENT_CHARACTER, returnState);
         }
     }
 
@@ -5277,6 +5305,14 @@ public final class Tokenizer implements Locator {
         }
     }
 
+    private void emitOrAppendOne(char[] val, int returnState) throws SAXException {
+        if ((returnState & (~1)) != 0) {
+            appendLongStrBuf(val[0]);
+        } else {
+            tokenHandler.characters(val, 0, 1);
+        }
+    }
+    
     public void end() throws SAXException {
         strBuf = null;
         longStrBuf = null;

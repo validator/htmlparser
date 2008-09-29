@@ -273,8 +273,12 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private boolean needToDropLF;
 
+    // [NOCPP[
+    
     private boolean wantingComments;
 
+    // ]NOCPP]
+    
     private @Local String context;
 
     private StackNode<T>[] stack;
@@ -4533,6 +4537,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     }
 
+    // [NOCPP[
+    
     /**
      * @see nu.validator.htmlparser.common.TokenHandler#wantsComments()
      */
@@ -4543,6 +4549,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     public void setIgnoringComments(boolean ignoreComments) {
         wantingComments = !ignoreComments;
     }
+    
+    // ]NOCPP]
 
     /**
      * Sets the errorHandler.
