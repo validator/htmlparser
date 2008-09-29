@@ -34,7 +34,6 @@ import nu.validator.htmlparser.common.Heuristics;
 import nu.validator.htmlparser.common.TokenHandler;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
 import nu.validator.htmlparser.extra.NormalizationChecker;
-import nu.validator.htmlparser.impl.Confidence;
 import nu.validator.htmlparser.impl.Tokenizer;
 import nu.validator.htmlparser.impl.TreeBuilder;
 import nu.validator.htmlparser.impl.UTF16Buffer;

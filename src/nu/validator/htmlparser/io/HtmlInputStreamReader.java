@@ -36,7 +36,6 @@ import nu.validator.htmlparser.common.Heuristics;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
 import nu.validator.htmlparser.extra.ChardetSniffer;
 import nu.validator.htmlparser.extra.IcuDetectorSniffer;
-import nu.validator.htmlparser.impl.Confidence;
 import nu.validator.htmlparser.impl.Tokenizer;
 
 import org.xml.sax.ErrorHandler;
