@@ -400,17 +400,17 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             stack[currentPtr] = node;
             resetTheInsertionMode();
             if ("title" == context || "textarea" == context) {
-                tokenizer.setContentModelFlag(ContentModelFlag.RCDATA, context);
+                tokenizer.setContentModelFlag(Tokenizer.RCDATA, context);
             } else if ("style" == context || "script" == context
                     || "xmp" == context || "iframe" == context
                     || "noembed" == context || "noframes" == context
                     || (scriptingEnabled && "noscript" == context)) {
-                tokenizer.setContentModelFlag(ContentModelFlag.CDATA, context);
+                tokenizer.setContentModelFlag(Tokenizer.CDATA, context);
             } else if ("plaintext" == context) {
-                tokenizer.setContentModelFlag(ContentModelFlag.PLAINTEXT,
+                tokenizer.setContentModelFlag(Tokenizer.PLAINTEXT,
                         context);
             } else {
-                tokenizer.setContentModelFlag(ContentModelFlag.PCDATA, context);
+                tokenizer.setContentModelFlag(Tokenizer.DATA, context);
             }
         }
     }
@@ -757,7 +757,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 return;
             default:
                 int end = start + length;
-                loop: for (int i = start; i < end; i++) {
+                charactersloop: for (int i = start; i < end; i++) {
                     switch (buf[i]) {
                         case ' ':
                         case '\t':
@@ -819,10 +819,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                      * Append the token's character to the
                                      * current node.
                                      */
-                                    break loop;
+                                    break charactersloop;
                                 case IN_SELECT:
                                 case IN_SELECT_IN_TABLE:
-                                    break loop;
+                                    break charactersloop;
                                 case AFTER_BODY:
                                     if (start < i) {
                                         accumulateCharacters(buf, start, i
@@ -1010,7 +1010,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                      * Append the token's character to the
                                      * current node.
                                      */
-                                    break loop;
+                                    break charactersloop;
                                 case IN_TABLE:
                                 case IN_TABLE_BODY:
                                 case IN_ROW:
@@ -1045,7 +1045,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     continue;
                                 case IN_SELECT:
                                 case IN_SELECT_IN_TABLE:
-                                    break loop;
+                                    break charactersloop;
                                 case AFTER_BODY:
                                     err("Non-space character after body.");
                                     fatal();
@@ -1507,7 +1507,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         originalMode = mode;
                                         mode = InsertionMode.IN_CDATA_RCDATA;
                                         tokenizer.setContentModelFlag(
-                                                ContentModelFlag.CDATA,
+                                                Tokenizer.CDATA,
                                                 elementName);
                                         break starttagloop;
                                     case INPUT:
@@ -1659,7 +1659,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                                 "http://www.w3.org/1999/xhtml",
                                                 elementName, attributes);
                                         tokenizer.setContentModelFlag(
-                                                ContentModelFlag.PLAINTEXT,
+                                                Tokenizer.PLAINTEXT,
                                                 elementName);
                                         break starttagloop;
                                     case A:
@@ -1732,7 +1732,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         originalMode = mode;
                                         mode = InsertionMode.IN_CDATA_RCDATA;
                                         tokenizer.setContentModelFlag(
-                                                ContentModelFlag.CDATA,
+                                                Tokenizer.CDATA,
                                                 elementName);
                                         break starttagloop;
                                     case TABLE:
@@ -1847,7 +1847,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                                 elementName, attributes,
                                                 formPointer);
                                         tokenizer.setContentModelFlag(
-                                                ContentModelFlag.RCDATA,
+                                                Tokenizer.RCDATA,
                                                 elementName);
                                         originalMode = mode;
                                         mode = InsertionMode.IN_CDATA_RCDATA;
@@ -1871,7 +1871,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         originalMode = mode;
                                         mode = InsertionMode.IN_CDATA_RCDATA;
                                         tokenizer.setContentModelFlag(
-                                                ContentModelFlag.CDATA,
+                                                Tokenizer.CDATA,
                                                 elementName);
                                         break starttagloop;
                                     case SELECT:
@@ -2043,7 +2043,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         originalMode = mode;
                                         mode = InsertionMode.IN_CDATA_RCDATA;
                                         tokenizer.setContentModelFlag(
-                                                ContentModelFlag.RCDATA,
+                                                Tokenizer.RCDATA,
                                                 elementName);
                                         break starttagloop;
                                     case NOSCRIPT:
@@ -2054,7 +2054,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                             originalMode = mode;
                                             mode = InsertionMode.IN_CDATA_RCDATA;
                                             tokenizer.setContentModelFlag(
-                                                    ContentModelFlag.CDATA,
+                                                    Tokenizer.CDATA,
                                                     elementName);
                                         } else {
                                             appendToCurrentNodeAndPushElementMayFoster(
@@ -2076,7 +2076,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         originalMode = mode;
                                         mode = InsertionMode.IN_CDATA_RCDATA;
                                         tokenizer.setContentModelFlag(
-                                                ContentModelFlag.CDATA,
+                                                Tokenizer.CDATA,
                                                 elementName);
                                         break starttagloop;
                                     case HEAD:
@@ -2120,7 +2120,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     originalMode = mode;
                                     mode = InsertionMode.IN_CDATA_RCDATA;
                                     tokenizer.setContentModelFlag(
-                                            ContentModelFlag.CDATA, elementName);
+                                            Tokenizer.CDATA, elementName);
                                     break starttagloop;
                                 case HEAD:
                                     err("Start tag for \u201Chead\u201D seen when \u201Chead\u201D was already open.");
@@ -2267,7 +2267,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     originalMode = mode;
                                     mode = InsertionMode.IN_CDATA_RCDATA;
                                     tokenizer.setContentModelFlag(
-                                            ContentModelFlag.CDATA, elementName);
+                                            Tokenizer.CDATA, elementName);
                                     break starttagloop;
                                 default:
                                     err("Stray \u201C" + name
@@ -2454,7 +2454,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     originalMode = mode;
                                     mode = InsertionMode.IN_CDATA_RCDATA;
                                     tokenizer.setContentModelFlag(
-                                            ContentModelFlag.CDATA, elementName);
+                                            Tokenizer.CDATA, elementName);
                                     break starttagloop;
                                 case STYLE:
                                 case NOFRAMES:
@@ -2468,7 +2468,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     originalMode = mode;
                                     mode = InsertionMode.IN_CDATA_RCDATA;
                                     tokenizer.setContentModelFlag(
-                                            ContentModelFlag.CDATA, elementName);
+                                            Tokenizer.CDATA, elementName);
                                     break starttagloop;
                                 case TITLE:
                                     err("\u201Ctitle\u201D element outside \u201Chead\u201D.");
@@ -2479,7 +2479,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     originalMode = mode;
                                     mode = InsertionMode.IN_CDATA_RCDATA;
                                     tokenizer.setContentModelFlag(
-                                            ContentModelFlag.RCDATA,
+                                            Tokenizer.RCDATA,
                                             elementName);
                                     break starttagloop;
                                 case HEAD:
@@ -2513,7 +2513,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     originalMode = mode;
                                     mode = InsertionMode.IN_CDATA_RCDATA;
                                     tokenizer.setContentModelFlag(
-                                            ContentModelFlag.CDATA, elementName);
+                                            Tokenizer.CDATA, elementName);
                                     break starttagloop;
                                 default:
                                     err("Stray \u201C" + name
