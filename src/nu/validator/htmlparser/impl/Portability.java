@@ -23,16 +23,21 @@
 package nu.validator.htmlparser.impl;
 
 import nu.validator.htmlparser.annotation.Local;
+import nu.validator.htmlparser.annotation.NoLength;
 
 public final class Portability {
 
     // Allocating methods
 
-    public static @Local String newLocalNameFromBuffer(char[] buf, int offset, int length) {
+    /**
+     * Allocates a new local name object. In C++, the refcount must be set up in such a way that 
+     * calling <code>releaseLocal</code> on the return value balances the refcount set by this method.
+     */
+    public static @Local String newLocalNameFromBuffer(@NoLength char[] buf, int offset, int length) {
         return new String(buf, offset, length).intern();
     }
 
-    public static String newStringFromBuffer(char[] buf, int offset, int length) {
+    public static String newStringFromBuffer(@NoLength char[] buf, int offset, int length) {
         return new String(buf, offset, length);
     }
     
@@ -54,6 +59,10 @@ public final class Portability {
         // No-op in Java
     }
     
+    /**
+     * Releases a Java array. This method is magically replaced by a macro in C++.
+     * @param arr
+     */
     public static void releaseArray(Object arr) {
         // No-op in Java
     }    
