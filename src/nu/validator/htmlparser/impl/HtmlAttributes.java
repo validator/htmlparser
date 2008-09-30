@@ -325,9 +325,11 @@ public final class HtmlAttributes implements Attributes {
             // Hixie
             AttributeName[] newNames = new AttributeName[newLen];
             System.arraycopy(names, 0, newNames, 0, names.length);
+            Portability.releaseArray(names);
             names = newNames;
             String[] newValues = new String[newLen];
             System.arraycopy(values, 0, newValues, 0, values.length);
+            Portability.releaseArray(values);
             values = newValues;
         }
         names[length] = name;

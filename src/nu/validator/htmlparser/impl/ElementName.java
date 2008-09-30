@@ -320,7 +320,7 @@ public final class ElementName
 //            System.out.println(el.constName() + ",");
 //        }
 //        System.out.println("};");
-//        System.out.println("private final static @NoLength int[] ELEMENT_HASHES = {");
+//        System.out.println("private final static int[] ELEMENT_HASHES = {");
 //        for (int i = 0; i < ELEMENT_NAMES.length; i++) {
 //            ElementName el = ELEMENT_NAMES[i];
 //            System.out.println(Integer.toString(el.hash()) + ",");
@@ -1113,7 +1113,7 @@ public final class ElementName
     DOMAINOFAPPLICATION,
     FECOMPONENTTRANSFER,
     };
-    private final static @NoLength int[] ELEMENT_HASHES = {
+    private final static int[] ELEMENT_HASHES = {
     1057,
     1090,
     1255,

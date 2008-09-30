@@ -33,9 +33,9 @@ import nu.validator.htmlparser.annotation.QName;
 
 public final class AttributeName
 // Uncomment to regenerate
-        implements Comparable<AttributeName> 
+//        implements Comparable<AttributeName> 
 {
-    
+    // [NOCPP[
 
     private static final @NsUri String[] ALL_NO_NS = { "", "", "", "" };
 
@@ -45,6 +45,18 @@ public final class AttributeName
 
     private static final boolean[] ALL_NO_NCNAME = { false, false, false, false };
 
+    private static @QName String[] COMPUTE_QNAME(String[] local, String[] prefix) {
+        @QName String[] rv = new String[4];
+        for (int i = 0; i < rv.length; i++) {
+            if (prefix[i] == null) {
+                rv[i] = local[i];
+            } else {
+                rv[i] = (prefix[i] + ':' + local[i]).intern();
+            }
+        }
+        return rv;
+    }
+    
     private static @NsUri String[] NAMESPACE(@Local String ns) {
         return new String[] { "", ns, ns, "" };
     }
@@ -72,6 +84,8 @@ public final class AttributeName
         return new String[] { name, name, name, name };
     }
 
+    // ]NOCPP]
+    
     static AttributeName nameByBuffer(char[] buf, int offset,
             int length, boolean checkNcName) {
         int hash = AttributeName.bufToHash(buf, length);
@@ -120,27 +134,29 @@ public final class AttributeName
 
     public static final int SVG = 2;
 
-    public static final int HTML_LANG = 3;
-
-    private final @IdType String type;
-
-    private final @NsUri String[] uri;
-
-    private final @Local String[] local;
-
-    private final @Prefix String[] prefix;
-    
     // [NOCPP[
     
-    private final @QName String[] qName;
+    public static final int HTML_LANG = 3;
+    
+    private final @IdType String type;
 
     // ]NOCPP]
     
+    private final @NsUri @NoLength String[] uri;
+
+    private final @Local @NoLength String[] local;
+
+    private final @Prefix @NoLength String[] prefix;
+    
+    // [NOCPP[
+    
+    private final @QName @NoLength String[] qName;
+    
     // XXX convert to bitfield
-    private final boolean[] ncname;
+    private final @NoLength boolean[] ncname;
 
     private final boolean xmlns;
-
+    
     /**
      * @param type
      * @param uri
@@ -149,24 +165,30 @@ public final class AttributeName
      * @param ncname
      * @param xmlns
      */
-    private AttributeName(@IdType String type, @NsUri String[] uri,
-            @Local String[] local, @Prefix String[] prefix, boolean[] ncname,
+    private AttributeName(@IdType String type, @NsUri @NoLength String[] uri,
+            @Local @NoLength String[] local, @Prefix @NoLength String[] prefix, @NoLength boolean[] ncname,
             boolean xmlns) {
         this.type = type;
         this.uri = uri;
         this.local = local;
         this.prefix = prefix;
         
-        // [NOCPP[
         this.qName = COMPUTE_QNAME(local, prefix);
         this.ncname = ncname;
         this.xmlns = xmlns;
-        // ]NOCPP]        
     }
 
-    private AttributeName(@NsUri String[] uri, @Local String[] local,
-            @Prefix String[] prefix, boolean[] ncname, boolean xmlns) {
+    // ]NOCPP]        
+    
+    private AttributeName(@NsUri @NoLength String[] uri, @Local @NoLength String[] local,
+            @Prefix @NoLength String[] prefix
+            // [NOCPP[
+            , @NoLength boolean[] ncname, boolean xmlns
+    // ]NOCPP]        
+    ) {
+        // [NOCPP[
         this.type = "CDATA";
+        // ]NOCPP]
         this.uri = uri;
         this.local = local;
         this.prefix = prefix;
@@ -175,18 +197,6 @@ public final class AttributeName
         this.ncname = ncname;
         this.xmlns = xmlns;
         // ]NOCPP]
-    }
-
-    private static @QName String[] COMPUTE_QNAME(String[] local, String[] prefix) {
-        @QName String[] rv = new String[4];
-        for (int i = 0; i < rv.length; i++) {
-            if (prefix[i] == null) {
-                rv[i] = local[i];
-            } else {
-                rv[i] = (prefix[i] + ':' + local[i]).intern();
-            }
-        }
-        return rv;
     }
 
     private static AttributeName create(@Local String name, boolean checkNcName) {
@@ -305,149 +315,149 @@ public final class AttributeName
 
     // START CODE ONLY USED FOR GENERATING CODE uncomment to regenerate
 
-    /**
-     * @see java.lang.Object#toString()
-     */
-    @Override public String toString() {
-        return "(" + ("ID" == type ? "\"ID\", " : "") + formatNs() + ", "
-                + formatLocal() + ", " + formatPrefix() + ", " + formatNcname()
-                + ", " + (xmlns ? "true" : "false") + ")";
-    }
-    
-    public int compareTo(AttributeName other) {
-        int thisHash = this.hash();
-        int otherHash = other.hash();
-        if (thisHash < otherHash) {
-            return -1;
-        } else if (thisHash == otherHash) {
-            return 0;
-        } else {
-            return 1;
-        }
-    }
-
-    private String formatString(String str) {
-        if (str == null) {
-            return null;
-        } else {
-            return "\"" + str.trim() + "\"";
-        }
-    }
-    
-    private String formatPrefix() {
-            if (prefix[0] == null && prefix[1] == null && prefix[2] == null && prefix[3] == null) {
-                return "ALL_NO_PREFIX";
-            } else if (prefix[0] == null && prefix[1] == prefix[2] && prefix[3] == null) {
-                return "PREFIX(\"" + prefix[1] + "\")";
-            } else {
-                return "new String[]{" + formatString(prefix[0]) + ", " + formatString(prefix[1])
-                        + ", " + formatString(prefix[2]) + ", " + formatString(prefix[3]) + "}";
-            }
-    }
-
-    private String formatLocal() {
-        if (local[0] == local[1] && local[0] == local[3]
-                && local[0] != local[2]) {
-            return "SVG_DIFFERENT(\"" + local[0] + "\", \"" + local[2]
-                    + "\")";
-        }
-        if (local[0] == local[2] && local[0] == local[3]
-                                                      && local[0] != local[1]) {
-                                                  return "MATH_DIFFERENT(\"" + local[0] + "\", \"" + local[1]
-                                                          + "\")";
-                                              }
-        if (local[0] == local[3] && local[1] == local[2]
-                && local[0] != local[1]) {
-            return "COLONIFIED_LOCAL(\"" + local[0] + "\", \"" + local[1]
-                    + "\")";
-        }
-        for (int i = 1; i < local.length; i++) {
-            if (local[0] != local[i]) {
-                return "new String[]{\"" + local[0] + "\", \"" + local[1]
-                        + "\", \"" + local[2] + "\", \"" + local[3] + "\"}";
-            }
-        }
-        return "SAME_LOWER_CASE_LOCAL(\"" + local[0] + "\")";
-    }
-
-    private String formatNs() {
-        if (uri[1] != "" && uri[0] == "" && uri[3] == "" && uri[1] == uri[2]) {
-            return "NAMESPACE(\"" + uri[1] + "\")";
-        }
-        for (int i = 0; i < uri.length; i++) {
-            if ("" != uri[i]) {
-                return "new String[]{\"" + uri[0] + "\", \"" + uri[1]
-                        + "\", \"" + uri[2] + "\", \"" + uri[3] + "\"}";
-            }
-        }
-        return "ALL_NO_NS";
-    }
-
-    private String formatNcname() {
-        for (int i = 0; i < ncname.length; i++) {
-            if (!ncname[i]) {
-                return "new boolean[]{" + ncname[0] + ", " + ncname[1] + ", "
-                        + ncname[2] + ", " + ncname[3] + "}";
-            }
-        }
-        return "ALL_NCNAME";
-    }
-
-    private String constName() {
-        String name = getLocal(HTML);
-        char[] buf = new char[name.length()];
-        for (int i = 0; i < name.length(); i++) {
-            char c = name.charAt(i);
-            if (c == '-' || c == ':') {
-                buf[i] = '_';
-            } else if (c >= 'a' && c <= 'z') {
-                buf[i] = (char) (c - 0x20);
-            } else {
-                buf[i] = c;
-            }
-        }
-        return new String(buf);
-    }
-
-    private int hash() {
-        String name = getLocal(HTML);
-        return bufToHash(name.toCharArray(), name.length());
-    }
-
-    /**
-     * Regenerate self
-     * 
-     * @param args
-     */
-    public static void main(String[] args) {
-        Arrays.sort(ATTRIBUTE_NAMES);
-        for (int i = 1; i < ATTRIBUTE_NAMES.length; i++) {
-            if (ATTRIBUTE_NAMES[i].hash() == ATTRIBUTE_NAMES[i - 1].hash()) {
-                System.err.println("Hash collision: "
-                        + ATTRIBUTE_NAMES[i].getLocal(HTML) + ", "
-                        + ATTRIBUTE_NAMES[i - 1].getLocal(HTML));
-                return;
-            }
-        }
-        for (int i = 0; i < ATTRIBUTE_NAMES.length; i++) {
-            AttributeName att = ATTRIBUTE_NAMES[i];
-            System.out.println("public static final AttributeName "
-                    + att.constName() + " = new AttributeName" + att.toString()
-                    + ";");
-        }
-        System.out.println("private final static @NoLength AttributeName[] ATTRIBUTE_NAMES = {");
-        for (int i = 0; i < ATTRIBUTE_NAMES.length; i++) {
-            AttributeName att = ATTRIBUTE_NAMES[i];
-            System.out.println(att.constName() + ",");
-        }
-        System.out.println("};");
-        System.out.println("private final static @NoLength int[] ATTRIBUTE_HASHES = {");
-        for (int i = 0; i < ATTRIBUTE_NAMES.length; i++) {
-            AttributeName att = ATTRIBUTE_NAMES[i];
-            System.out.println(Integer.toString(att.hash()) + ",");
-        }
-        System.out.println("};");
-    }
+//    /**
+//     * @see java.lang.Object#toString()
+//     */
+//    @Override public String toString() {
+//        return "(" + ("ID" == type ? "\"ID\", " : "") + formatNs() + ", "
+//                + formatLocal() + ", " + formatPrefix() + ", " + formatNcname()
+//                + ", " + (xmlns ? "true" : "false") + ")";
+//    }
+//    
+//    public int compareTo(AttributeName other) {
+//        int thisHash = this.hash();
+//        int otherHash = other.hash();
+//        if (thisHash < otherHash) {
+//            return -1;
+//        } else if (thisHash == otherHash) {
+//            return 0;
+//        } else {
+//            return 1;
+//        }
+//    }
+//
+//    private String formatString(String str) {
+//        if (str == null) {
+//            return null;
+//        } else {
+//            return "\"" + str.trim() + "\"";
+//        }
+//    }
+//    
+//    private String formatPrefix() {
+//            if (prefix[0] == null && prefix[1] == null && prefix[2] == null && prefix[3] == null) {
+//                return "ALL_NO_PREFIX";
+//            } else if (prefix[0] == null && prefix[1] == prefix[2] && prefix[3] == null) {
+//                return "PREFIX(\"" + prefix[1] + "\")";
+//            } else {
+//                return "new String[]{" + formatString(prefix[0]) + ", " + formatString(prefix[1])
+//                        + ", " + formatString(prefix[2]) + ", " + formatString(prefix[3]) + "}";
+//            }
+//    }
+//
+//    private String formatLocal() {
+//        if (local[0] == local[1] && local[0] == local[3]
+//                && local[0] != local[2]) {
+//            return "SVG_DIFFERENT(\"" + local[0] + "\", \"" + local[2]
+//                    + "\")";
+//        }
+//        if (local[0] == local[2] && local[0] == local[3]
+//                                                      && local[0] != local[1]) {
+//                                                  return "MATH_DIFFERENT(\"" + local[0] + "\", \"" + local[1]
+//                                                          + "\")";
+//                                              }
+//        if (local[0] == local[3] && local[1] == local[2]
+//                && local[0] != local[1]) {
+//            return "COLONIFIED_LOCAL(\"" + local[0] + "\", \"" + local[1]
+//                    + "\")";
+//        }
+//        for (int i = 1; i < local.length; i++) {
+//            if (local[0] != local[i]) {
+//                return "new String[]{\"" + local[0] + "\", \"" + local[1]
+//                        + "\", \"" + local[2] + "\", \"" + local[3] + "\"}";
+//            }
+//        }
+//        return "SAME_LOWER_CASE_LOCAL(\"" + local[0] + "\")";
+//    }
+//
+//    private String formatNs() {
+//        if (uri[1] != "" && uri[0] == "" && uri[3] == "" && uri[1] == uri[2]) {
+//            return "NAMESPACE(\"" + uri[1] + "\")";
+//        }
+//        for (int i = 0; i < uri.length; i++) {
+//            if ("" != uri[i]) {
+//                return "new String[]{\"" + uri[0] + "\", \"" + uri[1]
+//                        + "\", \"" + uri[2] + "\", \"" + uri[3] + "\"}";
+//            }
+//        }
+//        return "ALL_NO_NS";
+//    }
+//
+//    private String formatNcname() {
+//        for (int i = 0; i < ncname.length; i++) {
+//            if (!ncname[i]) {
+//                return "new boolean[]{" + ncname[0] + ", " + ncname[1] + ", "
+//                        + ncname[2] + ", " + ncname[3] + "}";
+//            }
+//        }
+//        return "ALL_NCNAME";
+//    }
+//
+//    private String constName() {
+//        String name = getLocal(HTML);
+//        char[] buf = new char[name.length()];
+//        for (int i = 0; i < name.length(); i++) {
+//            char c = name.charAt(i);
+//            if (c == '-' || c == ':') {
+//                buf[i] = '_';
+//            } else if (c >= 'a' && c <= 'z') {
+//                buf[i] = (char) (c - 0x20);
+//            } else {
+//                buf[i] = c;
+//            }
+//        }
+//        return new String(buf);
+//    }
+//
+//    private int hash() {
+//        String name = getLocal(HTML);
+//        return bufToHash(name.toCharArray(), name.length());
+//    }
+//
+//    /**
+//     * Regenerate self
+//     * 
+//     * @param args
+//     */
+//    public static void main(String[] args) {
+//        Arrays.sort(ATTRIBUTE_NAMES);
+//        for (int i = 1; i < ATTRIBUTE_NAMES.length; i++) {
+//            if (ATTRIBUTE_NAMES[i].hash() == ATTRIBUTE_NAMES[i - 1].hash()) {
+//                System.err.println("Hash collision: "
+//                        + ATTRIBUTE_NAMES[i].getLocal(HTML) + ", "
+//                        + ATTRIBUTE_NAMES[i - 1].getLocal(HTML));
+//                return;
+//            }
+//        }
+//        for (int i = 0; i < ATTRIBUTE_NAMES.length; i++) {
+//            AttributeName att = ATTRIBUTE_NAMES[i];
+//            System.out.println("public static final AttributeName "
+//                    + att.constName() + " = new AttributeName" + att.toString()
+//                    + ";");
+//        }
+//        System.out.println("private final static @NoLength AttributeName[] ATTRIBUTE_NAMES = {");
+//        for (int i = 0; i < ATTRIBUTE_NAMES.length; i++) {
+//            AttributeName att = ATTRIBUTE_NAMES[i];
+//            System.out.println(att.constName() + ",");
+//        }
+//        System.out.println("};");
+//        System.out.println("private final static int[] ATTRIBUTE_HASHES = {");
+//        for (int i = 0; i < ATTRIBUTE_NAMES.length; i++) {
+//            AttributeName att = ATTRIBUTE_NAMES[i];
+//            System.out.println(Integer.toString(att.hash()) + ",");
+//        }
+//        System.out.println("};");
+//    }
 
     // START GENERATED CODE
     public static final AttributeName D = new AttributeName(ALL_NO_NS, SAME_LOWER_CASE_LOCAL("d"), ALL_NO_PREFIX, ALL_NCNAME, false);
@@ -1614,7 +1624,7 @@ public final class AttributeName
     COLOR_INTERPOLATION_FILTERS,
     GLYPH_ORIENTATION_HORIZONTAL,
     };
-    private final static @NoLength int[] ATTRIBUTE_HASHES = {
+    private final static int[] ATTRIBUTE_HASHES = {
     1153,
     1383,
     1601,

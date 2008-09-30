@@ -182,12 +182,12 @@ public final class Tokenizer implements Locator {
     /**
      * Magic value for UTF-16 operations.
      */
-    private static final int LEAD_OFFSET = 0xD800 - (0x10000 >> 10);
+    private static final int LEAD_OFFSET = (0xD800 - (0x10000 >> 10));
 
     /**
      * Magic value for UTF-16 operations.
      */
-    private static final int SURROGATE_OFFSET = 0x10000 - (0xD800 << 10) - 0xDC00;
+    private static final int SURROGATE_OFFSET = (0x10000 - (0xD800 << 10) - 0xDC00);
 
     /**
      * UTF-16 code unit array containing less than and greater than for emitting
@@ -532,6 +532,8 @@ public final class Tokenizer implements Locator {
 
     }
     
+    // [NOCPP[
+    
     /**
      * Returns the mappingLangToXmlLang.
      * 
@@ -564,8 +566,6 @@ public final class Tokenizer implements Locator {
     public ErrorHandler getErrorHandler() {
         return this.errorHandler;
     }
-
-    // [NOCPP[
 
     /**
      * Sets the commentPolicy.
@@ -787,6 +787,7 @@ public final class Tokenizer implements Locator {
         if (strBufLen == strBuf.length) {
             char[] newBuf = new char[strBuf.length + Tokenizer.BUFFER_GROW_BY];
             System.arraycopy(strBuf, 0, newBuf, 0, strBuf.length);
+            Portability.releaseArray(strBuf);
             strBuf = newBuf;
         }
         strBuf[strBufLen++] = c;
@@ -807,6 +808,7 @@ public final class Tokenizer implements Locator {
         if (strBufLen == strBuf.length) {
             char[] newBuf = new char[strBuf.length + Tokenizer.BUFFER_GROW_BY];
             System.arraycopy(strBuf, 0, newBuf, 0, strBuf.length);
+            Portability.releaseArray(strBuf);
             strBuf = newBuf;
         }
         strBuf[strBufLen++] = c;
@@ -885,6 +887,7 @@ public final class Tokenizer implements Locator {
     }
 
     private void appendSecondHyphenToBogusComment() throws SAXException {
+        // [NOCPP[
         switch (commentPolicy) {
             case ALTER_INFOSET:
                 // detachLongStrBuf();
@@ -892,14 +895,18 @@ public final class Tokenizer implements Locator {
                 // FALLTHROUGH
             case ALLOW:
                 warn("The document is not mappable to XML 1.0 due to two consecutive hyphens in a comment.");
+                // ]NOCPP]
                 appendLongStrBuf('-');
+                // [NOCPP[
                 break;
             case FATAL:
                 fatal("The document is not mappable to XML 1.0 due to two consecutive hyphens in a comment.");
                 break;
         }
+        // ]NOCPP]
     }
 
+    // [NOCPP[
     private void maybeAppendSpaceToBogusComment() throws SAXException {
         switch (commentPolicy) {
             case ALTER_INFOSET:
@@ -914,9 +921,11 @@ public final class Tokenizer implements Locator {
                 break;
         }
     }
-
+    // ]NOCPP]
+    
     private void adjustDoubleHyphenAndAppendToLongStrBuf(char c)
             throws SAXException {
+        // [NOCPP[
         switch (commentPolicy) {
             case ALTER_INFOSET:
                 // detachLongStrBuf();
@@ -926,12 +935,15 @@ public final class Tokenizer implements Locator {
                 // FALLTHROUGH
             case ALLOW:
                 warn("The document is not mappable to XML 1.0 due to two consecutive hyphens in a comment.");
+                // ]NOCPP]
                 appendLongStrBuf(c);
+                // [NOCPP[
                 break;
             case FATAL:
                 fatal("The document is not mappable to XML 1.0 due to two consecutive hyphens in a comment.");
                 break;
         }
+        // ]NOCPP]
     }
 
     private void appendLongStrBuf(char[] buffer, int offset, int length) {
@@ -1087,7 +1099,7 @@ public final class Tokenizer implements Locator {
             line = currLine;
             col = currCol;
         }
-        cstart = Integer.MAX_VALUE;
+        cstart = 0x7fffffff;
     }
 
     /**
@@ -2339,7 +2351,9 @@ public final class Tokenizer implements Locator {
                             case '\u0000':
                                 break stateloop;
                             case '>':
+                                // [NOCPP[
                                 maybeAppendSpaceToBogusComment();
+                                // ]NOCPP]
                                 emitComment(0);
                                 state = Tokenizer.DATA;
                                 continue stateloop;
@@ -4760,7 +4774,9 @@ public final class Tokenizer implements Locator {
                     emitComment(0);
                     break eofloop;
                 case BOGUS_COMMENT_HYPHEN:
+                    // [NOCPP[
                     maybeAppendSpaceToBogusComment();
+                    // ]NOCPP]
                     emitComment(0);
                     break eofloop;
                 case MARKUP_DECLARATION_OPEN:
