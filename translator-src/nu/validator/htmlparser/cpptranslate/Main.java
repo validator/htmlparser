@@ -81,15 +81,16 @@ public class Main {
      */
     public static void main(String[] args) throws ParseException, IOException {
         CppTypes cppTypes = new CppTypes();
+        SymbolTable symbolTable = new SymbolTable();
         
         File javaDirectory = new File(args[0]);
         File cppDirectory = new File(args[1]);
         
         for (int i = 0; i < H_LIST.length; i++) {
-            parseFile(cppTypes, javaDirectory, cppDirectory, CPP_LIST[i], ".h", new HVisitor(cppTypes));
+            parseFile(cppTypes, javaDirectory, cppDirectory, CPP_LIST[i], ".h", new HVisitor(cppTypes, symbolTable));
         }
         for (int i = 0; i < CPP_LIST.length; i++) {
-            parseFile(cppTypes, javaDirectory, cppDirectory, CPP_LIST[i], ".cpp", new CppVisitor(cppTypes));
+            parseFile(cppTypes, javaDirectory, cppDirectory, CPP_LIST[i], ".cpp", new CppVisitor(cppTypes, symbolTable));
         }
     }
 
