@@ -37,73 +37,11 @@
 
 package nu.validator.htmlparser.cpptranslate;
 
-public class CppTypes {
+import java.util.HashMap;
+import java.util.Map;
 
-    public String classPrefix() {
-        return "nsHtmlParser";
-    }    
+public class SymbolTable {
 
-    public String booleanType() {
-        return "PRBool";
-    }
-
-    public String charType() {
-        return "PRUnichar";
-    }
-
-    public String intType() {
-        return "PRInt32";
-    }
+    public final Map<String, String> cppDefinesByJavaNames = new HashMap<String, String>();
     
-    public String stringType() {
-        return "nsString*";
-    }
-
-    public String localType() {
-        return "nsIAtom*";
-    }
-    
-    public String prefixType() {
-        return "nsIAtom*";
-    }
-
-    public String nsUriType() {
-        return "PRInt32";
-    }
-
-    public String falseLiteral() {
-        return "PR_FALSE";
-    }
-
-    public String trueLiteral() {
-        return "PR_TRUE";
-    }
-
-    public String nullLiteral() {
-        return "PR_NULL";
-    }
-
-    public String encodingDeclarationHandlerType() {
-        return "nsHtmlParserDriver*";
-    }
-
-    public String nodeType() {
-        return "nsGenericElement*";
-    }
-
-    public String xhtmlNamespaceLiteral() {
-        return "kNameSpaceID_XHTML";
-    }
-
-    public String svgNamespaceLiteral() {
-        return "kNameSpaceID_SVG";
-    }
-
-    public String xmlnsNamespaceLiteral() {
-        return "kNameSpaceID_XMLNS";
-    }
-    
-    
-    
-//    nsINameSpaceManager.h
 }
