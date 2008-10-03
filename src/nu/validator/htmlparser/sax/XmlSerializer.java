@@ -355,6 +355,7 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
                         writer.write(' ');
                         prevWasSpace = true;
                     }
+                    break;
                 case '\uFFFE':
                     writer.write('\uFFFD');
                     prevWasSpace = false;
