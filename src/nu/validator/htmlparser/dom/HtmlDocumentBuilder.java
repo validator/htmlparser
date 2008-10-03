@@ -50,14 +50,14 @@ import org.xml.sax.SAXException;
  * interface. 
  * 
  * <p>By default, when using the constructor without arguments, the 
- * this parser coerces XML 1.0-incompatible infosets into XML 1.0 infosets.
- * This corresponds to 
- * <code>ALTER_INFOSET</code> as the general XML violation policy. To make the parser 
- * support non-conforming HTML fully per the HTML 5 spec while on the other 
- * hand potentially violating the DOM API contract, set the general XML 
- * violation policy to <code>ALLOW</code>. This does not work with a standard 
- * DOM implementation. Halting on XML-incompatible parser outputs is possible by setting 
- * the general XML violation policy to <code>FATAL</code>.
+ * this parser coerces XML 1.0-incompatible infosets into XML 1.0-compatible
+ * infosets. This corresponds to <code>ALTER_INFOSET</code> as the general 
+ * XML violation policy. To make the parser support non-conforming HTML fully 
+ * per the HTML 5 spec while on the other hand potentially violating the SAX2 
+ * API contract, set the general XML violation policy to <code>ALLOW</code>. 
+ * This does not work with a standard DOM implementation.
+ * It is possible to treat XML 1.0 infoset violations as fatal by setting 
+ * the general XML violation policy to <code>FATAL</code>. 
  * 
  * <p>The doctype is not represented in the tree.
  * 
