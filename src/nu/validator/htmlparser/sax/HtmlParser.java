@@ -58,16 +58,13 @@ import org.xml.sax.helpers.DefaultHandler;
  * interface. 
  * 
  * <p>By default, when using the constructor without arguments, the 
- * this parser treats XML 1.0-incompatible infosets as fatal errors in 
- * order to adhere to the SAX2 API contract strictly. This corresponds to 
- * <code>FATAL</code> as the general XML violation policy. To make the parser 
- * support non-conforming HTML fully per the HTML 5 spec while on the other 
- * hand potentially violating the SAX2 API contract, set the general XML 
- * violation policy to <code>ALLOW</code>. Handling all input without fatal 
- * errors and without violating the SAX2 API contract is possible by setting 
- * the general XML violation policy to <code>ALTER_INFOSET</code>. <em>This 
- * makes the parser non-conforming</em> but is probably the most useful 
- * setting for most applications.
+ * this parser coerces XML 1.0-incompatible infosets into XML 1.0-compatible
+ * infosets. This corresponds to <code>ALTER_INFOSET</code> as the general 
+ * XML violation policy. To make the parser support non-conforming HTML fully 
+ * per the HTML 5 spec while on the other hand potentially violating the SAX2 
+ * API contract, set the general XML violation policy to <code>ALLOW</code>. 
+ * It is possible to treat XML 1.0 infoset violations as fatal by setting 
+ * the general XML violation policy to <code>FATAL</code>. 
  * 
  * <p>By default, this parser doesn't do true streaming but buffers everything 
  * first. The parser can be made truly streaming by calling 

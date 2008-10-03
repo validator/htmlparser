@@ -54,14 +54,10 @@ import org.xml.sax.SAXParseException;
  * interface. 
  * 
  * <p>By default, when using the constructor without arguments, the 
- * this parser treats XML 1.0-incompatible infosets as fatal errors. 
- * This corresponds to 
- * <code>FATAL</code> as the general XML violation policy. Handling 
- * all input without fatal errors and without 
- * violating the XOM API contract is possible by setting 
- * the general XML violation policy to <code>ALTER_INFOSET</code>. <em>This 
- * makes the parser non-conforming</em> but is probably the most useful 
- * setting for most applications.
+ * this parser coerces XML 1.0-incompatible infosets into XML 1.0-compatible
+ * infosets. This corresponds to <code>ALTER_INFOSET</code> as the general 
+ * XML violation policy. It is possible to treat XML 1.0 infoset violations 
+ * as fatal by setting the general XML violation policy to <code>FATAL</code>. 
  * 
  * <p>The doctype is not represented in the tree.
  * 
