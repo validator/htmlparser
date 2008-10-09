@@ -44,9 +44,11 @@ import japa.parser.ast.body.FieldDeclaration;
 import japa.parser.ast.body.ModifierSet;
 import japa.parser.ast.body.VariableDeclarator;
 import japa.parser.ast.expr.IntegerLiteralExpr;
+import japa.parser.ast.expr.MethodCallExpr;
 import japa.parser.ast.stmt.BlockStmt;
 import japa.parser.ast.type.PrimitiveType;
 import japa.parser.ast.type.ReferenceType;
+import japa.parser.ast.type.Type;
 
 public class HVisitor extends CppVisitor {
 
@@ -75,6 +77,28 @@ public class HVisitor extends CppVisitor {
      * @see nu.validator.htmlparser.cpptranslate.CppVisitor#startClassDeclaration()
      */
     @Override protected void startClassDeclaration() {
+        printer.print("#ifndef ");        
+        printer.print(className);
+        printer.printLn("_h__");
+        printer.print("#define ");        
+        printer.print(className);
+        printer.printLn("_h__");
+        
+        printer.printLn();
+        
+        String[] incs = cppTypes.boilerplateIncludes();
+        for (int i = 0; i < incs.length; i++) {
+            String inc = incs[i];
+            if (className.equals(inc)) {
+                continue;
+            }
+            printer.print("#include \"");
+            printer.print(inc);
+            printer.printLn(".h\"");
+        }
+
+        printer.printLn();
+        
         printer.print("class ");
         printer.printLn(className);
         printer.printLn("{");
@@ -86,8 +110,21 @@ public class HVisitor extends CppVisitor {
      * @see nu.validator.htmlparser.cpptranslate.CppVisitor#endClassDeclaration()
      */
     @Override protected void endClassDeclaration() {
+        printModifiers(ModifierSet.PUBLIC & ModifierSet.STATIC);
+        printer.printLn("void initializeStatics();");        
+        printModifiers(ModifierSet.PUBLIC & ModifierSet.STATIC);
+        printer.printLn("void releaseStatics();");        
+        
         printer.unindent();
         printer.unindent();
+        
+        if ("TreeBuilder".equals(javaClassName)) {
+            printer.printLn();
+            printer.print("#include \"");
+            printer.print(cppTypes.treeBuiderHSupplement());
+            printer.printLn("\"");
+        }
+        
         printer.printLn("};");
         printer.printLn();
 
@@ -97,6 +134,10 @@ public class HVisitor extends CppVisitor {
         for (String define : defines) {
             printer.printLn(define);
         }
+        
+        printer.printLn();
+        printer.printLn();
+        printer.printLn("#endif");
     }
 
     /**
@@ -165,46 +206,86 @@ public class HVisitor extends CppVisitor {
             symbolTable.cppDefinesByJavaNames.put(name, longName);
             defines.add("#define " + longName + " " + value);
         } else {
-            if (ModifierSet.isStatic(modifiers)) {
-                inFieldDeclarator = true;
-            }
-            boolean isConst = false;
             if (n.getType() instanceof ReferenceType) {
                 ReferenceType rt = (ReferenceType) n.getType();
                 currentArrayCount = rt.getArrayCount();
                 if (currentArrayCount > 0
-                        && (rt.getType() instanceof PrimitiveType) && declarator.getInit() != null && noLength()) {
+                        && (rt.getType() instanceof PrimitiveType) && declarator.getInit() != null) {
                     if (!ModifierSet.isStatic(modifiers)) {
                         throw new IllegalStateException(
                                 "Non-static array case not supported here." + declarator);
                     }
-                    isConst = true;
-                    mainPrinterHolder = printer;
-                    printer = arrayInitPrinter;
-                    n.getType().accept(this, arg);
-                    arrayInitPrinter.print(" const ");
-                    arrayInitPrinter.print(className);
-                    arrayInitPrinter.print("::");
-                    declarator.getId().accept(this, arg);
+                    if (noLength()) {
+                        inPrimitiveNoLengthFieldDeclarator = true;
+                        
+                        mainPrinterHolder = printer;
+                        printer = arrayInitPrinter;
+                        n.getType().accept(this, arg);
+                        printer.print(" ");
+                        printer.print(className);
+                        printer.print("::");
+                        declarator.getId().accept(this, arg);
 
-                    arrayInitPrinter.print(" = ");                    
-                    
-                    declarator.getInit().accept(this, arg);
-                    
-                    printer.printLn(";");                    
-                    printer = mainPrinterHolder;
+                        printer.print(" = ");                    
+                        
+                        declarator.getInit().accept(this, arg);
+                       
+                        printer.printLn(";");                    
+                        printer = mainPrinterHolder;                        
+                    } else if (!isNonToCharArrayMethodCall(declarator.getInit())) {
+                        mainPrinterHolder = printer;
+                        printer = arrayInitPrinter;
+                        
+                        rt.getType().accept(this, arg);
+                        printer.print(" ");
+                        printer.print(className);
+                        printer.print("::");
+                        declarator.getId().accept(this, arg);
+                        printer.print("_DATA[] = ");                    
+                        declarator.getInit().accept(this, arg);
+                        printer.printLn(";");                    
+
+                        printer.print(cppTypes.arrayTemplate());
+                        printer.print("<");
+                        suppressPointer = true;
+                        rt.getType().accept(this, arg);
+                        suppressPointer = false;
+                        printer.print(",");
+                        printer.print(cppTypes.intType());
+                        printer.print("> ");
+                        printer.print(className);
+                        printer.print("::");
+                        declarator.getId().accept(this, arg);
+                        printer.print(" = ");                    
+                        printer.print(cppTypes.staticArrayMacro());
+                        printer.print("(");
+                        suppressPointer = true;
+                        rt.getType().accept(this, arg);
+                        suppressPointer = false;
+                        printer.print(", ");
+                        printer.print(cppTypes.intType());
+                        printer.print(", ");
+                        declarator.getId().accept(this, arg);                        
+                        printer.printLn(");");                    
+                        
+                        
+                        printer = mainPrinterHolder;    
+                        
+                        printModifiers(ModifierSet.STATIC | ModifierSet.PRIVATE);
+                        rt.getType().accept(this, arg);
+                        printer.print(" ");
+                        declarator.getId().accept(this, arg);
+                        printer.printLn("_DATA[];");
+                    }
                 }
             }
             printModifiers(modifiers);
-            if (isConst) {
-                printer.print("const ");
-            }
             n.getType().accept(this, arg);
             printer.print(" ");
             declarator.getId().accept(this, arg);
             printer.printLn(";");
             currentArrayCount = 0;
-            inFieldDeclarator = false;
+            inPrimitiveNoLengthFieldDeclarator = false;
         }
     }
 
