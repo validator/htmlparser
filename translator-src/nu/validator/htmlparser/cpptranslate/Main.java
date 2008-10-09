@@ -46,6 +46,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 
@@ -57,9 +58,9 @@ public class Main {
         "AttributeName",
         "ElementName",
         "HtmlAttributes",
-        "NamedCharacters",
         "StackNode",
         "UTF16Buffer",
+        "Portability",
     };
     
     private static final String[] CPP_LIST = {
@@ -68,8 +69,6 @@ public class Main {
         "AttributeName",
         "ElementName",
         "HtmlAttributes",
-        "NamedCharacters",
-        "Portability",
         "StackNode",
         "UTF16Buffer",
     };
@@ -80,14 +79,15 @@ public class Main {
      * @throws IOException 
      */
     public static void main(String[] args) throws ParseException, IOException {
-        CppTypes cppTypes = new CppTypes();
+        GkAtomParser atomParser = new GkAtomParser(new InputStreamReader(new FileInputStream(args[2]), "utf-8"));
+        CppTypes cppTypes = new CppTypes(atomParser.parse());
         SymbolTable symbolTable = new SymbolTable();
         
         File javaDirectory = new File(args[0]);
         File cppDirectory = new File(args[1]);
         
         for (int i = 0; i < H_LIST.length; i++) {
-            parseFile(cppTypes, javaDirectory, cppDirectory, CPP_LIST[i], ".h", new HVisitor(cppTypes, symbolTable));
+            parseFile(cppTypes, javaDirectory, cppDirectory, H_LIST[i], ".h", new HVisitor(cppTypes, symbolTable));
         }
         for (int i = 0; i < CPP_LIST.length; i++) {
             parseFile(cppTypes, javaDirectory, cppDirectory, CPP_LIST[i], ".cpp", new CppVisitor(cppTypes, symbolTable));

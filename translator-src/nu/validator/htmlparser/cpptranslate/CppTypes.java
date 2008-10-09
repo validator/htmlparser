@@ -37,10 +37,37 @@
 
 package nu.validator.htmlparser.cpptranslate;
 
+import java.util.Map;
+
 public class CppTypes {
 
+    private static final String[] INCLUDES = {
+        "prtypes",
+        "nsIAtom",
+        "nsString",
+        "nsINameSpaceManager",
+        "nsGkAtoms",
+        "jArray",
+        "nsHtml5UTF16Buffer",
+        "nsHtml5TreeBuilder",
+        "nsHtml5Tokenizer",
+        "nsHtml5StackNode",
+        "nsHtml5Portability",
+        "nsHtml5Parser",
+        "nsHtml5HtmlAttributes",
+        "nsHtml5ElementName",
+        "nsHtml5AttributeName",
+        "nsHtml5DocumentMode",
+    };
+
+    private final Map<String, String> atomMap;
+    
+    public CppTypes(Map<String, String> atomMap) {
+        this.atomMap = atomMap;
+    }
+
     public String classPrefix() {
-        return "nsHtmlParser";
+        return "nsHtml5";
     }    
 
     public String booleanType() {
@@ -80,15 +107,15 @@ public class CppTypes {
     }
 
     public String nullLiteral() {
-        return "PR_NULL";
+        return "nsnull";
     }
 
     public String encodingDeclarationHandlerType() {
-        return "nsHtmlParserDriver*";
+        return "nsHtml5Parser*";
     }
 
     public String nodeType() {
-        return "nsGenericElement*";
+        return "void*";
     }
 
     public String xhtmlNamespaceLiteral() {
@@ -102,8 +129,70 @@ public class CppTypes {
     public String xmlnsNamespaceLiteral() {
         return "kNameSpaceID_XMLNS";
     }
+
+    public String xmlNamespaceLiteral() {
+        return "kNameSpaceID_XML";
+    }
     
+    public String noNamespaceLiteral() {
+        return "kNameSpaceID_None";
+    }
+
+    public String xlinkNamespaceLiteral() {
+        return "kNameSpaceID_XLink";
+    }
+
+    public String mathmlNamespaceLiteral() {
+        return "kNameSpaceID_MathML";
+    }
     
+    public String arrayTemplate() {
+        return "jArray";
+    }
     
-//    nsINameSpaceManager.h
+    public String localForLiteral(String literal) {
+        String atom = atomMap.get(literal);
+        if (atom == null) {
+            atom = createAtomName(literal);
+            atomMap.put(literal, atom);
+            System.err.println("MISSING ATOM: GK_ATOM("+ atom + ", \"" + literal + "\")");
+        }
+        return "nsGkAtoms::" + atom;
+    }
+    
+    private String createAtomName(String literal) {
+        String candidate = literal.replace('-', '_').replace(':', '_');
+        while (atomMap.values().contains(candidate)) {
+            candidate = candidate + '_';
+        }
+        return candidate;
+    }
+
+    public String stringForLiteral(String literal) {
+        return "NOT_IMPLEMENTED";
+    }
+
+    public String staticArrayMacro() {
+        return "J_ARRAY_STATIC";
+    }
+    
+    public String[] boilerplateIncludes() {
+        return INCLUDES;
+    }
+
+    public String treeBuiderHSupplement() {
+        return "nsHtml5TreeBuilderHSupplement.h";
+    }
+
+    public String treeBuiderCppSupplement() {
+        return "nsHtml5TreeBuilderCppSupplement.h";
+    }
+
+    public String documentModeHandlerType() {
+        return "nsHtml5Parser*";
+    }
+
+    public String documentModeType() {
+        return "nsHtml5DocumentMode";
+    }
 }

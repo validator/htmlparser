@@ -116,6 +116,7 @@ import japa.parser.ast.visitor.VoidVisitor;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -149,7 +150,7 @@ public class CppVisitor implements VoidVisitor<Object> {
 
         private void makeIndent() {
             for (int i = 0; i < level; i++) {
-                buf.append("    ");
+                buf.append("  ");
             }
         }
 
@@ -182,6 +183,10 @@ public class CppVisitor implements VoidVisitor<Object> {
 
     protected SourcePrinter printer = new SourcePrinter();
 
+    private SourcePrinter staticInitializerPrinter = new SourcePrinter();
+
+    private SourcePrinter tempPrinterHolder;
+
     protected final CppTypes cppTypes;
 
     protected String className = "";
@@ -192,7 +197,7 @@ public class CppVisitor implements VoidVisitor<Object> {
 
     protected Set<String> forLoopsWithCondition = new HashSet<String>();
 
-    protected boolean inFieldDeclarator = false;
+    protected boolean inPrimitiveNoLengthFieldDeclarator = false;
 
     protected final SymbolTable symbolTable;
 
@@ -200,12 +205,17 @@ public class CppVisitor implements VoidVisitor<Object> {
 
     protected String javaClassName;
 
+    protected boolean suppressPointer = false;
+
+    private final List<String> staticReleases = new LinkedList<String>();
+
     /**
      * @param cppTypes
      */
     public CppVisitor(CppTypes cppTypes, SymbolTable symbolTable) {
         this.cppTypes = cppTypes;
         this.symbolTable = symbolTable;
+        staticInitializerPrinter.indent();
     }
 
     public String getSource() {
@@ -233,31 +243,31 @@ public class CppVisitor implements VoidVisitor<Object> {
     }
 
     private void printTypeArgs(List<Type> args, Object arg) {
-//        if (args != null) {
-//            printer.print("<");
-//            for (Iterator<Type> i = args.iterator(); i.hasNext();) {
-//                Type t = i.next();
-//                t.accept(this, arg);
-//                if (i.hasNext()) {
-//                    printer.print(", ");
-//                }
-//            }
-//            printer.print(">");
-//        }
+        // if (args != null) {
+        // printer.print("<");
+        // for (Iterator<Type> i = args.iterator(); i.hasNext();) {
+        // Type t = i.next();
+        // t.accept(this, arg);
+        // if (i.hasNext()) {
+        // printer.print(", ");
+        // }
+        // }
+        // printer.print(">");
+        // }
     }
 
     private void printTypeParameters(List<TypeParameter> args, Object arg) {
-//        if (args != null) {
-//            printer.print("<");
-//            for (Iterator<TypeParameter> i = args.iterator(); i.hasNext();) {
-//                TypeParameter t = i.next();
-//                t.accept(this, arg);
-//                if (i.hasNext()) {
-//                    printer.print(", ");
-//                }
-//            }
-//            printer.print(">");
-//        }
+        // if (args != null) {
+        // printer.print("<");
+        // for (Iterator<TypeParameter> i = args.iterator(); i.hasNext();) {
+        // TypeParameter t = i.next();
+        // t.accept(this, arg);
+        // if (i.hasNext()) {
+        // printer.print(", ");
+        // }
+        // }
+        // printer.print(">");
+        // }
     }
 
     public void visit(Node n, Object arg) {
@@ -283,6 +293,10 @@ public class CppVisitor implements VoidVisitor<Object> {
     public void visit(NameExpr n, Object arg) {
         if ("mappingLangToXmlLang".equals(n.getName())) {
             printer.print("0");
+        } else if ("LANG_NS".equals(n.getName())) {
+            printer.print("ALL_NO_NS");
+        } else if ("LANG_PREFIX".equals(n.getName())) {
+            printer.print("ALL_NO_PREFIX");
         } else {
             String prefixedName = javaClassName + "." + n.getName();
             String constant = symbolTable.cppDefinesByJavaNames.get(prefixedName);
@@ -342,9 +356,45 @@ public class CppVisitor implements VoidVisitor<Object> {
     }
 
     protected void endClassDeclaration() {
+        printer.printLn("void");
+        printer.print(className);
+        printer.printLn("::initializeStatics()");
+        printer.printLn("{");
+        printer.print(staticInitializerPrinter.getSource());
+        printer.printLn("}");
+        printer.printLn();
+
+        printer.printLn("void");
+        printer.print(className);
+        printer.printLn("::releaseStatics()");
+        printer.printLn("{");
+        printer.indent();
+        for (String del : staticReleases) {
+            printer.print(del);
+            printer.printLn(";");
+        }
+        printer.unindent();
+        printer.printLn("}");
+        printer.printLn();
+
+        if ("TreeBuilder".equals(javaClassName)) {
+            printer.printLn();
+            printer.print("#include \"");
+            printer.print(cppTypes.treeBuiderCppSupplement());
+            printer.printLn("\"");
+        }
     }
 
     protected void startClassDeclaration() {
+        String[] incs = cppTypes.boilerplateIncludes();
+        for (int i = 0; i < incs.length; i++) {
+            String inc = incs[i];
+            printer.print("#include \"");
+            printer.print(inc);
+            printer.printLn(".h\"");
+        }
+
+        printer.printLn();
         printer.print("#include \"");
         printer.print(className);
         printer.printLn(".h\"");
@@ -387,8 +437,12 @@ public class CppVisitor implements VoidVisitor<Object> {
             name = cppTypes.classPrefix() + "TreeBuilder*";
         } else if ("EncodingDeclarationHandler".equals(name)) {
             name = cppTypes.encodingDeclarationHandlerType();
+        } else if ("DocumentModeHandler".equals(name)) {
+            name = cppTypes.documentModeHandlerType();
+        } else if ("DocumentMode".equals(name)) {
+            name = cppTypes.documentModeType();
         } else {
-            name = cppTypes.classPrefix() + name + "*";
+            name = cppTypes.classPrefix() + name + (suppressPointer ? "" : "*");
         }
         printer.print(name);
         printTypeArgs(n.getTypeArgs(), arg);
@@ -448,16 +502,19 @@ public class CppVisitor implements VoidVisitor<Object> {
         if (noLength()) {
             n.getType().accept(this, arg);
             for (int i = 0; i < n.getArrayCount(); i++) {
-                if (!inFieldDeclarator) {
+                if (!inPrimitiveNoLengthFieldDeclarator) {
                     printer.print("*");
                 }
             }
         } else {
             for (int i = 0; i < n.getArrayCount(); i++) {
-                printer.print("jArray<");
+                printer.print(cppTypes.arrayTemplate());
+                printer.print("<");
             }
             n.getType().accept(this, arg);
             for (int i = 0; i < n.getArrayCount(); i++) {
+                printer.print(",");
+                printer.print(cppTypes.intType());
                 printer.print(">");
             }
         }
@@ -500,30 +557,103 @@ public class CppVisitor implements VoidVisitor<Object> {
         currentAnnotations = null;
     }
 
-    protected void fieldDeclaration(FieldDeclaration n, Object arg) {
-        int modifiers = n.getModifiers();
-        VariableDeclarator declarator = n.getVariables().get(0);
-
-        if (ModifierSet.isStatic(modifiers) && ModifierSet.isFinal(modifiers)
-                && n.getType() instanceof PrimitiveType) {
-            // don't print
-        } else if (declarator.getInit() == null) {
-            // don't print
+    protected boolean isNonToCharArrayMethodCall(Expression exp) {
+        if (exp instanceof MethodCallExpr) {
+            MethodCallExpr mce = (MethodCallExpr) exp;
+            return !"toCharArray".equals(mce.getName());
         } else {
-            //            n.getType().accept(this, arg);
-            //
-            //            if (n.getType() instanceof ReferenceType) {
-            //                ReferenceType rt = (ReferenceType) n.getType();
-            //                currentArrayCount = rt.getArrayCount();
-            //            }
-            //            
-            //            printer.print(" ");
-            //            printer.print(className);
-            //            printer.print("::");
-            //            declarator.accept(this, arg);
-            //            printer.printLn(";");            
-            //            printer.printLn();
-            //            currentArrayCount = 0;
+            return false;
+        }
+    }
+    
+    protected void fieldDeclaration(FieldDeclaration n, Object arg) {
+        tempPrinterHolder = printer;
+        printer = staticInitializerPrinter;
+        int modifiers = n.getModifiers();
+        List<VariableDeclarator> variables = n.getVariables();
+        VariableDeclarator declarator = variables.get(0);
+        if (ModifierSet.isStatic(modifiers) && ModifierSet.isFinal(modifiers)
+                && !(n.getType() instanceof PrimitiveType)
+                && declarator.getInit() != null) {
+            if (n.getType() instanceof ReferenceType) {
+                ReferenceType rt = (ReferenceType) n.getType();
+                currentArrayCount = rt.getArrayCount();
+                if (currentArrayCount > 0) {
+                    if (currentArrayCount != 1) {
+                        throw new IllegalStateException(
+                                "Multidimensional arrays not supported. " + n);
+                    }
+                    if (noLength()) {
+                        if (rt.getType() instanceof PrimitiveType) {
+                            // do nothing
+                        } else {
+                            staticReleases.add("delete[] "
+                                    + declarator.getId().getName());
+
+                            ArrayInitializerExpr aie = (ArrayInitializerExpr) declarator.getInit();
+
+                            declarator.getId().accept(this, arg);
+                            printer.print(" = new ");
+//                            suppressPointer = true;
+                            rt.getType().accept(this, arg);
+//                            suppressPointer = false;
+                            printer.print("[");
+                            printer.print("" + aie.getValues().size());
+                            printer.printLn("];");
+
+                            printArrayInit(declarator.getId(), aie.getValues(),
+                                    arg);
+                        }
+                    } else if (isNonToCharArrayMethodCall(declarator.getInit()) || !(rt.getType() instanceof PrimitiveType)) {
+                        staticReleases.add(declarator.getId().getName()
+                                + ".release()");
+                        declarator.getId().accept(this, arg);
+                        printer.print(" = ");
+                        if (declarator.getInit() instanceof ArrayInitializerExpr) {
+
+                            ArrayInitializerExpr aie = (ArrayInitializerExpr) declarator.getInit();
+                            printer.print(cppTypes.arrayTemplate());
+                            printer.print("<");
+                            suppressPointer = true;
+                            rt.getType().accept(this, arg);
+                            suppressPointer = false;
+                            printer.print(",");
+                            printer.print(cppTypes.intType());
+                            printer.print(">(");
+                            printer.print("" + aie.getValues().size());
+                            printer.printLn(");");
+                            printArrayInit(declarator.getId(), aie.getValues(),
+                                    arg);
+                        } else {
+                            declarator.getInit().accept(this, arg);
+                            printer.printLn(";");
+                        }
+                    }
+                } else {
+                    staticReleases.add("delete " + declarator.getId().getName());
+
+                    declarator.accept(this, arg);
+                    printer.printLn(";");
+                }
+            } else {
+                throw new IllegalStateException(
+                        "Non-reference, non-primitive fields not supported.");
+            }
+        }
+        currentArrayCount = 0;
+        printer = tempPrinterHolder;
+    }
+
+    private void printArrayInit(VariableDeclaratorId variableDeclaratorId,
+            List<Expression> values, Object arg) {
+        for (int i = 0; i < values.size(); i++) {
+            Expression exp = values.get(i);
+            variableDeclaratorId.accept(this, arg);
+            printer.print("[");
+            printer.print("" + i);
+            printer.print("] = ");
+            exp.accept(this, arg);
+            printer.printLn(";");
         }
     }
 
@@ -540,7 +670,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         printer.print(n.getName());
         if (noLength()) {
             for (int i = 0; i < currentArrayCount; i++) {
-                if (inFieldDeclarator) {
+                if (inPrimitiveNoLengthFieldDeclarator) {
                     printer.print("[]");
                 }
             }
@@ -578,32 +708,31 @@ public class CppVisitor implements VoidVisitor<Object> {
     }
 
     public void visit(ArrayCreationExpr n, Object arg) {
-        //        printer.print("new ");
-        //        n.getType().accept(this, arg);
-        //        printTypeArgs(n.getTypeArgs(), arg);
+        // printer.print("new ");
+        // n.getType().accept(this, arg);
+        // printTypeArgs(n.getTypeArgs(), arg);
 
         if (n.getDimensions() != null) {
             for (Expression dim : n.getDimensions()) {
-                printer.print("J_ARRAY_NEW(");
+                printer.print(cppTypes.arrayTemplate());
+                printer.print("<");
                 n.getType().accept(this, arg);
-                printer.print(", ");
+                printer.print(",");
                 printer.print(cppTypes.intType());
-                printer.print(", ");
+                printer.print(">(");
                 dim.accept(this, arg);
                 printer.print(")");
             }
 
-            // XXX remove?
-            for (int i = 0; i < n.getArrayCount(); i++) {
-                printer.print("[]");
+            if (n.getArrayCount() > 0) {
+                throw new IllegalStateException(
+                        "Nested array allocation not supported. "
+                                + n.toString());
             }
         } else {
-            // XXX REMOVE?
-            for (int i = 0; i < n.getArrayCount(); i++) {
-                printer.print("[]");
-            }
-            printer.print(" ");
-            n.getInitializer().accept(this, arg);
+            throw new IllegalStateException(
+                    "Array initializer as part of array creation not supported. "
+                            + n.toString());
         }
     }
 
@@ -783,11 +912,15 @@ public class CppVisitor implements VoidVisitor<Object> {
         } else {
             String clazzName = classNameFromExpression(scope);
             if (clazzName == null) {
-                scope.accept(this, arg);
-                printer.print("->");
+                if ("DocumentMode".equals(scope.toString())) {
+                    printer.print(cppTypes.documentModeType());
+                    printer.print(".");
+                } else {
+                    scope.accept(this, arg);
+                    printer.print("->");
+                }
             } else {
-                String prefixedName = classNameFromExpression(scope) + "."
-                        + field;
+                String prefixedName = clazzName + "." + field;
                 String constant = symbolTable.cppDefinesByJavaNames.get(prefixedName);
                 if (constant != null) {
                     printer.print(constant);
@@ -892,15 +1025,25 @@ public class CppVisitor implements VoidVisitor<Object> {
     public void visit(StringLiteralExpr n, Object arg) {
         String val = n.getValue();
         if ("http://www.w3.org/1999/xhtml".equals(val)) {
-            printer.print(cppTypes.xhtmlNamespaceLiteral());            
+            printer.print(cppTypes.xhtmlNamespaceLiteral());
         } else if ("http://www.w3.org/2000/svg".equals(val)) {
-            printer.print(cppTypes.svgNamespaceLiteral());                        
+            printer.print(cppTypes.svgNamespaceLiteral());
         } else if ("http://www.w3.org/2000/xmlns/".equals(val)) {
-            printer.print(cppTypes.xmlnsNamespaceLiteral());                                    
+            printer.print(cppTypes.xmlnsNamespaceLiteral());
+        } else if ("http://www.w3.org/XML/1998/namespace".equals(val)) {
+            printer.print(cppTypes.xmlNamespaceLiteral());
+        } else if ("http://www.w3.org/1999/xlink".equals(val)) {
+            printer.print(cppTypes.xlinkNamespaceLiteral());
+        } else if ("http://www.w3.org/1998/Math/MathML".equals(val)) {
+            printer.print(cppTypes.mathmlNamespaceLiteral());
+        } else if ("".equals(val) && "AttributeName".equals(javaClassName)) {
+            printer.print(cppTypes.noNamespaceLiteral());            
+        } else if (val.startsWith("-/") || val.startsWith("+//")
+                || val.startsWith("http://") || val.startsWith("XSLT")) {
+            printer.print(cppTypes.stringForLiteral(val));
+        } else {
+            printer.print(cppTypes.localForLiteral(val));
         }
-        printer.print("\"");
-        printer.print(val);
-        printer.print("\"");
     }
 
     public void visit(BooleanLiteralExpr n, Object arg) {
@@ -933,7 +1076,20 @@ public class CppVisitor implements VoidVisitor<Object> {
 
     public void visit(MethodCallExpr n, Object arg) {
         if ("releaseArray".equals(n.getName())) {
-            printer.print("J_ARRAY_DELETE");
+            n.getArgs().get(0).accept(this, arg);
+            printer.print(".release()");
+        } else if ("deleteArray".equals(n.getName())) {
+            printer.print("delete[] ");
+            n.getArgs().get(0).accept(this, arg);
+        } else if ("delete".equals(n.getName())) {
+            printer.print("delete ");
+            n.getArgs().get(0).accept(this, arg);
+        } else if ("binarySearch".equals(n.getName())
+                && "Arrays".equals(n.getScope().toString())) {
+            n.getArgs().get(0).accept(this, arg);
+            printer.print(".binarySearch(");
+            n.getArgs().get(1).accept(this, arg);
+            printer.print(")");
         } else {
             Expression scope = n.getScope();
             if (scope != null) {
@@ -969,19 +1125,18 @@ public class CppVisitor implements VoidVisitor<Object> {
             }
             printTypeArgs(n.getTypeArgs(), arg);
             printer.print(n.getName());
-        }
-
-        printer.print("(");
-        if (n.getArgs() != null) {
-            for (Iterator<Expression> i = n.getArgs().iterator(); i.hasNext();) {
-                Expression e = i.next();
-                e.accept(this, arg);
-                if (i.hasNext()) {
-                    printer.print(", ");
+            printer.print("(");
+            if (n.getArgs() != null) {
+                for (Iterator<Expression> i = n.getArgs().iterator(); i.hasNext();) {
+                    Expression e = i.next();
+                    e.accept(this, arg);
+                    if (i.hasNext()) {
+                        printer.print(", ");
+                    }
                 }
             }
+            printer.print(")");
         }
-        printer.print(")");
     }
 
     public void visit(ObjectCreationExpr n, Object arg) {
@@ -992,8 +1147,17 @@ public class CppVisitor implements VoidVisitor<Object> {
 
         printer.print("new ");
 
+        suppressPointer = true;
         printTypeArgs(n.getTypeArgs(), arg);
         n.getType().accept(this, arg);
+        suppressPointer = false;
+
+        if ("AttributeName".equals(n.getType().getName())) {
+            List<Expression> args = n.getArgs();
+            while (args.size() > 3) {
+                args.remove(3);
+            }
+        }
 
         printer.print("(");
         if (n.getArgs() != null) {
@@ -1056,22 +1220,26 @@ public class CppVisitor implements VoidVisitor<Object> {
     }
 
     public void visit(ConstructorDeclaration n, Object arg) {
-        //        if (n.getJavaDoc() != null) {
-        //            n.getJavaDoc().accept(this, arg);
-        //        }
+        if ("TreeBuilder".equals(javaClassName)) {
+            return;
+        }
+
+        // if (n.getJavaDoc() != null) {
+        // n.getJavaDoc().accept(this, arg);
+        // }
         currentAnnotations = n.getAnnotations();
-        //        if (annotations != null) {
-        //            for (AnnotationExpr a : annotations) {
-        //                a.accept(this, arg);
-        //                printer.printLn();
-        //            }
-        //        }
+        // if (annotations != null) {
+        // for (AnnotationExpr a : annotations) {
+        // a.accept(this, arg);
+        // printer.printLn();
+        // }
+        // }
         printModifiers(n.getModifiers());
 
-        //        printTypeParameters(n.getTypeParameters(), arg);
-        //        if (n.getTypeParameters() != null) {
-        //            printer.print(" ");
-        //        }
+        // printTypeParameters(n.getTypeParameters(), arg);
+        // if (n.getTypeParameters() != null) {
+        // printer.print(" ");
+        // }
 
         printMethodNamespace();
         printer.print(className);
@@ -1089,29 +1257,31 @@ public class CppVisitor implements VoidVisitor<Object> {
         }
         printer.print(")");
 
-        //        if (n.getThrows() != null) {
-        //            printer.print(" throws ");
-        //            for (Iterator<NameExpr> i = n.getThrows().iterator(); i.hasNext();) {
-        //                NameExpr name = i.next();
-        //                name.accept(this, arg);
-        //                if (i.hasNext()) {
-        //                    printer.print(", ");
-        //                }
-        //            }
-        //        }
+        // if (n.getThrows() != null) {
+        // printer.print(" throws ");
+        // for (Iterator<NameExpr> i = n.getThrows().iterator(); i.hasNext();) {
+        // NameExpr name = i.next();
+        // name.accept(this, arg);
+        // if (i.hasNext()) {
+        // printer.print(", ");
+        // }
+        // }
+        // }
         printMethodBody(n.getBlock(), arg);
     }
 
     public void visit(MethodDeclaration n, Object arg) {
         if (n.getName().startsWith("fatal") || n.getName().startsWith("err")
                 || n.getName().startsWith("warn")
-                || "releaseArray".equals(n.getName())) {
+                || "releaseArray".equals(n.getName())
+                || "deleteArray".equals(n.getName())
+                || "delete".equals(n.getName())) {
             return;
         }
 
-        //        if (n.getJavaDoc() != null) {
-        //            n.getJavaDoc().accept(this, arg);
-        //        }
+        // if (n.getJavaDoc() != null) {
+        // n.getJavaDoc().accept(this, arg);
+        // }
         currentAnnotations = n.getAnnotations();
         printModifiers(n.getModifiers());
 
@@ -1164,13 +1334,13 @@ public class CppVisitor implements VoidVisitor<Object> {
 
     public void visit(Parameter n, Object arg) {
         currentAnnotations = n.getAnnotations();
-        //        if (annotations != null) {
-        //            for (AnnotationExpr a : annotations) {
-        //                a.accept(this, arg);
-        //                printer.print(" ");
-        //            }
-        //        }
-        //        printModifiers(n.getModifiers());
+        // if (annotations != null) {
+        // for (AnnotationExpr a : annotations) {
+        // a.accept(this, arg);
+        // printer.print(" ");
+        // }
+        // }
+        // printModifiers(n.getModifiers());
 
         n.getType().accept(this, arg);
         if (n.isVarArgs()) {
@@ -1208,12 +1378,12 @@ public class CppVisitor implements VoidVisitor<Object> {
 
     public void visit(VariableDeclarationExpr n, Object arg) {
         currentAnnotations = n.getAnnotations();
-        //        if (annotations != null) {
-        //            for (AnnotationExpr a : annotations) {
-        //                a.accept(this, arg);
-        //                printer.print(" ");
-        //            }
-        //        }
+        // if (annotations != null) {
+        // for (AnnotationExpr a : annotations) {
+        // a.accept(this, arg);
+        // printer.print(" ");
+        // }
+        // }
         printModifiers(n.getModifiers());
 
         n.getType().accept(this, arg);
@@ -1259,7 +1429,7 @@ public class CppVisitor implements VoidVisitor<Object> {
 
     public void visit(LabeledStmt n, Object arg) {
         // Only conditionless for loops are needed and supported
-        // Not implementing general Java continue semantics in order 
+        // Not implementing general Java continue semantics in order
         // to keep the generated C++ more readable.
         Statement stmt = n.getStmt();
         if (stmt instanceof ForStmt) {
@@ -1358,12 +1528,12 @@ public class CppVisitor implements VoidVisitor<Object> {
             n.getJavaDoc().accept(this, arg);
         }
         currentAnnotations = n.getAnnotations();
-        //        if (annotations != null) {
-        //            for (AnnotationExpr a : annotations) {
-        //                a.accept(this, arg);
-        //                printer.printLn();
-        //            }
-        //        }
+        // if (annotations != null) {
+        // for (AnnotationExpr a : annotations) {
+        // a.accept(this, arg);
+        // printer.printLn();
+        // }
+        // }
         printModifiers(n.getModifiers());
 
         printer.print("enum ");
@@ -1411,12 +1581,12 @@ public class CppVisitor implements VoidVisitor<Object> {
             n.getJavaDoc().accept(this, arg);
         }
         currentAnnotations = n.getAnnotations();
-        //        if (annotations != null) {
-        //            for (AnnotationExpr a : annotations) {
-        //                a.accept(this, arg);
-        //                printer.printLn();
-        //            }
-        //        }
+        // if (annotations != null) {
+        // for (AnnotationExpr a : annotations) {
+        // a.accept(this, arg);
+        // printer.printLn();
+        // }
+        // }
         printer.print(n.getName());
 
         currentAnnotations = null;
@@ -1581,12 +1751,12 @@ public class CppVisitor implements VoidVisitor<Object> {
             n.getJavaDoc().accept(this, arg);
         }
         currentAnnotations = n.getAnnotations();
-        //        if (annotations != null) {
-        //            for (AnnotationExpr a : annotations) {
-        //                a.accept(this, arg);
-        //                printer.printLn();
-        //            }
-        //        }
+        // if (annotations != null) {
+        // for (AnnotationExpr a : annotations) {
+        // a.accept(this, arg);
+        // printer.printLn();
+        // }
+        // }
         printModifiers(n.getModifiers());
 
         printer.print("@interface ");
@@ -1606,12 +1776,12 @@ public class CppVisitor implements VoidVisitor<Object> {
             n.getJavaDoc().accept(this, arg);
         }
         currentAnnotations = n.getAnnotations();
-        //        if (annotations != null) {
-        //            for (AnnotationExpr a : annotations) {
-        //                a.accept(this, arg);
-        //                printer.printLn();
-        //            }
-        //        }
+        // if (annotations != null) {
+        // for (AnnotationExpr a : annotations) {
+        // a.accept(this, arg);
+        // printer.printLn();
+        // }
+        // }
         printModifiers(n.getModifiers());
 
         n.getType().accept(this, arg);
