@@ -26,6 +26,7 @@ import java.util.Arrays;
 
 import nu.validator.htmlparser.annotation.Local;
 import nu.validator.htmlparser.annotation.NoLength;
+import nu.validator.htmlparser.annotation.Virtual;
 
 public final class ElementName
 // uncomment when regenerating self
@@ -48,8 +49,12 @@ public final class ElementName
 
     public final boolean fosterParenting;
 
+    // [NOCPP[
+    
     public final boolean custom;
 
+    // ]NOCPP]
+    
     static ElementName elementNameByBuffer(char[] buf, int offset, int length) {
         int hash = ElementName.bufToHash(buf, length);
         int index = Arrays.binarySearch(ElementName.ELEMENT_HASHES, hash);
@@ -95,7 +100,9 @@ public final class ElementName
         this.special = special;
         this.scoping = scoping;
         this.fosterParenting = fosterParenting;
+        // [NOCPP[
         this.custom = false;
+        // ]NOCPP]
         this.nameAsArray = nameAsArray;
     }
 
@@ -106,8 +113,21 @@ public final class ElementName
         this.special = false;
         this.scoping = false;
         this.fosterParenting = false;
+        // [NOCPP[
         this.custom = true;
+        // ]NOCPP]
         this.nameAsArray = null;
+    }
+    
+    @Virtual void release() {
+        // No-op in Java. 
+        // Implement as delete this in subclass.
+        // Be sure to release the local name
+    }
+    
+    @SuppressWarnings("unused") private void destructor() {
+        Portability.releaseLocal(name); // this must be a no-op for static locals
+        // for non-static cases the camel case contains the same pointer as a weak reference.
     }
 
     // START CODE ONLY USED FOR GENERATING CODE uncomment and run to regenerate
@@ -264,8 +284,10 @@ public final class ElementName
 //                return "B_OR_BIG_OR_EM_OR_FONT_OR_I_OR_S_OR_SMALL_OR_STRIKE_OR_STRONG_OR_TT_OR_U";
 //            case TreeBuilder.UL_OR_OL_OR_DL:
 //                return "UL_OR_OL_OR_DL";
-//            case TreeBuilder.IFRAME_OR_NOEMBED:
-//                return "IFRAME_OR_NOEMBED";
+//            case TreeBuilder.IFRAME:
+//                return "IFRAME";
+//  case TreeBuilder.NOEMBED:
+//  return "NOEMBED";
 //            case TreeBuilder.EMBED_OR_IMG:
 //                return "EMBED_OR_IMG";
 //            case TreeBuilder.AREA_OR_BASEFONT_OR_BGSOUND_OR_SPACER_OR_WBR:
@@ -506,7 +528,7 @@ public final class ElementName
     public static final ElementName SMALL = new ElementName("small", "small", TreeBuilder.B_OR_BIG_OR_EM_OR_FONT_OR_I_OR_S_OR_SMALL_OR_STRIKE_OR_STRONG_OR_TT_OR_U, false, false, false, null);
     public static final ElementName THEAD = new ElementName("thead", "thead", TreeBuilder.TBODY_OR_THEAD_OR_TFOOT, true, false, true, null);
     public static final ElementName TABLE = new ElementName("table", "table", TreeBuilder.TABLE, false, true, true, null);
-    public static final ElementName TITLE = new ElementName("title", "title", TreeBuilder.TITLE, true, false, false, new char[] {'t','i','t','l','e'});
+    public static final ElementName TITLE = new ElementName("title", "title", TreeBuilder.TITLE, true, false, false, null);
     public static final ElementName TSPAN = new ElementName("tspan", "tspan", TreeBuilder.OTHER, false, false, false, null);
     public static final ElementName TIMES = new ElementName("times", "times", TreeBuilder.OTHER, false, false, false, null);
     public static final ElementName TFOOT = new ElementName("tfoot", "tfoot", TreeBuilder.TBODY_OR_THEAD_OR_TFOOT, true, false, true, null);
@@ -538,7 +560,7 @@ public final class ElementName
     public static final ElementName FILTER = new ElementName("filter", "filter", TreeBuilder.OTHER, false, false, false, null);
     public static final ElementName FOOTER = new ElementName("footer", "footer", TreeBuilder.FIELDSET_OR_ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION, true, false, false, null);
     public static final ElementName HEADER = new ElementName("header", "header", TreeBuilder.FIELDSET_OR_ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION, true, false, false, null);
-    public static final ElementName IFRAME = new ElementName("iframe", "iframe", TreeBuilder.IFRAME_OR_NOEMBED, true, false, false, null);
+    public static final ElementName IFRAME = new ElementName("iframe", "iframe", TreeBuilder.IFRAME, true, false, false, null);
     public static final ElementName KEYGEN = new ElementName("keygen", "keygen", TreeBuilder.OTHER, false, false, false, null);
     public static final ElementName LAMBDA = new ElementName("lambda", "lambda", TreeBuilder.OTHER, false, false, false, null);
     public static final ElementName LEGEND = new ElementName("legend", "legend", TreeBuilder.OTHER, false, false, false, null);
@@ -606,7 +628,7 @@ public final class ElementName
     public static final ElementName MARQUEE = new ElementName("marquee", "marquee", TreeBuilder.OBJECT_OR_MARQUEE_OR_APPLET, false, true, false, null);
     public static final ElementName MACTION = new ElementName("maction", "maction", TreeBuilder.OTHER, false, false, false, null);
     public static final ElementName MSUBSUP = new ElementName("msubsup", "msubsup", TreeBuilder.OTHER, false, false, false, null);
-    public static final ElementName NOEMBED = new ElementName("noembed", "noembed", TreeBuilder.IFRAME_OR_NOEMBED, true, false, false, null);
+    public static final ElementName NOEMBED = new ElementName("noembed", "noembed", TreeBuilder.NOEMBED, true, false, false, null);
     public static final ElementName POLYGON = new ElementName("polygon", "polygon", TreeBuilder.OTHER, false, false, false, null);
     public static final ElementName PATTERN = new ElementName("pattern", "pattern", TreeBuilder.OTHER, false, false, false, null);
     public static final ElementName PRODUCT = new ElementName("product", "product", TreeBuilder.OTHER, false, false, false, null);
@@ -643,7 +665,7 @@ public final class ElementName
     public static final ElementName PRSUBSET = new ElementName("prsubset", "prsubset", TreeBuilder.OTHER, false, false, false, null);
     public static final ElementName QUOTIENT = new ElementName("quotient", "quotient", TreeBuilder.OTHER, false, false, false, null);
     public static final ElementName SELECTOR = new ElementName("selector", "selector", TreeBuilder.OTHER, false, false, false, null);
-    public static final ElementName TEXTAREA = new ElementName("textarea", "textarea", TreeBuilder.TEXTAREA, true, false, false, new char[] {'t','e','x','t','a','r','e','a'});
+    public static final ElementName TEXTAREA = new ElementName("textarea", "textarea", TreeBuilder.TEXTAREA, true, false, false, null);
     public static final ElementName TEXTPATH = new ElementName("textpath", "textPath", TreeBuilder.OTHER, false, false, false, null);
     public static final ElementName VARIANCE = new ElementName("variance", "variance", TreeBuilder.OTHER, false, false, false, null);
     public static final ElementName ANIMATION = new ElementName("animation", "animation", TreeBuilder.OTHER, false, false, false, null);

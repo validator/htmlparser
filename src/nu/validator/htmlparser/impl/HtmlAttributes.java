@@ -58,7 +58,7 @@ public final class HtmlAttributes implements Attributes {
 
     private AttributeName[] names;
 
-    private String[] values;
+    private String[] values; // XXX perhaps make this @NoLength?
 
     // [NOCPP[
 
@@ -93,6 +93,12 @@ public final class HtmlAttributes implements Attributes {
         // ]NOCPP]
     }
 
+    void destructor() {
+        clear(0);
+        Portability.releaseArray(names);
+        Portability.releaseArray(values);
+    }
+    
     /**
      * Only use with a static argument
      * 
@@ -287,7 +293,11 @@ public final class HtmlAttributes implements Attributes {
 
     // ]NOCPP]
 
-    void addAttribute(AttributeName name, String value, XmlViolationPolicy xmlnsPolicy) throws SAXException {
+    void addAttribute(AttributeName name, String value
+            // [NOCPP[
+            , XmlViolationPolicy xmlnsPolicy
+    // ]NOCPP]        
+    ) throws SAXException {
         // [NOCPP[
         if (name == AttributeName.ID) {
             idValue = value;
@@ -337,13 +347,16 @@ public final class HtmlAttributes implements Attributes {
         length++;
     }
 
-    void clear() {
+    void clear(int m) {
         for (int i = 0; i < length; i++) {
+            names[i].release();
             names[i] = null;
+            Portability.releaseString(values[i]);
             values[i] = null;
         }
         length = 0;
         idValue = null;
+        mode = m;
         // [NOCPP[
         for (int i = 0; i < xmlnsLength; i++) {
             xmlnsNames[i] = null;
@@ -413,7 +426,4 @@ public final class HtmlAttributes implements Attributes {
 
     // ]NOCPP]
     
-    public void release() {
-        
-    }
 }

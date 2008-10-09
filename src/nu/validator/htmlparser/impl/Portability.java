@@ -40,6 +40,10 @@ public final class Portability {
     public static String newStringFromBuffer(@NoLength char[] buf, int offset, int length) {
         return new String(buf, offset, length);
     }
+
+    public static String newEmptyString() {
+        return "";
+    }
     
     public static char[] newCharArrayFromLocal(@Local String local) {
         return local.toCharArray();
@@ -69,7 +73,7 @@ public final class Portability {
     
     // Comparison methods
     
-    public static boolean localEqualsBuffer(@Local String local, char[] buf, int offset, int length) {
+    public static boolean localEqualsBuffer(@Local String local, @NoLength char[] buf, int offset, int length) {
         if (local.length() != length) {
             return false;
         }
@@ -125,5 +129,17 @@ public final class Portability {
     
     public static boolean literalEqualsString(String literal, String string) {
         return literal.equals(string);
+    }
+
+    public static char[] isIndexPrompt() {
+        return "This is a searchable index. Insert your search keywords here: ".toCharArray();
+    }
+
+    public static void delete(Object o) {
+        
+    }
+
+    public static void deleteArray(Object o) {
+        
     }
 }

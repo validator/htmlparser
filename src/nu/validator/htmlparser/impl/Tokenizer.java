@@ -213,14 +213,14 @@ public final class Tokenizer implements Locator {
     private static final @NoLength char[] REPLACEMENT_CHARACTER = { '\uFFFD' };
 
     // [NOCPP[
-    
+
     /**
      * Array version of space.
      */
     private static final @NoLength char[] SPACE = { ' ' };
 
     // ]NOCPP]
-    
+
     /**
      * Array version of line feed.
      */
@@ -251,6 +251,31 @@ public final class Tokenizer implements Locator {
      */
     private static final @NoLength char[] YSTEM = "ystem".toCharArray();
 
+    private static final char[] TITLE_ARR = { 't', 'i', 't', 'l', 'e' };
+
+    private static final char[] SCRIPT_ARR = { 's', 'c', 'r', 'i', 'p', 't' };
+
+    private static final char[] STYLE_ARR = { 's', 't', 'y', 'l', 'e' };
+
+    private static final char[] PLAINTEXT_ARR = { 'p', 'l', 'a', 'i', 'n', 't',
+            'e', 'x', 't' };
+
+    private static final char[] XMP_ARR = { 'x', 'm', 'p' };
+
+    private static final char[] TEXTAREA_ARR = { 't', 'e', 'x', 't', 'a', 'r',
+            'e', 'a' };
+
+    private static final char[] IFRAME_ARR = { 'i', 'f', 'r', 'a', 'm', 'e' };
+
+    private static final char[] NOEMBED_ARR = { 'n', 'o', 'e', 'm', 'b', 'e',
+            'd' };
+
+    private static final char[] NOSCRIPT_ARR = { 'n', 'o', 's', 'c', 'r', 'i',
+            'p', 't' };
+
+    private static final char[] NOFRAMES_ARR = { 'n', 'o', 'f', 'r', 'a', 'm',
+            'e', 's' };
+
     private final EncodingDeclarationHandler encodingDeclarationHandler;
 
     /**
@@ -258,11 +283,15 @@ public final class Tokenizer implements Locator {
      */
     private final TokenHandler tokenHandler;
 
+    // [NOCPP[
+    
     /**
      * The error handler.
      */
     private ErrorHandler errorHandler;
 
+    // ]NOCPP]
+    
     /**
      * The previous <code>char</code> read from the buffer with infoset
      * alteration applied except for CR. Used for CRLF normalization and
@@ -316,7 +345,7 @@ public final class Tokenizer implements Locator {
 
     private int pos;
 
-    private int end;
+    private int endPos;
 
     private @NoLength char[] buf;
 
@@ -348,8 +377,7 @@ public final class Tokenizer implements Locator {
      * <code>-1</code> to indicate that <code>strBuf</code> is used or
      * otherwise an offset to the main buffer.
      */
-//    private int strBufOffset = -1;
-
+    // private int strBufOffset = -1;
     /**
      * Buffer for long strings.
      */
@@ -364,8 +392,7 @@ public final class Tokenizer implements Locator {
      * <code>-1</code> to indicate that <code>longStrBuf</code> is used or
      * otherwise an offset to the main buffer.
      */
-//    private int longStrBufOffset = -1;
-
+    // private int longStrBufOffset = -1;
     /**
      * The attribute holder.
      */
@@ -391,6 +418,8 @@ public final class Tokenizer implements Locator {
      */
     private ElementName contentModelElement = null;
 
+    private char[] contentModelElementNameAsArray;
+
     /**
      * <code>true</code> if tokenizing an end tag
      */
@@ -407,14 +436,14 @@ public final class Tokenizer implements Locator {
     private AttributeName attributeName = null;
 
     // [NOCPP[
-    
+
     /**
      * Whether comment tokens are emitted.
      */
     private boolean wantsComments = false;
 
     // ]NOCPP]
-    
+
     /**
      * If <code>false</code>, <code>addAttribute*()</code> are no-ops.
      */
@@ -512,7 +541,7 @@ public final class Tokenizer implements Locator {
         this.bmpChar = new char[1];
         this.astralChar = new char[2];
     }
-    
+
     // ]NOCPP]
 
     public Tokenizer(TokenHandler tokenHandler,
@@ -531,9 +560,14 @@ public final class Tokenizer implements Locator {
         this.publicId = newPublicId;
 
     }
-    
+
+    void destructor() {
+        Portability.releaseArray(bmpChar);
+        Portability.releaseArray(astralChar);
+    }
+
     // [NOCPP[
-    
+
     /**
      * Returns the mappingLangToXmlLang.
      * 
@@ -640,9 +674,13 @@ public final class Tokenizer implements Locator {
     public void setContentModelFlag(int contentModelFlag,
             @Local String contentModelElement) {
         this.stateSave = contentModelFlag;
+        if (contentModelFlag == Tokenizer.DATA) {
+            return;
+        }
         char[] asArray = Portability.newCharArrayFromLocal(contentModelElement);
         this.contentModelElement = ElementName.elementNameByBuffer(asArray, 0,
                 asArray.length);
+        contentModelElementToArray();
     }
 
     /**
@@ -657,6 +695,45 @@ public final class Tokenizer implements Locator {
             ElementName contentModelElement) {
         this.stateSave = contentModelFlag;
         this.contentModelElement = contentModelElement;
+        contentModelElementToArray();
+    }
+
+    private void contentModelElementToArray() {
+        switch (contentModelElement.group) {
+            case TreeBuilder.TITLE:
+                contentModelElementNameAsArray = TITLE_ARR;
+                return;
+            case TreeBuilder.SCRIPT:
+                contentModelElementNameAsArray = SCRIPT_ARR;
+                return;
+            case TreeBuilder.STYLE:
+                contentModelElementNameAsArray = STYLE_ARR;
+                return;
+            case TreeBuilder.PLAINTEXT:
+                contentModelElementNameAsArray = PLAINTEXT_ARR;
+                return;
+            case TreeBuilder.XMP:
+                contentModelElementNameAsArray = XMP_ARR;
+                return;
+            case TreeBuilder.TEXTAREA:
+                contentModelElementNameAsArray = TEXTAREA_ARR;
+                return;
+            case TreeBuilder.IFRAME:
+                contentModelElementNameAsArray = IFRAME_ARR;
+                return;
+            case TreeBuilder.NOEMBED:
+                contentModelElementNameAsArray = NOEMBED_ARR;
+                return;
+            case TreeBuilder.NOSCRIPT:
+                contentModelElementNameAsArray = NOSCRIPT_ARR;
+                return;
+            case TreeBuilder.NOFRAMES:
+                contentModelElementNameAsArray = NOFRAMES_ARR;
+                return;
+            default:
+                System.err.println(contentModelElement.name);
+                assert false;
+        }
     }
 
     // start Locator impl
@@ -921,8 +998,9 @@ public final class Tokenizer implements Locator {
                 break;
         }
     }
+
     // ]NOCPP]
-    
+
     private void adjustDoubleHyphenAndAppendToLongStrBuf(char c)
             throws SAXException {
         // [NOCPP[
@@ -1003,7 +1081,7 @@ public final class Tokenizer implements Locator {
     private void emitComment(int provisionalHyphens) throws SAXException {
         // [NOCPP[
         if (wantsComments) {
-        // ]NOCPP]
+            // ]NOCPP]
             // if (longStrBufOffset != -1) {
             // tokenHandler.comment(buf, longStrBufOffset, longStrBufLen
             // - provisionalHyphens);
@@ -1011,7 +1089,7 @@ public final class Tokenizer implements Locator {
             tokenHandler.comment(longStrBuf, 0, longStrBufLen
                     - provisionalHyphens);
             // }
-        // [NOCPP[
+            // [NOCPP[
         }
         // ]NOCPP]
         cstart = pos + 1;
@@ -1174,7 +1252,7 @@ public final class Tokenizer implements Locator {
             attributes = null;
         } else {
             // ]NOCPP]
-            attributes.clear();
+            attributes.clear(mappingLangToXmlLang);
             // [NOCPP[
         }
         // ]NOCPP]
@@ -1295,7 +1373,12 @@ public final class Tokenizer implements Locator {
                             + "\u201D without an explicit value seen. The attribute may be dropped by IE7.");
                 }
                 // ]NOCPP]
-                attributes.addAttribute(attributeName, "", xmlnsPolicy);
+                attributes.addAttribute(attributeName,
+                        Portability.newEmptyString()
+                        // [NOCPP[
+                        , xmlnsPolicy
+                // ]NOCPP]
+                );
                 // [NOCPP[
             }
             // ]NOCPP]
@@ -1317,7 +1400,11 @@ public final class Tokenizer implements Locator {
                 value = newAsciiLowerCaseStringFromString(value);
             }
             // ]NOCPP]
-            attributes.addAttribute(attributeName, value, xmlnsPolicy);
+            attributes.addAttribute(attributeName, value
+            // [NOCPP[
+                    , xmlnsPolicy
+            // ]NOCPP]
+            );
         }
     }
 
@@ -1347,7 +1434,7 @@ public final class Tokenizer implements Locator {
         longStrBuf = new char[1024];
         longStrBufLen = 0;
         alreadyComplainedAboutNonAscii = false;
-        stateSave = Tokenizer.DATA;        
+        stateSave = Tokenizer.DATA;
         line = linePrev = 0;
         col = colPrev = 1;
         nextCharOnNewLine = true;
@@ -1422,12 +1509,12 @@ public final class Tokenizer implements Locator {
          * meaning. (The rest of the array is garbage and should not be
          * examined.)
          */
-        end = buffer.getEnd();
+        endPos = buffer.getEnd();
         boolean reconsume = false;
         stateLoop(state, c, reconsume, returnState);
         detachStrBuf();
         detachLongStrBuf();
-        if (pos == end) {
+        if (pos == endPos) {
             // exiting due to end of buffer
             buffer.setStart(pos);
         } else {
@@ -3815,26 +3902,26 @@ public final class Tokenizer implements Locator {
                         emitOrAppend(val, returnState);
                         // this is so complicated!
                         if (strBufMark < strBufLen) {
-//                            if (strBufOffset != -1) {
-//                                if ((returnState & (~1)) != 0) {
-//                                    for (int i = strBufMark; i < strBufLen; i++) {
-//                                        appendLongStrBuf(buf[strBufOffset + i]);
-//                                    }
-//                                } else {
-//                                    tokenHandler.characters(buf, strBufOffset
-//                                            + strBufMark, strBufLen
-//                                            - strBufMark);
-//                                }
-//                            } else {
-                                if ((returnState & (~1)) != 0) {
-                                    for (int i = strBufMark; i < strBufLen; i++) {
-                                        appendLongStrBuf(strBuf[i]);
-                                    }
-                                } else {
-                                    tokenHandler.characters(strBuf, strBufMark,
-                                            strBufLen - strBufMark);
+                            // if (strBufOffset != -1) {
+                            // if ((returnState & (~1)) != 0) {
+                            // for (int i = strBufMark; i < strBufLen; i++) {
+                            // appendLongStrBuf(buf[strBufOffset + i]);
+                            // }
+                            // } else {
+                            // tokenHandler.characters(buf, strBufOffset
+                            // + strBufMark, strBufLen
+                            // - strBufMark);
+                            // }
+                            // } else {
+                            if ((returnState & (~1)) != 0) {
+                                for (int i = strBufMark; i < strBufLen; i++) {
+                                    appendLongStrBuf(strBuf[i]);
                                 }
-//                            }
+                            } else {
+                                tokenHandler.characters(strBuf, strBufMark,
+                                        strBufLen - strBufMark);
+                            }
+                            // }
                         }
                         if ((returnState & (~1)) == 0) {
                             cstart = pos;
@@ -4290,8 +4377,8 @@ public final class Tokenizer implements Locator {
                         // fails.
                         // Duplicating the relevant part of tag name state here
                         // as well.
-                        if (index < contentModelElement.name.length()) {
-                            char e = contentModelElement.name.charAt(index);
+                        if (index < contentModelElementNameAsArray.length) {
+                            char e = contentModelElementNameAsArray[index];
                             char folded = c;
                             if (c >= 'A' && c <= 'Z') {
                                 folded += 0x20;
@@ -4510,7 +4597,7 @@ public final class Tokenizer implements Locator {
             }
         }
         flushChars();
-        if (prev == '\r' && pos != end) {
+        if (prev == '\r' && pos != endPos) {
             pos--;
             col--;
         }
@@ -4519,11 +4606,14 @@ public final class Tokenizer implements Locator {
         returnStateSave = returnState;
     }
 
-    private void errUnescapedAmpersandInterpretedAsCharacterReference() throws SAXException {
+    private void errUnescapedAmpersandInterpretedAsCharacterReference()
+            throws SAXException {
         if (errorHandler == null) {
             return;
         }
-        SAXParseException spe = new SAXParseException("The string following \u201C&\u201D was interpreted as a character reference. (\u201C&\u201D probably should have been escaped as \u201C&amp;\u201D.)", ampersandLocation);
+        SAXParseException spe = new SAXParseException(
+                "The string following \u201C&\u201D was interpreted as a character reference. (\u201C&\u201D probably should have been escaped as \u201C&amp;\u201D.)",
+                ampersandLocation);
         errorHandler.error(spe);
     }
 
@@ -4539,7 +4629,9 @@ public final class Tokenizer implements Locator {
         if (errorHandler == null) {
             return;
         }
-        SAXParseException spe = new SAXParseException("\u201C&\u201D did not start a character reference. (\u201C&\u201D probably should have been escaped as \u201C&amp;\u201D.)", ampersandLocation);
+        SAXParseException spe = new SAXParseException(
+                "\u201C&\u201D did not start a character reference. (\u201C&\u201D probably should have been escaped as \u201C&amp;\u201D.)",
+                ampersandLocation);
         errorHandler.error(spe);
     }
 
@@ -4558,7 +4650,7 @@ public final class Tokenizer implements Locator {
     private void rememberAmpersandLocation() {
         ampersandLocation = new LocatorImpl(this);
     }
-    
+
     private void bogusDoctype() throws SAXException {
         err("Bogus doctype.");
         forceQuirks = true;
@@ -4599,7 +4691,7 @@ public final class Tokenizer implements Locator {
         } else if (value == 0x0D) {
             err("A numeric character reference expanded to carriage return.");
             emitOrAppendOne(Tokenizer.LF, returnState);
-        // [NOCPP[    
+            // [NOCPP[
         } else if (value == 0xC
                 && contentSpacePolicy != XmlViolationPolicy.ALLOW) {
             if (contentSpacePolicy == XmlViolationPolicy.ALTER_INFOSET) {
@@ -4607,7 +4699,7 @@ public final class Tokenizer implements Locator {
             } else if (contentSpacePolicy == XmlViolationPolicy.FATAL) {
                 fatal("A character reference expanded to a form feed which is not legal XML 1.0 white space.");
             }
-        // ]NOCPP]
+            // ]NOCPP]
         } else if ((value >= 0x0000 && value <= 0x0008) || (value == 0x000B)
                 || (value >= 0x000E && value <= 0x001F) || value == 0x007F) {
             /*
@@ -4637,15 +4729,19 @@ public final class Tokenizer implements Locator {
              * whose code point is that number.
              */
             char ch = (char) value;
+            // [NOCPP[
             if (errorHandler != null && isPrivateUse(ch)) {
                 warnAboutPrivateUseChar();
             }
+            // ]NOCPP]
             bmpChar[0] = ch;
             emitOrAppendOne(bmpChar, returnState);
         } else if (value <= 0x10FFFF) {
+            // [NOCPP[
             if (errorHandler != null && isAstralPrivateUse(value)) {
                 warnAboutPrivateUseChar();
             }
+            // ]NOCPP]
             astralChar[0] = (char) (Tokenizer.LEAD_OFFSET + (value >> 10));
             astralChar[1] = (char) (0xDC00 + (value & 0x3FF));
             emitOrAppend(astralChar, returnState);
@@ -5129,7 +5225,7 @@ public final class Tokenizer implements Locator {
     private char read() throws SAXException {
         char c;
         pos++;
-        if (pos == end) {
+        if (pos == endPos) {
             return '\u0000';
         }
 
@@ -5171,8 +5267,7 @@ public final class Tokenizer implements Locator {
             }
             // [NOCPP[
         } else {
-            if (!confident
-                    && !alreadyComplainedAboutNonAscii && c > '\u007F') {
+            if (!confident && !alreadyComplainedAboutNonAscii && c > '\u007F') {
                 complainAboutNonAscii();
                 alreadyComplainedAboutNonAscii = true;
             }
@@ -5289,14 +5384,15 @@ public final class Tokenizer implements Locator {
         }
     }
 
-    private void emitOrAppendOne(char[] val, int returnState) throws SAXException {
+    private void emitOrAppendOne(char[] val, int returnState)
+            throws SAXException {
         if ((returnState & (~1)) != 0) {
             appendLongStrBuf(val[0]);
         } else {
             tokenHandler.characters(val, 0, 1);
         }
     }
-    
+
     public void end() throws SAXException {
         strBuf = null;
         longStrBuf = null;
@@ -5307,8 +5403,9 @@ public final class Tokenizer implements Locator {
         attributeName = null;
         tokenHandler.endTokenization();
         if (attributes != null) {
-            attributes.clear();
-            attributes.release();
+            attributes.clear(mappingLangToXmlLang);
+            Portability.delete(attributes);
+            attributes = null;
         }
     }
 
@@ -5324,7 +5421,7 @@ public final class Tokenizer implements Locator {
     public boolean isAlreadyComplainedAboutNonAscii() {
         return alreadyComplainedAboutNonAscii;
     }
-    
+
     public void becomeConfident() {
         confident = true;
     }
@@ -5359,6 +5456,5 @@ public final class Tokenizer implements Locator {
     public int getCol() {
         return col;
     }
-    
-    
+
 }
