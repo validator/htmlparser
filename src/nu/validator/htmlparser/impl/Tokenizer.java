@@ -276,13 +276,13 @@ public final class Tokenizer implements Locator {
     private static final char[] NOFRAMES_ARR = { 'n', 'o', 'f', 'r', 'a', 'm',
             'e', 's' };
 
-    private final EncodingDeclarationHandler encodingDeclarationHandler;
-
     /**
      * The token handler.
      */
     private final TokenHandler tokenHandler;
 
+    private final EncodingDeclarationHandler encodingDeclarationHandler;
+    
     // [NOCPP[
     
     /**
@@ -512,11 +512,11 @@ public final class Tokenizer implements Locator {
 
     private boolean confident;
 
+    // [NOCPP[
+    
     private PushedLocation pushedLocation;
 
     private LocatorImpl ampersandLocation;
-
-    // [NOCPP[
 
     public Tokenizer(TokenHandler tokenHandler,
             EncodingDeclarationHandler encodingDeclarationHandler,
@@ -731,8 +731,8 @@ public final class Tokenizer implements Locator {
                 contentModelElementNameAsArray = NOFRAMES_ARR;
                 return;
             default:
-                System.err.println(contentModelElement.name);
                 assert false;
+                return;
         }
     }
 
@@ -905,6 +905,14 @@ public final class Tokenizer implements Locator {
         // }
     }
 
+    private @Local String strBufToLocal() {
+        // if (strBufOffset != -1) {
+        // return Portability.newLocalNameFromBuffer(buf, strBufOffset, strBufLen);
+        // } else {
+        return Portability.newLocalNameFromBuffer(strBuf, 0, strBufLen);
+        // }
+    }
+    
     /**
      * Emits the smaller buffer as character tokens.
      * 
@@ -1299,8 +1307,12 @@ public final class Tokenizer implements Locator {
         // attributeName = AttributeName.nameByBuffer(buf, strBufOffset,
         // strBufLen, namePolicy != XmlViolationPolicy.ALLOW);
         // } else {
-        attributeName = AttributeName.nameByBuffer(strBuf, 0, strBufLen,
-                namePolicy != XmlViolationPolicy.ALLOW);
+        attributeName = AttributeName.nameByBuffer(strBuf, 0, strBufLen
+                // [NOCPP[
+                ,
+                namePolicy != XmlViolationPolicy.ALLOW
+        // ]NOCPP]        
+        );
         // }
 
         // [NOCPP[
@@ -2894,7 +2906,7 @@ public final class Tokenizer implements Locator {
                                  * (LF) U+000C FORM FEED (FF) U+0020 SPACE
                                  * Switch to the after DOCTYPE name state.
                                  */
-                                doctypeName = strBufToString();
+                                doctypeName = strBufToLocal();
                                 state = Tokenizer.AFTER_DOCTYPE_NAME;
                                 break doctypenameloop;
                             // continue stateloop;
@@ -2903,7 +2915,7 @@ public final class Tokenizer implements Locator {
                                  * U+003E GREATER-THAN SIGN (>) Emit the current
                                  * DOCTYPE token.
                                  */
-                                tokenHandler.doctype(strBufToString(), null,
+                                tokenHandler.doctype(strBufToLocal(), null,
                                         null, false);
                                 /*
                                  * Switch to the data state.
@@ -3605,7 +3617,7 @@ public final class Tokenizer implements Locator {
                     }
                     // WARNING FALLTHRU CASE TRANSITION: DON'T REORDER
                 case CDATA_SECTION:
-                    cdataloop: for (;;) {
+                    cdatasectionloop: for (;;) {
                         if (reconsume) {
                             reconsume = false;
                         } else {
@@ -3617,7 +3629,7 @@ public final class Tokenizer implements Locator {
                             case ']':
                                 flushChars();
                                 state = Tokenizer.CDATA_RSQB;
-                                break cdataloop; // FALL THROUGH
+                                break cdatasectionloop; // FALL THROUGH
                             default:
                                 continue;
                         }
@@ -4648,7 +4660,9 @@ public final class Tokenizer implements Locator {
     }
 
     private void rememberAmpersandLocation() {
+        // [NOCPP[
         ampersandLocation = new LocatorImpl(this);
+        // ]NOCPP]
     }
 
     private void bogusDoctype() throws SAXException {
@@ -4686,7 +4700,7 @@ public final class Tokenizer implements Locator {
              * character token for the Unicode character given in the second
              * column of that row.
              */
-            char[] val = NamedCharacters.WINDOWS_1252[value - 0x80];
+            @NoLength char[] val = NamedCharacters.WINDOWS_1252[value - 0x80];
             emitOrAppendOne(val, returnState);
         } else if (value == 0x0D) {
             err("A numeric character reference expanded to carriage return.");
@@ -4943,7 +4957,7 @@ public final class Tokenizer implements Locator {
                      * Set the DOCTYPE token's force-quirks flag to on. Emit
                      * that DOCTYPE token.
                      */
-                    tokenHandler.doctype(strBufToString(), null, null, true);
+                    tokenHandler.doctype(strBufToLocal(), null, null, true);
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -5352,6 +5366,8 @@ public final class Tokenizer implements Locator {
         return c;
     }
 
+    // [NOCPP[
+    
     private void complainAboutNonAscii() throws SAXException {
         String encoding = null;
         if (encodingDeclarationHandler != null) {
@@ -5365,6 +5381,8 @@ public final class Tokenizer implements Locator {
         }
     }
 
+    // ]NOCPP]
+    
     public void internalEncodingDeclaration(String internalCharset)
             throws SAXException {
         if (encodingDeclarationHandler != null) {
@@ -5384,7 +5402,7 @@ public final class Tokenizer implements Locator {
         }
     }
 
-    private void emitOrAppendOne(char[] val, int returnState)
+    private void emitOrAppendOne(@NoLength char[] val, int returnState)
             throws SAXException {
         if ((returnState & (~1)) != 0) {
             appendLongStrBuf(val[0]);

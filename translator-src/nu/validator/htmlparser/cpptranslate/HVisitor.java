@@ -98,6 +98,28 @@ public class HVisitor extends CppVisitor {
         }
 
         printer.printLn();
+
+        String[] forwDecls = cppTypes.boilerplateForwardDeclarations();
+        for (int i = 0; i < forwDecls.length; i++) {
+            String decl = forwDecls[i];
+            printer.print("class ");
+            printer.print(decl);
+            printer.printLn(";");            
+        }
+        
+        printer.printLn();
+
+        for (int i = 0; i < Main.H_LIST.length; i++) {
+            String klazz = Main.H_LIST[i];
+            if (!klazz.equals(javaClassName)) {
+                printer.print("class ");
+                printer.print(cppTypes.classPrefix());
+                printer.print(klazz);
+                printer.printLn(";");
+            }
+        }
+        
+        printer.printLn();
         
         printer.print("class ");
         printer.printLn(className);
@@ -110,9 +132,9 @@ public class HVisitor extends CppVisitor {
      * @see nu.validator.htmlparser.cpptranslate.CppVisitor#endClassDeclaration()
      */
     @Override protected void endClassDeclaration() {
-        printModifiers(ModifierSet.PUBLIC & ModifierSet.STATIC);
+        printModifiers(ModifierSet.PUBLIC | ModifierSet.STATIC);
         printer.printLn("void initializeStatics();");        
-        printModifiers(ModifierSet.PUBLIC & ModifierSet.STATIC);
+        printModifiers(ModifierSet.PUBLIC | ModifierSet.STATIC);
         printer.printLn("void releaseStatics();");        
         
         printer.unindent();
@@ -287,6 +309,13 @@ public class HVisitor extends CppVisitor {
             currentArrayCount = 0;
             inPrimitiveNoLengthFieldDeclarator = false;
         }
+    }
+
+    /**
+     * @see nu.validator.htmlparser.cpptranslate.CppVisitor#printConstructorBody(japa.parser.ast.stmt.BlockStmt, java.lang.Object)
+     */
+    @Override protected void printConstructorBody(BlockStmt block, Object arg) {
+        printer.printLn(";");
     }
 
 }
