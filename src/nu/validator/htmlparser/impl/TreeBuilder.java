@@ -491,7 +491,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
     }
 
-    public final void doctype(String name, String publicIdentifier,
+    public final void doctype(@Local String name, String publicIdentifier,
             String systemIdentifier, boolean forceQuirks) throws SAXException {
         needToDropLF = false;
         doctypeloop: for (;;) {

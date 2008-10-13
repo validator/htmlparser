@@ -60,12 +60,12 @@ final class StackNode<T> {
             final boolean fosterParenting, final @Local String popName) {
         this.group = group;
         this.name = name;
+        this.popName = popName;
         this.ns = ns;
         this.node = node;
         this.scoping = scoping;
         this.special = special;
         this.fosterParenting = fosterParenting;
-        this.popName = popName;
         this.tainted = false;
     }
 

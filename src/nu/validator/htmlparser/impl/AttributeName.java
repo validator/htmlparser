@@ -164,20 +164,32 @@ public final class AttributeName
     }
 
 
-    static AttributeName nameByBuffer(@NoLength char[] buf, int offset, int length,
-            boolean checkNcName) {
+    static AttributeName nameByBuffer(@NoLength char[] buf, int offset, int length
+            // [NOCPP[
+            ,
+            boolean checkNcName
+    // ]NOCPP]        
+    ) {
         // XXX deal with offset
         int hash = AttributeName.bufToHash(buf, length);
         int index = Arrays.binarySearch(AttributeName.ATTRIBUTE_HASHES, hash);
         if (index < 0) {
             return AttributeName.create(Portability.newLocalNameFromBuffer(buf,
-                    offset, length), checkNcName);
+                    offset, length)
+                    // [NOCPP[
+                    , checkNcName
+            // ]NOCPP]        
+            );
         } else {
             AttributeName rv = AttributeName.ATTRIBUTE_NAMES[index];
             @Local String name = rv.getLocal(AttributeName.HTML);
             if (!Portability.localEqualsBuffer(name, buf, offset, length)) {
                 return AttributeName.create(Portability.newLocalNameFromBuffer(
-                        buf, offset, length), checkNcName);
+                        buf, offset, length)
+                        // [NOCPP[
+                        , checkNcName
+                // ]NOCPP]        
+                );
             }
             return rv;
         }
@@ -278,7 +290,11 @@ public final class AttributeName
         // ]NOCPP]
     }
 
-    private static AttributeName create(@Local String name, boolean checkNcName) {
+    private static AttributeName create(@Local String name
+            // [NOCPP[
+            , boolean checkNcName
+    // ]NOCPP]        
+    ) {
         // [NOCPP[
         boolean ncName = true;
         boolean xmlns = name.startsWith("xmlns:");
@@ -302,7 +318,7 @@ public final class AttributeName
 
     @Virtual void release() {
         // No-op in Java. 
-        // Implement as delete this in subclass.
+        // Implement as |delete this;| in subclass.
         // Be sure to release the local name
     }
     

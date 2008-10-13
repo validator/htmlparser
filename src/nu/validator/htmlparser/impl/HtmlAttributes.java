@@ -185,6 +185,8 @@ public final class HtmlAttributes implements Attributes {
         }
     }
 
+    // [NOCPP[
+    
     public @QName String getQName(int index) {
         if (index < length && index >= 0) {
             return names[index].getQName(mode);
@@ -193,17 +195,19 @@ public final class HtmlAttributes implements Attributes {
         }
     }
 
-    public AttributeName getAttributeName(int index) {
+    public @IdType String getType(int index) {
         if (index < length && index >= 0) {
-            return names[index];
+            return names[index].getType(mode);
         } else {
             return null;
         }
     }
 
-    public @IdType String getType(int index) {
+    // ]NOCPP]
+    
+    public AttributeName getAttributeName(int index) {
         if (index < length && index >= 0) {
-            return names[index].getType(mode);
+            return names[index];
         } else {
             return null;
         }
@@ -355,9 +359,9 @@ public final class HtmlAttributes implements Attributes {
             values[i] = null;
         }
         length = 0;
-        idValue = null;
         mode = m;
         // [NOCPP[
+        idValue = null;
         for (int i = 0; i < xmlnsLength; i++) {
             xmlnsNames[i] = null;
             xmlnsValues[i] = null;

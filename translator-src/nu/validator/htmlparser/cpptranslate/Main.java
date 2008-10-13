@@ -52,7 +52,7 @@ import java.io.UnsupportedEncodingException;
 
 public class Main {
 
-    private static final String[] H_LIST = {
+    static final String[] H_LIST = {
         "Tokenizer",
         "TreeBuilder",
         "AttributeName",

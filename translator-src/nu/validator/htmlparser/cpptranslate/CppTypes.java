@@ -46,20 +46,19 @@ public class CppTypes {
         "nsIAtom",
         "nsString",
         "nsINameSpaceManager",
+        "nsIContent",
         "nsGkAtoms",
         "jArray",
-        "nsHtml5UTF16Buffer",
-        "nsHtml5TreeBuilder",
-        "nsHtml5Tokenizer",
-        "nsHtml5StackNode",
-        "nsHtml5Portability",
-        "nsHtml5Parser",
-        "nsHtml5HtmlAttributes",
-        "nsHtml5ElementName",
-        "nsHtml5AttributeName",
         "nsHtml5DocumentMode",
+        "nsHtml5ArrayCopy",
+        "nsHtml5NamedCharacters",
+        "nsHtml5Parser",
     };
 
+    private static final String[] FORWARD_DECLARATIONS = {
+        "nsHtml5Parser",
+    };
+    
     private final Map<String, String> atomMap;
     
     public CppTypes(Map<String, String> atomMap) {
@@ -115,7 +114,7 @@ public class CppTypes {
     }
 
     public String nodeType() {
-        return "void*";
+        return "nsIContent*";
     }
 
     public String xhtmlNamespaceLiteral() {
@@ -180,6 +179,10 @@ public class CppTypes {
         return INCLUDES;
     }
 
+    public String[] boilerplateForwardDeclarations() {
+        return FORWARD_DECLARATIONS;
+    }
+    
     public String treeBuiderHSupplement() {
         return "nsHtml5TreeBuilderHSupplement.h";
     }
@@ -194,5 +197,13 @@ public class CppTypes {
 
     public String documentModeType() {
         return "nsHtml5DocumentMode";
+    }
+
+    public String arrayCopy() {
+        return "nsHtml5ArrayCopy::arraycopy";
+    }
+
+    public String maxInteger() {
+        return "PR_INT32_MAX";
     }
 }
