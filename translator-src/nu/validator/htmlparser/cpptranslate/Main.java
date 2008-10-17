@@ -80,7 +80,8 @@ public class Main {
      */
     public static void main(String[] args) throws ParseException, IOException {
         GkAtomParser atomParser = new GkAtomParser(new InputStreamReader(new FileInputStream(args[2]), "utf-8"));
-        CppTypes cppTypes = new CppTypes(atomParser.parse());
+        StringLiteralParser stringParser = new StringLiteralParser(new InputStreamReader(new FileInputStream(args[3]), "utf-8"));
+        CppTypes cppTypes = new CppTypes(atomParser.parse(), stringParser.parse());
         SymbolTable symbolTable = new SymbolTable();
         
         File javaDirectory = new File(args[0]);

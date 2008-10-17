@@ -332,20 +332,19 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     protected Tokenizer tokenizer;
 
     // [NOCPP[
-    
+
     protected ErrorHandler errorHandler;
 
     // ]NOCPP]
-    
 
     private DocumentModeHandler documentModeHandler;
 
     // [NOCPP[
-    
+
     private DoctypeExpectation doctypeExpectation = DoctypeExpectation.HTML;
 
     // ]NOCPP]
-    
+
     private boolean scriptingEnabled = false;
 
     private boolean needToDropLF;
@@ -452,7 +451,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     public final void startTokenization(Tokenizer self) throws SAXException {
         tokenizer = self;
-        html4 = false;
         stack = new StackNode[64];
         listOfActiveFormattingElements = new StackNode[64];
         needToDropLF = false;
@@ -461,9 +459,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         listPtr = -1;
         formPointer = null;
         // [NOCPP[
+        html4 = false;
         idLocations.clear();
-        // ]NOCPP]
         wantingComments = wantsComments();
+        // ]NOCPP]
         start(context != null);
         startCoalescing();
         if (context == null) {
@@ -758,9 +757,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     public final void comment(@NoLength char[] buf, int start, int length)
             throws SAXException {
         needToDropLF = false;
+        // [NOCPP[
         if (!wantingComments) {
             return;
         }
+        // ]NOCPP]
         commentloop: for (;;) {
             switch (foreignFlag) {
                 case IN_FOREIGN:
@@ -1204,6 +1205,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 }
                 foreignFlag = TreeBuilder.NOT_IN_FOREIGN;
             default:
+                // fall through
         }
         eofloop: for (;;) {
             switch (mode) {
@@ -1292,17 +1294,24 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 case IN_CAPTION:
                 case IN_CELL:
                 case IN_BODY:
-                    for (int i = currentPtr; i >= 0; i--) {
-                        String name = stack[i].name;
-                        if (!("dd" == name || "dt" == name || "li" == name
-                                || "p" == name || "tbody" == name
-                                || "td" == name || "tfoot" == name
-                                || "th" == name || "thead" == name
-                                || "body" == name || "html" == name)) {
-                            err("End of file seen and there were open elements.");
-                            break;
+                    // [NOCPP[
+                    openelementloop: for (int i = currentPtr; i >= 0; i--) {
+                        int group = stack[i].group;
+                        switch (group) {
+                            case DD_OR_DT:
+                            case LI:
+                            case P:
+                            case TBODY_OR_THEAD_OR_TFOOT:
+                            case TD_OR_TH:
+                            case BODY:
+                            case HTML:
+                                break;
+                            default:
+                                err("End of file seen and there were open elements.");
+                                break openelementloop;
                         }
                     }
+                    // ]NOCPP]
                     break eofloop;
                 case IN_CDATA_RCDATA:
                     err("End of file seen inside an [R]CDATA element.");
@@ -1362,6 +1371,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     public final void startTag(ElementName elementName,
             HtmlAttributes attributes, boolean selfClosing) throws SAXException {
+        // [NOCPP[
         if (errorHandler != null) {
             // ID uniqueness
             @IdType String id = attributes.getId();
@@ -1377,6 +1387,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 }
             }
         }
+        // ]NOCPP]
 
         int eltPos;
         needToDropLF = false;
@@ -1387,7 +1398,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             switch (foreignFlag) {
                 case IN_FOREIGN:
                     StackNode<T> currentNode = stack[currentPtr];
-                    String currNs = currentNode.ns;
+                    @NsUri String currNs = currentNode.ns;
                     int currGroup = currentNode.group;
                     if (("http://www.w3.org/1999/xhtml" == currNs)
                             || ("http://www.w3.org/1998/Math/MathML" == currNs && ((MGLYPH_OR_MALIGNMARK != group && MI_MO_MN_MS_MTEXT == currGroup) || (SVG == group && ANNOTATION_XML == currGroup)))
@@ -1882,8 +1893,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                                 HtmlAttributes.EMPTY_ATTRIBUTES);
                                         int promptIndex = attributes.getIndex(AttributeName.PROMPT);
                                         if (promptIndex > -1) {
-                                            char[] prompt = Portability.newCharArrayFromString(attributes.getValue(
-                                                    promptIndex));
+                                            char[] prompt = Portability.newCharArrayFromString(attributes.getValue(promptIndex));
                                             appendCharacters(
                                                     stack[currentPtr].node,
                                                     prompt, 0, prompt.length);
@@ -1899,8 +1909,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         inputAttributes.addAttribute(
                                                 AttributeName.NAME, "isindex"
                                                 // [NOCPP[
-                                                ,
-                                                XmlViolationPolicy.ALLOW
+                                                , XmlViolationPolicy.ALLOW
                                         // ]NOCPP]        
                                         );
                                         for (int i = 0; i < attributes.getLength(); i++) {
@@ -1914,7 +1923,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                                         ,
                                                         XmlViolationPolicy.ALLOW
                                                 // ]NOCPP]        
-                                                
+
                                                 );
                                             }
                                         }
@@ -2609,8 +2618,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                             + "\u201D start tag.");
                                     break starttagloop;
                             }
+                            // [NOCPP[
                         case IN_CDATA_RCDATA:
                             assert false;
+                            // ]NOCPP]
                     }
             }
         }
@@ -2797,6 +2808,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         String internalCharsetLegacy = null;
         if (content != null) {
             internalCharsetLegacy = TreeBuilder.extractCharsetFromContent(content);
+            // [NOCPP[
             if (errorHandler != null
                     && internalCharsetLegacy != null
                     && !Portability.lowerCaseLiteralEqualsIgnoreAsciiCaseString(
@@ -2804,6 +2816,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             attributes.getValue(AttributeName.HTTP_EQUIV))) {
                 warn("Attribute \u201Ccontent\u201D would be sniffed as an internal character encoding declaration but there was no matching \u201Chttp-equiv='Content-Type'\u201D attribute.");
             }
+            // ]NOCPP]
         }
         if (internalCharsetLegacy == null) {
             String internalCharsetHtml5 = attributes.getValue(AttributeName.CHARSET);
@@ -3623,8 +3636,12 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             String systemIdentifier, boolean html4SpecificAdditionalErrorChecks)
             throws SAXException {
         if (documentModeHandler != null) {
-            documentModeHandler.documentMode(m, publicIdentifier,
-                    systemIdentifier, html4SpecificAdditionalErrorChecks);
+            documentModeHandler.documentMode(m
+                    // [NOCPP[
+                    , publicIdentifier,
+                    systemIdentifier, html4SpecificAdditionalErrorChecks
+                    // ]NOCPP]
+            );
         }
         documentMode(m, publicIdentifier, systemIdentifier,
                 html4SpecificAdditionalErrorChecks);
@@ -3653,13 +3670,12 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         return false;
     }
 
-    private boolean isQuirky(String name, String publicIdentifier,
+    private boolean isQuirky(@Local String name, String publicIdentifier,
             String systemIdentifier, boolean forceQuirks) {
         if (forceQuirks) {
             return true;
         }
-        if (!Portability.lowerCaseLiteralEqualsIgnoreAsciiCaseString("html",
-                name)) {
+        if (!Portability.localEqualsHtmlIgnoreAsciiCase(name)) {
             return true;
         }
         if (publicIdentifier != null) {
@@ -3710,7 +3726,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private int findLastInTableScopeTdTh() {
         for (int i = currentPtr; i > 0; i--) {
-            String name = stack[i].name;
+            @Local String name = stack[i].name;
             if ("td" == name || "th" == name) {
                 return i;
             } else if (name == "table") {
@@ -3906,7 +3922,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         for (;;) {
             int formattingEltListPos = listPtr;
             while (formattingEltListPos > -1) {
-                String listName = listOfActiveFormattingElements[formattingEltListPos].name;
+                @Local String listName = listOfActiveFormattingElements[formattingEltListPos].name;
                 if (listName == name) {
                     break;
                 } else if (listName == null) {
@@ -4607,7 +4623,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     }
 
-    protected void appendDoctypeToDocument(String name,
+    protected void appendDoctypeToDocument(@Local String name,
             String publicIdentifier, String systemIdentifier)
             throws SAXException {
 
@@ -4662,7 +4678,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     // ]NOCPP]
-    
+
     /**
      * The argument MUST be an interned string or <code>null</code>.
      * 
@@ -4694,7 +4710,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     public void setScriptingEnabled(boolean scriptingEnabled) {
         this.scriptingEnabled = scriptingEnabled;
     }
-    
+
     // [NOCPP[
 
     /**
@@ -4712,7 +4728,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     // ]NOCPP]
-    
+
     /**
      * Sets the documentModeHandler.
      * 

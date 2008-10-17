@@ -53,6 +53,7 @@ public class CppTypes {
         "nsHtml5ArrayCopy",
         "nsHtml5NamedCharacters",
         "nsHtml5Parser",
+        "nsHtml5StringLiterals",
     };
 
     private static final String[] FORWARD_DECLARATIONS = {
@@ -61,8 +62,11 @@ public class CppTypes {
     
     private final Map<String, String> atomMap;
     
-    public CppTypes(Map<String, String> atomMap) {
+    private final Map<String, String> stringMap;
+
+    public CppTypes(Map<String, String> atomMap, Map<String, String> stringMap) {
         this.atomMap = atomMap;
+        this.stringMap = stringMap;
     }
 
     public String classPrefix() {
@@ -160,7 +164,7 @@ public class CppTypes {
     }
     
     private String createAtomName(String literal) {
-        String candidate = literal.replace('-', '_').replace(':', '_');
+        String candidate = literal.replaceAll("[^a-zA-Z0-9_]", "_");
         while (atomMap.values().contains(candidate)) {
             candidate = candidate + '_';
         }
@@ -168,7 +172,21 @@ public class CppTypes {
     }
 
     public String stringForLiteral(String literal) {
-        return "NOT_IMPLEMENTED";
+        String str = stringMap.get(literal);
+        if (str == null) {
+            str = createLiteralName(literal);
+            stringMap.put(literal, str);
+            System.err.println("MISSING STRING:  (" + str + " = new nsString())->Assign(NS_LITERAL_STRING(\"" + literal + "\"));");
+        }
+        return "nsHtml5StringLiterals::" + str;
+    }
+
+    private String createLiteralName(String literal) {
+        String candidate = literal.replaceAll("[^a-zA-Z0-9_]", "_");
+        while (stringMap.values().contains(candidate)) {
+            candidate = candidate + '_';
+        }
+        return candidate;
     }
 
     public String staticArrayMacro() {

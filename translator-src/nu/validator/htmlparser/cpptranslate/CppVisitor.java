@@ -211,6 +211,8 @@ public class CppVisitor implements VoidVisitor<Object> {
 
     private boolean inConstructorBody = false;
 
+    private String currentMethod = null;
+    
     /**
      * @param cppTypes
      */
@@ -817,6 +819,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         switch (n.getOperator()) {
             case notEquals:
                 if (right instanceof NullLiteralExpr) {
+                    printer.print("!!");
                     n.getLeft().accept(this, arg);
                     return;
                 } else if (right instanceof IntegerLiteralExpr) {
@@ -948,8 +951,8 @@ public class CppVisitor implements VoidVisitor<Object> {
             String clazzName = classNameFromExpression(scope);
             if (clazzName == null) {
                 if ("DocumentMode".equals(scope.toString())) {
-                    printer.print(cppTypes.documentModeType());
-                    printer.print(".");
+//                    printer.print(cppTypes.documentModeType());
+//                    printer.print(".");
                 } else {
                     scope.accept(this, arg);
                     printer.print("->");
@@ -1076,6 +1079,10 @@ public class CppVisitor implements VoidVisitor<Object> {
         } else if (val.startsWith("-/") || val.startsWith("+//")
                 || val.startsWith("http://") || val.startsWith("XSLT")) {
             printer.print(cppTypes.stringForLiteral(val));
+        } else if (("hidden".equals(val) || "isindex".equals(val)) && "TreeBuilder".equals(javaClassName)) {
+            printer.print(cppTypes.stringForLiteral(val));
+        } else if ("isQuirky".equals(currentMethod) && "html".equals(val)) {
+            printer.print(cppTypes.stringForLiteral(val));            
         } else {
             printer.print(cppTypes.localForLiteral(val));
         }
@@ -1366,6 +1373,16 @@ public class CppVisitor implements VoidVisitor<Object> {
     }
 
     public void visit(MethodDeclaration n, Object arg) {
+        if (isPrintableMethod(n.getModifiers())) {
+            printMethodDeclaration(n, arg);
+        }
+    }
+
+    private boolean isPrintableMethod(int modifiers) {
+        return !(ModifierSet.isAbstract(modifiers) || (ModifierSet.isProtected(modifiers) && !ModifierSet.isFinal(modifiers)));
+    }
+
+    protected void printMethodDeclaration(MethodDeclaration n, Object arg) {
         if (n.getName().startsWith("fatal") || n.getName().startsWith("err")
                 || n.getName().startsWith("warn")
                 || "releaseArray".equals(n.getName())
@@ -1373,6 +1390,8 @@ public class CppVisitor implements VoidVisitor<Object> {
                 || "delete".equals(n.getName())) {
             return;
         }
+        
+        currentMethod = n.getName();
 
         // if (n.getJavaDoc() != null) {
         // n.getJavaDoc().accept(this, arg);
@@ -1545,18 +1564,25 @@ public class CppVisitor implements VoidVisitor<Object> {
 
     public void visit(ExpressionStmt n, Object arg) {
         Expression e = n.getExpression();
-        if (e instanceof MethodCallExpr) {
-            MethodCallExpr methodCallExpr = (MethodCallExpr) e;
-            String name = methodCallExpr.getName();
-            if (name.startsWith("fatal") || name.startsWith("err")
-                    || name.startsWith("warn")) {
-                return;
-            }
+        if(isDroppedExpression(e)) {
+            return;
         }
         e.accept(this, arg);
         if (!inConstructorBody) {
             printer.print(";");
         }
+    }
+
+    private boolean isDroppedExpression(Expression e) {
+        if (e instanceof MethodCallExpr) {
+            MethodCallExpr methodCallExpr = (MethodCallExpr) e;
+            String name = methodCallExpr.getName();
+            if (name.startsWith("fatal") || name.startsWith("err")
+                    || name.startsWith("warn")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void visit(SwitchStmt n, Object arg) {
@@ -1584,13 +1610,41 @@ public class CppVisitor implements VoidVisitor<Object> {
         }
         printer.printLn();
         printer.indent();
-        if (n.getStmts() != null) {
+        if (isNoStatement(n.getStmts())) {
+            if (n.getLabel() == null) {
+                printer.printLn("; // fall through");            
+            }
+        } else {
             for (Statement s : n.getStmts()) {
                 s.accept(this, arg);
                 printer.printLn();
             }
         }
         printer.unindent();
+    }
+
+    private boolean isNoStatement(List<Statement> stmts) {
+        if (stmts == null) {
+            return true;
+        }
+        for (Statement statement : stmts) {
+            if (!isDroppableStatement(statement)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean isDroppableStatement(Statement statement) {
+        if (statement instanceof AssertStmt) {
+            return true;
+        } else if (statement instanceof ExpressionStmt) {
+            ExpressionStmt es = (ExpressionStmt) statement;
+            if(isDroppedExpression(es.getExpression())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void visit(BreakStmt n, Object arg) {
@@ -1720,14 +1774,24 @@ public class CppVisitor implements VoidVisitor<Object> {
     }
 
     public void visit(IfStmt n, Object arg) {
-        printer.print("if (");
-        n.getCondition().accept(this, arg);
-        printer.print(") ");
-        n.getThenStmt().accept(this, arg);
-        if (n.getElseStmt() != null) {
-            printer.print(" else ");
-            n.getElseStmt().accept(this, arg);
+        if (!isErrorHandlerIf(n.getCondition())) {
+            printer.print("if (");
+            n.getCondition().accept(this, arg);
+            printer.print(") ");
+            n.getThenStmt().accept(this, arg);
+            if (n.getElseStmt() != null) {
+                printer.print(" else ");
+                n.getElseStmt().accept(this, arg);
+            }            
         }
+    }
+
+    private boolean isErrorHandlerIf(Expression condition) {
+        if (condition instanceof BinaryExpr) {
+            BinaryExpr be = (BinaryExpr) condition;
+            return be.getLeft().toString().equals("errorHandler");       
+        }
+        return false;
     }
 
     public void visit(WhileStmt n, Object arg) {

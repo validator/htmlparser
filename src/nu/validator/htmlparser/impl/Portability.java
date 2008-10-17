@@ -142,4 +142,8 @@ public final class Portability {
     public static void deleteArray(Object o) {
         
     }
+
+    public static boolean localEqualsHtmlIgnoreAsciiCase(@Local String name) {
+        return lowerCaseLiteralEqualsIgnoreAsciiCaseString("html", name);
+    }
 }
