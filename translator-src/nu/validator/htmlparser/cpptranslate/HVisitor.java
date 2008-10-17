@@ -41,6 +41,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import japa.parser.ast.body.FieldDeclaration;
+import japa.parser.ast.body.MethodDeclaration;
 import japa.parser.ast.body.ModifierSet;
 import japa.parser.ast.body.VariableDeclarator;
 import japa.parser.ast.expr.IntegerLiteralExpr;
@@ -220,6 +221,9 @@ public class HVisitor extends CppVisitor {
             }
             String name = javaClassName + "." + declarator.getId().getName();
             String value = declarator.getInit().toString();
+            if ("Integer.MAX_VALUE".equals(value)) {
+                value = cppTypes.maxInteger();
+            }
             String longName = definePrefix + declarator.getId().getName();
             if (symbolTable.cppDefinesByJavaNames.containsKey(name)) {
                 throw new IllegalStateException(
@@ -316,6 +320,13 @@ public class HVisitor extends CppVisitor {
      */
     @Override protected void printConstructorBody(BlockStmt block, Object arg) {
         printer.printLn(";");
+    }
+
+    /**
+     * @see nu.validator.htmlparser.cpptranslate.CppVisitor#visit(japa.parser.ast.body.MethodDeclaration, java.lang.Object)
+     */
+    @Override public void visit(MethodDeclaration n, Object arg) {
+        printMethodDeclaration(n, arg);
     }
 
 }
