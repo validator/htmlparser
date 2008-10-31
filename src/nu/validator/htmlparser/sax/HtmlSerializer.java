@@ -191,12 +191,6 @@ public class HtmlSerializer implements ContentHandler, LexicalHandler {
                         case '"':
                             writer.write("&quot;");
                             break;
-                        case '<':
-                            writer.write("&lt;");
-                            break;
-                        case '>':
-                            writer.write("&gt;");
-                            break;
                         case '&':
                             writer.write("&amp;");
                             break;
