@@ -55,6 +55,11 @@ public class CppTypes {
         "nsHtml5Parser",
         "nsHtml5StringLiterals",
     };
+    
+    private static final String[] NAMED_CHARACTERS_INCLUDES = {
+        "prtypes",
+        "jArray",
+    };
 
     private static final String[] FORWARD_DECLARATIONS = {
         "nsHtml5Parser",
@@ -197,6 +202,10 @@ public class CppTypes {
         return INCLUDES;
     }
 
+    public String[] namedCharactersIncludes() {
+        return NAMED_CHARACTERS_INCLUDES;
+    }
+    
     public String[] boilerplateForwardDeclarations() {
         return FORWARD_DECLARATIONS;
     }
