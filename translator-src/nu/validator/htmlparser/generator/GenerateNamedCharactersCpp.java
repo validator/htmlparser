@@ -94,6 +94,7 @@ public class GenerateNamedCharactersCpp {
         File targetDirectory = new File(args[1]);
         
         generateH(targetDirectory, cppTypes, entities);
+        generateCpp(targetDirectory, cppTypes, entities.size());
     }
 
     private static void generateH(File targetDirectory, CppTypes cppTypes, Map<String, String> entities) throws IOException {
@@ -202,6 +203,8 @@ public class GenerateNamedCharactersCpp {
         }
         
         out.write("\n#endif // " + cppTypes.classPrefix() + "NamedCharacters_h__\n");
+        out.flush();
+        out.close();
     }
 
     private static void generateCpp(File targetDirectory, CppTypes cppTypes, int numOfEntities) throws IOException {
@@ -243,5 +246,7 @@ public class GenerateNamedCharactersCpp {
         out.write("  delete[] WINDOWS_1252;\n");
         out.write("}\n");
         out.write("\n");
+        out.flush();
+        out.close();
     }    
 }
