@@ -203,10 +203,10 @@ class DOMTreeBuilder extends CoalescingTreeBuilder<Element> {
 
     /**
      * 
-     * @see nu.validator.htmlparser.impl.TreeBuilder#detachFromParentAndAppendToNewParent(java.lang.Object, java.lang.Object)
+     * @see nu.validator.htmlparser.impl.TreeBuilder#appendElement(java.lang.Object, java.lang.Object)
      */
     @Override
-    protected void detachFromParentAndAppendToNewParent(Element child,
+    protected void appendElement(Element child,
             Element newParent) throws SAXException {
         try {
             newParent.appendChild(child);

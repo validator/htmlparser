@@ -37,7 +37,7 @@ public abstract class CoalescingTreeBuilder<T> extends TreeBuilder<T> {
             int newLen = charBufferLen + length;
             if (newLen > charBuffer.length) {
                 char[] newBuf = new char[newLen];
-                System.arraycopy(charBuffer, 0, newBuf, 0, charBuffer.length);
+                System.arraycopy(charBuffer, 0, newBuf, 0, charBufferLen);
                 Portability.releaseArray(charBuffer);
                 charBuffer = newBuf;
             }

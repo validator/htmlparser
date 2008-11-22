@@ -287,7 +287,7 @@ class BrowserTreeBuilder extends CoalescingTreeBuilder<JavaScriptObject> {
         }
     }
 
-    @Override protected void detachFromParentAndAppendToNewParent(
+    @Override protected void appendElement(
             JavaScriptObject child, JavaScriptObject newParent)
             throws SAXException {
         try {

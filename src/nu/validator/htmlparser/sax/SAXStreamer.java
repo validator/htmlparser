@@ -93,7 +93,7 @@ class SAXStreamer extends TreeBuilder<Attributes>{
     }
 
     @Override
-    protected void detachFromParentAndAppendToNewParent(Attributes child, Attributes newParent) throws SAXException {
+    protected void appendElement(Attributes child, Attributes newParent) throws SAXException {
     }
 
     @Override

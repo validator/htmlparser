@@ -26,6 +26,7 @@ package nu.validator.htmlparser.impl;
 import nu.validator.htmlparser.annotation.IdType;
 import nu.validator.htmlparser.annotation.Local;
 import nu.validator.htmlparser.annotation.NsUri;
+import nu.validator.htmlparser.annotation.Prefix;
 import nu.validator.htmlparser.annotation.QName;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
 
@@ -216,6 +217,14 @@ public final class HtmlAttributes implements Attributes {
     public @NsUri String getURI(int index) {
         if (index < length && index >= 0) {
             return names[index].getUri(mode);
+        } else {
+            return null;
+        }
+    }
+
+    public @Prefix String getPrefix(int index) {
+        if (index < length && index >= 0) {
+            return names[index].getPrefix(mode);
         } else {
             return null;
         }

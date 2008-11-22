@@ -162,7 +162,7 @@ class XOMTreeBuilder extends CoalescingTreeBuilder<Element> {
     }
 
     @Override
-    protected void detachFromParentAndAppendToNewParent(Element child,
+    protected void appendElement(Element child,
             Element newParent) throws SAXException {
         try {
             child.detach();
