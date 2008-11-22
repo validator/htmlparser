@@ -47,6 +47,7 @@ public class CppTypes {
         "nsString",
         "nsINameSpaceManager",
         "nsIContent",
+        "nsIDocument",
         "nsGkAtoms",
         "jArray",
         "nsHtml5DocumentMode",
@@ -232,5 +233,13 @@ public class CppTypes {
 
     public String maxInteger() {
         return "PR_INT32_MAX";
+    }
+
+    public String utf16BufferCppSupplement() {
+        return "nsHtml5UTF16BufferCppSupplement.h";
+    }
+
+    public String utf16BufferHSupplement() {
+        return "nsHtml5UTF16BufferHSupplement.h";
     }
 }

@@ -386,6 +386,11 @@ public class CppVisitor implements VoidVisitor<Object> {
             printer.print("#include \"");
             printer.print(cppTypes.treeBuiderCppSupplement());
             printer.printLn("\"");
+        } else if ("UTF16Buffer".equals(javaClassName)) {
+            printer.printLn();
+            printer.print("#include \"");
+            printer.print(cppTypes.utf16BufferCppSupplement());
+            printer.printLn("\"");
         }
     }
 
@@ -1373,7 +1378,7 @@ public class CppVisitor implements VoidVisitor<Object> {
     }
 
     public void visit(MethodDeclaration n, Object arg) {
-        if (isPrintableMethod(n.getModifiers())) {
+        if (isPrintableMethod(n.getModifiers()) && !(n.getName().equals("endCoalescing") || n.getName().equals("startCoalescing"))) {
             printMethodDeclaration(n, arg);
         }
     }

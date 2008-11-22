@@ -3643,8 +3643,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     // ]NOCPP]
             );
         }
+        // [NOCPP[
         documentMode(m, publicIdentifier, systemIdentifier,
                 html4SpecificAdditionalErrorChecks);
+        // ]NOCPP]
     }
 
     private boolean isAlmostStandards(String publicIdentifier,
@@ -4010,14 +4012,16 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     listOfActiveFormattingElements[nodeListPos] = node;
                     stack[nodePos] = node;
                 }
-                detachFromParentAndAppendToNewParent(lastNode.node, node.node);
+                detachFromParent(lastNode.node);
+                appendElement(lastNode.node, node.node);
                 lastNode = node;
             }
             if (commonAncestor.fosterParenting) {
                 fatal();
                 insertIntoFosterParent(lastNode.node);
             } else {
-                detachFromParentAndAppendToNewParent(lastNode.node,
+                detachFromParent(lastNode.node);
+                appendElement(lastNode.node,
                         commonAncestor.node);
             }
             T clone = shallowClone(formattingElt.node);
@@ -4026,7 +4030,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     clone, formattingElt.scoping, formattingElt.special,
                     formattingElt.fosterParenting, formattingElt.popName);
             appendChildrenToNewParent(furthestBlock.node, clone);
-            detachFromParentAndAppendToNewParent(clone, furthestBlock.node);
+            appendElement(clone, furthestBlock.node);
             removeFromListOfActiveFormattingElements(formattingEltListPos);
             insertIntoListOfActiveFormattingElements(formattingClone, bookmark);
             assert formattingEltStackPos < furthestBlockPos;
@@ -4165,7 +4169,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             if (currentNode.fosterParenting) {
                 insertIntoFosterParent(clone);
             } else {
-                detachFromParentAndAppendToNewParent(clone, currentNode.node);
+                appendElement(clone, currentNode.node);
             }
             push(entryClone);
             listOfActiveFormattingElements[entryPos] = entryClone;
@@ -4178,12 +4182,12 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         node.tainted = true;
         T elt = node.node;
         if (eltPos == 0) {
-            detachFromParentAndAppendToNewParent(child, elt);
+            appendElement(child, elt);
             return;
         }
         T parent = parentElementFor(elt);
         if (parent == null) {
-            detachFromParentAndAppendToNewParent(child, stack[eltPos - 1].node);
+            appendElement(child, stack[eltPos - 1].node);
         } else {
             insertBefore(child, elt, parent);
         }
@@ -4301,7 +4305,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         // ]NOCPP]
         T elt = createElement("http://www.w3.org/1999/xhtml", "head",
                 attributes);
-        detachFromParentAndAppendToNewParent(elt, stack[currentPtr].node);
+        appendElement(elt, stack[currentPtr].node);
         headPointer = elt;
         StackNode<T> node = new StackNode<T>("http://www.w3.org/1999/xhtml",
                 ElementName.HEAD, elt);
@@ -4332,7 +4336,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             fatal();
             insertIntoFosterParent(elt);
         } else {
-            detachFromParentAndAppendToNewParent(elt, current.node);
+            appendElement(elt, current.node);
         }
         StackNode<T> node = new StackNode<T>("http://www.w3.org/1999/xhtml",
                 ElementName.FORM, elt);
@@ -4353,7 +4357,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             fatal();
             insertIntoFosterParent(elt);
         } else {
-            detachFromParentAndAppendToNewParent(elt, current.node);
+            appendElement(elt, current.node);
         }
         StackNode<T> node = new StackNode<T>(ns, elementName, elt);
         push(node);
@@ -4369,7 +4373,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         // ]NOCPP]
         // This method can't be called for custom elements
         T elt = createElement(ns, elementName.name, attributes);
-        detachFromParentAndAppendToNewParent(elt, stack[currentPtr].node);
+        appendElement(elt, stack[currentPtr].node);
         StackNode<T> node = new StackNode<T>(ns, elementName, elt);
         push(node);
     }
@@ -4391,7 +4395,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             fatal();
             insertIntoFosterParent(elt);
         } else {
-            detachFromParentAndAppendToNewParent(elt, current.node);
+            appendElement(elt, current.node);
         }
         StackNode<T> node = new StackNode<T>(ns, elementName, elt, popName);
         push(node);
@@ -4414,7 +4418,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             fatal();
             insertIntoFosterParent(elt);
         } else {
-            detachFromParentAndAppendToNewParent(elt, current.node);
+            appendElement(elt, current.node);
         }
         StackNode<T> node = new StackNode<T>(ns, elementName, elt, popName,
                 false);
@@ -4438,7 +4442,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             fatal();
             insertIntoFosterParent(elt);
         } else {
-            detachFromParentAndAppendToNewParent(elt, current.node);
+            appendElement(elt, current.node);
         }
         StackNode<T> node = new StackNode<T>(ns, elementName, elt, popName,
                 ElementName.FOREIGNOBJECT == elementName);
@@ -4459,7 +4463,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             fatal();
             insertIntoFosterParent(elt);
         } else {
-            detachFromParentAndAppendToNewParent(elt, current.node);
+            appendElement(elt, current.node);
         }
         StackNode<T> node = new StackNode<T>(ns, elementName, elt);
         push(node);
@@ -4479,7 +4483,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             fatal();
             insertIntoFosterParent(elt);
         } else {
-            detachFromParentAndAppendToNewParent(elt, current.node);
+            appendElement(elt, current.node);
         }
         elementPushed(ns, name, (T) attributes);
         elementPopped(ns, name, null);
@@ -4502,7 +4506,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             fatal();
             insertIntoFosterParent(elt);
         } else {
-            detachFromParentAndAppendToNewParent(elt, current.node);
+            appendElement(elt, current.node);
         }
         elementPushed(ns, popName, (T) attributes);
         elementPopped(ns, popName, null);
@@ -4525,7 +4529,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             fatal();
             insertIntoFosterParent(elt);
         } else {
-            detachFromParentAndAppendToNewParent(elt, current.node);
+            appendElement(elt, current.node);
         }
         elementPushed(ns, popName, (T) attributes);
         elementPopped(ns, popName, null);
@@ -4541,7 +4545,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         // Can't be called for custom elements
         T elt = createElement(ns, name, attributes, formPointer);
         StackNode<T> current = stack[currentPtr];
-        detachFromParentAndAppendToNewParent(elt, current.node);
+        appendElement(elt, current.node);
         elementPushed(ns, name, (T) attributes);
         elementPopped(ns, name, null);
     }
@@ -4577,7 +4581,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     protected abstract T shallowClone(T element) throws SAXException;
 
-    protected abstract void detachFromParentAndAppendToNewParent(T child,
+    protected abstract void appendElement(T child,
             T newParent) throws SAXException;
 
     protected abstract void appendChildrenToNewParent(T oldParent, T newParent)
@@ -4638,14 +4642,14 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             throws SAXException {
 
     }
+    
+    // [NOCPP[
 
     protected void documentMode(DocumentMode m, String publicIdentifier,
             String systemIdentifier, boolean html4SpecificAdditionalErrorChecks)
             throws SAXException {
 
     }
-
-    // [NOCPP[
 
     /**
      * @see nu.validator.htmlparser.common.TokenHandler#wantsComments()

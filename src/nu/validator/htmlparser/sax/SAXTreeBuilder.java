@@ -77,7 +77,7 @@ class SAXTreeBuilder extends TreeBuilder<Element> {
     }
 
     @Override
-    protected void detachFromParentAndAppendToNewParent(Element child, Element newParent) {
+    protected void appendElement(Element child, Element newParent) {
         newParent.appendChild(child);
     }
 

@@ -146,6 +146,11 @@ public class HVisitor extends CppVisitor {
             printer.print("#include \"");
             printer.print(cppTypes.treeBuiderHSupplement());
             printer.printLn("\"");
+        } else if ("UTF16Buffer".equals(javaClassName)) {
+            printer.printLn();
+            printer.print("#include \"");
+            printer.print(cppTypes.utf16BufferHSupplement());
+            printer.printLn("\"");
         }
         
         printer.printLn("};");
