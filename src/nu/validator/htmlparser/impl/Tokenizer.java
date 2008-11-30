@@ -3754,7 +3754,9 @@ public final class Tokenizer implements Locator {
                         case '<':
                         case '&':
                             emitOrAppendStrBuf(returnState);
-                            cstart = pos;
+                            if ((returnState & (~1)) == 0) {
+                                cstart = pos;
+                            }
                             state = returnState;
                             reconsume = true;
                             continue stateloop;
@@ -4117,8 +4119,8 @@ public final class Tokenizer implements Locator {
                             continue;
                         } else if (c == ';') {
                             if (seenDigits) {
-                                state = Tokenizer.HANDLE_NCR_VALUE;
                                 cstart = pos + 1;
+                                state = Tokenizer.HANDLE_NCR_VALUE;
                                 continue stateloop;
                             } else {
                                 err("No digits after \u201C" + strBufToString()
