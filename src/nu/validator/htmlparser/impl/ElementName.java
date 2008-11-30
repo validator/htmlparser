@@ -385,7 +385,7 @@ public final class ElementName
     public static final ElementName COT = new ElementName("cot", "cot", TreeBuilder.OTHER, false, false, false);
     public static final ElementName DEL = new ElementName("del", "del", TreeBuilder.OTHER, false, false, false);
     public static final ElementName DFN = new ElementName("dfn", "dfn", TreeBuilder.OTHER, false, false, false);
-    public static final ElementName DIR = new ElementName("dir", "dir", TreeBuilder.FIELDSET_OR_ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION, true, false, false);
+    public static final ElementName DIR = new ElementName("dir", "dir", TreeBuilder.ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION, true, false, false);
     public static final ElementName DIV = new ElementName("div", "div", TreeBuilder.DIV_OR_BLOCKQUOTE_OR_CENTER_OR_MENU, true, false, false);
     public static final ElementName EXP = new ElementName("exp", "exp", TreeBuilder.OTHER, false, false, false);
     public static final ElementName GCD = new ElementName("gcd", "gcd", TreeBuilder.OTHER, false, false, false);
@@ -404,7 +404,7 @@ public final class ElementName
     public static final ElementName MAX = new ElementName("max", "max", TreeBuilder.OTHER, false, false, false);
     public static final ElementName NEQ = new ElementName("neq", "neq", TreeBuilder.OTHER, false, false, false);
     public static final ElementName NOT = new ElementName("not", "not", TreeBuilder.OTHER, false, false, false);
-    public static final ElementName NAV = new ElementName("nav", "nav", TreeBuilder.FIELDSET_OR_ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION, true, false, false);
+    public static final ElementName NAV = new ElementName("nav", "nav", TreeBuilder.ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION, true, false, false);
     public static final ElementName PRE = new ElementName("pre", "pre", TreeBuilder.PRE_OR_LISTING, true, false, false);
     public static final ElementName REM = new ElementName("rem", "rem", TreeBuilder.OTHER, false, false, false);
     public static final ElementName SUB = new ElementName("sub", "sub", TreeBuilder.CODE_OR_RUBY_OR_SPAN_OR_SUB_OR_SUP_OR_VAR, false, false, false);
@@ -477,7 +477,7 @@ public final class ElementName
     public static final ElementName TANH = new ElementName("tanh", "tanh", TreeBuilder.OTHER, false, false, false);
     public static final ElementName TEXT = new ElementName("text", "text", TreeBuilder.OTHER, false, false, false);
     public static final ElementName VIEW = new ElementName("view", "view", TreeBuilder.OTHER, false, false, false);
-    public static final ElementName ASIDE = new ElementName("aside", "aside", TreeBuilder.FIELDSET_OR_ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION, true, false, false);
+    public static final ElementName ASIDE = new ElementName("aside", "aside", TreeBuilder.ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION, true, false, false);
     public static final ElementName AUDIO = new ElementName("audio", "audio", TreeBuilder.OTHER, false, false, false);
     public static final ElementName APPLY = new ElementName("apply", "apply", TreeBuilder.OTHER, false, false, false);
     public static final ElementName EMBED = new ElementName("embed", "embed", TreeBuilder.EMBED_OR_IMG, true, false, false);
@@ -489,7 +489,7 @@ public final class ElementName
     public static final ElementName IMAGE = new ElementName("image", "image", TreeBuilder.IMAGE, true, false, false);
     public static final ElementName IDENT = new ElementName("ident", "ident", TreeBuilder.OTHER, false, false, false);
     public static final ElementName INPUT = new ElementName("input", "input", TreeBuilder.INPUT, true, false, false);
-    public static final ElementName LABEL = new ElementName("label", "label", TreeBuilder.OTHER, false, false, false);
+    public static final ElementName LABEL = new ElementName("label", "label", TreeBuilder.OUTPUT_OR_LABEL, false, false, false);
     public static final ElementName LIMIT = new ElementName("limit", "limit", TreeBuilder.OTHER, false, false, false);
     public static final ElementName MFRAC = new ElementName("mfrac", "mfrac", TreeBuilder.OTHER, false, false, false);
     public static final ElementName MPATH = new ElementName("mpath", "mpath", TreeBuilder.OTHER, false, false, false);
@@ -521,7 +521,7 @@ public final class ElementName
     public static final ElementName ARCTAN = new ElementName("arctan", "arctan", TreeBuilder.OTHER, false, false, false);
     public static final ElementName ARCSIN = new ElementName("arcsin", "arcsin", TreeBuilder.OTHER, false, false, false);
     public static final ElementName ARCCOS = new ElementName("arccos", "arccos", TreeBuilder.OTHER, false, false, false);
-    public static final ElementName APPLET = new ElementName("applet", "applet", TreeBuilder.OBJECT_OR_MARQUEE_OR_APPLET, false, true, false);
+    public static final ElementName APPLET = new ElementName("applet", "applet", TreeBuilder.MARQUEE_OR_APPLET, false, true, false);
     public static final ElementName ARCCOT = new ElementName("arccot", "arccot", TreeBuilder.OTHER, false, false, false);
     public static final ElementName APPROX = new ElementName("approx", "approx", TreeBuilder.OTHER, false, false, false);
     public static final ElementName BUTTON = new ElementName("button", "button", TreeBuilder.BUTTON, false, true, false);
@@ -531,15 +531,15 @@ public final class ElementName
     public static final ElementName CANVAS = new ElementName("canvas", "canvas", TreeBuilder.OTHER, false, false, false);
     public static final ElementName DIVIDE = new ElementName("divide", "divide", TreeBuilder.OTHER, false, false, false);
     public static final ElementName DEGREE = new ElementName("degree", "degree", TreeBuilder.OTHER, false, false, false);
-    public static final ElementName DIALOG = new ElementName("dialog", "dialog", TreeBuilder.FIELDSET_OR_ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION, true, false, false);
+    public static final ElementName DIALOG = new ElementName("dialog", "dialog", TreeBuilder.ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION, true, false, false);
     public static final ElementName DOMAIN = new ElementName("domain", "domain", TreeBuilder.OTHER, false, false, false);
     public static final ElementName EXISTS = new ElementName("exists", "exists", TreeBuilder.OTHER, false, false, false);
     public static final ElementName FETILE = new ElementName("fetile", "feTile", TreeBuilder.OTHER, false, false, false);
-    public static final ElementName FIGURE = new ElementName("figure", "figure", TreeBuilder.FIELDSET_OR_ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION, true, false, false);
+    public static final ElementName FIGURE = new ElementName("figure", "figure", TreeBuilder.ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION, true, false, false);
     public static final ElementName FORALL = new ElementName("forall", "forall", TreeBuilder.OTHER, false, false, false);
     public static final ElementName FILTER = new ElementName("filter", "filter", TreeBuilder.OTHER, false, false, false);
-    public static final ElementName FOOTER = new ElementName("footer", "footer", TreeBuilder.FIELDSET_OR_ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION, true, false, false);
-    public static final ElementName HEADER = new ElementName("header", "header", TreeBuilder.FIELDSET_OR_ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION, true, false, false);
+    public static final ElementName FOOTER = new ElementName("footer", "footer", TreeBuilder.ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION, true, false, false);
+    public static final ElementName HEADER = new ElementName("header", "header", TreeBuilder.ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION, true, false, false);
     public static final ElementName IFRAME = new ElementName("iframe", "iframe", TreeBuilder.IFRAME, true, false, false);
     public static final ElementName KEYGEN = new ElementName("keygen", "keygen", TreeBuilder.OTHER, false, false, false);
     public static final ElementName LAMBDA = new ElementName("lambda", "lambda", TreeBuilder.OTHER, false, false, false);
@@ -555,8 +555,8 @@ public final class ElementName
     public static final ElementName MOMENT = new ElementName("moment", "moment", TreeBuilder.OTHER, false, false, false);
     public static final ElementName MATRIX = new ElementName("matrix", "matrix", TreeBuilder.OTHER, false, false, false);
     public static final ElementName OPTION = new ElementName("option", "option", TreeBuilder.OPTION, true, false, false);
-    public static final ElementName OBJECT = new ElementName("object", "object", TreeBuilder.OBJECT_OR_MARQUEE_OR_APPLET, false, true, false);
-    public static final ElementName OUTPUT = new ElementName("output", "output", TreeBuilder.OTHER, false, false, false);
+    public static final ElementName OBJECT = new ElementName("object", "object", TreeBuilder.OBJECT, false, true, false);
+    public static final ElementName OUTPUT = new ElementName("output", "output", TreeBuilder.OUTPUT_OR_LABEL, false, false, false);
     public static final ElementName PRIMES = new ElementName("primes", "primes", TreeBuilder.OTHER, false, false, false);
     public static final ElementName SOURCE = new ElementName("source", "source", TreeBuilder.PARAM_OR_SOURCE, false, false, false);
     public static final ElementName STRIKE = new ElementName("strike", "strike", TreeBuilder.B_OR_BIG_OR_EM_OR_FONT_OR_I_OR_S_OR_SMALL_OR_STRIKE_OR_STRONG_OR_TT_OR_U, false, false, false);
@@ -569,7 +569,7 @@ public final class ElementName
     public static final ElementName SCRIPT = new ElementName("script", "script", TreeBuilder.SCRIPT, true, false, false);
     public static final ElementName TBREAK = new ElementName("tbreak", "tbreak", TreeBuilder.OTHER, false, false, false);
     public static final ElementName VECTOR = new ElementName("vector", "vector", TreeBuilder.OTHER, false, false, false);
-    public static final ElementName ARTICLE = new ElementName("article", "article", TreeBuilder.FIELDSET_OR_ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION, true, false, false);
+    public static final ElementName ARTICLE = new ElementName("article", "article", TreeBuilder.ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION, true, false, false);
     public static final ElementName ANIMATE = new ElementName("animate", "animate", TreeBuilder.OTHER, false, false, false);
     public static final ElementName ARCSECH = new ElementName("arcsech", "arcsech", TreeBuilder.OTHER, false, false, false);
     public static final ElementName ARCCSCH = new ElementName("arccsch", "arccsch", TreeBuilder.OTHER, false, false, false);
@@ -578,7 +578,7 @@ public final class ElementName
     public static final ElementName ARCCOSH = new ElementName("arccosh", "arccosh", TreeBuilder.OTHER, false, false, false);
     public static final ElementName ARCCOTH = new ElementName("arccoth", "arccoth", TreeBuilder.OTHER, false, false, false);
     public static final ElementName ACRONYM = new ElementName("acronym", "acronym", TreeBuilder.OTHER, false, false, false);
-    public static final ElementName ADDRESS = new ElementName("address", "address", TreeBuilder.FIELDSET_OR_ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION, true, false, false);
+    public static final ElementName ADDRESS = new ElementName("address", "address", TreeBuilder.ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION, true, false, false);
     public static final ElementName BGSOUND = new ElementName("bgsound", "bgsound", TreeBuilder.AREA_OR_BASEFONT_OR_BGSOUND_OR_SPACER_OR_WBR, true, false, false);
     public static final ElementName COMMAND = new ElementName("command", "command", TreeBuilder.COMMAND_OR_EVENT_SOURCE, true, false, false);
     public static final ElementName COMPOSE = new ElementName("compose", "compose", TreeBuilder.OTHER, false, false, false);
@@ -587,7 +587,7 @@ public final class ElementName
     public static final ElementName CAPTION = new ElementName("caption", "caption", TreeBuilder.CAPTION, false, true, false);
     public static final ElementName DISCARD = new ElementName("discard", "discard", TreeBuilder.OTHER, false, false, false);
     public static final ElementName DECLARE = new ElementName("declare", "declare", TreeBuilder.OTHER, false, false, false);
-    public static final ElementName DETAILS = new ElementName("details", "details", TreeBuilder.FIELDSET_OR_ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION, true, false, false);
+    public static final ElementName DETAILS = new ElementName("details", "details", TreeBuilder.ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION, true, false, false);
     public static final ElementName ELLIPSE = new ElementName("ellipse", "ellipse", TreeBuilder.OTHER, false, false, false);
     public static final ElementName FEFUNCA = new ElementName("fefunca", "feFuncA", TreeBuilder.OTHER, false, false, false);
     public static final ElementName FEFUNCB = new ElementName("fefuncb", "feFuncB", TreeBuilder.OTHER, false, false, false);
@@ -605,7 +605,7 @@ public final class ElementName
     public static final ElementName LISTING = new ElementName("listing", "listing", TreeBuilder.PRE_OR_LISTING, true, false, false);
     public static final ElementName MFENCED = new ElementName("mfenced", "mfenced", TreeBuilder.OTHER, false, false, false);
     public static final ElementName MPADDED = new ElementName("mpadded", "mpadded", TreeBuilder.OTHER, false, false, false);
-    public static final ElementName MARQUEE = new ElementName("marquee", "marquee", TreeBuilder.OBJECT_OR_MARQUEE_OR_APPLET, false, true, false);
+    public static final ElementName MARQUEE = new ElementName("marquee", "marquee", TreeBuilder.MARQUEE_OR_APPLET, false, true, false);
     public static final ElementName MACTION = new ElementName("maction", "maction", TreeBuilder.OTHER, false, false, false);
     public static final ElementName MSUBSUP = new ElementName("msubsup", "msubsup", TreeBuilder.OTHER, false, false, false);
     public static final ElementName NOEMBED = new ElementName("noembed", "noembed", TreeBuilder.NOEMBED, true, false, false);
@@ -613,7 +613,7 @@ public final class ElementName
     public static final ElementName PATTERN = new ElementName("pattern", "pattern", TreeBuilder.OTHER, false, false, false);
     public static final ElementName PRODUCT = new ElementName("product", "product", TreeBuilder.OTHER, false, false, false);
     public static final ElementName SETDIFF = new ElementName("setdiff", "setdiff", TreeBuilder.OTHER, false, false, false);
-    public static final ElementName SECTION = new ElementName("section", "section", TreeBuilder.FIELDSET_OR_ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION, true, false, false);
+    public static final ElementName SECTION = new ElementName("section", "section", TreeBuilder.ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION, true, false, false);
     public static final ElementName TENDSTO = new ElementName("tendsto", "tendsto", TreeBuilder.OTHER, false, false, false);
     public static final ElementName UPLIMIT = new ElementName("uplimit", "uplimit", TreeBuilder.OTHER, false, false, false);
     public static final ElementName ALTGLYPH = new ElementName("altglyph", "altGlyph", TreeBuilder.OTHER, false, false, false);
@@ -621,10 +621,10 @@ public final class ElementName
     public static final ElementName CLIPPATH = new ElementName("clippath", "clipPath", TreeBuilder.OTHER, false, false, false);
     public static final ElementName CODOMAIN = new ElementName("codomain", "codomain", TreeBuilder.OTHER, false, false, false);
     public static final ElementName COLGROUP = new ElementName("colgroup", "colgroup", TreeBuilder.COLGROUP, true, false, false);
-    public static final ElementName DATAGRID = new ElementName("datagrid", "datagrid", TreeBuilder.FIELDSET_OR_ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION, true, false, false);
+    public static final ElementName DATAGRID = new ElementName("datagrid", "datagrid", TreeBuilder.ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION, true, false, false);
     public static final ElementName EMPTYSET = new ElementName("emptyset", "emptyset", TreeBuilder.OTHER, false, false, false);
     public static final ElementName FACTOROF = new ElementName("factorof", "factorof", TreeBuilder.OTHER, false, false, false);
-    public static final ElementName FIELDSET = new ElementName("fieldset", "fieldset", TreeBuilder.FIELDSET_OR_ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION, true, false, false);
+    public static final ElementName FIELDSET = new ElementName("fieldset", "fieldset", TreeBuilder.FIELDSET, true, false, false);
     public static final ElementName FRAMESET = new ElementName("frameset", "frameset", TreeBuilder.FRAMESET, true, false, false);
     public static final ElementName FEOFFSET = new ElementName("feoffset", "feOffset", TreeBuilder.OTHER, false, false, false);
     public static final ElementName GLYPHREF = new ElementName("glyphref", "glyphRef", TreeBuilder.OTHER, false, false, false);
