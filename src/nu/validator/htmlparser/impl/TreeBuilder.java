@@ -141,7 +141,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     final static int H1_OR_H2_OR_H3_OR_H4_OR_H5_OR_H6 = 42;
 
-    final static int OBJECT_OR_MARQUEE_OR_APPLET = 43;
+    final static int MARQUEE_OR_APPLET = 43;
 
     final static int PRE_OR_LISTING = 44;
 
@@ -157,7 +157,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     final static int DIV_OR_BLOCKQUOTE_OR_CENTER_OR_MENU = 50;
 
-    final static int FIELDSET_OR_ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION = 51;
+    final static int ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION = 51;
 
     final static int CODE_OR_RUBY_OR_SPAN_OR_SUB_OR_SUP_OR_VAR = 52;
 
@@ -177,6 +177,12 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     final static int NOEMBED = 60;
 
+    final static int FIELDSET = 61;
+
+    final static int OUTPUT_OR_LABEL = 62;
+
+    final static int OBJECT = 63;
+    
     // start insertion modes
 
     private static final int INITIAL = 0;
@@ -1693,11 +1699,17 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     case DIV_OR_BLOCKQUOTE_OR_CENTER_OR_MENU:
                                     case H1_OR_H2_OR_H3_OR_H4_OR_H5_OR_H6:
                                     case UL_OR_OL_OR_DL:
-                                    case FIELDSET_OR_ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION:
+                                    case ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION:
                                         implicitlyCloseP();
                                         appendToCurrentNodeAndPushElementMayFoster(
                                                 "http://www.w3.org/1999/xhtml",
                                                 elementName, attributes);
+                                        break starttagloop;
+                                    case FIELDSET:
+                                        implicitlyCloseP();
+                                        appendToCurrentNodeAndPushElementMayFoster(
+                                                "http://www.w3.org/1999/xhtml",
+                                                elementName, attributes, formPointer);
                                         break starttagloop;
                                     case PRE_OR_LISTING:
                                         implicitlyCloseP();
@@ -1808,7 +1820,14 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                             insertMarker();
                                             break starttagloop;
                                         }
-                                    case OBJECT_OR_MARQUEE_OR_APPLET:
+                                    case OBJECT:
+                                        reconstructTheActiveFormattingElements();
+                                        appendToCurrentNodeAndPushElementMayFoster(
+                                                "http://www.w3.org/1999/xhtml",
+                                                elementName, attributes, formPointer);
+                                        insertMarker();
+                                        break starttagloop;
+                                    case MARQUEE_OR_APPLET:
                                         reconstructTheActiveFormattingElements();
                                         appendToCurrentNodeAndPushElementMayFoster(
                                                 "http://www.w3.org/1999/xhtml",
@@ -2108,6 +2127,12 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         err("Stray start tag \u201C" + name
                                                 + "\u201D.");
                                         break starttagloop;
+                                    case OUTPUT_OR_LABEL:
+                                        reconstructTheActiveFormattingElements();
+                                        appendToCurrentNodeAndPushElementMayFoster(
+                                                "http://www.w3.org/1999/xhtml",
+                                                elementName, attributes, formPointer);
+                                        break starttagloop;
                                     default:
                                         reconstructTheActiveFormattingElements();
                                         appendToCurrentNodeAndPushElementMayFoster(
@@ -2226,7 +2251,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     err("Start tag for \u201Cnoscript\u201D seen when \u201Cnoscript\u201D was already open.");
                                     break starttagloop;
                                 default:
-                                    err("Bad start tag in \u201Cnoscript\u201D in \u201Chead\u201D.");
+                                    err("Bad start tag in \u201C" + name + "\u201D in \u201Chead\u201D.");
                                     pop();
                                     mode = IN_HEAD;
                                     continue;
@@ -3085,7 +3110,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         case DIV_OR_BLOCKQUOTE_OR_CENTER_OR_MENU:
                         case UL_OR_OL_OR_DL:
                         case PRE_OR_LISTING:
-                        case FIELDSET_OR_ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION:
+                        case FIELDSET:
+                        case ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION:
                             eltPos = findLastInScope(name);
                             if (eltPos == TreeBuilder.NOT_FOUND_ON_STACK) {
                                 err("Stray end tag \u201C" + name + "\u201D.");
@@ -3189,7 +3215,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             adoptionAgencyEndTag(name);
                             break endtagloop;
                         case BUTTON:
-                        case OBJECT_OR_MARQUEE_OR_APPLET:
+                        case OBJECT:
+                        case MARQUEE_OR_APPLET:
                             eltPos = findLastInScope(name);
                             if (eltPos == TreeBuilder.NOT_FOUND_ON_STACK) {
                                 err("Stray end tag \u201C" + name + "\u201D.");
@@ -4351,7 +4378,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         checkAttributes(attributes, ns);
         // ]NOCPP]
         // This method can't be called for custom elements
-        T elt = createElement(ns, elementName.name, attributes, formPointer);
+        T elt = createElement(ns, elementName.name, attributes);
         StackNode<T> current = stack[currentPtr];
         if (current.fosterParenting) {
             fatal();
@@ -4457,7 +4484,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         checkAttributes(attributes, ns);
         // ]NOCPP]
         // Can't be called for custom elements
-        T elt = createElement(ns, elementName.name, attributes, formPointer);
+        T elt = createElement(ns, elementName.name, attributes, form);
         StackNode<T> current = stack[currentPtr];
         if (current.fosterParenting) {
             fatal();
@@ -4477,7 +4504,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         checkAttributes(attributes, ns);
         // ]NOCPP]
         // Can't be called for custom elements
-        T elt = createElement(ns, name, attributes, formPointer);
+        T elt = createElement(ns, name, attributes, form);
         StackNode<T> current = stack[currentPtr];
         if (current.fosterParenting) {
             fatal();
@@ -4485,8 +4512,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         } else {
             appendElement(elt, current.node);
         }
-        elementPushed(ns, name, (T) attributes);
-        elementPopped(ns, name, null);
+        elementPushed(ns, name, elt);
+        elementPopped(ns, name, elt);
     }
 
     @SuppressWarnings("unchecked") private void appendVoidElementToCurrentMayFoster(
@@ -4508,8 +4535,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         } else {
             appendElement(elt, current.node);
         }
-        elementPushed(ns, popName, (T) attributes);
-        elementPopped(ns, popName, null);
+        elementPushed(ns, popName, elt);
+        elementPopped(ns, popName, elt);
     }
 
     @SuppressWarnings("unchecked") private void appendVoidElementToCurrentMayFosterCamelCase(
@@ -4531,8 +4558,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         } else {
             appendElement(elt, current.node);
         }
-        elementPushed(ns, popName, (T) attributes);
-        elementPopped(ns, popName, null);
+        elementPushed(ns, popName, elt);
+        elementPopped(ns, popName, elt);
     }
 
     @SuppressWarnings("unchecked") private void appendVoidElementToCurrent(
@@ -4543,11 +4570,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         checkAttributes(attributes, ns);
         // ]NOCPP]
         // Can't be called for custom elements
-        T elt = createElement(ns, name, attributes, formPointer);
+        T elt = createElement(ns, name, attributes, form);
         StackNode<T> current = stack[currentPtr];
         appendElement(elt, current.node);
-        elementPushed(ns, name, (T) attributes);
-        elementPopped(ns, name, null);
+        elementPushed(ns, name, elt);
+        elementPopped(ns, name, elt);
     }
 
     protected void accumulateCharacters(@NoLength char[] buf, int start,
