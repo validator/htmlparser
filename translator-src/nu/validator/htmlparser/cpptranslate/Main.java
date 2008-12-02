@@ -79,9 +79,8 @@ public class Main {
      * @throws IOException 
      */
     public static void main(String[] args) throws ParseException, IOException {
-        GkAtomParser atomParser = new GkAtomParser(new InputStreamReader(new FileInputStream(args[2]), "utf-8"));
         StringLiteralParser stringParser = new StringLiteralParser(new InputStreamReader(new FileInputStream(args[3]), "utf-8"));
-        CppTypes cppTypes = new CppTypes(atomParser.parse(), stringParser.parse());
+        CppTypes cppTypes = new CppTypes(stringParser.parse(), new File(args[2]));
         SymbolTable symbolTable = new SymbolTable();
         
         File javaDirectory = new File(args[0]);
@@ -93,14 +92,19 @@ public class Main {
         for (int i = 0; i < CPP_LIST.length; i++) {
             parseFile(cppTypes, javaDirectory, cppDirectory, CPP_LIST[i], ".cpp", new CppVisitor(cppTypes, symbolTable));
         }
+        cppTypes.finished();
     }
 
     private static void parseFile(CppTypes cppTypes, File javaDirectory, File cppDirectory, String className, String fne, CppVisitor visitor) throws ParseException,
             FileNotFoundException, UnsupportedEncodingException, IOException {
-        CompilationUnit cu = JavaParser.parse(new NoCppInputStream(new FileInputStream(new File(javaDirectory, className + ".java"))), "utf-8");
+        File file = new File(javaDirectory, className + ".java");
+        String license = new LicenseExtractor(file).extract();
+        CompilationUnit cu = JavaParser.parse(new NoCppInputStream(new FileInputStream(file)), "utf-8");
         cu.accept(visitor, null);
         FileOutputStream out = new FileOutputStream(new File(cppDirectory, cppTypes.classPrefix() + className + fne));
         OutputStreamWriter w = new OutputStreamWriter(out, "utf-8");
+        w.write(license);
+        w.write("\n\n/*\n * THIS IS A GENERATED FILE. PLEASE DO NOT EDIT.\n * Please edit " + className + ".java instead and regenerate.\n */\n\n");
         w.write(visitor.getSource());
         w.close();
     }

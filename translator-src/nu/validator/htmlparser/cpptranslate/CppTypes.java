@@ -37,47 +37,87 @@
 
 package nu.validator.htmlparser.cpptranslate;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
+import java.io.Writer;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class CppTypes {
 
-    private static final String[] INCLUDES = {
-        "prtypes",
-        "nsIAtom",
-        "nsString",
-        "nsINameSpaceManager",
-        "nsIContent",
-        "nsIDocument",
-        "nsGkAtoms",
-        "jArray",
-        "nsHtml5DocumentMode",
-        "nsHtml5ArrayCopy",
-        "nsHtml5NamedCharacters",
-        "nsHtml5Parser",
-        "nsHtml5StringLiterals",
-    };
+    private static Set<String> reservedWords = new HashSet<String>();
     
-    private static final String[] NAMED_CHARACTERS_INCLUDES = {
-        "prtypes",
-        "jArray",
-    };
+    static {
+        reservedWords.add("small");
+        reservedWords.add("for");
+        reservedWords.add("false");
+        reservedWords.add("true");
+        reservedWords.add("default");
+        reservedWords.add("class");
+        reservedWords.add("switch");
+        reservedWords.add("union");
+        reservedWords.add("template");
+        reservedWords.add("int");
+        reservedWords.add("char");
+        reservedWords.add("operator");
+        reservedWords.add("or");
+        reservedWords.add("and");
+        reservedWords.add("not");
+        reservedWords.add("xor");
+    }
+    
+    private static final String[] INCLUDES = { "prtypes", "nsIAtom",
+            "nsString", "nsINameSpaceManager", "nsIContent", "nsIDocument",
+            "jArray", "nsHtml5DocumentMode", "nsHtml5ArrayCopy",
+            "nsHtml5NamedCharacters", "nsHtml5Parser", "nsHtml5StringLiterals",
+            "nsHtml5Atoms", };
 
-    private static final String[] FORWARD_DECLARATIONS = {
-        "nsHtml5Parser",
-    };
-    
-    private final Map<String, String> atomMap;
-    
+    private static final String[] NAMED_CHARACTERS_INCLUDES = { "prtypes",
+            "jArray", "nscore" };
+
+    private static final String[] FORWARD_DECLARATIONS = { "nsHtml5Parser", };
+
+    private final Map<String, String> atomMap = new HashMap<String, String>();
+
     private final Map<String, String> stringMap;
 
-    public CppTypes(Map<String, String> atomMap, Map<String, String> stringMap) {
-        this.atomMap = atomMap;
+    private final Writer atomWriter;
+
+    public CppTypes(Map<String, String> stringMap,
+            File atomList) {
         this.stringMap = stringMap;
+        if (atomList == null) {
+            atomWriter = null;
+        } else {
+            try {
+                atomWriter = new OutputStreamWriter(new FileOutputStream(
+                        atomList), "utf-8");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    public void finished() {
+        try {
+            if (atomWriter != null) {
+                atomWriter.flush();
+                atomWriter.close();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public String classPrefix() {
         return "nsHtml5";
-    }    
+    }
 
     public String booleanType() {
         return "PRBool";
@@ -90,7 +130,7 @@ public class CppTypes {
     public String intType() {
         return "PRInt32";
     }
-    
+
     public String stringType() {
         return "nsString*";
     }
@@ -98,7 +138,7 @@ public class CppTypes {
     public String localType() {
         return "nsIAtom*";
     }
-    
+
     public String prefixType() {
         return "nsIAtom*";
     }
@@ -142,7 +182,7 @@ public class CppTypes {
     public String xmlNamespaceLiteral() {
         return "kNameSpaceID_XML";
     }
-    
+
     public String noNamespaceLiteral() {
         return "kNameSpaceID_None";
     }
@@ -154,24 +194,34 @@ public class CppTypes {
     public String mathmlNamespaceLiteral() {
         return "kNameSpaceID_MathML";
     }
-    
+
     public String arrayTemplate() {
         return "jArray";
     }
-    
+
     public String localForLiteral(String literal) {
         String atom = atomMap.get(literal);
         if (atom == null) {
             atom = createAtomName(literal);
             atomMap.put(literal, atom);
-            System.err.println("MISSING ATOM: GK_ATOM("+ atom + ", \"" + literal + "\")");
+            if (atomWriter != null) {
+                try {
+                    atomWriter.write("HTML5_ATOM(" + atom
+                            + ", \"" + literal + "\")\n");
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
-        return "nsGkAtoms::" + atom;
+        return "nsHtml5Atoms::" + atom;
     }
-    
+
     private String createAtomName(String literal) {
         String candidate = literal.replaceAll("[^a-zA-Z0-9_]", "_");
-        while (atomMap.values().contains(candidate)) {
+        if ("".equals(candidate)) {
+            candidate = "emptystring";
+        }
+        while (atomMap.values().contains(candidate) || reservedWords.contains(candidate)) {
             candidate = candidate + '_';
         }
         return candidate;
@@ -182,7 +232,9 @@ public class CppTypes {
         if (str == null) {
             str = createLiteralName(literal);
             stringMap.put(literal, str);
-            System.err.println("MISSING STRING:  (" + str + " = new nsString())->Assign(NS_LITERAL_STRING(\"" + literal + "\"));");
+            System.err.println("MISSING STRING:  (" + str
+                    + " = new nsString())->Assign(NS_LITERAL_STRING(\""
+                    + literal + "\"));");
         }
         return "nsHtml5StringLiterals::" + str;
     }
@@ -198,7 +250,7 @@ public class CppTypes {
     public String staticArrayMacro() {
         return "J_ARRAY_STATIC";
     }
-    
+
     public String[] boilerplateIncludes() {
         return INCLUDES;
     }
@@ -206,11 +258,11 @@ public class CppTypes {
     public String[] namedCharactersIncludes() {
         return NAMED_CHARACTERS_INCLUDES;
     }
-    
+
     public String[] boilerplateForwardDeclarations() {
         return FORWARD_DECLARATIONS;
     }
-    
+
     public String treeBuiderHSupplement() {
         return "nsHtml5TreeBuilderHSupplement.h";
     }
