@@ -156,7 +156,12 @@ public class HVisitor extends CppVisitor {
         printer.printLn("};");
         printer.printLn();
 
+        // This stuff should probably go into the .cpp anyway. sigh.
+        printer.print("#ifdef ");
+        printer.print(className);
+        printer.printLn("_cpp__");
         printer.print(arrayInitPrinter.getSource());
+        printer.printLn("#endif");
         printer.printLn();
         
         for (String define : defines) {
@@ -297,17 +302,36 @@ public class HVisitor extends CppVisitor {
                         printer.print(cppTypes.intType());
                         printer.print(", ");
                         declarator.getId().accept(this, arg);                        
-                        printer.printLn(");");                    
+                        printer.printLn("_DATA);");                    
                         
                         
                         printer = mainPrinterHolder;    
                         
+                        printer.print("#ifdef ");
+                        printer.print(className);
+                        printer.printLn("_cpp__");
+                        // XXX strictly speaking, there's a visibility bug here, but practically not
                         printModifiers(ModifierSet.STATIC | ModifierSet.PRIVATE);
                         rt.getType().accept(this, arg);
                         printer.print(" ");
                         declarator.getId().accept(this, arg);
                         printer.printLn("_DATA[];");
+                        printer.printLn("#endif");
                     }
+                } else if (ModifierSet.isStatic(modifiers)) {
+                    mainPrinterHolder = printer;
+                    printer = arrayInitPrinter;
+
+                    n.getType().accept(this, arg);
+                    printer.print(" ");
+                    printer.print(className);
+                    printer.print("::");
+                    declarator.getId().accept(this, arg);
+                    printer.print(" = ");
+                    printer.print(cppTypes.nullLiteral());
+                    printer.printLn(";");
+                    
+                    printer = mainPrinterHolder;    
                 }
             }
             printModifiers(modifiers);

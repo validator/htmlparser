@@ -395,6 +395,11 @@ public class CppVisitor implements VoidVisitor<Object> {
     }
 
     protected void startClassDeclaration() {
+        printer.print("#define ");
+        printer.print(className);
+        printer.printLn("_cpp__");
+        printer.printLn();
+
         String[] incs = cppTypes.boilerplateIncludes();
         for (int i = 0; i < incs.length; i++) {
             String inc = incs[i];
