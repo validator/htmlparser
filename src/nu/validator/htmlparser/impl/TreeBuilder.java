@@ -4108,10 +4108,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             @Local String name) {
         for (int i = listPtr; i >= 0; i--) {
             StackNode<T> node = listOfActiveFormattingElements[i];
-            if (node.name == name) {
-                return i;
-            } else if (node == MARKER) {
+            if (node == MARKER) {
                 return -1;
+            } else if (node.name == name) {
+                return i;
             }
         }
         return -1;
