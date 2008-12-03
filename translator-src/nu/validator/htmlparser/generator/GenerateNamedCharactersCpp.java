@@ -94,7 +94,7 @@ public class GenerateNamedCharactersCpp {
         File targetDirectory = new File(args[1]);
         
         generateH(targetDirectory, cppTypes, entities);
-        generateCpp(targetDirectory, cppTypes, entities.size());
+        generateCpp(targetDirectory, cppTypes, entities);
     }
 
     private static void generateH(File targetDirectory, CppTypes cppTypes, Map<String, String> entities) throws IOException {
@@ -121,14 +121,42 @@ public class GenerateNamedCharactersCpp {
         out.write("    static void initializeStatics();\n");
         out.write("    static void releaseStatics();\n");
         out.write("  private:\n");
+        out.write("#ifdef " + cppTypes.classPrefix() + "NamedCharacters_cpp__\n");
         out.write("    static " + cppTypes.charType() + " WINDOWS_1252_DATA[];\n");
 
         for (int i = 0; i < entities.size(); i++) {
             out.write("    static " + cppTypes.charType() + " NAME_" + i + "[];\n");
             out.write("    static " + cppTypes.charType() + " VALUE_" + i + "[];\n");
         }
-        
+
+        out.write("#endif\n");
         out.write("};\n");
+        
+        out.write("\n#endif // " + cppTypes.classPrefix() + "NamedCharacters_h__\n");
+        out.flush();
+        out.close();
+    }
+
+    private static void generateCpp(File targetDirectory, CppTypes cppTypes, Map<String, String> entities) throws IOException {
+        File hFile = new File(targetDirectory, cppTypes.classPrefix() + "NamedCharacters.cpp");
+        Writer out = new OutputStreamWriter(new FileOutputStream(hFile), "utf-8");
+
+        out.write("#define " + cppTypes.classPrefix() + "NamedCharacters_cpp__\n");
+        
+        String[] includes = cppTypes.namedCharactersIncludes();
+        for (int i = 0; i < includes.length; i++) {
+            String include = includes[i];
+            out.write("#include \"" + include + ".h\"\n");
+        }
+        
+        out.write('\n');
+        out.write("#include \"" + cppTypes.classPrefix() + "NamedCharacters.h\"\n");
+        out.write("\n");
+
+        out.write("" + cppTypes.arrayTemplate() + "<" + cppTypes.arrayTemplate() + "<" + cppTypes.charType() + "," + cppTypes.intType() + ">," + cppTypes.intType() + "> " + cppTypes.classPrefix() + "NamedCharacters::NAMES = " + cppTypes.arrayTemplate() + "<" + cppTypes.arrayTemplate() + "<" + cppTypes.charType() + "," + cppTypes.intType() + ">," + cppTypes.intType() + ">();\n");
+        out.write("" + cppTypes.arrayTemplate() + "<" + cppTypes.charType() + "," + cppTypes.intType() + ">* " + cppTypes.classPrefix() + "NamedCharacters::VALUES = " + cppTypes.nullLiteral() + ";\n");
+        out.write("" + cppTypes.charType() + "** " + cppTypes.classPrefix() + "NamedCharacters::WINDOWS_1252 = " + cppTypes.nullLiteral() + ";\n");
+        
         out.write("" + cppTypes.charType() + " " + cppTypes.classPrefix() + "NamedCharacters::WINDOWS_1252_DATA[] = {\n");
         out.write("  0x20AC,\n");
         out.write("  0xFFFD,\n");
@@ -164,12 +192,12 @@ public class GenerateNamedCharactersCpp {
         out.write("  0x0178\n");
         out.write("};\n");
         
-        int i = 0;
+        int k = 0;
         for (Map.Entry<String, String> entity : entities.entrySet()) {
             String name = entity.getKey();
             int value = Integer.parseInt(entity.getValue(), 16);
 
-            out.write(cppTypes.charType() + " " + cppTypes.classPrefix() + "NamedCharacters::NAME_" + i + "[] = {\n");
+            out.write(cppTypes.charType() + " " + cppTypes.classPrefix() + "NamedCharacters::NAME_" + k + "[] = {\n");
             out.write("  ");
             
             for (int j = 0; j < name.length(); j++) {
@@ -184,7 +212,7 @@ public class GenerateNamedCharactersCpp {
             
             out.write("\n};\n");
             
-            out.write(cppTypes.charType() + " " + cppTypes.classPrefix() + "NamedCharacters::VALUE_" + i + "[] = {\n");
+            out.write(cppTypes.charType() + " " + cppTypes.classPrefix() + "NamedCharacters::VALUE_" + k + "[] = {\n");
             out.write("  ");
             
             if (value <= 0xFFFF) {
@@ -199,36 +227,19 @@ public class GenerateNamedCharactersCpp {
             
             out.write("\n};\n");
 
-            i++;
+            k++;
         }
-        
-        out.write("\n#endif // " + cppTypes.classPrefix() + "NamedCharacters_h__\n");
-        out.flush();
-        out.close();
-    }
 
-    private static void generateCpp(File targetDirectory, CppTypes cppTypes, int numOfEntities) throws IOException {
-        File hFile = new File(targetDirectory, cppTypes.classPrefix() + "NamedCharacters.cpp");
-        Writer out = new OutputStreamWriter(new FileOutputStream(hFile), "utf-8");
-
-        String[] includes = cppTypes.namedCharactersIncludes();
-        for (int i = 0; i < includes.length; i++) {
-            String include = includes[i];
-            out.write("#include \"" + include + ".h\"\n");
-        }
         
-        out.write('\n');
-        out.write("#include \"" + cppTypes.classPrefix() + "NamedCharacters.h\"\n");
-        out.write("\n");
         out.write("void\n");
         out.write(cppTypes.classPrefix() + "NamedCharacters::initializeStatics()\n");
         out.write("{\n");
-        out.write("  NAMES = " + cppTypes.arrayTemplate() + "<" + cppTypes.arrayTemplate() + "<" + cppTypes.charType() + "," + cppTypes.intType() + ">," + cppTypes.intType() + ">(" + numOfEntities + ");\n");
-        for (int i = 0; i < numOfEntities; i++) {        
+        out.write("  NAMES = " + cppTypes.arrayTemplate() + "<" + cppTypes.arrayTemplate() + "<" + cppTypes.charType() + "," + cppTypes.intType() + ">," + cppTypes.intType() + ">(" + entities.size() + ");\n");
+        for (int i = 0; i < entities.size(); i++) {        
             out.write("  NAMES[" + i + "] = " + cppTypes.staticArrayMacro() + "(" + cppTypes.charType() + ", " + cppTypes.intType() + ", NAME_" + i + ");\n");
         }        
-        out.write("  VALUES = new " + cppTypes.arrayTemplate() + "<" + cppTypes.charType() + "," + cppTypes.intType() + ">[" + numOfEntities + "];\n");
-        for (int i = 0; i < numOfEntities; i++) {        
+        out.write("  VALUES = new " + cppTypes.arrayTemplate() + "<" + cppTypes.charType() + "," + cppTypes.intType() + ">[" + entities.size() + "];\n");
+        for (int i = 0; i < entities.size(); i++) {        
             out.write("  VALUES[" + i + "] = " + cppTypes.staticArrayMacro() + "(" + cppTypes.charType() + ", " + cppTypes.intType() + ", VALUE_" + i + ");\n");
         } 
         out.write("\n");

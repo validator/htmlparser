@@ -67,6 +67,10 @@ final class StackNode<T> {
         this.special = special;
         this.fosterParenting = fosterParenting;
         this.tainted = false;
+//        Portability.retainLocal(name);
+//        Portability.retainLocal(popName);
+//        Portability.retainElement(node);
+        // not retaining namespace for now        
     }
 
     /**
@@ -84,6 +88,10 @@ final class StackNode<T> {
         this.special = elementName.special;
         this.fosterParenting = elementName.fosterParenting;
         this.tainted = false;
+//        Portability.retainLocal(name);
+//        Portability.retainLocal(popName);
+//        Portability.retainElement(node);
+        // not retaining namespace for now        
     }
 
     StackNode(final @NsUri String ns, ElementName elementName, final T node, @Local String popName) {
@@ -96,6 +104,10 @@ final class StackNode<T> {
         this.special = elementName.special;
         this.fosterParenting = elementName.fosterParenting;
         this.tainted = false;
+//        Portability.retainLocal(name);
+//        Portability.retainLocal(popName);
+//        Portability.retainElement(node);
+        // not retaining namespace for now        
     }
 
     StackNode(final @NsUri String ns, ElementName elementName, final T node, @Local String popName, boolean scoping) {
@@ -108,6 +120,17 @@ final class StackNode<T> {
         this.special = false;
         this.fosterParenting = false;
         this.tainted = false;
+//        Portability.retainLocal(name);
+//        Portability.retainLocal(popName);
+//        Portability.retainElement(node);
+        // not retaining namespace for now        
+    }
+    
+    @SuppressWarnings("unused") private void destructor() {
+//        Portability.releaseLocal(name);
+//        Portability.releaseLocal(popName);
+//        Portability.releaseElement(node);
+        // not releasing namespace for now        
     }
     
     // [NOCPP[

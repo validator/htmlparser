@@ -59,6 +59,10 @@ public final class Portability {
         // No-op in Java
     }
     
+    public static void retainLocal(@Local String local) {
+        // No-op in Java
+    }
+
     public static void releaseLocal(@Local String local) {
         // No-op in Java
     }
@@ -70,6 +74,14 @@ public final class Portability {
     public static void releaseArray(Object arr) {
         // No-op in Java
     }    
+    
+    public static void retainElement(Object elt) {
+        // No-op in Java
+    }
+
+    public static void releaseElement(Object elt) {
+        // No-op in Java
+    }
     
     // Comparison methods
     

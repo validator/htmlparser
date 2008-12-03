@@ -319,7 +319,6 @@ public final class AttributeName
     @Virtual void release() {
         // No-op in Java. 
         // Implement as |delete this;| in subclass.
-        // Be sure to release the local name
     }
     
     @SuppressWarnings("unused") private void destructor() {
