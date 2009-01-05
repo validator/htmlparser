@@ -1625,19 +1625,23 @@ public class CppVisitor implements VoidVisitor<Object> {
         } else {
             printer.print("default:");
         }
-        printer.printLn();
-        printer.indent();
         if (isNoStatement(n.getStmts())) {
+            printer.printLn();
+            printer.indent();
             if (n.getLabel() == null) {
                 printer.printLn("; // fall through");            
             }
+            printer.unindent();
         } else {
+            printer.printLn(" {");
+            printer.indent();
             for (Statement s : n.getStmts()) {
                 s.accept(this, arg);
                 printer.printLn();
             }
+            printer.unindent();
+            printer.printLn("}");
         }
-        printer.unindent();
     }
 
     private boolean isNoStatement(List<Statement> stmts) {
