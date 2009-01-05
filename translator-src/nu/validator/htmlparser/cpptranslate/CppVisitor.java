@@ -1405,22 +1405,34 @@ public class CppVisitor implements VoidVisitor<Object> {
         
         currentMethod = n.getName();
 
+        boolean destructor = "destructor".equals(n.getName());
+        
         // if (n.getJavaDoc() != null) {
         // n.getJavaDoc().accept(this, arg);
         // }
         currentAnnotations = n.getAnnotations();
-        printModifiers(n.getModifiers());
-
+        if (destructor) {
+            printModifiers(ModifierSet.PUBLIC);
+        } else {
+            printModifiers(n.getModifiers());
+        }
+        
         printTypeParameters(n.getTypeParameters(), arg);
         if (n.getTypeParameters() != null) {
             printer.print(" ");
         }
-
-        n.getType().accept(this, arg);
-        printer.print(" ");
+        if (!destructor) {
+            n.getType().accept(this, arg);
+            printer.print(" ");
+        }
         printMethodNamespace();
-        printer.print(n.getName());
-
+        if (destructor) {
+            printer.print("~");
+            printer.print(className);
+        } else {
+            printer.print(n.getName());
+        }
+        
         currentAnnotations = null;
         printer.print("(");
         if (n.getParameters() != null) {
