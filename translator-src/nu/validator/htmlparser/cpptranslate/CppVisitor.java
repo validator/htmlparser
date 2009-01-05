@@ -212,6 +212,8 @@ public class CppVisitor implements VoidVisitor<Object> {
     private boolean inConstructorBody = false;
 
     private String currentMethod = null;
+
+    private Set<String> labels = null;
     
     /**
      * @param cppTypes
@@ -1559,13 +1561,18 @@ public class CppVisitor implements VoidVisitor<Object> {
                     "Only for loop supported as labeled statement. Line: "
                             + n.getBeginLine());
         }
-        printer.print(n.getLabel());
-        printer.print(": ");
+        String label = n.getLabel();
+        if (labels.contains(label)) {
+            printer.print(label);
+            printer.print(": ");            
+        }
         stmt.accept(this, arg);
         printer.printLn();
-        printer.print(n.getLabel());
-        printer.print("_end");
-        printer.print(": ;");
+        label += "_end";
+        if (labels.contains(label)) {
+            printer.print(label);
+            printer.print(": ;");
+        }
     }
 
     public void visit(EmptyStmt n, Object arg) {
@@ -2005,5 +2012,10 @@ public class CppVisitor implements VoidVisitor<Object> {
         printer.print(n.getContent());
         printer.printLn("*/");
     }
+
+    public void setLabels(Set<String> labels) {
+        this.labels = labels;
+    }
+
 
 }

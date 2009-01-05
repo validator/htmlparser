@@ -100,6 +100,9 @@ public class Main {
         File file = new File(javaDirectory, className + ".java");
         String license = new LicenseExtractor(file).extract();
         CompilationUnit cu = JavaParser.parse(new NoCppInputStream(new FileInputStream(file)), "utf-8");
+        LabelVisitor labelVisitor = new LabelVisitor();
+        cu.accept(labelVisitor, null);
+        visitor.setLabels(labelVisitor.getLabels());
         cu.accept(visitor, null);
         FileOutputStream out = new FileOutputStream(new File(cppDirectory, cppTypes.classPrefix() + className + fne));
         OutputStreamWriter w = new OutputStreamWriter(out, "utf-8");
