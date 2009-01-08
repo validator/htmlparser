@@ -163,7 +163,19 @@ public final class AttributeName
         return rv;
     }
 
-
+    /**
+     * Returns an attribute name by buffer. 
+     * 
+     * <p>C++ ownership: The return value is either released 
+     * by the caller if the attribute is a duplicate or the ownership is transferred
+     * to HtmlAttributes and released upon clearing or destroying that object.
+     * 
+     * @param buf
+     * @param offset
+     * @param length
+     * @param checkNcName
+     * @return
+     */
     static AttributeName nameByBuffer(@NoLength char[] buf, int offset, int length
             // [NOCPP[
             ,
@@ -174,7 +186,7 @@ public final class AttributeName
         int hash = AttributeName.bufToHash(buf, length);
         int index = Arrays.binarySearch(AttributeName.ATTRIBUTE_HASHES, hash);
         if (index < 0) {
-            return AttributeName.create(Portability.newLocalNameFromBuffer(buf,
+            return AttributeName.createAttributeName(Portability.newLocalNameFromBuffer(buf,
                     offset, length)
                     // [NOCPP[
                     , checkNcName
@@ -184,7 +196,7 @@ public final class AttributeName
             AttributeName rv = AttributeName.ATTRIBUTE_NAMES[index];
             @Local String name = rv.getLocal(AttributeName.HTML);
             if (!Portability.localEqualsBuffer(name, buf, offset, length)) {
-                return AttributeName.create(Portability.newLocalNameFromBuffer(
+                return AttributeName.createAttributeName(Portability.newLocalNameFromBuffer(
                         buf, offset, length)
                         // [NOCPP[
                         , checkNcName
@@ -271,7 +283,7 @@ public final class AttributeName
 
     // ]NOCPP]
 
-    private AttributeName(@NsUri @NoLength String[] uri,
+    protected AttributeName(@NsUri @NoLength String[] uri,
             @Local @NoLength String[] local, @Prefix @NoLength String[] prefix
             // [NOCPP[
             , @NoLength boolean[] ncname, boolean xmlns
@@ -290,7 +302,7 @@ public final class AttributeName
         // ]NOCPP]
     }
 
-    private static AttributeName create(@Local String name
+    private static AttributeName createAttributeName(@Local String name
             // [NOCPP[
             , boolean checkNcName
     // ]NOCPP]        

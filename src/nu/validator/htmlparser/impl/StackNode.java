@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
- * Copyright (c) 2007-2008 Mozilla Foundation
+ * Copyright (c) 2007-2009 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -44,6 +44,8 @@ final class StackNode<T> {
     final boolean fosterParenting;
 
     boolean tainted;
+    
+    private int refcount = 1;
 
     /**
      * @param group
@@ -67,9 +69,9 @@ final class StackNode<T> {
         this.special = special;
         this.fosterParenting = fosterParenting;
         this.tainted = false;
-//        Portability.retainLocal(name);
-//        Portability.retainLocal(popName);
-//        Portability.retainElement(node);
+        Portability.retainLocal(name);
+        Portability.retainLocal(popName);
+        Portability.retainElement(node);
         // not retaining namespace for now        
     }
 
@@ -88,9 +90,9 @@ final class StackNode<T> {
         this.special = elementName.special;
         this.fosterParenting = elementName.fosterParenting;
         this.tainted = false;
-//        Portability.retainLocal(name);
-//        Portability.retainLocal(popName);
-//        Portability.retainElement(node);
+        Portability.retainLocal(name);
+        Portability.retainLocal(popName);
+        Portability.retainElement(node);
         // not retaining namespace for now        
     }
 
@@ -104,9 +106,9 @@ final class StackNode<T> {
         this.special = elementName.special;
         this.fosterParenting = elementName.fosterParenting;
         this.tainted = false;
-//        Portability.retainLocal(name);
-//        Portability.retainLocal(popName);
-//        Portability.retainElement(node);
+        Portability.retainLocal(name);
+        Portability.retainLocal(popName);
+        Portability.retainElement(node);
         // not retaining namespace for now        
     }
 
@@ -120,16 +122,16 @@ final class StackNode<T> {
         this.special = false;
         this.fosterParenting = false;
         this.tainted = false;
-//        Portability.retainLocal(name);
-//        Portability.retainLocal(popName);
-//        Portability.retainElement(node);
+        Portability.retainLocal(name);
+        Portability.retainLocal(popName);
+        Portability.retainElement(node);
         // not retaining namespace for now        
     }
     
     @SuppressWarnings("unused") private void destructor() {
-//        Portability.releaseLocal(name);
-//        Portability.releaseLocal(popName);
-//        Portability.releaseElement(node);
+        Portability.releaseLocal(name);
+        Portability.releaseLocal(popName);
+        Portability.releaseElement(node);
         // not releasing namespace for now        
     }
     
@@ -141,4 +143,15 @@ final class StackNode<T> {
         return name;
     }
     // ]NOCPP]
+    
+    public void retain() {   
+        refcount++;
+    }
+    
+    public void release() {
+        refcount--;
+        if (refcount == 0) {
+            Portability.delete(this);
+        }
+    }
 }

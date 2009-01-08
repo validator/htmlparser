@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2005, 2006, 2007 Henri Sivonen
- * Copyright (c) 2007-2008 Mozilla Foundation
- * Portions of comments Copyright 2004-2007 Apple Computer, Inc., Mozilla 
+ * Copyright (c) 2005-2007 Henri Sivonen
+ * Copyright (c) 2007-2009 Mozilla Foundation
+ * Portions of comments Copyright 2004-2008 Apple Computer, Inc., Mozilla 
  * Foundation, and Opera Software ASA.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
@@ -28,7 +28,7 @@
  * comment are quotes from the WHATWG HTML 5 spec as of 2 June 2007 
  * amended as of June 18 2008.
  * That document came with this statement:
- * "© Copyright 2004-2007 Apple Computer, Inc., Mozilla Foundation, and 
+ * "© Copyright 2004-2008 Apple Computer, Inc., Mozilla Foundation, and 
  * Opera Software ASA. You are granted a license to use, reproduce and 
  * create derivative works of this document."
  */
@@ -282,16 +282,16 @@ public final class Tokenizer implements Locator {
     private final TokenHandler tokenHandler;
 
     private final EncodingDeclarationHandler encodingDeclarationHandler;
-    
+
     // [NOCPP[
-    
+
     /**
      * The error handler.
      */
     private ErrorHandler errorHandler;
 
     // ]NOCPP]
-    
+
     /**
      * The previous <code>char</code> read from the buffer with infoset
      * alteration applied except for CR. Used for CRLF normalization and
@@ -374,8 +374,8 @@ public final class Tokenizer implements Locator {
     private int strBufLen;
 
     /**
-     * <code>-1</code> to indicate that <code>strBuf</code> is used or
-     * otherwise an offset to the main buffer.
+     * <code>-1</code> to indicate that <code>strBuf</code> is used or otherwise
+     * an offset to the main buffer.
      */
     // private int strBufOffset = -1;
     /**
@@ -445,11 +445,6 @@ public final class Tokenizer implements Locator {
     // ]NOCPP]
 
     /**
-     * If <code>false</code>, <code>addAttribute*()</code> are no-ops.
-     */
-    private boolean shouldAddAttributes;
-
-    /**
      * <code>true</code> when HTML4-specific additional errors are requested.
      */
     private boolean html4;
@@ -513,7 +508,7 @@ public final class Tokenizer implements Locator {
     private boolean confident;
 
     // [NOCPP[
-    
+
     private PushedLocation pushedLocation;
 
     private LocatorImpl ampersandLocation;
@@ -677,9 +672,11 @@ public final class Tokenizer implements Locator {
         if (contentModelFlag == Tokenizer.DATA) {
             return;
         }
+        // XXX does this make any sense?
         char[] asArray = Portability.newCharArrayFromLocal(contentModelElement);
         this.contentModelElement = ElementName.elementNameByBuffer(asArray, 0,
                 asArray.length);
+        Portability.releaseArray(asArray);
         contentModelElementToArray();
     }
 
@@ -893,7 +890,10 @@ public final class Tokenizer implements Locator {
     }
 
     /**
-     * The smaller buffer as a String.
+     * The smaller buffer as a String. Currently only used for error
+     * reporting.
+     * 
+     * <p>C++ memory note: The return value must be released.
      * 
      * @return the smaller buffer as a string
      */
@@ -905,14 +905,20 @@ public final class Tokenizer implements Locator {
         // }
     }
 
-    private @Local String strBufToLocal() {
+    /**
+     * Returns the short buffer as a local name. The return value 
+     * is released in emitDoctypeToken().
+     * @return the smaller buffer as local name
+     */
+    private @Local String strBufToDoctypeName() {
         // if (strBufOffset != -1) {
-        // return Portability.newLocalNameFromBuffer(buf, strBufOffset, strBufLen);
+        // return Portability.newLocalNameFromBuffer(buf, strBufOffset,
+        // strBufLen);
         // } else {
         return Portability.newLocalNameFromBuffer(strBuf, 0, strBufLen);
         // }
     }
-    
+
     /**
      * Emits the smaller buffer as character tokens.
      * 
@@ -1069,6 +1075,8 @@ public final class Tokenizer implements Locator {
 
     /**
      * The larger buffer as a string.
+     * 
+     * <p>C++ memory note: The return value must be released. 
      * 
      * @return the larger buffer as a string
      */
@@ -1308,10 +1316,9 @@ public final class Tokenizer implements Locator {
         // strBufLen, namePolicy != XmlViolationPolicy.ALLOW);
         // } else {
         attributeName = AttributeName.nameByBuffer(strBuf, 0, strBufLen
-                // [NOCPP[
-                ,
-                namePolicy != XmlViolationPolicy.ALLOW
-        // ]NOCPP]        
+        // [NOCPP[
+                , namePolicy != XmlViolationPolicy.ALLOW
+        // ]NOCPP]
         );
         // }
 
@@ -1330,28 +1337,10 @@ public final class Tokenizer implements Locator {
          * along with the value that gets associated with it (if any).
          */
         if (attributes.contains(attributeName)) {
-            shouldAddAttributes = false;
             err("Duplicate attribute \u201C"
                     + attributeName.getLocal(AttributeName.HTML) + "\u201D.");
-        } else {
-            shouldAddAttributes = true;
-            // if (namePolicy == XmlViolationPolicy.ALLOW) {
-            // shouldAddAttributes = true;
-            // } else {
-            // if (NCName.isNCName(attributeName)) {
-            // shouldAddAttributes = true;
-            // } else {
-            // if (namePolicy == XmlViolationPolicy.FATAL) {
-            // fatal("Attribute name \u201C" + attributeName
-            // + "\u201D is not an NCName.");
-            // } else {
-            // shouldAddAttributes = false;
-            // warn("Attribute name \u201C"
-            // + attributeName
-            // + "\u201D is not an NCName. Ignoring the attribute.");
-            // }
-            // }
-            // }
+            attributeName.release();
+            attributeName = null;
         }
     }
 
@@ -1362,7 +1351,7 @@ public final class Tokenizer implements Locator {
             err("A \u201Ccharset\u201D attribute on a \u201Cmeta\u201D element found after the first 512 bytes.");
         }
         // ]NOCPP]
-        if (shouldAddAttributes) {
+        if (attributeName != null) {
             // [NOCPP[
             if (html4) {
                 if (attributeName.isBoolean()) {
@@ -1404,8 +1393,8 @@ public final class Tokenizer implements Locator {
             err("A \u201Ccharset\u201D attribute on a \u201Cmeta\u201D element found after the first 512 bytes.");
         }
         // ]NOCPP]
-        if (shouldAddAttributes) {
-            String value = longStrBufToString();
+        if (attributeName != null) {
+            String value = longStrBufToString(); // Ownership transferred to HtmlAttributes
             // [NOCPP[
             if (!endTag && html4 && html4ModeCompatibleWithXhtml1Schemata
                     && attributeName.isCaseFolded()) {
@@ -1493,8 +1482,8 @@ public final class Tokenizer implements Locator {
         pos = start - 1;
 
         /**
-         * The index of the first <code>char</code> in <code>buf</code> that
-         * is part of a coalesced run of character tokens or
+         * The index of the first <code>char</code> in <code>buf</code> that is
+         * part of a coalesced run of character tokens or
          * <code>Integer.MAX_VALUE</code> if there is not a current run being
          * coalesced.
          */
@@ -2793,9 +2782,10 @@ public final class Tokenizer implements Locator {
                         } else {
                             c = read();
                         }
+                        doctypeName = "";
                         systemIdentifier = null;
                         publicIdentifier = null;
-                        doctypeName = null;
+                        forceQuirks = false;
                         /*
                          * Consume the next input character:
                          */
@@ -2862,9 +2852,13 @@ public final class Tokenizer implements Locator {
                                 err("Nameless doctype.");
                                 /*
                                  * Create a new DOCTYPE token. Set its
-                                 * force-quirks flag to on. Emit the token.
+                                 * force-quirks flag to on.
                                  */
-                                tokenHandler.doctype("", null, null, true);
+                                forceQuirks = true;
+                                /*
+                                 * Emit the token.
+                                 */
+                                emitDoctypeToken();
                                 /*
                                  * Switch to the data state.
                                  */
@@ -2906,7 +2900,7 @@ public final class Tokenizer implements Locator {
                                  * (LF) U+000C FORM FEED (FF) U+0020 SPACE
                                  * Switch to the after DOCTYPE name state.
                                  */
-                                doctypeName = strBufToLocal();
+                                doctypeName = strBufToDoctypeName();
                                 state = Tokenizer.AFTER_DOCTYPE_NAME;
                                 break doctypenameloop;
                             // continue stateloop;
@@ -2915,8 +2909,8 @@ public final class Tokenizer implements Locator {
                                  * U+003E GREATER-THAN SIGN (>) Emit the current
                                  * DOCTYPE token.
                                  */
-                                tokenHandler.doctype(strBufToLocal(), null,
-                                        null, false);
+                                doctypeName = strBufToDoctypeName();
+                                emitDoctypeToken();
                                 /*
                                  * Switch to the data state.
                                  */
@@ -2962,8 +2956,7 @@ public final class Tokenizer implements Locator {
                                  * U+003E GREATER-THAN SIGN (>) Emit the current
                                  * DOCTYPE token.
                                  */
-                                tokenHandler.doctype(doctypeName, null, null,
-                                        false);
+                                emitDoctypeToken();
                                 /*
                                  * Switch to the data state.
                                  */
@@ -3091,10 +3084,13 @@ public final class Tokenizer implements Locator {
                                 err("Expected a public identifier but the doctype ended.");
                                 /*
                                  * Set the DOCTYPE token's force-quirks flag to
-                                 * on. Emit that DOCTYPE token.
+                                 * on.
                                  */
-                                tokenHandler.doctype(doctypeName, null, null,
-                                        true);
+                                forceQuirks = true;
+                                /*
+                                 * Emit that DOCTYPE token.
+                                 */
+                                emitDoctypeToken();
                                 /*
                                  * Switch to the data state.
                                  */
@@ -3141,10 +3137,14 @@ public final class Tokenizer implements Locator {
                                 err("\u201C>\u201D in public identifier.");
                                 /*
                                  * Set the DOCTYPE token's force-quirks flag to
-                                 * on. Emit that DOCTYPE token.
+                                 * on.
                                  */
-                                tokenHandler.doctype(doctypeName,
-                                        longStrBufToString(), null, true);
+                                forceQuirks = true;
+                                /*
+                                 * Emit that DOCTYPE token.
+                                 */
+                                publicIdentifier = longStrBufToString();
+                                emitDoctypeToken();
                                 /*
                                  * Switch to the data state.
                                  */
@@ -3218,8 +3218,7 @@ public final class Tokenizer implements Locator {
                                  * U+003E GREATER-THAN SIGN (>) Emit the current
                                  * DOCTYPE token.
                                  */
-                                tokenHandler.doctype(doctypeName,
-                                        publicIdentifier, null, false);
+                                emitDoctypeToken();
                                 /*
                                  * Switch to the data state.
                                  */
@@ -3265,15 +3264,16 @@ public final class Tokenizer implements Locator {
                                 err("\u201C>\u201D in system identifier.");
                                 /*
                                  * Set the DOCTYPE token's force-quirks flag to
-                                 * on. Emit that DOCTYPE token.
+                                 * on.
                                  */
-                                tokenHandler.doctype(doctypeName,
-                                        publicIdentifier, longStrBufToString(),
-                                        true);
-
+                                forceQuirks = true;
+                                /*
+                                 * Emit that DOCTYPE token.
+                                 */
+                                systemIdentifier = longStrBufToString();
+                                emitDoctypeToken();
                                 /*
                                  * Switch to the data state.
-                                 * 
                                  */
                                 cstart = pos + 1;
                                 state = Tokenizer.DATA;
@@ -3318,9 +3318,7 @@ public final class Tokenizer implements Locator {
                                  * U+003E GREATER-THAN SIGN (>) Emit the current
                                  * DOCTYPE token.
                                  */
-                                tokenHandler.doctype(doctypeName,
-                                        publicIdentifier, systemIdentifier,
-                                        false);
+                                emitDoctypeToken();
                                 /*
                                  * Switch to the data state.
                                  */
@@ -3358,9 +3356,7 @@ public final class Tokenizer implements Locator {
                                  * U+003E GREATER-THAN SIGN (>) Emit that
                                  * DOCTYPE token.
                                  */
-                                tokenHandler.doctype(doctypeName,
-                                        publicIdentifier, systemIdentifier,
-                                        forceQuirks);
+                                emitDoctypeToken();
                                 /*
                                  * Switch to the data state.
                                  */
@@ -3466,10 +3462,13 @@ public final class Tokenizer implements Locator {
                                 err("Expected a system identifier but the doctype ended.");
                                 /*
                                  * Set the DOCTYPE token's force-quirks flag to
-                                 * on. Emit that DOCTYPE token.
+                                 * on.
                                  */
-                                tokenHandler.doctype(doctypeName, null, null,
-                                        true);
+                                forceQuirks = true;
+                                /*
+                                 * Emit that DOCTYPE token.
+                                 */
+                                emitDoctypeToken();
                                 /*
                                  * Switch to the data state.
                                  */
@@ -3515,14 +3514,16 @@ public final class Tokenizer implements Locator {
                                 err("\u201C>\u201D in system identifier.");
                                 /*
                                  * Set the DOCTYPE token's force-quirks flag to
-                                 * on. Emit that DOCTYPE token.
+                                 * on.
                                  */
-                                tokenHandler.doctype(doctypeName,
-                                        publicIdentifier, longStrBufToString(),
-                                        true);
+                                forceQuirks = true;
+                                /*
+                                 * Emit that DOCTYPE token.
+                                 */
+                                systemIdentifier = longStrBufToString();
+                                emitDoctypeToken();
                                 /*
                                  * Switch to the data state.
-                                 * 
                                  */
                                 cstart = pos + 1;
                                 state = Tokenizer.DATA;
@@ -3566,10 +3567,14 @@ public final class Tokenizer implements Locator {
                                 err("\u201C>\u201D in public identifier.");
                                 /*
                                  * Set the DOCTYPE token's force-quirks flag to
-                                 * on. Emit that DOCTYPE token.
+                                 * on.
                                  */
-                                tokenHandler.doctype(doctypeName,
-                                        longStrBufToString(), null, true);
+                                forceQuirks = true;
+                                /*
+                                 * Emit that DOCTYPE token.
+                                 */
+                                publicIdentifier = longStrBufToString();
+                                emitDoctypeToken();
                                 /*
                                  * Switch to the data state.
                                  */
@@ -3697,8 +3702,8 @@ public final class Tokenizer implements Locator {
                             case '&':
                                 /*
                                  * U+0026 AMPERSAND (&) Switch to the character
-                                 * reference in attribute value state, with the +
-                                 * additional allowed character being U+0027
+                                 * reference in attribute value state, with the
+                                 * + additional allowed character being U+0027
                                  * APOSTROPHE (').
                                  */
                                 detachLongStrBuf();
@@ -4947,9 +4952,13 @@ public final class Tokenizer implements Locator {
                     err("End of file inside doctype.");
                     /*
                      * Create a new DOCTYPE token. Set its force-quirks flag to
-                     * on. Emit the token.
+                     * on.
                      */
-                    tokenHandler.doctype("", null, null, true);
+                    forceQuirks = true;
+                    /*
+                     * Emit the token.
+                     */
+                    emitDoctypeToken();
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -4957,11 +4966,15 @@ public final class Tokenizer implements Locator {
                 case DOCTYPE_NAME:
                     /* EOF Parse error. */
                     err("End of file inside doctype.");
+                    doctypeName = strBufToDoctypeName();
                     /*
-                     * Set the DOCTYPE token's force-quirks flag to on. Emit
-                     * that DOCTYPE token.
+                     * Set the DOCTYPE token's force-quirks flag to on.
                      */
-                    tokenHandler.doctype(strBufToLocal(), null, null, true);
+                    forceQuirks = true;
+                    /*
+                     * Emit that DOCTYPE token.
+                     */
+                    emitDoctypeToken();
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -4973,10 +4986,13 @@ public final class Tokenizer implements Locator {
                     /* EOF Parse error. */
                     err("End of file inside doctype.");
                     /*
-                     * Set the DOCTYPE token's force-quirks flag to on. Emit
-                     * that DOCTYPE token.
+                     * Set the DOCTYPE token's force-quirks flag to on.
                      */
-                    tokenHandler.doctype(doctypeName, null, null, true);
+                    forceQuirks = true;
+                    /*
+                     * Emit that DOCTYPE token.
+                     */
+                    emitDoctypeToken();
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -4986,11 +5002,14 @@ public final class Tokenizer implements Locator {
                     /* EOF Parse error. */
                     err("End of file inside public identifier.");
                     /*
-                     * Set the DOCTYPE token's force-quirks flag to on. Emit
-                     * that DOCTYPE token.
+                     * Set the DOCTYPE token's force-quirks flag to on.
                      */
-                    tokenHandler.doctype(doctypeName, longStrBufToString(),
-                            null, true);
+                    forceQuirks = true;
+                    /*
+                     * Emit that DOCTYPE token.
+                     */
+                    publicIdentifier = longStrBufToString();
+                    emitDoctypeToken();
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -5000,11 +5019,13 @@ public final class Tokenizer implements Locator {
                     /* EOF Parse error. */
                     err("End of file inside doctype.");
                     /*
-                     * Set the DOCTYPE token's force-quirks flag to on. Emit
-                     * that DOCTYPE token.
+                     * Set the DOCTYPE token's force-quirks flag to on.
                      */
-                    tokenHandler.doctype(doctypeName, publicIdentifier, null,
-                            true);
+                    forceQuirks = true;
+                    /*
+                     * Emit that DOCTYPE token.
+                     */
+                    emitDoctypeToken();
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -5014,11 +5035,14 @@ public final class Tokenizer implements Locator {
                     /* EOF Parse error. */
                     err("End of file inside system identifier.");
                     /*
-                     * Set the DOCTYPE token's force-quirks flag to on. Emit
-                     * that DOCTYPE token.
+                     * Set the DOCTYPE token's force-quirks flag to on.
                      */
-                    tokenHandler.doctype(doctypeName, publicIdentifier,
-                            longStrBufToString(), true);
+                    forceQuirks = true;
+                    /*
+                     * Emit that DOCTYPE token.
+                     */
+                    systemIdentifier = longStrBufToString();
+                    emitDoctypeToken();
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -5027,11 +5051,13 @@ public final class Tokenizer implements Locator {
                     /* EOF Parse error. */
                     err("End of file inside doctype.");
                     /*
-                     * Set the DOCTYPE token's force-quirks flag to on. Emit
-                     * that DOCTYPE token.
+                     * Set the DOCTYPE token's force-quirks flag to on.
                      */
-                    tokenHandler.doctype(doctypeName, publicIdentifier,
-                            systemIdentifier, true);
+                    forceQuirks = true;
+                    /*
+                     * Emit that DOCTYPE token.
+                     */
+                    emitDoctypeToken();
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -5040,8 +5066,7 @@ public final class Tokenizer implements Locator {
                     /*
                      * Emit that DOCTYPE token.
                      */
-                    tokenHandler.doctype(doctypeName, publicIdentifier,
-                            systemIdentifier, forceQuirks);
+                    emitDoctypeToken();
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -5240,6 +5265,17 @@ public final class Tokenizer implements Locator {
         return;
     }
 
+    private void emitDoctypeToken() throws SAXException {
+        tokenHandler.doctype(doctypeName, publicIdentifier, systemIdentifier,
+                forceQuirks);
+        // It is OK and sufficient to release these here, since 
+        // there's no way out of the doctype states than through paths
+        // that call this method.
+        Portability.releaseLocal(doctypeName);
+        Portability.releaseString(publicIdentifier);
+        Portability.releaseString(systemIdentifier);
+    }
+
     private char read() throws SAXException {
         char c;
         pos++;
@@ -5371,7 +5407,7 @@ public final class Tokenizer implements Locator {
     }
 
     // [NOCPP[
-    
+
     private void complainAboutNonAscii() throws SAXException {
         String encoding = null;
         if (encodingDeclarationHandler != null) {
@@ -5386,7 +5422,7 @@ public final class Tokenizer implements Locator {
     }
 
     // ]NOCPP]
-    
+
     public void internalEncodingDeclaration(String internalCharset)
             throws SAXException {
         if (encodingDeclarationHandler != null) {
