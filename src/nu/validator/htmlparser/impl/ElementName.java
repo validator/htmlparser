@@ -103,7 +103,7 @@ public final class ElementName
         // ]NOCPP]
     }
 
-    private ElementName(@Local String name) {
+    protected ElementName(@Local String name) {
         this.name = name;
         this.camelCaseName = name;
         this.group = TreeBuilder.OTHER;

@@ -206,6 +206,9 @@ public class HVisitor extends CppVisitor {
                 previousVisibility = Visibility.PUBLIC;
             }
         }
+        if (virtual()) {
+            printer.print("virtual ");            
+        }
         if (ModifierSet.isStatic(modifiers)) {
             printer.print("static ");
         }

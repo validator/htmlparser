@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 Mozilla Foundation
+ * Copyright (c) 2008-2009 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -45,6 +45,7 @@ public final class Portability {
         return "";
     }
     
+    // XXX get rid of this
     public static char[] newCharArrayFromLocal(@Local String local) {
         return local.toCharArray();
     }
@@ -63,6 +64,10 @@ public final class Portability {
         // No-op in Java
     }
 
+    /**
+     * This MUST be a no-op on locals that are known at compile time.
+     * @param local
+     */
     public static void releaseLocal(@Local String local) {
         // No-op in Java
     }
