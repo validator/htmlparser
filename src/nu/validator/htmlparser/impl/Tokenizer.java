@@ -890,10 +890,10 @@ public final class Tokenizer implements Locator {
     }
 
     /**
-     * The smaller buffer as a String. Currently only used for error
-     * reporting.
+     * The smaller buffer as a String. Currently only used for error reporting.
      * 
-     * <p>C++ memory note: The return value must be released.
+     * <p>
+     * C++ memory note: The return value must be released.
      * 
      * @return the smaller buffer as a string
      */
@@ -906,8 +906,9 @@ public final class Tokenizer implements Locator {
     }
 
     /**
-     * Returns the short buffer as a local name. The return value 
-     * is released in emitDoctypeToken().
+     * Returns the short buffer as a local name. The return value is released in
+     * emitDoctypeToken().
+     * 
      * @return the smaller buffer as local name
      */
     private @Local String strBufToDoctypeName() {
@@ -1076,7 +1077,8 @@ public final class Tokenizer implements Locator {
     /**
      * The larger buffer as a string.
      * 
-     * <p>C++ memory note: The return value must be released. 
+     * <p>
+     * C++ memory note: The return value must be released.
      * 
      * @return the larger buffer as a string
      */
@@ -1394,7 +1396,8 @@ public final class Tokenizer implements Locator {
         }
         // ]NOCPP]
         if (attributeName != null) {
-            String value = longStrBufToString(); // Ownership transferred to HtmlAttributes
+            String value = longStrBufToString(); // Ownership transferred to
+                                                 // HtmlAttributes
             // [NOCPP[
             if (!endTag && html4 && html4ModeCompatibleWithXhtml1Schemata
                     && attributeName.isCaseFolded()) {
@@ -1567,7 +1570,7 @@ public final class Tokenizer implements Locator {
                                  * model flag is set to the PCDATA state: switch
                                  * to the tag open state. When the content model
                                  * flag is set to either the RCDATA state or the
-                                 * CDATA state and the escape flag is false:
+                                 * CDATA state, and the escape flag is false:
                                  * switch to the tag open state. Otherwise:
                                  * treat it as per the "anything else" entry
                                  * below.
@@ -2866,12 +2869,24 @@ public final class Tokenizer implements Locator {
                                 state = Tokenizer.DATA;
                                 continue stateloop;
                             default:
-                                /* Anything else Create a new DOCTYPE token. */
-                                /*
-                                 * Set the token's name name to the current
-                                 * input character.
-                                 */
-                                clearStrBufAndAppendCurrentC(c);
+                                if (c >= 'A' && c <= 'Z') {
+                                    /*
+                                     * U+0041 LATIN CAPITAL LETTER A through to
+                                     * U+005A LATIN CAPITAL LETTER Z Create a
+                                     * new DOCTYPE token. Set the token's name
+                                     * to the lowercase version of the input
+                                     * character (add 0x0020 to the character's
+                                     * code point).
+                                     */
+                                    clearStrBufAndAppendForceWrite((char) (c + 0x20));
+                                } else {
+                                    /* Anything else Create a new DOCTYPE token. */
+                                    /*
+                                     * Set the token's name name to the current
+                                     * input character.
+                                     */
+                                    clearStrBufAndAppendCurrentC(c);
+                                }
                                 /*
                                  * Switch to the DOCTYPE name state.
                                  */
@@ -2918,6 +2933,16 @@ public final class Tokenizer implements Locator {
                                 state = Tokenizer.DATA;
                                 continue stateloop;
                             default:
+                                /*
+                                 * U+0041 LATIN CAPITAL LETTER A through to
+                                 * U+005A LATIN CAPITAL LETTER Z Append the
+                                 * lowercase version of the input character (add
+                                 * 0x0020 to the character's code point) to the
+                                 * current DOCTYPE token's name.
+                                 */
+                                if (c >= 'A' && c <= 'Z') {
+                                    c += 0x0020;
+                                }
                                 /*
                                  * Anything else Append the current input
                                  * character to the current DOCTYPE token's
@@ -4212,7 +4237,7 @@ public final class Tokenizer implements Locator {
                                  * model flag is set to the PCDATA state: switch
                                  * to the tag open state. When the content model
                                  * flag is set to either the RCDATA state or the
-                                 * CDATA state and the escape flag is false:
+                                 * CDATA state, and the escape flag is false:
                                  * switch to the tag open state. Otherwise:
                                  * treat it as per the "anything else" entry
                                  * below.
@@ -4461,16 +4486,9 @@ public final class Tokenizer implements Locator {
                                     continue stateloop;
                                 case '/':
                                     /*
-                                     * U+002F SOLIDUS (/) Parse error unless
-                                     * this is a permitted slash.
+                                     * U+002F SOLIDUS (/) Switch to the self-closing start tag state.
                                      */
-                                    // never permitted here
-                                    err("Stray \u201C/\u201D in end tag.");
-                                    /*
-                                     * Switch to the before attribute name
-                                     * state.
-                                     */
-                                    state = Tokenizer.BEFORE_ATTRIBUTE_NAME;
+                                    state = Tokenizer.SELF_CLOSING_START_TAG;
                                     continue stateloop;
                                 default:
                                     if (html4) {
@@ -4593,7 +4611,7 @@ public final class Tokenizer implements Locator {
                                  * model flag is set to the PCDATA state: switch
                                  * to the tag open state. When the content model
                                  * flag is set to either the RCDATA state or the
-                                 * CDATA state and the escape flag is false:
+                                 * CDATA state, and the escape flag is false:
                                  * switch to the tag open state. Otherwise:
                                  * treat it as per the "anything else" entry
                                  * below.
@@ -4726,8 +4744,8 @@ public final class Tokenizer implements Locator {
         } else if ((value >= 0x0000 && value <= 0x0008) || (value == 0x000B)
                 || (value >= 0x000E && value <= 0x001F) || value == 0x007F) {
             /*
-             * OOtherwise, if the number is in the range 0x0000 to 0x0008,
-             * U+000B, U+000E to 0x001F, 0x007F to 0x009F, 0xD800 to 0xDFFF ,
+             * OOtherwise, if the number is in the range U+0000 to U+0008,
+             * U+000B, U+000E to 0x001F, 0x007F to 0x009F, 0xD800 to 0xDFFF,
              * 0xFDD0 to 0xFDDF, or is one of 0xFFFE, 0xFFFF, 0x1FFFE, 0x1FFFF,
              * 0x2FFFE, 0x2FFFF, 0x3FFFE, 0x3FFFF, 0x4FFFE, 0x4FFFF, 0x5FFFE,
              * 0x5FFFF, 0x6FFFE, 0x6FFFF, 0x7FFFE, 0x7FFFF, 0x8FFFE, 0x8FFFF,
@@ -4809,7 +4827,17 @@ public final class Tokenizer implements Locator {
                      */
                     break eofloop;
                 case CLOSE_TAG_OPEN_NOT_PCDATA:
-                    break eofloop;
+                    if (index < contentModelElementNameAsArray.length) {
+                        break eofloop;
+                    } else {
+                        err("End of file inside end tag.");
+                        endTag = true;
+                        // XXX replace contentModelElement with different
+                        // type
+                        tagName = contentModelElement;
+                        emitCurrentTagToken(false);
+                        break eofloop;
+                    }
                 case CLOSE_TAG_OPEN_PCDATA:
                     /* EOF Parse error. */
                     err("Saw \u201C</\u201D immediately before end of file.");
@@ -4908,8 +4936,30 @@ public final class Tokenizer implements Locator {
                     emitComment(0);
                     break eofloop;
                 case MARKUP_DECLARATION_OCTYPE:
-                    err("Bogus comment.");
-                    emitComment(0);
+                    if (index < 6) {
+                        err("Bogus comment.");
+                        emitComment(0);
+                    } else {
+                        err("Expected space characters after \u201CDOCTYPE\u201D.");
+                        /* EOF Parse error. */
+                        err("End of file inside doctype.");
+                        /*
+                         * Create a new DOCTYPE token. Set its force-quirks flag to
+                         * on.
+                         */
+                        doctypeName = "";
+                        publicIdentifier = null;
+                        systemIdentifier = null;
+                        forceQuirks = true;
+                        /*
+                         * Emit the token.
+                         */
+                        emitDoctypeToken();
+                        /*
+                         * Reconsume the EOF character in the data state.
+                         */
+                        break eofloop;                        
+                    }
                     break eofloop;
                 case COMMENT_START:
                 case COMMENT:
@@ -5268,7 +5318,7 @@ public final class Tokenizer implements Locator {
     private void emitDoctypeToken() throws SAXException {
         tokenHandler.doctype(doctypeName, publicIdentifier, systemIdentifier,
                 forceQuirks);
-        // It is OK and sufficient to release these here, since 
+        // It is OK and sufficient to release these here, since
         // there's no way out of the doctype states than through paths
         // that call this method.
         Portability.releaseLocal(doctypeName);
