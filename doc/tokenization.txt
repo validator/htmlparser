@@ -4,7 +4,7 @@
 
 HTML 5
 
-Draft Recommendation — 2 September 2008
+Draft Recommendation — 13 January 2009
 
    ← 8.2 Parsing HTML documents – Table of contents – 8.2.5 Tree
    construction →
@@ -61,16 +61,19 @@ Draft Recommendation — 2 September 2008
    When an end tag token is emitted with its self-closing flag set, that
    is a parse error.
 
-   Before each step of the tokeniser, the user agent may check to see if
-   either one of the scripts in the list of scripts that will execute as
-   soon as possible or the first script in the list of scripts that will
-   execute asynchronously, has completed loading. If one has, then it must
-   be executed and removed from its list.
+   Before each step of the tokeniser, the user agent must first check the
+   parser pause flag. If it is true, then the tokeniser must abort the
+   processing of any nested invocations of the tokeniser, yielding control
+   back to the caller. If it is false, then the user agent may then check
+   to see if either one of the scripts in the list of scripts that will
+   execute as soon as possible or the first script in the list of scripts
+   that will execute asynchronously, has completed loading. If one has,
+   then it must be executed and removed from its list.
 
    The tokeniser state machine consists of the states defined in the
    following subsections.
 
-      8.2.4.1. Data state
+      8.2.4.1 Data state
 
    Consume the next input character:
 
@@ -96,7 +99,7 @@ Draft Recommendation — 2 September 2008
           When the content model flag is set to the PCDATA state: switch
           to the tag open state.
           When the content model flag is set to either the RCDATA state or
-          the CDATA state and the escape flag is false: switch to the tag
+          the CDATA state, and the escape flag is false: switch to the tag
           open state.
           Otherwise: treat it as per the "anything else" entry below.
 
@@ -117,7 +120,7 @@ Draft Recommendation — 2 September 2008
           Emit the input character as a character token. Stay in the data
           state.
 
-      8.2.4.2. Character reference data state
+      8.2.4.2 Character reference data state
 
    (This cannot happen if the content model flag is set to the CDATA
    state.)
@@ -131,7 +134,7 @@ Draft Recommendation — 2 September 2008
 
    Finally, switch to the data state.
 
-      8.2.4.3. Tag open state
+      8.2.4.3 Tag open state
 
    The behavior of this state depends on the content model flag.
 
@@ -177,7 +180,7 @@ Draft Recommendation — 2 September 2008
                 and reconsume the current input character in the data
                 state.
 
-      8.2.4.4. Close tag open state
+      8.2.4.4 Close tag open state
 
    If the content model flag is set to the RCDATA or CDATA states but no
    start tag token has ever been emitted by this instance of the tokeniser
@@ -226,7 +229,7 @@ Draft Recommendation — 2 September 2008
    Anything else
           Parse error. Switch to the bogus comment state.
 
-      8.2.4.5. Tag name state
+      8.2.4.5 Tag name state
 
    Consume the next input character:
 
@@ -255,7 +258,7 @@ Draft Recommendation — 2 September 2008
           Append the current input character to the current tag token's
           tag name. Stay in the tag name state.
 
-      8.2.4.6. Before attribute name state
+      8.2.4.6 Before attribute name state
 
    Consume the next input character:
 
@@ -291,7 +294,7 @@ Draft Recommendation — 2 September 2008
           attribute's name to the current input character, and its value
           to the empty string. Switch to the attribute name state.
 
-      8.2.4.7. Attribute name state
+      8.2.4.7 Attribute name state
 
    Consume the next input character:
 
@@ -334,7 +337,7 @@ Draft Recommendation — 2 September 2008
    is a parse error and the new attribute must be dropped, along with the
    value that gets associated with it (if any).
 
-      8.2.4.8. After attribute name state
+      8.2.4.8 After attribute name state
 
    Consume the next input character:
 
@@ -372,7 +375,7 @@ Draft Recommendation — 2 September 2008
           attribute's name to the current input character, and its value
           to the empty string. Switch to the attribute name state.
 
-      8.2.4.9. Before attribute value state
+      8.2.4.9 Before attribute value state
 
    Consume the next input character:
 
@@ -407,7 +410,7 @@ Draft Recommendation — 2 September 2008
           Append the current input character to the current attribute's
           value. Switch to the attribute value (unquoted) state.
 
-      8.2.4.10. Attribute value (double-quoted) state
+      8.2.4.10 Attribute value (double-quoted) state
 
    Consume the next input character:
 
@@ -427,7 +430,7 @@ Draft Recommendation — 2 September 2008
           Append the current input character to the current attribute's
           value. Stay in the attribute value (double-quoted) state.
 
-      8.2.4.11. Attribute value (single-quoted) state
+      8.2.4.11 Attribute value (single-quoted) state
 
    Consume the next input character:
 
@@ -446,7 +449,7 @@ Draft Recommendation — 2 September 2008
           Append the current input character to the current attribute's
           value. Stay in the attribute value (single-quoted) state.
 
-      8.2.4.12. Attribute value (unquoted) state
+      8.2.4.12 Attribute value (unquoted) state
 
    Consume the next input character:
 
@@ -476,7 +479,7 @@ Draft Recommendation — 2 September 2008
           Append the current input character to the current attribute's
           value. Stay in the attribute value (unquoted) state.
 
-      8.2.4.13. Character reference in attribute value state
+      8.2.4.13 Character reference in attribute value state
 
    Attempt to consume a character reference.
 
@@ -489,7 +492,7 @@ Draft Recommendation — 2 September 2008
    Finally, switch back to the attribute value state that you were in when
    were switched into this state.
 
-      8.2.4.14. After attribute value (quoted) state
+      8.2.4.14 After attribute value (quoted) state
 
    Consume the next input character:
 
@@ -513,7 +516,7 @@ Draft Recommendation — 2 September 2008
           Parse error. Reconsume the character in the before attribute
           name state.
 
-      8.2.4.15. Self-closing start tag state
+      8.2.4.15 Self-closing start tag state
 
    Consume the next input character:
 
@@ -529,7 +532,7 @@ Draft Recommendation — 2 September 2008
           Parse error. Reconsume the character in the before attribute
           name state.
 
-      8.2.4.16. Bogus comment state
+      8.2.4.16 Bogus comment state
 
    (This can only happen if the content model flag is set to the PCDATA
    state.)
@@ -548,7 +551,7 @@ Draft Recommendation — 2 September 2008
 
    If the end of the file was reached, reconsume the EOF character.
 
-      8.2.4.17. Markup declaration open state
+      8.2.4.17 Markup declaration open state
 
    (This can only happen if the content model flag is set to the PCDATA
    state.)
@@ -573,7 +576,7 @@ Draft Recommendation — 2 September 2008
    The next character that is consumed, if any, is the first character
    that will be in the comment.
 
-      8.2.4.18. Comment start state
+      8.2.4.18 Comment start state
 
    Consume the next input character:
 
@@ -591,7 +594,7 @@ Draft Recommendation — 2 September 2008
           Append the input character to the comment token's data. Switch
           to the comment state.
 
-      8.2.4.19. Comment start dash state
+      8.2.4.19 Comment start dash state
 
    Consume the next input character:
 
@@ -610,7 +613,7 @@ Draft Recommendation — 2 September 2008
           character to the comment token's data. Switch to the comment
           state.
 
-      8.2.4.20. Comment state
+      8.2.4.20 Comment state
 
    Consume the next input character:
 
@@ -625,7 +628,7 @@ Draft Recommendation — 2 September 2008
           Append the input character to the comment token's data. Stay in
           the comment state.
 
-      8.2.4.21. Comment end dash state
+      8.2.4.21 Comment end dash state
 
    Consume the next input character:
 
@@ -641,7 +644,7 @@ Draft Recommendation — 2 September 2008
           character to the comment token's data. Switch to the comment
           state.
 
-      8.2.4.22. Comment end state
+      8.2.4.22 Comment end state
 
    Consume the next input character:
 
@@ -661,7 +664,7 @@ Draft Recommendation — 2 September 2008
           the input character to the comment token's data. Switch to the
           comment state.
 
-      8.2.4.23. DOCTYPE state
+      8.2.4.23 DOCTYPE state
 
    Consume the next input character:
 
@@ -675,7 +678,7 @@ Draft Recommendation — 2 September 2008
           Parse error. Reconsume the current character in the before
           DOCTYPE name state.
 
-      8.2.4.24. Before DOCTYPE name state
+      8.2.4.24 Before DOCTYPE name state
 
    Consume the next input character:
 
@@ -689,6 +692,11 @@ Draft Recommendation — 2 September 2008
           Parse error. Create a new DOCTYPE token. Set its force-quirks
           flag to on. Emit the token. Switch to the data state.
 
+   U+0041 LATIN CAPITAL LETTER A through to U+005A LATIN CAPITAL LETTER Z
+          Create a new DOCTYPE token. Set the token's name to the
+          lowercase version of the input character (add 0x0020 to the
+          character's code point). Switch to the DOCTYPE name state.
+
    EOF
           Parse error. Create a new DOCTYPE token. Set its force-quirks
           flag to on. Emit the token. Reconsume the EOF character in the
@@ -698,7 +706,7 @@ Draft Recommendation — 2 September 2008
           Create a new DOCTYPE token. Set the token's name to the current
           input character. Switch to the DOCTYPE name state.
 
-      8.2.4.25. DOCTYPE name state
+      8.2.4.25 DOCTYPE name state
 
    First, consume the next input character:
 
@@ -711,6 +719,11 @@ Draft Recommendation — 2 September 2008
    U+003E GREATER-THAN SIGN (>)
           Emit the current DOCTYPE token. Switch to the data state.
 
+   U+0041 LATIN CAPITAL LETTER A through to U+005A LATIN CAPITAL LETTER Z
+          Append the lowercase version of the input character (add 0x0020
+          to the character's code point) to the current DOCTYPE token's
+          name. Stay in the DOCTYPE name state.
+
    EOF
           Parse error. Set the DOCTYPE token's force-quirks flag to on.
           Emit that DOCTYPE token. Reconsume the EOF character in the data
@@ -720,7 +733,7 @@ Draft Recommendation — 2 September 2008
           Append the current input character to the current DOCTYPE
           token's name. Stay in the DOCTYPE name state.
 
-      8.2.4.26. After DOCTYPE name state
+      8.2.4.26 After DOCTYPE name state
 
    Consume the next input character:
 
@@ -751,7 +764,7 @@ Draft Recommendation — 2 September 2008
           Otherwise, this is the parse error. Set the DOCTYPE token's
           force-quirks flag to on. Switch to the bogus DOCTYPE state.
 
-      8.2.4.27. Before DOCTYPE public identifier state
+      8.2.4.27 Before DOCTYPE public identifier state
 
    Consume the next input character:
 
@@ -784,7 +797,7 @@ Draft Recommendation — 2 September 2008
           Parse error. Set the DOCTYPE token's force-quirks flag to on.
           Switch to the bogus DOCTYPE state.
 
-      8.2.4.28. DOCTYPE public identifier (double-quoted) state
+      8.2.4.28 DOCTYPE public identifier (double-quoted) state
 
    Consume the next input character:
 
@@ -805,7 +818,7 @@ Draft Recommendation — 2 September 2008
           token's public identifier. Stay in the DOCTYPE public identifier
           (double-quoted) state.
 
-      8.2.4.29. DOCTYPE public identifier (single-quoted) state
+      8.2.4.29 DOCTYPE public identifier (single-quoted) state
 
    Consume the next input character:
 
@@ -826,7 +839,7 @@ Draft Recommendation — 2 September 2008
           token's public identifier. Stay in the DOCTYPE public identifier
           (single-quoted) state.
 
-      8.2.4.30. After DOCTYPE public identifier state
+      8.2.4.30 After DOCTYPE public identifier state
 
    Consume the next input character:
 
@@ -858,7 +871,7 @@ Draft Recommendation — 2 September 2008
           Parse error. Set the DOCTYPE token's force-quirks flag to on.
           Switch to the bogus DOCTYPE state.
 
-      8.2.4.31. Before DOCTYPE system identifier state
+      8.2.4.31 Before DOCTYPE system identifier state
 
    Consume the next input character:
 
@@ -891,7 +904,7 @@ Draft Recommendation — 2 September 2008
           Parse error. Set the DOCTYPE token's force-quirks flag to on.
           Switch to the bogus DOCTYPE state.
 
-      8.2.4.32. DOCTYPE system identifier (double-quoted) state
+      8.2.4.32 DOCTYPE system identifier (double-quoted) state
 
    Consume the next input character:
 
@@ -912,7 +925,7 @@ Draft Recommendation — 2 September 2008
           token's system identifier. Stay in the DOCTYPE system identifier
           (double-quoted) state.
 
-      8.2.4.33. DOCTYPE system identifier (single-quoted) state
+      8.2.4.33 DOCTYPE system identifier (single-quoted) state
 
    Consume the next input character:
 
@@ -933,7 +946,7 @@ Draft Recommendation — 2 September 2008
           token's system identifier. Stay in the DOCTYPE system identifier
           (single-quoted) state.
 
-      8.2.4.34. After DOCTYPE system identifier state
+      8.2.4.34 After DOCTYPE system identifier state
 
    Consume the next input character:
 
@@ -955,7 +968,7 @@ Draft Recommendation — 2 September 2008
           Parse error. Switch to the bogus DOCTYPE state. (This does not
           set the DOCTYPE token's force-quirks flag to on.)
 
-      8.2.4.35. Bogus DOCTYPE state
+      8.2.4.35 Bogus DOCTYPE state
 
    Consume the next input character:
 
@@ -969,7 +982,7 @@ Draft Recommendation — 2 September 2008
    Anything else
           Stay in the bogus DOCTYPE state.
 
-      8.2.4.36. CDATA section state
+      8.2.4.36 CDATA section state
 
    (This can only happen if the content model flag is set to the PCDATA
    state, and is unrelated to the content model flag's CDATA state.)
@@ -985,7 +998,7 @@ Draft Recommendation — 2 September 2008
 
    If the end of the file was reached, reconsume the EOF character.
 
-      8.2.4.37. Tokenizing character references
+      8.2.4.37 Tokenizing character references
 
    This section defines how to consume a character reference. This
    definition is used when parsing character references in text and in
@@ -1089,7 +1102,7 @@ Draft Recommendation — 2 September 2008
           0x9F   U+0178 LATIN CAPITAL LETTER Y WITH DIAERESIS ('Ÿ')
 
           Otherwise, if the number is in the range 0x0000 to 0x0008,
-          U+000B, U+000E to 0x001F, 0x007F to 0x009F, 0xD800 to 0xDFFF ,
+          0x000B, 0x000E to 0x001F, 0x007F to 0x009F, 0xD800 to 0xDFFF,
           0xFDD0 to 0xFDDF, or is one of 0xFFFE, 0xFFFF, 0x1FFFE, 0x1FFFF,
           0x2FFFE, 0x2FFFF, 0x3FFFE, 0x3FFFF, 0x4FFFE, 0x4FFFF, 0x5FFFE,
           0x5FFFF, 0x6FFFE, 0x6FFFF, 0x7FFFE, 0x7FFFF, 0x8FFFE, 0x8FFFF,
