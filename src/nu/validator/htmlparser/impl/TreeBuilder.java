@@ -1918,7 +1918,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                             break starttagloop;
                                         }
                                         implicitlyCloseP();
-                                        HtmlAttributes formAttrs = tokenizer.emptyAttributes();
+                                        HtmlAttributes formAttrs = new HtmlAttributes(0);
                                         int actionIndex = attributes.getIndex(AttributeName.ACTION);
                                         if (actionIndex > -1) {
                                             formAttrs.addAttribute(
@@ -1992,6 +1992,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                                 HtmlAttributes.EMPTY_ATTRIBUTES);
                                         pop(); // form
                                         selfClosing = false;
+                                        Portability.delete(formAttrs);
                                         break starttagloop;
                                     case TEXTAREA:
                                         appendToCurrentNodeAndPushElementMayFoster(
