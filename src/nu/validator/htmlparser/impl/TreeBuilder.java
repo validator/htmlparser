@@ -331,7 +331,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     private final StackNode<T> MARKER = new StackNode<T>(null,
             ElementName.NULL_ELEMENT_NAME, null);
 
-    private static @Local String HTML_LOCAL = "html";
+    private static final @Local String HTML_LOCAL = "html";
     
     private int mode = INITIAL;
 
