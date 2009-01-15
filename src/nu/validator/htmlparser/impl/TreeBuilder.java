@@ -331,6 +331,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     private final StackNode<T> MARKER = new StackNode<T>(null,
             ElementName.NULL_ELEMENT_NAME, null);
 
+    private static @Local String HTML_LOCAL = "html";
+    
     private int mode = INITIAL;
 
     private int originalMode = INITIAL;
@@ -3765,7 +3767,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (forceQuirks) {
             return true;
         }
-        if (name != "html") {
+        if (name != HTML_LOCAL) {
             return true;
         }
         if (publicIdentifier != null) {
