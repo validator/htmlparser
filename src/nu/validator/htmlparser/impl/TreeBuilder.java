@@ -1376,7 +1376,17 @@ public abstract class TreeBuilder<T> implements TokenHandler {
      * @see nu.validator.htmlparser.common.TokenHandler#endTokenization()
      */
     public final void endTokenization() throws SAXException {
+        while (currentPtr > -1) {
+            stack[currentPtr].release();
+            currentPtr--;
+        }
+        Portability.deleteArray(stack);
         stack = null;
+        while (listPtr > -1) {
+            listOfActiveFormattingElements[listPtr].release();
+            listPtr--;
+        }
+        Portability.deleteArray(listOfActiveFormattingElements);        
         listOfActiveFormattingElements = null;
         // [NOCPP[
         idLocations.clear();
