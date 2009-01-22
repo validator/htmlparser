@@ -24,6 +24,8 @@ package nu.validator.htmlparser.io;
 
 import java.io.IOException;
 
+import nu.validator.htmlparser.common.ByteReadable;
+
 /**
  * The BOM sniffing part of the HTML5 encoding sniffing algorithm.
  * 
