@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 
 import nu.validator.htmlparser.common.Heuristics;
+import nu.validator.htmlparser.io.Encoding;
 import nu.validator.htmlparser.io.HtmlInputStreamReader;
 
 import org.xml.sax.SAXException;
@@ -79,7 +80,7 @@ public class EncodingTester {
             }
         }
         String sniffed = charset.name();
-        String expected = builder.toString();
+        String expected = Encoding.forName(builder.toString()).newDecoder().charset().name();
         if (expected.equalsIgnoreCase(sniffed)) {
             System.err.println("Success.");
             // System.err.println(stream);

@@ -124,7 +124,7 @@ public final class HtmlInputStreamReader extends Reader implements
         Encoding encoding = (new BomSniffer(this)).sniff();
         if (encoding == null) {
             position = 0;
-            encoding = (new MetaSniffer(this, errorHandler, this)).sniff();
+            encoding = (new MetaSniffer(errorHandler, this)).sniff(this);
             if (encoding == null
                     && (heuristics == Heuristics.CHARDET || heuristics == Heuristics.ALL)) {
                 encoding = (new ChardetSniffer(byteArray, limit)).sniff();
