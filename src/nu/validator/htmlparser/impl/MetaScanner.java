@@ -54,11 +54,11 @@ public abstract class MetaScanner {
     
     private static final int DATA = 0;
 
-    private static final int TAG_OPEN = 49;
+    private static final int TAG_OPEN = 1;
 
-    private static final int SCAN_UNTIL_GT = 50;
+    private static final int SCAN_UNTIL_GT = 2;
 
-    private static final int TAG_NAME = 58;
+    private static final int TAG_NAME = 3;
 
     private static final int BEFORE_ATTRIBUTE_NAME = 4;
 
@@ -80,17 +80,17 @@ public abstract class MetaScanner {
     
     private static final int MARKUP_DECLARATION_HYPHEN = 14;
 
-    private static final int COMMENT_START = 27;
+    private static final int COMMENT_START = 15;
 
-    private static final int COMMENT_START_DASH = 28;
+    private static final int COMMENT_START_DASH = 16;
 
-    private static final int COMMENT = 29;
+    private static final int COMMENT = 17;
 
-    private static final int COMMENT_END_DASH = 30;
+    private static final int COMMENT_END_DASH = 18;
 
-    private static final int COMMENT_END = 31;
+    private static final int COMMENT_END = 19;
     
-    private static final int SELF_CLOSING_START_TAG = 32;
+    private static final int SELF_CLOSING_START_TAG = 20;
     
     protected ByteReadable readable;
     
@@ -105,6 +105,8 @@ public abstract class MetaScanner {
     private int strBufLen;
 
     private char[] strBuf;
+    
+    // [NOCPP[
     
     /**
      * @param source
@@ -121,7 +123,7 @@ public abstract class MetaScanner {
         strBufLen = 0;
         strBuf = new char[36];
     }
-
+    
     /**
      * -1 means end.
      * @return
@@ -131,9 +133,11 @@ public abstract class MetaScanner {
         return readable.readByte();
     }
 
+    // ]NOCPP]
+
     // WARNING When editing this, makes sure the bytecode length shown by javap
     // stays under 8000 bytes!
-    protected void stateLoop(int state)
+    protected final void stateLoop(int state)
             throws SAXException, IOException {
         int c = -1;
         boolean reconsume = false;
