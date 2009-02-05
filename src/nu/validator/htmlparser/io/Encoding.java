@@ -30,6 +30,7 @@ import java.io.Reader;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
+import java.nio.charset.CoderMalfunctionError;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.Arrays;
@@ -217,6 +218,8 @@ public class Encoding {
             return false;
         } catch (Exception e) {
             return false;
+        } catch (CoderMalfunctionError e) {
+            return false;            
         }
 
         return true;
