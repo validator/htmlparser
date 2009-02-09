@@ -55,6 +55,7 @@ public class Main {
     static final String[] H_LIST = {
         "Tokenizer",
         "TreeBuilder",
+        "MetaScanner",
         "AttributeName",
         "ElementName",
         "HtmlAttributes",
@@ -66,6 +67,7 @@ public class Main {
     private static final String[] CPP_LIST = {
         "Tokenizer",
         "TreeBuilder",
+        "MetaScanner",
         "AttributeName",
         "ElementName",
         "HtmlAttributes",

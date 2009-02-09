@@ -128,7 +128,7 @@ import java.util.Set;
 public class CppVisitor implements VoidVisitor<Object> {
 
     private static final String[] CLASS_NAMES = { "AttributeName",
-            "ElementName", "HtmlAttributes", "LocatorImpl", "NamedCharacters",
+            "ElementName", "HtmlAttributes", "LocatorImpl", "MetaScanner", "NamedCharacters",
             "Portability", "StackNode", "Tokenizer", "TreeBuilder",
             "UTF16Buffer" };
 
@@ -393,6 +393,11 @@ public class CppVisitor implements VoidVisitor<Object> {
             printer.printLn();
             printer.print("#include \"");
             printer.print(cppTypes.utf16BufferCppSupplement());
+            printer.printLn("\"");
+        } else if ("MetaScanner".equals(javaClassName)) {
+            printer.printLn();
+            printer.print("#include \"");
+            printer.print(cppTypes.metaScannerCppSupplement());
             printer.printLn("\"");
         }
     }
@@ -1327,7 +1332,7 @@ public class CppVisitor implements VoidVisitor<Object> {
     }
 
     public void visit(ConstructorDeclaration n, Object arg) {
-        if ("TreeBuilder".equals(javaClassName)) {
+        if ("TreeBuilder".equals(javaClassName) || "MetaScanner".equals(javaClassName)) {
             return;
         }
 
