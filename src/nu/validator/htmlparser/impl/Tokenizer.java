@@ -1397,7 +1397,7 @@ public final class Tokenizer implements Locator {
         // ]NOCPP]
         if (attributeName != null) {
             String value = longStrBufToString(); // Ownership transferred to
-                                                 // HtmlAttributes
+            // HtmlAttributes
             // [NOCPP[
             if (!endTag && html4 && html4ModeCompatibleWithXhtml1Schemata
                     && attributeName.isCaseFolded()) {
@@ -2900,7 +2900,7 @@ public final class Tokenizer implements Locator {
                     doctypenameloop: for (;;) {
                         c = read();
                         /*
-                         * First, consume the next input character:
+                         * Consume the next input character:
                          */
                         switch (c) {
                             case '\u0000':
@@ -3025,10 +3025,10 @@ public final class Tokenizer implements Locator {
                             break stateloop;
                         }
                         /*
-                         * If the next six characters are an ASCII
-                         * case-insensitive match for the word "PUBLIC", then
-                         * consume those characters and switch to the before
-                         * DOCTYPE public identifier state.
+                         * If the six characters starting from the current input
+                         * character are an ASCII case-insensitive match for the
+                         * word "PUBLIC", then consume those characters and
+                         * switch to the before DOCTYPE public identifier state.
                          */
                         if (index < 5) { // UBLIC.length
                             char folded = c;
@@ -3404,10 +3404,11 @@ public final class Tokenizer implements Locator {
                             break stateloop;
                         }
                         /*
-                         * Otherwise, if the next six characters are an ASCII
-                         * case-insensitive match for the word "SYSTEM", then
-                         * consume those characters and switch to the before
-                         * DOCTYPE system identifier state.
+                         * Otherwise, if the six characters starting from the
+                         * current input character are an ASCII case-insensitive
+                         * match for the word "SYSTEM", then consume those
+                         * characters and switch to the before DOCTYPE system
+                         * identifier state.
                          */
                         if (index < 5) { // YSTEM.length
                             char folded = c;
@@ -4405,7 +4406,7 @@ public final class Tokenizer implements Locator {
                          * case), or, if the content model flag is set to the
                          * RCDATA or CDATA states and the next few characters do
                          * not match the tag name of the last start tag token
-                         * emitted (compared in an ASCII case insensitive
+                         * emitted (compared in an ASCII case-insensitive
                          * manner), or if they do but they are not immediately
                          * followed by one of the following characters: + U+0009
                          * CHARACTER TABULATION + U+000A LINE FEED (LF) + +
@@ -4486,7 +4487,8 @@ public final class Tokenizer implements Locator {
                                     continue stateloop;
                                 case '/':
                                     /*
-                                     * U+002F SOLIDUS (/) Switch to the self-closing start tag state.
+                                     * U+002F SOLIDUS (/) Switch to the
+                                     * self-closing start tag state.
                                      */
                                     state = Tokenizer.SELF_CLOSING_START_TAG;
                                     continue stateloop;
@@ -4744,15 +4746,15 @@ public final class Tokenizer implements Locator {
         } else if ((value >= 0x0000 && value <= 0x0008) || (value == 0x000B)
                 || (value >= 0x000E && value <= 0x001F) || value == 0x007F) {
             /*
-             * OOtherwise, if the number is in the range U+0000 to U+0008,
-             * U+000B, U+000E to 0x001F, 0x007F to 0x009F, 0xD800 to 0xDFFF,
-             * 0xFDD0 to 0xFDDF, or is one of 0xFFFE, 0xFFFF, 0x1FFFE, 0x1FFFF,
-             * 0x2FFFE, 0x2FFFF, 0x3FFFE, 0x3FFFF, 0x4FFFE, 0x4FFFF, 0x5FFFE,
-             * 0x5FFFF, 0x6FFFE, 0x6FFFF, 0x7FFFE, 0x7FFFF, 0x8FFFE, 0x8FFFF,
-             * 0x9FFFE, 0x9FFFF, 0xAFFFE, 0xAFFFF, 0xBFFFE, 0xBFFFF, 0xCFFFE,
-             * 0xCFFFF, 0xDFFFE, 0xDFFFF, 0xEFFFE, 0xEFFFF, 0xFFFFE, 0xFFFFF,
-             * 0x10FFFE, or 0x10FFFF, or is higher than 0x10FFFF, then this is a
-             * parse error; return a character token for the U+FFFD REPLACEMENT
+             * Otherwise, if the number is in the range 0x0000 to 0x0008, 0x000E
+             * to 0x001F, 0x007F to 0x009F, 0xD800 to 0xDFFF, 0xFDD0 to 0xFDEF,
+             * or is one of 0x000B, 0xFFFE, 0xFFFF, 0x1FFFE, 0x1FFFF, 0x2FFFE,
+             * 0x2FFFF, 0x3FFFE, 0x3FFFF, 0x4FFFE, 0x4FFFF, 0x5FFFE, 0x5FFFF,
+             * 0x6FFFE, 0x6FFFF, 0x7FFFE, 0x7FFFF, 0x8FFFE, 0x8FFFF, 0x9FFFE,
+             * 0x9FFFF, 0xAFFFE, 0xAFFFF, 0xBFFFE, 0xBFFFF, 0xCFFFE, 0xCFFFF,
+             * 0xDFFFE, 0xDFFFF, 0xEFFFE, 0xEFFFF, 0xFFFFE, 0xFFFFF, 0x10FFFE,
+             * or 0x10FFFF, or is higher than 0x10FFFF, then this is a parse
+             * error; return a character token for the U+FFFD REPLACEMENT
              * CHARACTER character instead.
              */
             err("Character reference expands to a control character ("
@@ -4763,6 +4765,9 @@ public final class Tokenizer implements Locator {
             emitOrAppendOne(Tokenizer.REPLACEMENT_CHARACTER, returnState);
         } else if (isNonCharacter(value)) {
             err("Character reference expands to a non-character.");
+            emitOrAppendOne(Tokenizer.REPLACEMENT_CHARACTER, returnState);
+        } else if (value >= 0xFDD0 && value <= 0xFDEF) {
+            err("Character reference expands to a permanently unassigned code point.");
             emitOrAppendOne(Tokenizer.REPLACEMENT_CHARACTER, returnState);
         } else if (value <= 0xFFFF) {
             /*
@@ -4944,8 +4949,8 @@ public final class Tokenizer implements Locator {
                         /* EOF Parse error. */
                         err("End of file inside doctype.");
                         /*
-                         * Create a new DOCTYPE token. Set its force-quirks flag to
-                         * on.
+                         * Create a new DOCTYPE token. Set its force-quirks flag
+                         * to on.
                          */
                         doctypeName = "";
                         publicIdentifier = null;
@@ -4958,7 +4963,7 @@ public final class Tokenizer implements Locator {
                         /*
                          * Reconsume the EOF character in the data state.
                          */
-                        break eofloop;                        
+                        break eofloop;
                     }
                     break eofloop;
                 case COMMENT_START:
