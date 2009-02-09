@@ -55,11 +55,11 @@ public class Encoding {
     private static String[] SHOULD_NOT = { "jisx02121990", "xjis0208" };
 
     private static String[] BANNED = { "bocu1", "cesu8", "compoundtext",
-            "macarabic", "maccentraleurroman", "maccroatian", "maccyrillic",
-            "macdevanagari", "macfarsi", "macgreek", "macgujarati",
-            "macgurmukhi", "machebrew", "macicelandic", "macroman",
-            "macromanian", "macthai", "macturkish", "macukranian", "scsu",
-            "utf32", "utf32be", "utf32le", "utf7", "ximapmailboxname",
+            "iscii91", "macarabic", "maccentraleurroman", "maccroatian",
+            "maccyrillic", "macdevanagari", "macfarsi", "macgreek",
+            "macgujarati", "macgurmukhi", "machebrew", "macicelandic",
+            "macroman", "macromanian", "macthai", "macturkish", "macukranian",
+            "scsu", "utf32", "utf32be", "utf32le", "utf7", "ximapmailboxname",
             "xjisautodetect", "xutf16bebom", "xutf16lebom", "xutf32bebom",
             "xutf32lebom", "xutf16oppositeendian", "xutf16platformendian",
             "xutf32oppositeendian", "xutf32platformendian" };
@@ -219,7 +219,7 @@ public class Encoding {
         } catch (Exception e) {
             return false;
         } catch (CoderMalfunctionError e) {
-            return false;            
+            return false;
         }
 
         return true;
