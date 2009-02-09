@@ -74,7 +74,7 @@ public class CppTypes {
             "nsString", "nsINameSpaceManager", "nsIContent", "nsIDocument",
             "jArray", "nsHtml5DocumentMode", "nsHtml5ArrayCopy",
             "nsHtml5NamedCharacters", "nsHtml5Parser", "nsHtml5StringLiterals",
-            "nsHtml5Atoms", };
+            "nsHtml5Atoms", "nsHtml5ByteReadable", };
 
     private static final String[] NAMED_CHARACTERS_INCLUDES = { "prtypes",
             "jArray", "nscore" };
@@ -291,5 +291,13 @@ public class CppTypes {
 
     public String utf16BufferHSupplement() {
         return "nsHtml5UTF16BufferHSupplement.h";
+    }
+
+    public String MetaScannerHSupplement() {
+        return "nsHtml5MetaScannerHSupplement.h";
+    }
+
+    public String metaScannerCppSupplement() {
+        return "nsHtml5MetaScannerCppSupplement.h";
     }
 }
