@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
- * Copyright (c) 2008 Mozilla Foundation
+ * Copyright (c) 2008-2009 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -45,7 +45,7 @@ import org.xml.sax.ext.LexicalHandler;
 
 public class XmlSerializer implements ContentHandler, LexicalHandler {
 
-    private class PrefixMapping {
+    private final class PrefixMapping {
         public final String uri;
 
         public final String prefix;
@@ -62,7 +62,7 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
         /**
          * @see java.lang.Object#equals(java.lang.Object)
          */
-        @Override public boolean equals(Object obj) {
+        @Override public final boolean equals(Object obj) {
             if (obj instanceof PrefixMapping) {
                 PrefixMapping other = (PrefixMapping) obj;
                 return this.prefix.equals(other.prefix);
@@ -74,13 +74,13 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
         /**
          * @see java.lang.Object#hashCode()
          */
-        @Override public int hashCode() {
+        @Override public final int hashCode() {
             return prefix.hashCode();
         }
 
     }
 
-    private class StackNode {
+    private final class StackNode {
         public final String uri;
 
         public final String prefix;
@@ -237,7 +237,7 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
         WELL_KNOWN_ELEMENT_PREFIXES.put("http://www.iupac.org/foo/ichi", "ichi");
     }
 
-    private static Writer wrap(OutputStream out) {
+    private final static Writer wrap(OutputStream out) {
         Charset charset = Charset.forName("utf-8");
         CharsetEncoder encoder = charset.newEncoder();
         encoder.onMalformedInput(CodingErrorAction.REPLACE);
@@ -262,18 +262,22 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
     public XmlSerializer(Writer out) {
         this.writer = out;
     }
+    
+    protected void checkNCName(String name) throws SAXException {
+        
+    }
 
-    private void push(String uri, String local, String prefix) {
+    private final void push(String uri, String local, String prefix) {
         stack.addFirst(new StackNode(uri, local, prefix));
     }
 
-    private String pop() {
+    private final String pop() {
         String rv = stack.removeFirst().qName;
         stack.getFirst().mappings.clear();
         return rv;
     }
 
-    private String lookupPrefixAttribute(String ns) {
+    private final String lookupPrefixAttribute(String ns) {
         if ("http://www.w3.org/XML/1998/namespace".equals(ns)) {
             return "xml";
         }
@@ -290,7 +294,7 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
         return null;
     }
 
-    private String lookupUri(String prefix) {
+    private final String lookupUri(String prefix) {
         for (StackNode node : stack) {
             for (PrefixMapping mapping : node.mappings) {
                 if (mapping.prefix.equals(prefix)) {
@@ -301,7 +305,7 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
         return null;
     }
 
-    private boolean xmlNsQname(String name) {
+    private final boolean xmlNsQname(String name) {
         if (name == null) {
             return false;
         } else if ("xmlns".equals(name)) {
@@ -313,7 +317,7 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
         }
     }
 
-    private void writeAttributeValue(String val) throws IOException {
+    private final void writeAttributeValue(String val) throws IOException {
         boolean prevWasSpace = true;
         int last = val.length() - 1;
         for (int i = 0; i <= last; i++) {
@@ -376,7 +380,7 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
         }
     }
 
-    private void generatePrefix(String uri) throws SAXException {
+    private final void generatePrefix(String uri) throws SAXException {
         int counter = 0;
         String candidate = WELL_KNOWN_ATTRIBUTE_PREFIXES.get(uri);
         if (candidate == null) {
@@ -388,7 +392,7 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
         startPrefixMappingPrivate(candidate, uri);
     }
 
-    public void characters(char[] ch, int start, int length)
+    public final void characters(char[] ch, int start, int length)
             throws SAXException {
         try {
             for (int i = start; i < start + length; i++) {
@@ -432,7 +436,7 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
         }
     }
 
-    public void endDocument() throws SAXException {
+    public final void endDocument() throws SAXException {
         try {
             stack.clear();
             writer.flush();
@@ -442,7 +446,7 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
         }
     }
 
-    public void endElement(String uri, String localName, String qName)
+    public final void endElement(String uri, String localName, String qName)
             throws SAXException {
         try {
             writer.write('<');
@@ -454,14 +458,15 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
         }
     }
 
-    public void ignorableWhitespace(char[] ch, int start, int length)
+    public final void ignorableWhitespace(char[] ch, int start, int length)
             throws SAXException {
         characters(ch, start, length);
     }
 
-    public void processingInstruction(String target, String data)
+    public final void processingInstruction(String target, String data)
             throws SAXException {
         try {
+            checkNCName(target);
             writer.write("<?");
             writer.write(target);
             writer.write(' ');
@@ -481,14 +486,11 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
                         }
                         prevWasQuestionmark = false;
                         break;
-                    case '\r':
-                        writer.write("&#xD;");
-                        prevWasQuestionmark = false;
-                        break;
                     case '\t':
                         writer.write('\t');
                         prevWasQuestionmark = false;
                         break;
+                    case '\r':
                     case '\n':
                         writer.write('\n');
                         prevWasQuestionmark = false;
@@ -511,19 +513,16 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
                         break;
                 }
             }
-            if (prevWasQuestionmark) {
-                writer.write(' ');
-            }
             writer.write("?>");
         } catch (IOException e) {
             throw new SAXException(e);
         }
     }
 
-    public void setDocumentLocator(Locator locator) {
+    public final void setDocumentLocator(Locator locator) {
     }
 
-    public void startDocument() throws SAXException {
+    public final void startDocument() throws SAXException {
         try {
             writer.write("<?xml version='1.0' encoding='utf-8'?>\n");
         } catch (IOException e) {
@@ -533,8 +532,9 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
         push(null, null, null);
     }
 
-    public void startElement(String uri, String localName, String q,
+    public final void startElement(String uri, String localName, String q,
             Attributes atts) throws SAXException {
+        checkNCName(localName);
         String prefix;
         String qName;
         if (uri.length() == 0) {
@@ -604,7 +604,9 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
                     writer.write(lookupPrefixAttribute(attUri));
                     writer.write(':');
                 }
-                writer.write(atts.getLocalName(i));
+                String attLocal = atts.getLocalName(i);
+                checkNCName(attLocal);
+                writer.write(attLocal);
                 writer.write('=');
                 writer.write('"');
                 writeAttributeValue(atts.getValue(i));
@@ -617,7 +619,7 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
         push(uri, qName, prefix);
     }
 
-    public void comment(char[] ch, int start, int length) throws SAXException {
+    public final void comment(char[] ch, int start, int length) throws SAXException {
         try {
             boolean prevWasHyphen = false;
             writer.write("<!--");
@@ -632,14 +634,11 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
                             prevWasHyphen = true;
                         }
                         break;
-                    case '\r':
-                        writer.write("&#xD;");
-                        prevWasHyphen = false;
-                        break;
                     case '\t':
                         writer.write('\t');
                         prevWasHyphen = false;
                         break;
+                    case '\r':
                     case '\n':
                         writer.write('\n');
                         prevWasHyphen = false;
@@ -671,26 +670,26 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
         }
     }
 
-    public void endCDATA() throws SAXException {
+    public final void endCDATA() throws SAXException {
     }
 
-    public void endDTD() throws SAXException {
+    public final void endDTD() throws SAXException {
     }
 
-    public void endEntity(String name) throws SAXException {
+    public final void endEntity(String name) throws SAXException {
     }
 
-    public void startCDATA() throws SAXException {
+    public final void startCDATA() throws SAXException {
     }
 
-    public void startDTD(String name, String publicId, String systemId)
+    public final void startDTD(String name, String publicId, String systemId)
             throws SAXException {
     }
 
-    public void startEntity(String name) throws SAXException {
+    public final void startEntity(String name) throws SAXException {
     }
 
-    public void startPrefixMapping(String prefix, String uri)
+    public final void startPrefixMapping(String prefix, String uri)
             throws SAXException {
         if (prefix.length() == 0 || uri.equals(lookupUri(prefix))) {
             return;
@@ -708,6 +707,10 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
         if ("http://www.w3.org/2000/xmlns/".equals(uri)) {
             throw new SAXException("Attempt to declare a reserved NS uri.");
         }
+        if (uri.length() == 0 && prefix.length() != 0) {
+            throw new SAXException("Can bind a prefix to no namespace.");           
+        }
+        checkNCName(prefix);
         Set<PrefixMapping> theSet = stack.getFirst().mappings;
         PrefixMapping mapping = new PrefixMapping(uri, prefix);
         if (theSet.contains(mapping)) {
@@ -717,7 +720,7 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
         theSet.add(mapping);
     }
 
-    public void startPrefixMappingPrivate(String prefix, String uri)
+    public final void startPrefixMappingPrivate(String prefix, String uri)
             throws SAXException {
         if (uri.equals(lookupUri(prefix))) {
             return;
@@ -725,10 +728,10 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
         stack.getFirst().mappings.add(new PrefixMapping(uri, prefix));
     }
 
-    public void endPrefixMapping(String prefix) throws SAXException {
+    public final void endPrefixMapping(String prefix) throws SAXException {
     }
 
-    public void skippedEntity(String name) throws SAXException {
+    public final void skippedEntity(String name) throws SAXException {
     }
 
 }

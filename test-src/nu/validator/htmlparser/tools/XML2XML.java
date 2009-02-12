@@ -33,6 +33,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.transform.TransformerException;
 
+import nu.validator.htmlparser.sax.NameCheckingXmlSerializer;
 import nu.validator.htmlparser.sax.XmlSerializer;
 import nu.validator.htmlparser.test.SystemErrErrorHandler;
 
@@ -71,7 +72,7 @@ public class XML2XML {
                 return;
         }
 
-        ContentHandler serializer = new XmlSerializer(out);
+        ContentHandler serializer = new NameCheckingXmlSerializer(out);
         
         SAXParserFactory factory = SAXParserFactory.newInstance();
         factory.setNamespaceAware(true);
