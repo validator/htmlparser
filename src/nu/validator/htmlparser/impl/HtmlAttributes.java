@@ -303,6 +303,14 @@ public final class HtmlAttributes implements Attributes {
             return getXmlnsValue(index);
         }
     }
+    
+    public AttributeName getXmlnsAttributeName(int index) {
+        if (index < xmlnsLength && index >= 0) {
+            return xmlnsNames[index];
+        } else {
+            return null;
+        }
+    }
 
     // ]NOCPP]
 
