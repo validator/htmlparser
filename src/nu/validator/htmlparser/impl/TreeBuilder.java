@@ -371,6 +371,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private @NsUri String contextNamespace;
 
+    private T contextNode;
+    
     private StackNode<T>[] stack;
 
     private int currentPtr = -1;
@@ -484,7 +486,12 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         start(fragment);
         startCoalescing();
         if (fragment) {
-            T elt = createHtmlElementSetAsRoot(tokenizer.emptyAttributes());
+            T elt;
+            if (contextNode != null) {
+                elt = contextNode;
+            } else {
+                elt = createHtmlElementSetAsRoot(tokenizer.emptyAttributes());
+            }
             StackNode<T> node = new StackNode<T>(
                     "http://www.w3.org/1999/xhtml", ElementName.HTML, elt);
             currentPtr++;
@@ -502,6 +509,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             } else {
                 tokenizer.setContentModelFlag(Tokenizer.DATA, contextName);
             }
+            Portability.releaseLocal(contextName);
+            contextName = null;
+            Portability.releaseElement(contextNode);
+            contextNode = null;
             Portability.releaseElement(elt);
         } else {
             mode = INITIAL;
@@ -1376,6 +1387,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
      * @see nu.validator.htmlparser.common.TokenHandler#endTokenization()
      */
     public final void endTokenization() throws SAXException {
+        Portability.releaseElement(formPointer);
+        formPointer = null;
+        Portability.releaseElement(headPointer);
+        headPointer = null;
         while (currentPtr > -1) {
             stack[currentPtr].release();
             currentPtr--;
@@ -3850,12 +3865,15 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         foreignFlag = TreeBuilder.NOT_IN_FOREIGN;
         StackNode<T> node;
         @Local String name;
+        @NsUri String ns;
         for (int i = currentPtr; i >= 0; i--) {
             node = stack[i];
             name = node.name;
+            ns = node.ns;
             if (i == 0) {
-                if (!(contextName == "td" || contextName == "th")) {
+                if (!(contextNamespace == "http://www.w3.org/1999/xhtml" && (contextName == "td" || contextName == "th"))) {
                     name = contextName;
+                    ns = contextNamespace;
                 } else {
                     mode = IN_BODY; // XXX from Hixie's email
                     return;
@@ -4378,15 +4396,60 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     private void checkAttributes(HtmlAttributes attributes, @NsUri String ns)
             throws SAXException {
         if (errorHandler != null) {
-            String xmlns = attributes.getXmlnsValue(AttributeName.XMLNS);
-            if (xmlns != null) {
-                if (html4) {
-                    err("Attribute \u201Cxmlns\u201D not allowed here. (HTML4-only error.)");
-                } else if (!ns.equals(xmlns)) {
-                    err("Bad value \u201C"
-                            + xmlns
-                            + "\u201D for the attribute \u201Cxmlns\u201D (only \u201C"
-                            + ns + "\u201D permitted here).");
+            int len = attributes.getXmlnsLength();
+            for (int i = 0; i < len; i++) {
+                AttributeName name = attributes.getXmlnsAttributeName(i);
+                if (name == AttributeName.XMLNS) {
+                    if (html4) {
+                        err("Attribute \u201Cxmlns\u201D not allowed here. (HTML4-only error.)");
+                    } else {
+                        String xmlns = attributes.getXmlnsValue(i);
+                        if (!ns.equals(xmlns)) {
+                            err("Bad value \u201C"
+                                    + xmlns
+                                    + "\u201D for the attribute \u201Cxmlns\u201D (only \u201C"
+                                    + ns + "\u201D permitted here).");
+                            switch (namePolicy) {
+                                case ALTER_INFOSET:
+                                    // fall through
+                                case ALLOW:
+                                    warn("Attribute \u201Cxmlns\u201D is not serializable as XML 1.0.");
+                                    break;
+                                case FATAL:
+                                    fatal("Attribute \u201Cxmlns\u201D is not serializable as XML 1.0.");
+                                    break;
+                            }
+                        }
+                    }
+                } else if (ns != "http://www.w3.org/1999/xhtml" && name == AttributeName.XMLNS_XLINK) {
+                    String xmlns = attributes.getXmlnsValue(i);
+                    if (!"http://www.w3org/1999/xlink".equals(xmlns)) {
+                        err("Bad value \u201C"
+                                + xmlns
+                                + "\u201D for the attribute \u201Cxmlns:link\u201D (only \u201Chttp://www.w3org/1999/xlink\u201D permitted here).");
+                        switch (namePolicy) {
+                            case ALTER_INFOSET:
+                                // fall through
+                            case ALLOW:
+                                warn("Attribute \u201Cxmlns:xlink\u201D with the value \u201Chttp://www.w3org/1999/xlink\u201D is not serializable as XML 1.0 without changing document semantics.");
+                                break;
+                            case FATAL:
+                                fatal("Attribute \u201Cxmlns:xlink\u201D with the value \u201Chttp://www.w3org/1999/xlink\u201D is not serializable as XML 1.0 without changing document semantics.");
+                                break;
+                        }
+                    }                    
+                } else {
+                    err("Attribute \u201C" + attributes.getLocalName(i) + "\u201D not allowed here.");                    
+                    switch (namePolicy) {
+                        case ALTER_INFOSET:
+                            // fall through
+                        case ALLOW:
+                            warn("Attribute with the local name \u201C" + attributes.getLocalName(i) + "\u201D is not serializable as XML 1.0.");
+                            break;
+                        case FATAL:
+                            fatal("Attribute with the local name \u201C" + attributes.getLocalName(i) + "\u201D is not serializable as XML 1.0.");
+                            break;
+                    }
                 }
             }
         }
@@ -4838,10 +4901,25 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     public final void setFragmentContext(@Local String context) {
         this.contextName = context;
         this.contextNamespace = "http://www.w3.org/1999/xhtml";
+        this.contextNode = null;
         this.fragment = (contextName != null);
     }
 
     // ]NOCPP]
+
+    /**
+     * The argument MUST be an interned string or <code>null</code>.
+     * 
+     * @param context
+     */
+    public final void setFragmentContext(@Local String context, @NsUri String ns, T node) {
+        this.contextName = context;
+        Portability.retainLocal(context);
+        this.contextNamespace = ns;
+        this.contextNode = node;
+        Portability.retainElement(node);
+        this.fragment = (contextName != null);
+    }
 
     protected final T currentNode() {
         return stack[currentPtr].node;
