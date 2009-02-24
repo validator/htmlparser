@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
- * Copyright (c) 2008 Mozilla Foundation
+ * Copyright (c) 2008-2009 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -187,22 +187,6 @@ class DOMTreeBuilder extends CoalescingTreeBuilder<Element> {
 
     /**
      * 
-     * @see nu.validator.htmlparser.impl.TreeBuilder#detachFromParent(java.lang.Object)
-     */
-    @Override
-    protected void detachFromParent(Element element) throws SAXException {
-        try {
-            Node parent = element.getParentNode();
-            if (parent != null) {
-                parent.removeChild(element);
-            }
-        } catch (DOMException e) {
-            fatal(e);
-        }
-    }
-
-    /**
-     * 
      * @see nu.validator.htmlparser.impl.TreeBuilder#appendElement(java.lang.Object, java.lang.Object)
      */
     @Override
@@ -229,52 +213,6 @@ class DOMTreeBuilder extends CoalescingTreeBuilder<Element> {
         }
     }
 
-    /**
-     * 
-     * @see nu.validator.htmlparser.impl.TreeBuilder#insertBefore(java.lang.Object, java.lang.Object, java.lang.Object)
-     */
-    @Override
-    protected void insertBefore(Element child, Element sibling, Element parent)
-            throws SAXException {
-        try {
-            parent.insertBefore(child, sibling);
-        } catch (DOMException e) {
-            fatal(e);
-        }
-    }
-
-    /**
-     * 
-     * @see nu.validator.htmlparser.impl.CoalescingTreeBuilder#insertCharactersBefore(java.lang.String, java.lang.Object, java.lang.Object)
-     */
-    @Override
-    protected void insertCharactersBefore(String comment,
-            Element sibling, Element parent) throws SAXException {
-        try {
-            parent.insertBefore(document.createTextNode(comment), sibling);
-        } catch (DOMException e) {
-            fatal(e);
-        }
-    }
-
-    /**
-     * 
-     * @see nu.validator.htmlparser.impl.TreeBuilder#parentElementFor(java.lang.Object)
-     */
-    @Override
-    protected Element parentElementFor(Element child) throws SAXException {
-        try {
-            Node parent = child.getParentNode();
-            if (parent != null && parent.getNodeType() == Node.ELEMENT_NODE) {
-                return (Element) parent;
-            } else {
-                return null;
-            }
-        } catch (DOMException e) {
-            fatal(e);
-            throw new RuntimeException("Unreachable");
-        }
-    }
 
     /**
      * 
@@ -347,5 +285,26 @@ class DOMTreeBuilder extends CoalescingTreeBuilder<Element> {
         }
         document = null;
         return rv;
+    }
+
+    @Override protected void insertFosterParentedCharacter(
+            String text, Element table, Element stackParent) throws SAXException {
+        Node child = document.createTextNode(text);
+        Node parent = table.getParentNode();
+        if (parent != null) { // always an element if not null
+            parent.insertBefore(child, table);
+        } else {
+            stackParent.appendChild(child);
+        }
+    }
+
+    @Override protected void insertFosterParentedChild(Element child,
+            Element table, Element stackParent) throws SAXException {
+        Node parent = table.getParentNode();
+        if (parent != null) { // always an element if not null
+            parent.insertBefore(child, table);
+        } else {
+            stackParent.appendChild(child);
+        }
     }
 }

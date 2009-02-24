@@ -468,7 +468,7 @@ public final class NCName {
     
     private static void appendUHexTo(StringBuilder sb, int c) {
         sb.append('U');
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 6; i++) {
             sb.append(HEX_TABLE[(c & 0xF0000) >> 16]);
             c <<= 4;
         }

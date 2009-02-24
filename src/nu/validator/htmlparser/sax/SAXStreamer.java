@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
- * Copyright (c) 2008 Mozilla Foundation
+ * Copyright (c) 2008-2009 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -102,22 +102,6 @@ class SAXStreamer extends TreeBuilder<Attributes>{
     }
 
     @Override
-    protected void insertBefore(Attributes child, Attributes sibling, Attributes parent) throws SAXException {
-        fatal();
-    }
-
-    @Override
-    protected void insertCharactersBefore(char[] buf, int start, int length, Attributes sibling, Attributes parent) throws SAXException {
-        fatal();
-    }
-
-    @Override
-    protected Attributes parentElementFor(Attributes child) throws SAXException {
-        fatal();
-        throw new RuntimeException("Unreachable");
-    }
-
-    @Override
     protected Attributes shallowClone(Attributes element) throws SAXException {
         return element;
     }
@@ -184,6 +168,17 @@ class SAXStreamer extends TreeBuilder<Attributes>{
             errorHandler.fatalError(spe);
         }
         throw spe;
+    }
+
+    @Override protected void insertFosterParentedCharacter(char[] buf,
+            int start, Attributes table, Attributes stackParent)
+            throws SAXException {
+        fatal();
+    }
+
+    @Override protected void insertFosterParentedChild(Attributes child,
+            Attributes table, Attributes stackParent) throws SAXException {
+        fatal();
     }
 
 }

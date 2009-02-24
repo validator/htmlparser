@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
- * Copyright (c) 2008 Mozilla Foundation
+ * Copyright (c) 2008-2009 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -29,6 +29,7 @@ import nu.validator.htmlparser.impl.HtmlAttributes;
 import nu.xom.Attribute;
 import nu.xom.Document;
 import nu.xom.Element;
+import nu.xom.Node;
 import nu.xom.Nodes;
 import nu.xom.ParentNode;
 import nu.xom.XMLException;
@@ -40,6 +41,10 @@ class XOMTreeBuilder extends CoalescingTreeBuilder<Element> {
     private final SimpleNodeFactory nodeFactory;
 
     private Document document;
+    
+    private int cachedTableIndex = -1;
+    
+    private Element cachedTable = null;
 
     protected XOMTreeBuilder(SimpleNodeFactory nodeFactory) {
         super();
@@ -183,41 +188,6 @@ class XOMTreeBuilder extends CoalescingTreeBuilder<Element> {
     }
 
     @Override
-    protected void insertBefore(Element child, Element sibling, Element parent)
-            throws SAXException {
-        try {
-            parent.insertChild(child, parent.indexOf(sibling));
-        } catch (XMLException e) {
-            fatal(e);
-        }
-    }
-
-    @Override
-    protected void insertCharactersBefore(String text,
-            Element sibling, Element parent) throws SAXException {
-        try {
-            parent.insertChild(nodeFactory.makeText(text), parent.indexOf(sibling));
-        } catch (XMLException e) {
-            fatal(e);
-        }
-    }
-
-    @Override
-    protected Element parentElementFor(Element child) throws SAXException {
-        try {
-            ParentNode parent = child.getParent();
-            if (parent != null && parent instanceof Element) {
-                return (Element) parent;
-            } else {
-                return null;
-            }
-        } catch (XMLException e) {
-            fatal(e);
-            throw new RuntimeException("Unreachable");
-        }
-    }
-
-    @Override
     protected Element shallowClone(Element element) throws SAXException {
         try {
             Element rv = nodeFactory.makeElement(element.getLocalName(),
@@ -283,6 +253,8 @@ class XOMTreeBuilder extends CoalescingTreeBuilder<Element> {
     @Override
     protected void start(boolean fragment) throws SAXException {
         document = nodeFactory.makeDocument();
+        cachedTableIndex = -1;
+        cachedTable = null;
     }
 
     /**
@@ -297,5 +269,53 @@ class XOMTreeBuilder extends CoalescingTreeBuilder<Element> {
             Mode modal = (Mode) document;
             modal.setMode(mode);
         }
+    }
+
+    @Override protected void insertFosterParentedCharacter(String text,
+            Element table, Element stackParent) throws SAXException {
+        try {
+            Node child = nodeFactory.makeText(text);
+            Node parent = table.getParent();
+            if (parent != null) { // always an element if not null
+                ((ParentNode)parent).insertChild(child, indexOfTable(table, stackParent));
+                cachedTableIndex++;
+            } else {
+                stackParent.appendChild(child);
+            }            
+        } catch (XMLException e) {
+            fatal(e);
+        }
+    }
+
+    @Override protected void insertFosterParentedChild(Element child,
+            Element table, Element stackParent) throws SAXException {
+        try {
+            Node parent = table.getParent();
+            if (parent != null) { // always an element if not null
+                ((ParentNode)parent).insertChild(child, indexOfTable(table, stackParent));
+                cachedTableIndex++;
+            } else {
+                stackParent.appendChild(child);
+            }
+        } catch (XMLException e) {
+            fatal(e);
+        }
+    }
+    
+    private int indexOfTable(Element table, Element stackParent) {
+        if (table == cachedTable) {
+            return cachedTableIndex;
+        } else {
+            cachedTable = table;
+            return (cachedTableIndex = stackParent.indexOf(table));
+        }
+    }
+
+    /**
+     * @see nu.validator.htmlparser.impl.TreeBuilder#end()
+     */
+    @Override protected void end() throws SAXException {
+        cachedTableIndex = -1;
+        cachedTable = null;
     }
 }

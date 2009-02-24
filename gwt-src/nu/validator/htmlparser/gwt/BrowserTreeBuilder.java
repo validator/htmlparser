@@ -29,6 +29,7 @@ import nu.validator.htmlparser.common.DocumentMode;
 import nu.validator.htmlparser.impl.CoalescingTreeBuilder;
 import nu.validator.htmlparser.impl.HtmlAttributes;
 
+import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
 import com.google.gwt.core.client.JavaScriptException;
@@ -270,23 +271,6 @@ class BrowserTreeBuilder extends CoalescingTreeBuilder<JavaScriptObject> {
               return element.parentNode; 
           }-*/;
 
-    private static native void removeChild(JavaScriptObject parent,
-            JavaScriptObject child) /*-{
-              parent.removeChild(child); 
-          }-*/;
-
-    @Override protected void detachFromParent(JavaScriptObject element)
-            throws SAXException {
-        try {
-            JavaScriptObject parent = getParentNode(element);
-            if (parent != null) {
-                removeChild(parent, element);
-            }
-        } catch (JavaScriptException e) {
-            fatal(e);
-        }
-    }
-
     @Override protected void appendElement(
             JavaScriptObject child, JavaScriptObject newParent)
             throws SAXException {
@@ -315,43 +299,9 @@ class BrowserTreeBuilder extends CoalescingTreeBuilder<JavaScriptObject> {
               parent.insertBefore(child, sibling);
           }-*/;
 
-    @Override protected void insertBefore(JavaScriptObject child,
-            JavaScriptObject sibling, JavaScriptObject parent)
-            throws SAXException {
-        try {
-            insertBeforeNative(parent, child, sibling);
-        } catch (JavaScriptException e) {
-            fatal(e);
-        }
-    }
-
-    @Override protected void insertCharactersBefore(String text, JavaScriptObject sibling, JavaScriptObject parent)
-            throws SAXException {
-        try {
-            insertBeforeNative(parent, createTextNode(document, text), sibling);
-        } catch (JavaScriptException e) {
-            fatal(e);
-        }
-    }
-
     private static native int getNodeType(JavaScriptObject node) /*-{
               return node.nodeType;
           }-*/;
-
-    @Override protected JavaScriptObject parentElementFor(JavaScriptObject child)
-            throws SAXException {
-        try {
-            JavaScriptObject parent = getParentNode(child);
-            if (parent != null && getNodeType(parent) == 1 /* ELEMENT_NODE */) {
-                return parent;
-            } else {
-                return null;
-            }
-        } catch (JavaScriptException e) {
-            fatal(e);
-            throw new RuntimeException("Unreachable");
-        }
-    }
 
     private static native JavaScriptObject cloneNode(JavaScriptObject node) /*-{
               return node.cloneNode(false);
@@ -459,6 +409,29 @@ class BrowserTreeBuilder extends CoalescingTreeBuilder<JavaScriptObject> {
                 script = scriptHolder.getScript();
                 placeholder = scriptHolder.getPlaceholder();
             }
+        }
+    }
+
+    @Override protected void insertFosterParentedCharacter(
+            String text, JavaScriptObject table, JavaScriptObject stackParent)
+            throws SAXException {
+        JavaScriptObject child = createTextNode(document, text);
+        JavaScriptObject parent = getParentNode(table);
+        if (parent != null && getNodeType(parent) == 1) {
+            insertBeforeNative(parent, child, table);
+        } else {
+            appendChild(stackParent, child);
+        }
+    }
+
+    @Override protected void insertFosterParentedChild(
+            JavaScriptObject child, JavaScriptObject table,
+            JavaScriptObject stackParent) throws SAXException {
+        JavaScriptObject parent = getParentNode(table);
+        if (parent != null && getNodeType(parent) == 1) {
+            insertBeforeNative(parent, child, table);
+        } else {
+            appendChild(stackParent, child);
         }
     }
 }

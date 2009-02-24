@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
- * Copyright (c) 2008 Mozilla Foundation
+ * Copyright (c) 2008-2009 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -31,7 +31,7 @@ import nu.validator.saxtree.DTD;
 import nu.validator.saxtree.Document;
 import nu.validator.saxtree.DocumentFragment;
 import nu.validator.saxtree.Element;
-import nu.validator.saxtree.NodeType;
+import nu.validator.saxtree.Node;
 import nu.validator.saxtree.ParentNode;
 
 import org.xml.sax.SAXException;
@@ -39,6 +39,10 @@ import org.xml.sax.SAXException;
 class SAXTreeBuilder extends TreeBuilder<Element> {
     
     private Document document;
+    
+    private Node cachedTable = null;
+    
+    private Node cachedTablePreviousSibling = null;
     
     SAXTreeBuilder() {
         super();
@@ -57,11 +61,6 @@ class SAXTreeBuilder extends TreeBuilder<Element> {
     @Override
     protected void appendCharacters(Element parent, char[] buf, int start, int length) {
         parent.appendChild(new Characters(tokenizer, buf, start, length));
-    }
-
-    @Override
-    protected void detachFromParent(Element element) {
-        element.detach();
     }
 
     @Override
@@ -86,23 +85,6 @@ class SAXTreeBuilder extends TreeBuilder<Element> {
         Element newElt = new Element(tokenizer, "http://www.w3.org/1999/xhtml", "html", "html", attributes, true, null);
         document.appendChild(newElt);
         return newElt;
-    }
-
-    @Override
-    protected void insertBefore(Element child, Element sibling, Element parent) {
-        parent.insertBefore(child, sibling);
-    }
-
-    @Override
-    protected Element parentElementFor(Element child) {
-        ParentNode parent = child.getParentNode();
-        if (parent == null) {
-            return null;
-        }
-        if (parent.getNodeType() == NodeType.ELEMENT) {
-            return (Element) parent;
-        }
-        return null;
     }
 
     @Override
@@ -146,6 +128,8 @@ class SAXTreeBuilder extends TreeBuilder<Element> {
     @Override
     protected void end() throws SAXException {
         document.setEndLocator(tokenizer);
+        cachedTable = null;
+        cachedTablePreviousSibling = null;
     }
 
     /**
@@ -154,6 +138,8 @@ class SAXTreeBuilder extends TreeBuilder<Element> {
     @Override
     protected void start(boolean fragment) {
         document = new Document(tokenizer);
+        cachedTable = null;
+        cachedTablePreviousSibling = null;
     }
 
     @Override
@@ -166,9 +152,35 @@ class SAXTreeBuilder extends TreeBuilder<Element> {
         return new Element(tokenizer, ns, name, name, attributes, true, null);
     }
 
-    @Override
-    protected void insertCharactersBefore(char[] buf, int start, int length, Element sibling, Element parent) throws SAXException {
-        parent.insertBefore(new Characters(tokenizer, buf, start, length), sibling);        
+    @Override protected void insertFosterParentedCharacter(char[] buf,
+            int start, Element table, Element stackParent) throws SAXException {
+        Node child = new Characters(tokenizer, buf, start, 1);
+        ParentNode parent = table.getParentNode();
+        if (parent != null) { // always an element if not null
+            parent.insertBetween(child, previousSibling(table), table);
+            cachedTablePreviousSibling = child;
+        } else {
+            stackParent.appendChild(child);
+        }        
     }
 
+    @Override protected void insertFosterParentedChild(Element child,
+            Element table, Element stackParent) throws SAXException {
+        ParentNode parent = table.getParentNode();
+        if (parent != null) { // always an element if not null
+            parent.insertBetween(child, previousSibling(table), table);
+            cachedTablePreviousSibling = child;
+        } else {
+            stackParent.appendChild(child);
+        }
+    }
+
+    private Node previousSibling(Node table) {
+        if (table == cachedTable) {
+            return cachedTablePreviousSibling;   
+        } else {
+            cachedTable = table;
+            return (cachedTablePreviousSibling = table.getPreviousSibling());
+        }
+    }
 }

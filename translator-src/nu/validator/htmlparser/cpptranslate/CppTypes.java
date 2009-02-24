@@ -50,7 +50,7 @@ import java.util.Set;
 public class CppTypes {
 
     private static Set<String> reservedWords = new HashSet<String>();
-    
+
     static {
         reservedWords.add("small");
         reservedWords.add("for");
@@ -69,12 +69,12 @@ public class CppTypes {
         reservedWords.add("not");
         reservedWords.add("xor");
     }
-    
+
     private static final String[] INCLUDES = { "prtypes", "nsIAtom",
             "nsString", "nsINameSpaceManager", "nsIContent", "nsIDocument",
-            "jArray", "nsHtml5DocumentMode", "nsHtml5ArrayCopy",
-            "nsHtml5NamedCharacters", "nsHtml5Parser", "nsHtml5StringLiterals",
-            "nsHtml5Atoms", "nsHtml5ByteReadable", };
+            "nsTraceRefcnt", "jArray", "nsHtml5DocumentMode",
+            "nsHtml5ArrayCopy", "nsHtml5NamedCharacters", "nsHtml5Parser",
+            "nsHtml5StringLiterals", "nsHtml5Atoms", "nsHtml5ByteReadable", };
 
     private static final String[] NAMED_CHARACTERS_INCLUDES = { "prtypes",
             "jArray", "nscore" };
@@ -87,8 +87,7 @@ public class CppTypes {
 
     private final Writer atomWriter;
 
-    public CppTypes(Map<String, String> stringMap,
-            File atomList) {
+    public CppTypes(Map<String, String> stringMap, File atomList) {
         this.stringMap = stringMap;
         if (atomList == null) {
             atomWriter = null;
@@ -204,8 +203,8 @@ public class CppTypes {
             atomMap.put(literal, atom);
             if (atomWriter != null) {
                 try {
-                    atomWriter.write("HTML5_ATOM(" + atom
-                            + ", \"" + literal + "\")\n");
+                    atomWriter.write("HTML5_ATOM(" + atom + ", \"" + literal
+                            + "\")\n");
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -219,7 +218,8 @@ public class CppTypes {
         if ("".equals(candidate)) {
             candidate = "emptystring";
         }
-        while (atomMap.values().contains(candidate) || reservedWords.contains(candidate)) {
+        while (atomMap.values().contains(candidate)
+                || reservedWords.contains(candidate)) {
             candidate = candidate + '_';
         }
         return candidate;
@@ -299,5 +299,13 @@ public class CppTypes {
 
     public String metaScannerCppSupplement() {
         return "nsHtml5MetaScannerCppSupplement.h";
+    }
+
+    public String constructorBoilerplate(String className) {
+        return "MOZ_COUNT_CTOR(" + className + ");";
+    }
+
+    public String destructorBoilderplate(String className) {
+        return "MOZ_COUNT_DTOR(" + className + ");";
     }
 }
