@@ -120,6 +120,26 @@ public abstract class ParentNode extends Node {
         return child;
     }
     
+    public Node insertBetween(Node child, Node prev, Node next) {
+        assert prev == null || this == prev.getParentNode();
+        assert next == null || this == next.getParentNode();
+        assert prev != null || next == firstChild;
+        assert next != null || prev == lastChild;
+        assert prev == null || next == null || prev.getNextSibling() == next;
+        if (next == null) {
+            return appendChild(child);            
+        }
+        child.detach();
+        child.setParentNode(this);
+        child.setNextSibling(next);
+        if (prev == null) {
+            firstChild = child;
+        } else {
+            prev.setNextSibling(child);
+        }        
+        return child;
+    }
+    
     /**
      * Append a child to this node and return the child.
      * 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 Mozilla Foundation
+ * Copyright (c) 2008-2009 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -85,11 +85,11 @@ public abstract class CoalescingTreeBuilder<T> extends TreeBuilder<T> {
     protected abstract void appendCommentToDocument(String comment) throws SAXException;
     
     /**
-     * @see nu.validator.htmlparser.impl.TreeBuilder#insertCharactersBefore(char[], int, int, java.lang.Object, java.lang.Object)
+     * @see nu.validator.htmlparser.impl.TreeBuilder#insertFosterParentedCharacter(char[], int, java.lang.Object, java.lang.Object)
      */
-    @Override protected final void insertCharactersBefore(char[] buf, int start,
-            int length, T sibling, T parent) throws SAXException {
-        insertCharactersBefore(new String(buf, start, length), sibling, parent);
+    @Override protected final void insertFosterParentedCharacter(char[] buf, int start,
+            T table, T stackParent) throws SAXException {
+        insertFosterParentedCharacter(new String(buf, start, 1), table, stackParent);
     }
     
     /**
@@ -107,5 +107,5 @@ public abstract class CoalescingTreeBuilder<T> extends TreeBuilder<T> {
         charBuffer = new char[1024];
     }
 
-    protected abstract void insertCharactersBefore(String text, T sibling, T parent) throws SAXException;
+    protected abstract void insertFosterParentedCharacter(String text, T table, T stackParent) throws SAXException;
 }

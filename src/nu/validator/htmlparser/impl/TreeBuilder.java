@@ -145,7 +145,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     final static int PRE_OR_LISTING = 44;
 
-    final static int B_OR_BIG_OR_EM_OR_I_OR_S_OR_SMALL_OR_STRIKE_OR_STRONG_OR_TT_OR_U = 45;
+    final static int B_OR_BIG_OR_CODE_OR_EM_OR_I_OR_S_OR_SMALL_OR_STRIKE_OR_STRONG_OR_TT_OR_U = 45;
 
     final static int UL_OR_OL_OR_DL = 46;
 
@@ -159,7 +159,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     final static int ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION = 51;
 
-    final static int CODE_OR_RUBY_OR_SPAN_OR_SUB_OR_SUP_OR_VAR = 52;
+    final static int RUBY_OR_SPAN_OR_SUB_OR_SUP_OR_VAR = 52;
 
     final static int RT_OR_RP = 53;
 
@@ -386,6 +386,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     private T headPointer;
 
     private boolean reportingDoctype = true;
+    
+    private boolean framesetOk = true;
 
     // [NOCPP[
 
@@ -478,6 +480,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         formPointer = null;
         Portability.releaseElement(headPointer);
         headPointer = null;
+        framesetOk = true;
         // [NOCPP[
         html4 = false;
         idLocations.clear();
@@ -530,37 +533,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 default:
                     switch (mode) {
                         case INITIAL:
-                            /*
-                             * A DOCTYPE token If the DOCTYPE token's name does
-                             * not case-insensitively match the string "HTML",
-                             * or if the token's public identifier is not
-                             * missing, or if the token's system identifier is
-                             * not missing, then there is a parse error.
-                             * Conformance checkers may, instead of reporting
-                             * this error, switch to a conformance checking mode
-                             * for another language (e.g. based on the DOCTYPE
-                             * token a conformance checker could recognise that
-                             * the document is an HTML4-era document, and defer
-                             * to an HTML4 conformance checker.)
-                             * 
-                             * Append a DocumentType node to the Document node,
-                             * with the name attribute set to the name given in
-                             * the DOCTYPE token; the publicId attribute set to
-                             * the public identifier given in the DOCTYPE token,
-                             * or the empty string if the public identifier was
-                             * not set; the systemId attribute set to the system
-                             * identifier given in the DOCTYPE token, or the
-                             * empty string if the system identifier was not
-                             * set; and the other attributes specific to
-                             * DocumentType objects set to null and empty lists
-                             * as appropriate. Associate the DocumentType node
-                             * with the Document object so that it is returned
-                             * as the value of the doctype attribute of the
-                             * Document object.
-                             */
                             if (reportingDoctype) {
                                 appendDoctypeToDocument(
-                                        name,
+                                        name == null ? "" : name,
                                         publicIdentifier == null ? Portability.newEmptyString() // XXX
                                                                                                 // MEMORY
                                                                                                 // MANAGEMENT
@@ -570,28 +545,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                                                                                 // MANAGEMENT
                                                 : systemIdentifier);
                             }
-                            /*
-                             * Then, if the DOCTYPE token matches one of the
-                             * conditions in the following list, then set the
-                             * document to quirks mode:
-                             * 
-                             * Otherwise, if the DOCTYPE token matches one of
-                             * the conditions in the following list, then set
-                             * the document to limited quirks mode: + The public
-                             * identifier is set to: "-//W3C//DTD XHTML 1.0
-                             * Frameset//EN" + The public identifier is set to:
-                             * "-//W3C//DTD XHTML 1.0 Transitional//EN" + The
-                             * system identifier is not missing and the public
-                             * identifier is set to: "-//W3C//DTD HTML 4.01
-                             * Frameset//EN" + The system identifier is not
-                             * missing and the public identifier is set to:
-                             * "-//W3C//DTD HTML 4.01 Transitional//EN"
-                             * 
-                             * The name, system identifier, and public
-                             * identifier strings must be compared to the values
-                             * given in the lists above in a case-insensitive
-                             * manner.
-                             */
+
                             // [NOCPP[
                             switch (doctypeExpectation) {
                                 case HTML:
@@ -611,11 +565,13 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                                 publicIdentifier,
                                                 systemIdentifier, false);
                                     } else {
-                                        if (!((publicIdentifier == null || Portability.literalEqualsString(
-                                                "XSLT-generated",
-                                                publicIdentifier)) && systemIdentifier == null)) {
+                                        // [NOCPP[
+                                        if (!((systemIdentifier == null || Portability.literalEqualsString(
+                                                "about:legacy-compat",
+                                                systemIdentifier)) && publicIdentifier == null)) {
                                             err("Legacy doctype. Expected \u201C<!DOCTYPE html>\u201D.");
                                         }
+                                        // ]NOCPP]
                                         documentModeInternal(
                                                 DocumentMode.STANDARDS_MODE,
                                                 publicIdentifier,
@@ -1448,11 +1404,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         // fall through to non-foreign behavior
                     } else {
                         switch (group) {
-                            case B_OR_BIG_OR_EM_OR_I_OR_S_OR_SMALL_OR_STRIKE_OR_STRONG_OR_TT_OR_U:
+                            case B_OR_BIG_OR_CODE_OR_EM_OR_I_OR_S_OR_SMALL_OR_STRIKE_OR_STRONG_OR_TT_OR_U:
                             case DIV_OR_BLOCKQUOTE_OR_CENTER_OR_MENU:
                             case BODY:
                             case BR:
-                            case CODE_OR_RUBY_OR_SPAN_OR_SUB_OR_SUP_OR_VAR:
+                            case RUBY_OR_SPAN_OR_SUB_OR_SUP_OR_VAR:
                             case DD_OR_DT:
                             case UL_OR_OL_OR_DL:
                             case EMBED_OR_IMG:
@@ -1839,7 +1795,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                                 "http://www.w3.org/1999/xhtml",
                                                 elementName, attributes);
                                         break starttagloop;
-                                    case B_OR_BIG_OR_EM_OR_I_OR_S_OR_SMALL_OR_STRIKE_OR_STRONG_OR_TT_OR_U:
+                                    case B_OR_BIG_OR_CODE_OR_EM_OR_I_OR_S_OR_SMALL_OR_STRIKE_OR_STRONG_OR_TT_OR_U:
                                     case FONT:
                                         reconstructTheActiveFormattingElements();
                                         appendToCurrentNodeAndPushFormattingElementMayFoster(
@@ -1984,7 +1940,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                                     0,
                                                     TreeBuilder.ISINDEX_PROMPT.length);
                                         }
-                                        HtmlAttributes inputAttributes = tokenizer.emptyAttributes();
+                                        HtmlAttributes inputAttributes = new HtmlAttributes(0);
                                         inputAttributes.addAttribute(
                                                 AttributeName.NAME, "isindex"
                                                 // [NOCPP[
@@ -2020,6 +1976,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         pop(); // form
                                         selfClosing = false;
                                         Portability.delete(formAttrs);
+                                        Portability.delete(inputAttributes);
                                         break starttagloop;
                                     case TEXTAREA:
                                         appendToCurrentNodeAndPushElementMayFoster(
@@ -3151,7 +3108,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     switch (stack[i].group) {
                                         case DD_OR_DT:
                                         case LI:
+                                        case OPTGROUP:
+                                        case OPTION: // is this possible?
                                         case P:
+                                        case RT_OR_RP:
                                         case TD_OR_TH:
                                         case TBODY_OR_THEAD_OR_TFOOT:
                                             break;
@@ -3294,7 +3254,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             }
                             break endtagloop;
                         case A:
-                        case B_OR_BIG_OR_EM_OR_I_OR_S_OR_SMALL_OR_STRIKE_OR_STRONG_OR_TT_OR_U:
+                        case B_OR_BIG_OR_CODE_OR_EM_OR_I_OR_S_OR_SMALL_OR_STRIKE_OR_STRONG_OR_TT_OR_U:
                         case FONT:
                         case NOBR:
                             adoptionAgencyEndTag(name);
@@ -3548,6 +3508,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     continue;
                 case BEFORE_HEAD:
                     switch (group) {
+                        case HTML:
+                        case BODY:
                         case HEAD:
                         case BR:
                             appendToCurrentNodeAndPushHeadElement(HtmlAttributes.EMPTY_ATTRIBUTES);
@@ -3563,6 +3525,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             pop();
                             mode = AFTER_HEAD;
                             break endtagloop;
+                        case BODY:
+                        case HTML:
                         case BR:
                             pop();
                             mode = AFTER_HEAD;
@@ -3588,6 +3552,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     }
                 case AFTER_HEAD:
                     switch (group) {
+                        case HTML:
+                        case BODY:
                         case BR:
                             appendToCurrentNodeAndPushBodyElement();
                             mode = IN_BODY;
@@ -4115,7 +4081,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             StackNode<T> commonAncestor = stack[formattingEltStackPos - 1]; // weak
                                                                             // ref
             StackNode<T> furthestBlock = stack[furthestBlockPos]; // weak ref
-            detachFromParent(furthestBlock.node);
+            // detachFromParent(furthestBlock.node); XXX AAA CHANGE
             int bookmark = formattingEltListPos;
             int nodePos = furthestBlockPos;
             StackNode<T> lastNode = furthestBlock; // weak ref
@@ -4139,31 +4105,32 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 if (nodePos == furthestBlockPos) {
                     bookmark = nodeListPos + 1;
                 }
-                if (hasChildren(node.node)) {
-                    assert node == listOfActiveFormattingElements[nodeListPos];
-                    assert node == stack[nodePos];
-                    T clone = shallowClone(node.node);
-                    StackNode<T> newNode = new StackNode<T>(node.group,
-                            node.ns, node.name, clone, node.scoping,
-                            node.special, node.fosterParenting, node.popName); // creation
-                                                                               // ownership
-                                                                               // goes
-                                                                               // to
-                                                                               // stack
-                    stack[nodePos] = newNode;
-                    newNode.retain(); // retain for list
-                    listOfActiveFormattingElements[nodeListPos] = newNode;
-                    node.release(); // release from stack
-                    node.release(); // release from list
-                    node = newNode;
-                    Portability.releaseElement(clone);
-                }
+                // if (hasChildren(node.node)) { XXX AAA CHANGE
+                assert node == listOfActiveFormattingElements[nodeListPos];
+                assert node == stack[nodePos];
+                T clone = shallowClone(node.node);
+                StackNode<T> newNode = new StackNode<T>(node.group, node.ns,
+                        node.name, clone, node.scoping, node.special,
+                        node.fosterParenting, node.popName); // creation
+                // ownership
+                // goes
+                // to
+                // stack
+                stack[nodePos] = newNode;
+                newNode.retain(); // retain for list
+                listOfActiveFormattingElements[nodeListPos] = newNode;
+                node.release(); // release from stack
+                node.release(); // release from list
+                node = newNode;
+                Portability.releaseElement(clone);
+                // } XXX AAA CHANGE
                 detachFromParent(lastNode.node);
                 appendElement(lastNode.node, node.node);
                 lastNode = node;
             }
             if (commonAncestor.fosterParenting) {
                 fatal();
+                detachFromParent(lastNode.node);
                 insertIntoFosterParent(lastNode.node);
             } else {
                 detachFromParent(lastNode.node);
@@ -4336,12 +4303,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             appendElement(child, elt);
             return;
         }
-        T parent = parentElementFor(elt);
-        if (parent == null) {
-            appendElement(child, stack[eltPos - 1].node);
-        } else {
-            insertBefore(child, elt, parent);
-        }
+        insertFosterParentedChild(child, elt, stack[eltPos - 1].node);
     }
 
     private boolean isInStack(StackNode<T> node) {
@@ -4375,12 +4337,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 appendCharacters(elt, buf, i, 1);
                 return;
             }
-            T parent = parentElementFor(elt);
-            if (parent == null) {
-                appendCharacters(stack[eltPos - 1].node, buf, i, 1);
-            } else {
-                insertCharactersBefore(buf, i, 1, elt, parent);
-            }
+            insertFosterParentedCharacter(buf, i, elt, stack[eltPos - 1].node);
         } else {
             accumulateCharacters(buf, i, 1);
         }
@@ -4787,7 +4744,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     protected abstract T createHtmlElementSetAsRoot(HtmlAttributes attributes)
             throws SAXException;
 
-    protected abstract void detachFromParent(T element) throws SAXException;
+    protected void detachFromParent(T element) throws SAXException {
+        
+    }
 
     protected abstract boolean hasChildren(T element) throws SAXException;
 
@@ -4799,17 +4758,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     protected abstract void appendChildrenToNewParent(T oldParent, T newParent)
             throws SAXException;
 
-    /**
-     * Get the parent element. MUST return <code>null</code> if there is no
-     * parent <em>or</em> the parent is not an element.
-     */
-    protected abstract T parentElementFor(T child) throws SAXException;
-
-    protected abstract void insertBefore(T child, T sibling, T parent)
+    protected abstract void insertFosterParentedChild(T child, T table, T stackParent)
             throws SAXException;
 
-    protected abstract void insertCharactersBefore(@NoLength char[] buf,
-            int start, int length, T sibling, T parent) throws SAXException;
+    protected abstract void insertFosterParentedCharacter(@NoLength char[] buf,
+            int start, T table, T stackParent) throws SAXException;
 
     protected abstract void appendCharacters(T parent, @NoLength char[] buf,
             int start, int length) throws SAXException;

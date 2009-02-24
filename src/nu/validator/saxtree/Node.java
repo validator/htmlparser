@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
- * Copyright (c) 2007-2008 Mozilla Foundation
+ * Copyright (c) 2007-2009 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -150,6 +150,22 @@ public abstract class Node implements Locator {
      */
     public final Node getNextSibling() {
         return nextSibling;
+    }
+    
+    /**
+     * Returns the previous sibling
+     * @return the previous sibling
+     */
+    public final Node getPreviousSibling() {
+        Node prev = null;
+        Node next = parentNode.getFirstChild();
+        for(;;) {
+            if (this == next) {
+                return prev;
+            }
+            prev = next;
+            next = next.nextSibling;
+        }
     }
 
     /**

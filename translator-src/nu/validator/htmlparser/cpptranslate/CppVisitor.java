@@ -216,6 +216,8 @@ public class CppVisitor implements VoidVisitor<Object> {
 
     private Set<String> labels = null;
 
+    private boolean destructor;
+
     /**
      * @param cppTypes
      */
@@ -1414,6 +1416,10 @@ public class CppVisitor implements VoidVisitor<Object> {
         printer.printLn();
         printer.printLn("{");
         printer.indent();
+        String boilerplate = cppTypes.constructorBoilerplate(className);
+        if (boilerplate != null) {
+            printer.printLn(boilerplate);
+        }
         for (Statement statement : nonAssigns) {
             statement.accept(this, arg);
             printer.printLn();
@@ -1446,7 +1452,7 @@ public class CppVisitor implements VoidVisitor<Object> {
 
         currentMethod = n.getName();
 
-        boolean destructor = "destructor".equals(n.getName());
+        destructor = "destructor".equals(n.getName());
 
         // if (n.getJavaDoc() != null) {
         // n.getJavaDoc().accept(this, arg);
@@ -1499,7 +1505,22 @@ public class CppVisitor implements VoidVisitor<Object> {
             printer.print(";");
         } else {
             printer.printLn();
-            n.accept(this, arg);
+            printer.printLn("{");
+            printer.indent();
+            if (destructor) {
+                String boilerplate = cppTypes.destructorBoilderplate(className);
+                if (boilerplate != null) {
+                    printer.printLn(boilerplate);
+                }
+            }
+            if (n.getStmts() != null) {
+                for (Statement s : n.getStmts()) {
+                    s.accept(this, arg);
+                    printer.printLn();
+                }
+            }
+            printer.unindent();
+            printer.print("}");
         }
         printer.printLn();
         printer.printLn();
