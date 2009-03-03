@@ -4,7 +4,7 @@
 
 HTML 5
 
-Draft Recommendation — 13 January 2009
+Draft Recommendation — 7 February 2009
 
    ← 8.2 Parsing HTML documents – Table of contents – 8.2.5 Tree
    construction →
@@ -186,7 +186,7 @@ Draft Recommendation — 13 January 2009
    start tag token has ever been emitted by this instance of the tokeniser
    (fragment case), or, if the content model flag is set to the RCDATA or
    CDATA states and the next few characters do not match the tag name of
-   the last start tag token emitted (compared in an ASCII case insensitive
+   the last start tag token emitted (compared in an ASCII case-insensitive
    manner), or if they do but they are not immediately followed by one of
    the following characters:
      * U+0009 CHARACTER TABULATION
@@ -708,7 +708,7 @@ Draft Recommendation — 13 January 2009
 
       8.2.4.25 DOCTYPE name state
 
-   First, consume the next input character:
+   Consume the next input character:
 
    U+0009 CHARACTER TABULATION
    U+000A LINE FEED (LF)
@@ -752,14 +752,15 @@ Draft Recommendation — 13 January 2009
           state.
 
    Anything else
-          If the next six characters are an ASCII case-insensitive match
-          for the word "PUBLIC", then consume those characters and switch
-          to the before DOCTYPE public identifier state.
+          If the six characters starting from the current input character
+          are an ASCII case-insensitive match for the word "PUBLIC", then
+          consume those characters and switch to the before DOCTYPE public
+          identifier state.
 
-          Otherwise, if the next six characters are an ASCII
-          case-insensitive match for the word "SYSTEM", then consume those
-          characters and switch to the before DOCTYPE system identifier
-          state.
+          Otherwise, if the six characters starting from the current input
+          character are an ASCII case-insensitive match for the word
+          "SYSTEM", then consume those characters and switch to the before
+          DOCTYPE system identifier state.
 
           Otherwise, this is the parse error. Set the DOCTYPE token's
           force-quirks flag to on. Switch to the bogus DOCTYPE state.
@@ -990,9 +991,9 @@ Draft Recommendation — 13 January 2009
    Consume every character up to the next occurrence of the three
    character sequence U+005D RIGHT SQUARE BRACKET U+005D RIGHT SQUARE
    BRACKET U+003E GREATER-THAN SIGN (]]>), or the end of the file (EOF),
-   whichever comes first. Emit a series of text tokens consisting of all
-   the characters consumed except the matching three character sequence at
-   the end (if one was found before the end of the file).
+   whichever comes first. Emit a series of character tokens consisting of
+   all the characters consumed except the matching three character
+   sequence at the end (if one was found before the end of the file).
 
    Switch to the data state.
 
@@ -1102,8 +1103,8 @@ Draft Recommendation — 13 January 2009
           0x9F   U+0178 LATIN CAPITAL LETTER Y WITH DIAERESIS ('Ÿ')
 
           Otherwise, if the number is in the range 0x0000 to 0x0008,
-          0x000B, 0x000E to 0x001F, 0x007F to 0x009F, 0xD800 to 0xDFFF,
-          0xFDD0 to 0xFDDF, or is one of 0xFFFE, 0xFFFF, 0x1FFFE, 0x1FFFF,
+          0x000E to 0x001F, 0x007F to 0x009F, 0xD800 to 0xDFFF, 0xFDD0 to
+          0xFDEF, or is one of 0x000B, 0xFFFE, 0xFFFF, 0x1FFFE, 0x1FFFF,
           0x2FFFE, 0x2FFFF, 0x3FFFE, 0x3FFFF, 0x4FFFE, 0x4FFFF, 0x5FFFE,
           0x5FFFF, 0x6FFFE, 0x6FFFF, 0x7FFFE, 0x7FFFF, 0x8FFFE, 0x8FFFF,
           0x9FFFE, 0x9FFFF, 0xAFFFE, 0xAFFFF, 0xBFFFE, 0xBFFFF, 0xCFFFE,
