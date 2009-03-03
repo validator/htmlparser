@@ -384,12 +384,14 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     private T formPointer;
 
     private T headPointer;
-
-    private boolean reportingDoctype = true;
     
-    private boolean framesetOk = true;
+    protected char[] charBuffer;
+
+    protected int charBufferLen = 0;
 
     // [NOCPP[
+
+    private boolean reportingDoctype = true;
 
     private XmlViolationPolicy namePolicy = XmlViolationPolicy.ALTER_INFOSET;
 
@@ -480,18 +482,19 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         formPointer = null;
         Portability.releaseElement(headPointer);
         headPointer = null;
-        framesetOk = true;
         // [NOCPP[
         html4 = false;
         idLocations.clear();
         wantingComments = wantsComments();
         // ]NOCPP]
         start(fragment);
-        startCoalescing();
+        charBufferLen = 0;
+        charBuffer = new char[1024];
         if (fragment) {
             T elt;
             if (contextNode != null) {
                 elt = contextNode;
+                Portability.retainElement(elt);
             } else {
                 elt = createHtmlElementSetAsRoot(tokenizer.emptyAttributes());
             }
@@ -533,20 +536,19 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 default:
                     switch (mode) {
                         case INITIAL:
-                            if (reportingDoctype) {
-                                appendDoctypeToDocument(
-                                        name == null ? "" : name,
-                                        publicIdentifier == null ? Portability.newEmptyString() // XXX
-                                                                                                // MEMORY
-                                                                                                // MANAGEMENT
-                                                : publicIdentifier,
-                                        systemIdentifier == null ? Portability.newEmptyString() // XXX
-                                                                                                // MEMORY
-                                                                                                // MANAGEMENT
-                                                : systemIdentifier);
-                            }
-
                             // [NOCPP[
+                            if (reportingDoctype) {
+                                // ]NOCPP]
+                                String emptyString = Portability.newEmptyString();
+                                appendDoctypeToDocument(name == null ? ""
+                                        : name,
+                                        publicIdentifier == null ? emptyString
+                                                : publicIdentifier,
+                                        systemIdentifier == null ? emptyString
+                                                : systemIdentifier);
+                                Portability.releaseString(emptyString);
+                                // [NOCPP[
+                            }
                             switch (doctypeExpectation) {
                                 case HTML:
                                     // ]NOCPP]
@@ -841,19 +843,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                      */
                                     start = i + 1;
                                     continue;
-                                case IN_TABLE:
-                                case IN_TABLE_BODY:
-                                case IN_ROW:
-                                    if (isTainted()) {
-                                        if (start < i) {
-                                            accumulateCharacters(buf, start, i
-                                                    - start);
-                                        }
-                                        reconstructTheActiveFormattingElements();
-                                        appendCharMayFoster(buf, i);
-                                        start = i + 1;
-                                    }
-                                    continue;
                                 case IN_HEAD:
                                 case IN_HEAD_NOSCRIPT:
                                 case AFTER_HEAD:
@@ -887,6 +876,13 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                 case IN_SELECT:
                                 case IN_SELECT_IN_TABLE:
                                     break charactersloop;
+                                case IN_TABLE:
+                                case IN_TABLE_BODY:
+                                case IN_ROW:
+                                    reconstructTheActiveFormattingElements();
+                                    accumulateCharacter(buf[i]);
+                                    start = i + 1;
+                                    continue;
                                 case AFTER_BODY:
                                     if (start < i) {
                                         accumulateCharacters(buf, start, i
@@ -1077,13 +1073,12 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                 case IN_TABLE:
                                 case IN_TABLE_BODY:
                                 case IN_ROW:
-                                    if (start < i) {
-                                        accumulateCharacters(buf, start, i
-                                                - start);
-                                    }
                                     reconstructTheActiveFormattingElements();
-                                    appendCharMayFoster(buf, i);
+                                    accumulateCharacter(buf[i]);
                                     start = i + 1;
+                                    int eltPos = findLastOrRoot(TreeBuilder.TABLE);
+                                    StackNode<T> node = stack[eltPos];
+                                    node.tainted = true;
                                     continue;
                                 case IN_COLUMN_GROUP:
                                     if (start < i) {
@@ -1362,7 +1357,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         // [NOCPP[
         idLocations.clear();
         // ]NOCPP]
-        endCoalescing();
+        Portability.deleteArray(charBuffer);
+        charBuffer = null;
         end();
     }
 
@@ -4324,25 +4320,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         node.release();
     }
 
-    private void appendCharMayFoster(@NoLength char[] buf, int i)
-            throws SAXException {
-        StackNode<T> current = stack[currentPtr];
-        if (current.fosterParenting) {
-            fatal();
-            int eltPos = findLastOrRoot(TreeBuilder.TABLE);
-            StackNode<T> node = stack[eltPos];
-            node.tainted = true;
-            T elt = node.node;
-            if (eltPos == 0) {
-                appendCharacters(elt, buf, i, 1);
-                return;
-            }
-            insertFosterParentedCharacter(buf, i, elt, stack[eltPos - 1].node);
-        } else {
-            accumulateCharacters(buf, i, 1);
-        }
-    }
-
     private boolean isTainted() {
         int eltPos = findLastOrRoot(TreeBuilder.TABLE);
         StackNode<T> node = stack[eltPos];
@@ -4723,9 +4700,19 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             int length) throws SAXException {
         appendCharacters(stack[currentPtr].node, buf, start, length);
     }
-
-    protected void flushCharacters() throws SAXException {
+    
+    protected final void accumulateCharacter(char c) throws SAXException {
+            int newLen = charBufferLen + 1;
+            if (newLen > charBuffer.length) {
+                char[] newBuf = new char[newLen];
+                System.arraycopy(charBuffer, 0, newBuf, 0, charBufferLen);
+                Portability.releaseArray(charBuffer);
+                charBuffer = newBuf;
+            }
+            charBuffer[charBufferLen] = c;
+            charBufferLen = newLen;
     }
+
 
     // ------------------------------- //
 
@@ -4761,8 +4748,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     protected abstract void insertFosterParentedChild(T child, T table, T stackParent)
             throws SAXException;
 
-    protected abstract void insertFosterParentedCharacter(@NoLength char[] buf,
-            int start, T table, T stackParent) throws SAXException;
+    protected abstract void insertFosterParentedCharacters(@NoLength char[] buf,
+            int start, int length, T table, T stackParent) throws SAXException;
 
     protected abstract void appendCharacters(T parent, @NoLength char[] buf,
             int start, int length) throws SAXException;
@@ -4776,15 +4763,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     protected abstract void addAttributesToElement(T element,
             HtmlAttributes attributes) throws SAXException;
 
-    void startCoalescing() throws SAXException {
-
-    }
-
     protected void start(boolean fragment) throws SAXException {
-
-    }
-
-    void endCoalescing() throws SAXException {
 
     }
 
@@ -4925,6 +4904,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         this.documentModeHandler = documentModeHandler;
     }
 
+    // [NOCPP[
+    
     /**
      * Sets the reportingDoctype.
      * 
@@ -4934,12 +4915,37 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     public void setReportingDoctype(boolean reportingDoctype) {
         this.reportingDoctype = reportingDoctype;
     }
+    
+    // ]NOCPP]
 
     /**
      * @see nu.validator.htmlparser.common.TokenHandler#inForeign()
      */
     public boolean inForeign() throws SAXException {
         return foreignFlag == IN_FOREIGN;
+    }
+
+    private final void flushCharacters() throws SAXException {
+        if (charBufferLen > 0) {
+            StackNode<T> current = stack[currentPtr];
+            if (current.fosterParenting) {
+                int eltPos = findLastOrRoot(TreeBuilder.TABLE);
+                StackNode<T> node = stack[eltPos];
+                if (node.tainted) {
+                    T elt = node.node;
+                    if (eltPos == 0) {
+                        appendCharacters(elt, charBuffer, 0, charBufferLen);
+                        charBufferLen = 0;
+                        return;
+                    }
+                    insertFosterParentedCharacters(charBuffer, 0, charBufferLen, elt, stack[eltPos - 1].node);
+                    charBufferLen = 0;
+                    return;
+                }
+            }
+            appendCharacters(currentNode(), charBuffer, 0, charBufferLen);
+            charBufferLen = 0;
+        }
     }
 
 }

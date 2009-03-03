@@ -271,7 +271,7 @@ class XOMTreeBuilder extends CoalescingTreeBuilder<Element> {
         }
     }
 
-    @Override protected void insertFosterParentedCharacter(String text,
+    @Override protected void insertFosterParentedCharacters(String text,
             Element table, Element stackParent) throws SAXException {
         try {
             Node child = nodeFactory.makeText(text);

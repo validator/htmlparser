@@ -87,7 +87,7 @@ public class HVisitor extends CppVisitor {
         
         printer.printLn();
         
-        String[] incs = cppTypes.boilerplateIncludes();
+        String[] incs = cppTypes.boilerplateIncludes(javaClassName);
         for (int i = 0; i < incs.length; i++) {
             String inc = incs[i];
             if (className.equals(inc)) {

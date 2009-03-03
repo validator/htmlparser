@@ -170,8 +170,8 @@ class SAXStreamer extends TreeBuilder<Attributes>{
         throw spe;
     }
 
-    @Override protected void insertFosterParentedCharacter(char[] buf,
-            int start, Attributes table, Attributes stackParent)
+    @Override protected void insertFosterParentedCharacters(char[] buf,
+            int start, int length, Attributes table, Attributes stackParent)
             throws SAXException {
         fatal();
     }

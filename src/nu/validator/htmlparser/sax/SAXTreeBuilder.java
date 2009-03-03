@@ -152,9 +152,9 @@ class SAXTreeBuilder extends TreeBuilder<Element> {
         return new Element(tokenizer, ns, name, name, attributes, true, null);
     }
 
-    @Override protected void insertFosterParentedCharacter(char[] buf,
-            int start, Element table, Element stackParent) throws SAXException {
-        Node child = new Characters(tokenizer, buf, start, 1);
+    @Override protected void insertFosterParentedCharacters(char[] buf,
+            int start, int length, Element table, Element stackParent) throws SAXException {
+        Node child = new Characters(tokenizer, buf, start, length);
         ParentNode parent = table.getParentNode();
         if (parent != null) { // always an element if not null
             parent.insertBetween(child, previousSibling(table), table);
