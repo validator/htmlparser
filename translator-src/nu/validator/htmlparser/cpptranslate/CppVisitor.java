@@ -410,7 +410,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         printer.printLn("_cpp__");
         printer.printLn();
 
-        String[] incs = cppTypes.boilerplateIncludes();
+        String[] incs = cppTypes.boilerplateIncludes(javaClassName);
         for (int i = 0; i < incs.length; i++) {
             String inc = incs[i];
             printer.print("#include \"");

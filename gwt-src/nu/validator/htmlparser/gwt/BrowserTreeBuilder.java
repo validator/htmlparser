@@ -412,7 +412,7 @@ class BrowserTreeBuilder extends CoalescingTreeBuilder<JavaScriptObject> {
         }
     }
 
-    @Override protected void insertFosterParentedCharacter(
+    @Override protected void insertFosterParentedCharacters(
             String text, JavaScriptObject table, JavaScriptObject stackParent)
             throws SAXException {
         JavaScriptObject child = createTextNode(document, text);

@@ -287,7 +287,7 @@ class DOMTreeBuilder extends CoalescingTreeBuilder<Element> {
         return rv;
     }
 
-    @Override protected void insertFosterParentedCharacter(
+    @Override protected void insertFosterParentedCharacters(
             String text, Element table, Element stackParent) throws SAXException {
         Node child = document.createTextNode(text);
         Node parent = table.getParentNode();

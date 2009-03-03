@@ -28,31 +28,19 @@ import org.xml.sax.SAXException;
 
 public abstract class CoalescingTreeBuilder<T> extends TreeBuilder<T> {
 
-    private char[] charBuffer;
-
-    private int charBufferLen = 0;
-    
     protected final void accumulateCharacters(@NoLength char[] buf, int start,
             int length) throws SAXException {
-            int newLen = charBufferLen + length;
-            if (newLen > charBuffer.length) {
-                char[] newBuf = new char[newLen];
-                System.arraycopy(charBuffer, 0, newBuf, 0, charBufferLen);
-                Portability.releaseArray(charBuffer);
-                charBuffer = newBuf;
-            }
-            System.arraycopy(buf, start, charBuffer, charBufferLen, length);
-            charBufferLen = newLen;
+        int newLen = charBufferLen + length;
+        if (newLen > charBuffer.length) {
+            char[] newBuf = new char[newLen];
+            System.arraycopy(charBuffer, 0, newBuf, 0, charBufferLen);
+            Portability.releaseArray(charBuffer);
+            charBuffer = newBuf;
+        }
+        System.arraycopy(buf, start, charBuffer, charBufferLen, length);
+        charBufferLen = newLen;
     }
 
-    protected final void flushCharacters() throws SAXException {
-        if (charBufferLen > 0) {
-            appendCharacters(currentNode(), charBuffer, 0,
-                    charBufferLen);
-            charBufferLen = 0;
-        }
-    }
-    
     /**
      * @see nu.validator.htmlparser.impl.TreeBuilder#appendCharacters(java.lang.Object, char[], int, int)
      */
@@ -85,27 +73,12 @@ public abstract class CoalescingTreeBuilder<T> extends TreeBuilder<T> {
     protected abstract void appendCommentToDocument(String comment) throws SAXException;
     
     /**
-     * @see nu.validator.htmlparser.impl.TreeBuilder#insertFosterParentedCharacter(char[], int, java.lang.Object, java.lang.Object)
+     * @see nu.validator.htmlparser.impl.TreeBuilder#insertFosterParentedCharacters(char[], int, int, java.lang.Object, java.lang.Object)
      */
-    @Override protected final void insertFosterParentedCharacter(char[] buf, int start,
-            T table, T stackParent) throws SAXException {
-        insertFosterParentedCharacter(new String(buf, start, 1), table, stackParent);
+    @Override protected final void insertFosterParentedCharacters(char[] buf, int start,
+            int length, T table, T stackParent) throws SAXException {
+        insertFosterParentedCharacters(new String(buf, start, length), table, stackParent);
     }
     
-    /**
-     * @see nu.validator.htmlparser.impl.TreeBuilder#endCoalescing()
-     */
-    @Override void endCoalescing() throws SAXException {
-        charBuffer = null;
-    }
-
-    /**
-     * @see nu.validator.htmlparser.impl.TreeBuilder#startCoalescing()
-     */
-    @Override void startCoalescing() throws SAXException {
-        charBufferLen = 0;
-        charBuffer = new char[1024];
-    }
-
-    protected abstract void insertFosterParentedCharacter(String text, T table, T stackParent) throws SAXException;
+    protected abstract void insertFosterParentedCharacters(String text, T table, T stackParent) throws SAXException;
 }

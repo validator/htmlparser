@@ -70,6 +70,13 @@ public class CppTypes {
         reservedWords.add("xor");
     }
 
+    private static final String[] TREE_BUILDER_INCLUDES = { "prtypes", "nsIAtom",
+        "nsString", "nsINameSpaceManager", "nsIContent", "nsIDocument",
+        "nsTraceRefcnt", "jArray", "nsHtml5DocumentMode",
+        "nsHtml5ArrayCopy", "nsHtml5NamedCharacters", "nsHtml5Parser",
+        "nsHtml5StringLiterals", "nsHtml5Atoms", "nsHtml5ByteReadable", "nsHtml5TreeOperation",
+        "nsHtml5PendingNotification"};
+    
     private static final String[] INCLUDES = { "prtypes", "nsIAtom",
             "nsString", "nsINameSpaceManager", "nsIContent", "nsIDocument",
             "nsTraceRefcnt", "jArray", "nsHtml5DocumentMode",
@@ -249,8 +256,12 @@ public class CppTypes {
         return "J_ARRAY_STATIC";
     }
 
-    public String[] boilerplateIncludes() {
-        return INCLUDES;
+    public String[] boilerplateIncludes(String javaClass) {
+        if ("TreeBuilder".equals(javaClass)) {
+            return TREE_BUILDER_INCLUDES;
+        } else {
+            return INCLUDES;
+        }
     }
 
     public String[] namedCharactersIncludes() {

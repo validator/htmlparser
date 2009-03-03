@@ -24,17 +24,11 @@
 package nu.validator.htmlparser.impl;
 
 import java.io.IOException;
-import java.nio.charset.UnsupportedCharsetException;
 
 import nu.validator.htmlparser.annotation.NoLength;
 import nu.validator.htmlparser.common.ByteReadable;
-import nu.validator.htmlparser.impl.Portability;
-import nu.validator.htmlparser.impl.TreeBuilder;
 
-import org.xml.sax.ErrorHandler;
-import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
 
 public abstract class MetaScanner {
 
