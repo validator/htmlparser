@@ -229,6 +229,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private static final int IN_CDATA_RCDATA = 20;
 
+    private static final int FRAMESET_OK = 21;
+    
     // start charset states
 
     private static final int CHARSET_INITIAL = 0;
@@ -843,6 +845,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                      */
                                     start = i + 1;
                                     continue;
+                                case FRAMESET_OK:
                                 case IN_HEAD:
                                 case IN_HEAD_NOSCRIPT:
                                 case AFTER_HEAD:
@@ -1046,10 +1049,14 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                      * seen,
                                      */
                                     appendToCurrentNodeAndPushBodyElement();
-                                    mode = IN_BODY;
+                                    mode = FRAMESET_OK;
                                     /*
                                      * and then reprocess the current token.
                                      */
+                                    i--;
+                                    continue;
+                                case FRAMESET_OK:
+                                    mode = IN_BODY;
                                     i--;
                                     continue;
                                 case IN_BODY:
@@ -1269,6 +1276,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         mode = IN_TABLE;
                         continue;
                     }
+                case FRAMESET_OK:
                 case IN_CAPTION:
                 case IN_CELL:
                 case IN_BODY:
@@ -1672,6 +1680,54 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     }
                                 default:
                                     // fall through to IN_BODY
+                            }
+                        case FRAMESET_OK:
+                            switch (group) {
+                                case FRAMESET:
+                                    if (mode == FRAMESET_OK) {
+                                        if (currentPtr == 0 || stack[1].group != BODY) {
+                                            assert fragment;
+                                            err("Stray \u201Cframeset\u201D start tag.");                                            
+                                            break starttagloop;
+                                        } else {
+                                            err("\u201Cframeset\u201D start tag after \u201Cbody\u201D already open.");
+                                            detachFromParent(stack[1].node);
+                                            while (currentPtr > 0) {
+                                                pop();
+                                            }
+                                            appendToCurrentNodeAndPushElement(
+                                                    "http://www.w3.org/1999/xhtml",
+                                                    elementName, attributes);
+                                            mode = IN_FRAMESET;
+                                            break starttagloop;                                            
+                                        }
+                                    } else {
+                                        err("Stray \u201Cframeset\u201D start tag.");                                            
+                                        break starttagloop;
+                                    }
+                                    // NOT falling through!
+                                case PRE_OR_LISTING:
+                                case LI:
+                                case DD_OR_DT:
+                                case BUTTON:
+                                case MARQUEE_OR_APPLET:
+                                case OBJECT:
+                                case TABLE:
+                                case AREA_OR_BASEFONT_OR_BGSOUND_OR_SPACER_OR_WBR:
+                                case BR:
+                                case EMBED_OR_IMG:
+                                case INPUT:
+                                case HR:
+                                case TEXTAREA:
+                                case XMP:
+                                case IFRAME:
+                                case SELECT:
+                                    if (mode == FRAMESET_OK) {
+                                        mode = IN_BODY;
+                                    }
+                                    // fall through to IN_BODY 
+                                default:
+                                    // fall through to IN_BODY                                
                             }
                         case IN_BODY:
                             inbodyloop: for (;;) {
@@ -2561,7 +2617,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     } else {
                                         appendToCurrentNodeAndPushBodyElement(attributes);
                                     }
-                                    mode = IN_BODY;
+                                    mode = FRAMESET_OK;
                                     break starttagloop;
                                 case FRAMESET:
                                     appendToCurrentNodeAndPushElement(
@@ -2638,7 +2694,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     break starttagloop;
                                 default:
                                     appendToCurrentNodeAndPushBodyElement();
-                                    mode = IN_BODY;
+                                    mode = FRAMESET_OK;
                                     continue;
                             }
                         case AFTER_AFTER_BODY:
@@ -3090,6 +3146,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         default:
                             // fall through to IN_BODY
                     }
+                case FRAMESET_OK:
                 case IN_BODY:
                     switch (group) {
                         case BODY:
@@ -3552,7 +3609,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         case BODY:
                         case BR:
                             appendToCurrentNodeAndPushBodyElement();
-                            mode = IN_BODY;
+                            mode = FRAMESET_OK;
                             continue;
                         default:
                             err("Stray end tag \u201C" + name + "\u201D.");
