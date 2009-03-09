@@ -330,9 +330,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private static final int NOT_IN_FOREIGN = 1;
 
-    private final StackNode<T> MARKER = new StackNode<T>(null,
-            ElementName.NULL_ELEMENT_NAME, null);
-
     private static final @Local String HTML_LOCAL = "html";
     
     private int mode = INITIAL;
@@ -1357,7 +1354,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         Portability.deleteArray(stack);
         stack = null;
         while (listPtr > -1) {
-            listOfActiveFormattingElements[listPtr].release();
+            if (listOfActiveFormattingElements[listPtr] != null) {
+                listOfActiveFormattingElements[listPtr].release();
+            }
             listPtr--;
         }
         Portability.deleteArray(listOfActiveFormattingElements);        
@@ -3999,14 +3998,17 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     private void insertMarker() {
-        append(MARKER);
+        append(null);
     }
 
     private void clearTheListOfActiveFormattingElementsUpToTheLastMarker() {
         while (listPtr > -1) {
-            if (listOfActiveFormattingElements[listPtr--] == MARKER) {
+            if (listOfActiveFormattingElements[listPtr] == null) {
+                --listPtr;
                 return;
             }
+            listOfActiveFormattingElements[listPtr].release();
+            --listPtr;
         }
     }
 
@@ -4046,7 +4048,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     private void removeFromListOfActiveFormattingElements(int pos) {
-        listOfActiveFormattingElements[pos].release();
+        assert listOfActiveFormattingElements[pos] != null;
+        listOfActiveFormattingElements[pos].release();            
         if (pos == listPtr) {
             assert clearLastListSlot();
             listPtr--;
@@ -4066,11 +4069,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         for (;;) {
             int formattingEltListPos = listPtr;
             while (formattingEltListPos > -1) {
-                @Local String listName = listOfActiveFormattingElements[formattingEltListPos].name;
-                if (listName == name) {
-                    break;
-                } else if (listName == null) {
+                StackNode<T> listNode = listOfActiveFormattingElements[formattingEltListPos]; // weak ref
+                if (listNode == null) {
                     formattingEltListPos = -1;
+                    break;
+                } else if (listNode.name == name) {
                     break;
                 }
                 formattingEltListPos--;
@@ -4252,7 +4255,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             @Local String name) {
         for (int i = listPtr; i >= 0; i--) {
             StackNode<T> node = listOfActiveFormattingElements[i];
-            if (node == MARKER) {
+            if (node == null) {
                 return -1;
             } else if (node.name == name) {
                 return i;
@@ -4310,7 +4313,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             return;
         }
         StackNode<T> mostRecent = listOfActiveFormattingElements[listPtr];
-        if (mostRecent == MARKER || isInStack(mostRecent)) {
+        if (mostRecent == null || isInStack(mostRecent)) {
             return;
         }
         int entryPos = listPtr;
@@ -4319,7 +4322,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             if (entryPos == -1) {
                 break;
             }
-            if (listOfActiveFormattingElements[entryPos] == MARKER) {
+            if (listOfActiveFormattingElements[entryPos] == null) {
                 break;
             }
             if (isInStack(listOfActiveFormattingElements[entryPos])) {
@@ -4343,7 +4346,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 appendElement(clone, currentNode.node);
             }
             push(entryClone);
+            // stack takes ownership of the local variable
             listOfActiveFormattingElements[entryPos] = entryClone;
+            // overwriting the old entry on the list, so release & retain
+            entry.release();
+            entryClone.retain();
         }
     }
 
