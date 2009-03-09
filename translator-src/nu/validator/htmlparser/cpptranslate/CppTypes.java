@@ -83,6 +83,13 @@ public class CppTypes {
             "nsHtml5ArrayCopy", "nsHtml5NamedCharacters", "nsHtml5Parser",
             "nsHtml5StringLiterals", "nsHtml5Atoms", "nsHtml5ByteReadable", };
 
+    private static final String[] OTHER_DECLATIONS = {
+    };
+    
+    private static final String[] TREE_BUILDER_OTHER_DECLATIONS = {
+        "typedef nsIContent* nsIContentPtr;"
+    };
+    
     private static final String[] NAMED_CHARACTERS_INCLUDES = { "prtypes",
             "jArray", "nscore" };
 
@@ -264,6 +271,14 @@ public class CppTypes {
         }
     }
 
+    public String[] boilerplateDeclarations(String javaClass) {
+        if ("TreeBuilder".equals(javaClass)) {
+            return TREE_BUILDER_OTHER_DECLATIONS;
+        } else {
+            return OTHER_DECLATIONS;
+        }
+    }
+    
     public String[] namedCharactersIncludes() {
         return NAMED_CHARACTERS_INCLUDES;
     }

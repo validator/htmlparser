@@ -122,6 +122,14 @@ public class HVisitor extends CppVisitor {
         
         printer.printLn();
         
+        String[] otherDecls = cppTypes.boilerplateDeclarations(javaClassName);
+        for (int i = 0; i < otherDecls.length; i++) {
+            String decl = otherDecls[i];
+            printer.printLn(decl);
+        }
+        
+        printer.printLn();
+
         printer.print("class ");
         printer.printLn(className);
         printer.printLn("{");
