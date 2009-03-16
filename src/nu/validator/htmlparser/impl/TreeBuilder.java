@@ -330,7 +330,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private static final int NOT_IN_FOREIGN = 1;
 
+    // [NOCPP[
+    
     private static final @Local String HTML_LOCAL = "html";
+    
+    // ]NOCPP]
     
     private int mode = INITIAL;
 
