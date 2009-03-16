@@ -42,8 +42,6 @@ final class StackNode<T> {
     final boolean special;
 
     final boolean fosterParenting;
-
-    boolean tainted;
     
     private int refcount = 1;
 
@@ -68,7 +66,6 @@ final class StackNode<T> {
         this.scoping = scoping;
         this.special = special;
         this.fosterParenting = fosterParenting;
-        this.tainted = false;
         this.refcount = 1;
         Portability.retainLocal(name);
         Portability.retainLocal(popName);
@@ -90,7 +87,6 @@ final class StackNode<T> {
         this.scoping = elementName.scoping;
         this.special = elementName.special;
         this.fosterParenting = elementName.fosterParenting;
-        this.tainted = false;
         this.refcount = 1;
         Portability.retainLocal(name);
         Portability.retainLocal(popName);
@@ -107,7 +103,6 @@ final class StackNode<T> {
         this.scoping = elementName.scoping;
         this.special = elementName.special;
         this.fosterParenting = elementName.fosterParenting;
-        this.tainted = false;
         this.refcount = 1;
         Portability.retainLocal(name);
         Portability.retainLocal(popName);
@@ -124,7 +119,6 @@ final class StackNode<T> {
         this.scoping = scoping;
         this.special = false;
         this.fosterParenting = false;
-        this.tainted = false;
         this.refcount = 1;
         Portability.retainLocal(name);
         Portability.retainLocal(popName);
