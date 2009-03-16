@@ -306,6 +306,8 @@ public class CppVisitor implements VoidVisitor<Object> {
             printer.print("ALL_NO_NS");
         } else if ("LANG_PREFIX".equals(n.getName())) {
             printer.print("ALL_NO_PREFIX");
+        } else if ("HTML_LOCAL".equals(n.getName())) {
+            printer.print(cppTypes.localForLiteral("html"));
         } else {
             String prefixedName = javaClassName + "." + n.getName();
             String constant = symbolTable.cppDefinesByJavaNames.get(prefixedName);
