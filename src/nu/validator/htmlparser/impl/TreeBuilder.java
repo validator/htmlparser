@@ -1086,7 +1086,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     start = i + 1;
                                     int eltPos = findLastOrRoot(TreeBuilder.TABLE);
                                     StackNode<T> node = stack[eltPos];
-                                    node.tainted = true;
                                     continue;
                                 case IN_COLUMN_GROUP:
                                     if (start < i) {
@@ -1602,9 +1601,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         continue starttagloop;
                                     case SCRIPT:
                                     case STYLE:
-                                        if (isTainted()) {
-                                            break intableloop;
-                                        }
                                         // XXX need to manage much more stuff
                                         // here if
                                         // supporting
@@ -1618,8 +1614,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                                 Tokenizer.CDATA, elementName);
                                         break starttagloop;
                                     case INPUT:
-                                        if (isTainted()
-                                                || !Portability.lowerCaseLiteralEqualsIgnoreAsciiCaseString(
+                                        if (!Portability.lowerCaseLiteralEqualsIgnoreAsciiCaseString(
                                                         "hidden",
                                                         attributes.getValue(AttributeName.TYPE))) {
                                             break intableloop;
@@ -4355,7 +4350,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     private void insertIntoFosterParent(T child) throws SAXException {
         int eltPos = findLastOrRoot(TreeBuilder.TABLE);
         StackNode<T> node = stack[eltPos];
-        node.tainted = true;
         T elt = node.node;
         if (eltPos == 0) {
             appendElement(child, elt);
@@ -4380,12 +4374,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         currentPtr--;
         elementPopped(node.ns, node.popName, node.node);
         node.release();
-    }
-
-    private boolean isTainted() {
-        int eltPos = findLastOrRoot(TreeBuilder.TABLE);
-        StackNode<T> node = stack[eltPos];
-        return node.tainted;
     }
 
     // [NOCPP[
@@ -4990,24 +4978,38 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     private final void flushCharacters() throws SAXException {
         if (charBufferLen > 0) {
             StackNode<T> current = stack[currentPtr];
-            if (current.fosterParenting) {
+            if (current.fosterParenting && charBufferContainsNonWhitespace()) {
                 int eltPos = findLastOrRoot(TreeBuilder.TABLE);
                 StackNode<T> node = stack[eltPos];
-                if (node.tainted) {
-                    T elt = node.node;
-                    if (eltPos == 0) {
-                        appendCharacters(elt, charBuffer, 0, charBufferLen);
-                        charBufferLen = 0;
-                        return;
-                    }
-                    insertFosterParentedCharacters(charBuffer, 0, charBufferLen, elt, stack[eltPos - 1].node);
+                T elt = node.node;
+                if (eltPos == 0) {
+                    appendCharacters(elt, charBuffer, 0, charBufferLen);
                     charBufferLen = 0;
                     return;
                 }
+                insertFosterParentedCharacters(charBuffer, 0, charBufferLen,
+                        elt, stack[eltPos - 1].node);
+                charBufferLen = 0;
+                return;
             }
             appendCharacters(currentNode(), charBuffer, 0, charBufferLen);
             charBufferLen = 0;
         }
+    }
+
+    private boolean charBufferContainsNonWhitespace() {
+        for (int i = 0; i < charBufferLen; i++) {
+            switch (charBuffer[i]) {
+                case ' ':
+                case '\t':
+                case '\n':
+                case '\u000C':
+                    continue;
+                default:
+                    return true;
+            }
+        }
+        return false;
     }
 
 }
