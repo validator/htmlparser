@@ -43,9 +43,9 @@ class BrowserTreeBuilder extends CoalescingTreeBuilder<JavaScriptObject> {
     private JavaScriptObject placeholder;
 
     private boolean readyToRun;
-    
+
     private final LinkedList<ScriptHolder> scriptStack = new LinkedList<ScriptHolder>();
-    
+
     private class ScriptHolder {
         private final JavaScriptObject script;
 
@@ -77,7 +77,7 @@ class BrowserTreeBuilder extends CoalescingTreeBuilder<JavaScriptObject> {
          */
         public JavaScriptObject getPlaceholder() {
             return placeholder;
-        }        
+        }
     }
 
     protected BrowserTreeBuilder(JavaScriptObject document) {
@@ -86,48 +86,48 @@ class BrowserTreeBuilder extends CoalescingTreeBuilder<JavaScriptObject> {
         installExplorerCreateElementNS(document);
     }
 
-    private static native boolean installExplorerCreateElementNS(JavaScriptObject doc) /*-{
-        if (!doc.createElementNS) {
-            doc.createElementNS = function (uri, local) {
-                if ("http://www.w3.org/1999/xhtml" == uri) {
-                    return doc.createElement(local);
-                } else if ("http://www.w3.org/1998/Math/MathML" == uri) {
-                    if (!doc.mathplayerinitialized) {
-                        var obj = document.createElement("object");
-                        obj.setAttribute("id", "mathplayer");
-                        obj.setAttribute("classid", "clsid:32F66A20-7614-11D4-BD11-00104BD3F987");
-                        document.getElementsByTagName("head")[0].appendChild(obj);
-                        document.namespaces.add("m", "http://www.w3.org/1998/Math/MathML", "#mathplayer");  
-                        doc.mathplayerinitialized = true;
-                    }
-                    return doc.createElement("m:" + local);
-                } else if ("http://www.w3.org/2000/svg" == uri) {
-                    if (!doc.renesisinitialized) {
-                        var obj = document.createElement("object");
-                        obj.setAttribute("id", "renesis");
-                        obj.setAttribute("classid", "clsid:AC159093-1683-4BA2-9DCF-0C350141D7F2");
-                        document.getElementsByTagName("head")[0].appendChild(obj);
-                        document.namespaces.add("s", "http://www.w3.org/2000/svg", "#renesis");  
-                        doc.renesisinitialized = true;
-                    }
-                    return doc.createElement("s:" + local);
-                } else {
-                    // throw
-                }
-            }
-        }
-    }-*/;
+    private static native boolean installExplorerCreateElementNS(
+            JavaScriptObject doc) /*-{
+                  if (!doc.createElementNS) {
+                      doc.createElementNS = function (uri, local) {
+                          if ("http://www.w3.org/1999/xhtml" == uri) {
+                              return doc.createElement(local);
+                          } else if ("http://www.w3.org/1998/Math/MathML" == uri) {
+                              if (!doc.mathplayerinitialized) {
+                                  var obj = document.createElement("object");
+                                  obj.setAttribute("id", "mathplayer");
+                                  obj.setAttribute("classid", "clsid:32F66A20-7614-11D4-BD11-00104BD3F987");
+                                  document.getElementsByTagName("head")[0].appendChild(obj);
+                                  document.namespaces.add("m", "http://www.w3.org/1998/Math/MathML", "#mathplayer");  
+                                  doc.mathplayerinitialized = true;
+                              }
+                              return doc.createElement("m:" + local);
+                          } else if ("http://www.w3.org/2000/svg" == uri) {
+                              if (!doc.renesisinitialized) {
+                                  var obj = document.createElement("object");
+                                  obj.setAttribute("id", "renesis");
+                                  obj.setAttribute("classid", "clsid:AC159093-1683-4BA2-9DCF-0C350141D7F2");
+                                  document.getElementsByTagName("head")[0].appendChild(obj);
+                                  document.namespaces.add("s", "http://www.w3.org/2000/svg", "#renesis");  
+                                  doc.renesisinitialized = true;
+                              }
+                              return doc.createElement("s:" + local);
+                          } else {
+                              // throw
+                          }
+                      }
+                  }
+              }-*/;
 
-    
     private static native boolean hasAttributeNS(JavaScriptObject element,
             String uri, String localName) /*-{
-              return element.hasAttributeNS(uri, localName); 
-          }-*/;
+                        return element.hasAttributeNS(uri, localName); 
+                    }-*/;
 
     private static native void setAttributeNS(JavaScriptObject element,
             String uri, String localName, String value) /*-{
-              element.setAttributeNS(uri, localName, value); 
-          }-*/;
+                        element.setAttributeNS(uri, localName, value); 
+                    }-*/;
 
     @Override protected void addAttributesToElement(JavaScriptObject element,
             HtmlAttributes attributes) throws SAXException {
@@ -147,13 +147,13 @@ class BrowserTreeBuilder extends CoalescingTreeBuilder<JavaScriptObject> {
 
     private static native void appendChild(JavaScriptObject parent,
             JavaScriptObject child) /*-{
-              parent.appendChild(child); 
-          }-*/;
+                        parent.appendChild(child); 
+                    }-*/;
 
     private static native JavaScriptObject createTextNode(JavaScriptObject doc,
             String text) /*-{
-              return doc.createTextNode(text); 
-          }-*/;
+                        return doc.createTextNode(text); 
+                    }-*/;
 
     @Override protected void appendCharacters(JavaScriptObject parent,
             String text) throws SAXException {
@@ -169,13 +169,13 @@ class BrowserTreeBuilder extends CoalescingTreeBuilder<JavaScriptObject> {
     }
 
     private static native boolean hasChildNodes(JavaScriptObject element) /*-{
-              return element.hasChildNodes(); 
-          }-*/;
+                        return element.hasChildNodes(); 
+                    }-*/;
 
     private static native JavaScriptObject getFirstChild(
             JavaScriptObject element) /*-{
-              return element.firstChild; 
-          }-*/;
+                        return element.firstChild; 
+                    }-*/;
 
     @Override protected void appendChildrenToNewParent(
             JavaScriptObject oldParent, JavaScriptObject newParent)
@@ -191,10 +191,11 @@ class BrowserTreeBuilder extends CoalescingTreeBuilder<JavaScriptObject> {
 
     private static native JavaScriptObject createComment(JavaScriptObject doc,
             String text) /*-{
-              return doc.createComment(text); 
-          }-*/;
+                        return doc.createComment(text); 
+                    }-*/;
 
-    @Override protected void appendComment(JavaScriptObject parent, String comment) throws SAXException {
+    @Override protected void appendComment(JavaScriptObject parent,
+            String comment) throws SAXException {
         try {
             if (parent == placeholder) {
                 appendChild(script, createComment(document, comment));
@@ -205,7 +206,8 @@ class BrowserTreeBuilder extends CoalescingTreeBuilder<JavaScriptObject> {
         }
     }
 
-    @Override protected void appendCommentToDocument(String comment) throws SAXException {
+    @Override protected void appendCommentToDocument(String comment)
+            throws SAXException {
         try {
             appendChild(document, createComment(document, comment));
         } catch (JavaScriptException e) {
@@ -215,8 +217,8 @@ class BrowserTreeBuilder extends CoalescingTreeBuilder<JavaScriptObject> {
 
     private static native JavaScriptObject createElementNS(
             JavaScriptObject doc, String ns, String local) /*-{
-              return doc.createElementNS(ns, local); 
-          }-*/;
+                        return doc.createElementNS(ns, local); 
+                    }-*/;
 
     @Override protected JavaScriptObject createElement(String ns, String name,
             HtmlAttributes attributes) throws SAXException {
@@ -267,12 +269,11 @@ class BrowserTreeBuilder extends CoalescingTreeBuilder<JavaScriptObject> {
 
     private static native JavaScriptObject getParentNode(
             JavaScriptObject element) /*-{
-              return element.parentNode; 
-          }-*/;
+                        return element.parentNode; 
+                    }-*/;
 
-    @Override protected void appendElement(
-            JavaScriptObject child, JavaScriptObject newParent)
-            throws SAXException {
+    @Override protected void appendElement(JavaScriptObject child,
+            JavaScriptObject newParent) throws SAXException {
         try {
             if (newParent == placeholder) {
                 appendChild(script, cloneNodeDeep(child));
@@ -295,22 +296,21 @@ class BrowserTreeBuilder extends CoalescingTreeBuilder<JavaScriptObject> {
 
     private static native void insertBeforeNative(JavaScriptObject parent,
             JavaScriptObject child, JavaScriptObject sibling) /*-{
-              parent.insertBefore(child, sibling);
-          }-*/;
+                        parent.insertBefore(child, sibling);
+                    }-*/;
 
     private static native int getNodeType(JavaScriptObject node) /*-{
-              return node.nodeType;
-          }-*/;
+                        return node.nodeType;
+                    }-*/;
 
     private static native JavaScriptObject cloneNode(JavaScriptObject node) /*-{
-              return node.cloneNode(false);
-          }-*/;
+                        return node.cloneNode(false);
+                    }-*/;
 
     private static native JavaScriptObject cloneNodeDeep(JavaScriptObject node) /*-{
-    return node.cloneNode(true);
-}-*/;
+              return node.cloneNode(true);
+           }-*/;
 
-    
     @Override protected JavaScriptObject shallowClone(JavaScriptObject element)
             throws SAXException {
         try {
@@ -334,8 +334,8 @@ class BrowserTreeBuilder extends CoalescingTreeBuilder<JavaScriptObject> {
 
     private static native JavaScriptObject createDocumentFragment(
             JavaScriptObject doc) /*-{
-              return doc.createDocumentFragment(); 
-          }-*/;
+                        return doc.createDocumentFragment(); 
+                    }-*/;
 
     JavaScriptObject getDocumentFragment() {
         JavaScriptObject rv = createDocumentFragment(document);
@@ -393,8 +393,8 @@ class BrowserTreeBuilder extends CoalescingTreeBuilder<JavaScriptObject> {
 
     private static native void replace(JavaScriptObject oldNode,
             JavaScriptObject newNode) /*-{
-              oldNode.parentNode.replaceChild(newNode, oldNode);
-          }-*/;
+                        oldNode.parentNode.replaceChild(newNode, oldNode);
+                    }-*/;
 
     void maybeRunScript() {
         if (readyToRun) {
@@ -402,7 +402,7 @@ class BrowserTreeBuilder extends CoalescingTreeBuilder<JavaScriptObject> {
             replace(placeholder, script);
             if (scriptStack.isEmpty()) {
                 script = null;
-                placeholder = null;                
+                placeholder = null;
             } else {
                 ScriptHolder scriptHolder = scriptStack.removeLast();
                 script = scriptHolder.getScript();
@@ -411,39 +411,51 @@ class BrowserTreeBuilder extends CoalescingTreeBuilder<JavaScriptObject> {
         }
     }
 
-    @Override protected void insertFosterParentedCharacters(
-            String text, JavaScriptObject table, JavaScriptObject stackParent)
+    @Override protected void insertFosterParentedCharacters(String text,
+            JavaScriptObject table, JavaScriptObject stackParent)
             throws SAXException {
-        JavaScriptObject child = createTextNode(document, text);
-        JavaScriptObject parent = getParentNode(table);
-        if (parent != null && getNodeType(parent) == 1) {
-            insertBeforeNative(parent, child, table);
-        } else {
-            appendChild(stackParent, child);
+        try {
+            JavaScriptObject child = createTextNode(document, text);
+            JavaScriptObject parent = getParentNode(table);
+            if (parent != null && getNodeType(parent) == 1) {
+                insertBeforeNative(parent, child, table);
+            } else {
+                appendChild(stackParent, child);
+            }
+        } catch (JavaScriptException e) {
+            fatal(e);
         }
     }
 
-    @Override protected void insertFosterParentedChild(
-            JavaScriptObject child, JavaScriptObject table,
-            JavaScriptObject stackParent) throws SAXException {
+    @Override protected void insertFosterParentedChild(JavaScriptObject child,
+            JavaScriptObject table, JavaScriptObject stackParent)
+            throws SAXException {
         JavaScriptObject parent = getParentNode(table);
-        if (parent != null && getNodeType(parent) == 1) {
-            insertBeforeNative(parent, child, table);
-        } else {
-            appendChild(stackParent, child);
+        try {
+            if (parent != null && getNodeType(parent) == 1) {
+                insertBeforeNative(parent, child, table);
+            } else {
+                appendChild(stackParent, child);
+            }
+        } catch (JavaScriptException e) {
+            fatal(e);
         }
     }
 
     private static native void removeChild(JavaScriptObject parent,
             JavaScriptObject child) /*-{
-              parent.removeChild(child);
-          }-*/;
+                        parent.removeChild(child);
+                    }-*/;
 
     @Override protected void detachFromParent(JavaScriptObject element)
             throws SAXException {
-        JavaScriptObject parent = getParentNode(element);
-        if (parent != null) {
-            removeChild(parent, element);
+        try {
+            JavaScriptObject parent = getParentNode(element);
+            if (parent != null) {
+                removeChild(parent, element);
+            }
+        } catch (JavaScriptException e) {
+            fatal(e);
         }
     }
 }
