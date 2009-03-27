@@ -307,4 +307,12 @@ class DOMTreeBuilder extends CoalescingTreeBuilder<Element> {
             stackParent.appendChild(child);
         }
     }
+
+    @Override protected void detachFromParent(Element element)
+            throws SAXException {
+        Node parent = element.getParentNode();
+        if (parent != null) {
+            parent.removeChild(element);
+        }
+    }
 }
