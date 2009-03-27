@@ -4,7 +4,7 @@
   <groupId>nu.validator.htmlparser</groupId>
   <artifactId>htmlparser</artifactId>
   <packaging>jar</packaging>
-  <version>1.1.0</version>
+  <version>1.2.0</version>
   <name>htmlparser</name>
   <url>http://about.validator.nu/htmlparser/</url>
   <description>The Validator.nu HTML Parser is an implementation of the HTML5 parsing algorithm in Java for applications that do not run scripts. The parser is designed to work as a drop-in replacement for the XML parser in applications that already support XHTML 1.x content with an XML parser and use SAX, DOM or XOM to interface with the parser.</description>

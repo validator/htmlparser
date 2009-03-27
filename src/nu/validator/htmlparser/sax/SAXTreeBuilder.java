@@ -183,4 +183,9 @@ class SAXTreeBuilder extends TreeBuilder<Element> {
             return (cachedTablePreviousSibling = table.getPreviousSibling());
         }
     }
+
+    @Override protected void detachFromParent(Element element)
+            throws SAXException {
+        element.detach();
+    }
 }

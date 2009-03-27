@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
- * Copyright (c) 2008 Mozilla Foundation
+ * Copyright (c) 2008-2009 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -29,7 +29,6 @@ import nu.validator.htmlparser.common.DocumentMode;
 import nu.validator.htmlparser.impl.CoalescingTreeBuilder;
 import nu.validator.htmlparser.impl.HtmlAttributes;
 
-import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
 import com.google.gwt.core.client.JavaScriptException;
@@ -432,6 +431,19 @@ class BrowserTreeBuilder extends CoalescingTreeBuilder<JavaScriptObject> {
             insertBeforeNative(parent, child, table);
         } else {
             appendChild(stackParent, child);
+        }
+    }
+
+    private static native void removeChild(JavaScriptObject parent,
+            JavaScriptObject child) /*-{
+              parent.removeChild(child);
+          }-*/;
+
+    @Override protected void detachFromParent(JavaScriptObject element)
+            throws SAXException {
+        JavaScriptObject parent = getParentNode(element);
+        if (parent != null) {
+            removeChild(parent, element);
         }
     }
 }

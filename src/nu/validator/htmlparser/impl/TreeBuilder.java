@@ -4781,9 +4781,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     protected abstract T createHtmlElementSetAsRoot(HtmlAttributes attributes)
             throws SAXException;
 
-    protected void detachFromParent(T element) throws SAXException {
-        
-    }
+    protected abstract void detachFromParent(T element) throws SAXException;
 
     protected abstract boolean hasChildren(T element) throws SAXException;
 
@@ -4979,6 +4977,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         if (charBufferLen > 0) {
             StackNode<T> current = stack[currentPtr];
             if (current.fosterParenting && charBufferContainsNonWhitespace()) {
+                err("Misplaced non-space characters insided a table.");
                 int eltPos = findLastOrRoot(TreeBuilder.TABLE);
                 StackNode<T> node = stack[eltPos];
                 T elt = node.node;
