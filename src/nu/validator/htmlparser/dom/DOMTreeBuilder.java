@@ -55,7 +55,9 @@ class DOMTreeBuilder extends CoalescingTreeBuilder<Element> {
 
     /**
      * The constructor.
-     * @param implementation the DOM impl.
+     * 
+     * @param implementation
+     *            the DOM impl.
      */
     protected DOMTreeBuilder(DOMImplementation implementation) {
         super();
@@ -64,11 +66,11 @@ class DOMTreeBuilder extends CoalescingTreeBuilder<Element> {
 
     /**
      * 
-     * @see nu.validator.htmlparser.impl.TreeBuilder#addAttributesToElement(java.lang.Object, nu.validator.htmlparser.impl.HtmlAttributes)
+     * @see nu.validator.htmlparser.impl.TreeBuilder#addAttributesToElement(java.lang.Object,
+     *      nu.validator.htmlparser.impl.HtmlAttributes)
      */
-    @Override
-    protected void addAttributesToElement(Element element, HtmlAttributes attributes)
-            throws SAXException {
+    @Override protected void addAttributesToElement(Element element,
+            HtmlAttributes attributes) throws SAXException {
         try {
             for (int i = 0; i < attributes.getLength(); i++) {
                 String localName = attributes.getLocalName(i);
@@ -85,10 +87,11 @@ class DOMTreeBuilder extends CoalescingTreeBuilder<Element> {
 
     /**
      * 
-     * @see nu.validator.htmlparser.impl.CoalescingTreeBuilder#appendCharacters(java.lang.Object, java.lang.String)
+     * @see nu.validator.htmlparser.impl.CoalescingTreeBuilder#appendCharacters(java.lang.Object,
+     *      java.lang.String)
      */
-    @Override
-    protected void appendCharacters(Element parent, String text) throws SAXException {
+    @Override protected void appendCharacters(Element parent, String text)
+            throws SAXException {
         try {
             parent.appendChild(document.createTextNode(text));
         } catch (DOMException e) {
@@ -98,10 +101,10 @@ class DOMTreeBuilder extends CoalescingTreeBuilder<Element> {
 
     /**
      * 
-     * @see nu.validator.htmlparser.impl.TreeBuilder#appendChildrenToNewParent(java.lang.Object, java.lang.Object)
+     * @see nu.validator.htmlparser.impl.TreeBuilder#appendChildrenToNewParent(java.lang.Object,
+     *      java.lang.Object)
      */
-    @Override
-    protected void appendChildrenToNewParent(Element oldParent,
+    @Override protected void appendChildrenToNewParent(Element oldParent,
             Element newParent) throws SAXException {
         try {
             while (oldParent.hasChildNodes()) {
@@ -114,10 +117,11 @@ class DOMTreeBuilder extends CoalescingTreeBuilder<Element> {
 
     /**
      * 
-     * @see nu.validator.htmlparser.impl.CoalescingTreeBuilder#appendComment(java.lang.Object, java.lang.String)
+     * @see nu.validator.htmlparser.impl.CoalescingTreeBuilder#appendComment(java.lang.Object,
+     *      java.lang.String)
      */
-    @Override
-    protected void appendComment(Element parent, String comment) throws SAXException {
+    @Override protected void appendComment(Element parent, String comment)
+            throws SAXException {
         try {
             parent.appendChild(document.createComment(comment));
         } catch (DOMException e) {
@@ -129,8 +133,7 @@ class DOMTreeBuilder extends CoalescingTreeBuilder<Element> {
      * 
      * @see nu.validator.htmlparser.impl.CoalescingTreeBuilder#appendCommentToDocument(java.lang.String)
      */
-    @Override
-    protected void appendCommentToDocument(String comment)
+    @Override protected void appendCommentToDocument(String comment)
             throws SAXException {
         try {
             document.appendChild(document.createComment(comment));
@@ -141,19 +144,19 @@ class DOMTreeBuilder extends CoalescingTreeBuilder<Element> {
 
     /**
      * 
-     * @see nu.validator.htmlparser.impl.TreeBuilder#createElement(java.lang.String, java.lang.String, nu.validator.htmlparser.impl.HtmlAttributes)
+     * @see nu.validator.htmlparser.impl.TreeBuilder#createElement(java.lang.String,
+     *      java.lang.String, nu.validator.htmlparser.impl.HtmlAttributes)
      */
-    @Override
-    protected Element createElement(String ns, String name, HtmlAttributes attributes)
-            throws SAXException {
+    @Override protected Element createElement(String ns, String name,
+            HtmlAttributes attributes) throws SAXException {
         try {
-            Element rv = document.createElementNS(
-                    ns, name);
+            Element rv = document.createElementNS(ns, name);
             for (int i = 0; i < attributes.getLength(); i++) {
                 rv.setAttributeNS(attributes.getURI(i),
                         attributes.getLocalName(i), attributes.getValue(i));
                 if (attributes.getType(i) == "ID") {
-                    rv.setIdAttributeNS(attributes.getURI(i), attributes.getLocalName(i), true);
+                    rv.setIdAttributeNS(attributes.getURI(i),
+                            attributes.getLocalName(i), true);
                 }
             }
             return rv;
@@ -167,9 +170,8 @@ class DOMTreeBuilder extends CoalescingTreeBuilder<Element> {
      * 
      * @see nu.validator.htmlparser.impl.TreeBuilder#createHtmlElementSetAsRoot(nu.validator.htmlparser.impl.HtmlAttributes)
      */
-    @Override
-    protected Element createHtmlElementSetAsRoot(HtmlAttributes attributes)
-            throws SAXException {
+    @Override protected Element createHtmlElementSetAsRoot(
+            HtmlAttributes attributes) throws SAXException {
         try {
             Element rv = document.createElementNS(
                     "http://www.w3.org/1999/xhtml", "html");
@@ -187,11 +189,11 @@ class DOMTreeBuilder extends CoalescingTreeBuilder<Element> {
 
     /**
      * 
-     * @see nu.validator.htmlparser.impl.TreeBuilder#appendElement(java.lang.Object, java.lang.Object)
+     * @see nu.validator.htmlparser.impl.TreeBuilder#appendElement(java.lang.Object,
+     *      java.lang.Object)
      */
-    @Override
-    protected void appendElement(Element child,
-            Element newParent) throws SAXException {
+    @Override protected void appendElement(Element child, Element newParent)
+            throws SAXException {
         try {
             newParent.appendChild(child);
         } catch (DOMException e) {
@@ -203,8 +205,8 @@ class DOMTreeBuilder extends CoalescingTreeBuilder<Element> {
      * 
      * @see nu.validator.htmlparser.impl.TreeBuilder#hasChildren(java.lang.Object)
      */
-    @Override
-    protected boolean hasChildren(Element element) throws SAXException {
+    @Override protected boolean hasChildren(Element element)
+            throws SAXException {
         try {
             return element.hasChildNodes();
         } catch (DOMException e) {
@@ -213,13 +215,12 @@ class DOMTreeBuilder extends CoalescingTreeBuilder<Element> {
         }
     }
 
-
     /**
      * 
      * @see nu.validator.htmlparser.impl.TreeBuilder#shallowClone(java.lang.Object)
      */
-    @Override
-    protected Element shallowClone(Element element) throws SAXException {
+    @Override protected Element shallowClone(Element element)
+            throws SAXException {
         try {
             return (Element) element.cloneNode(false);
         } catch (DOMException e) {
@@ -229,10 +230,10 @@ class DOMTreeBuilder extends CoalescingTreeBuilder<Element> {
     }
 
     /**
-     * @see nu.validator.htmlparser.impl.TreeBuilder#createElement(String, java.lang.String, org.xml.sax.Attributes, java.lang.Object)
+     * @see nu.validator.htmlparser.impl.TreeBuilder#createElement(String,
+     *      java.lang.String, org.xml.sax.Attributes, java.lang.Object)
      */
-    @Override
-    protected Element createElement(String ns, String name,
+    @Override protected Element createElement(String ns, String name,
             HtmlAttributes attributes, Element form) throws SAXException {
         try {
             Element rv = createElement(ns, name, attributes);
@@ -247,19 +248,20 @@ class DOMTreeBuilder extends CoalescingTreeBuilder<Element> {
     /**
      * @see nu.validator.htmlparser.impl.TreeBuilder#start()
      */
-    @Override
-    protected void start(boolean fragment) throws SAXException {
+    @Override protected void start(boolean fragment) throws SAXException {
         document = implementation.createDocument(null, null, null);
     }
 
     /**
      * 
-     * @see nu.validator.htmlparser.impl.TreeBuilder#documentMode(nu.validator.htmlparser.common.DocumentMode, java.lang.String, java.lang.String, boolean)
+     * @see nu.validator.htmlparser.impl.TreeBuilder#documentMode(nu.validator.htmlparser.common.DocumentMode,
+     *      java.lang.String, java.lang.String, boolean)
      */
-    protected void documentMode(DocumentMode mode, String publicIdentifier, String systemIdentifier, boolean html4SpecificAdditionalErrorChecks) throws SAXException {
+    protected void documentMode(DocumentMode mode, String publicIdentifier,
+            String systemIdentifier, boolean html4SpecificAdditionalErrorChecks)
+            throws SAXException {
         document.setUserData("nu.validator.document-mode", mode, null);
     }
-    
 
     /**
      * Returns the document.
@@ -287,32 +289,44 @@ class DOMTreeBuilder extends CoalescingTreeBuilder<Element> {
         return rv;
     }
 
-    @Override protected void insertFosterParentedCharacters(
-            String text, Element table, Element stackParent) throws SAXException {
-        Node child = document.createTextNode(text);
-        Node parent = table.getParentNode();
-        if (parent != null) { // always an element if not null
-            parent.insertBefore(child, table);
-        } else {
-            stackParent.appendChild(child);
+    @Override protected void insertFosterParentedCharacters(String text,
+            Element table, Element stackParent) throws SAXException {
+        try {
+            Node child = document.createTextNode(text);
+            Node parent = table.getParentNode();
+            if (parent != null) { // always an element if not null
+                parent.insertBefore(child, table);
+            } else {
+                stackParent.appendChild(child);
+            }
+        } catch (DOMException e) {
+            fatal(e);
         }
     }
 
     @Override protected void insertFosterParentedChild(Element child,
             Element table, Element stackParent) throws SAXException {
-        Node parent = table.getParentNode();
-        if (parent != null) { // always an element if not null
-            parent.insertBefore(child, table);
-        } else {
-            stackParent.appendChild(child);
+        try {
+            Node parent = table.getParentNode();
+            if (parent != null) { // always an element if not null
+                parent.insertBefore(child, table);
+            } else {
+                stackParent.appendChild(child);
+            }
+        } catch (DOMException e) {
+            fatal(e);
         }
     }
 
     @Override protected void detachFromParent(Element element)
             throws SAXException {
-        Node parent = element.getParentNode();
-        if (parent != null) {
-            parent.removeChild(element);
+        try {
+            Node parent = element.getParentNode();
+            if (parent != null) {
+                parent.removeChild(element);
+            }
+        } catch (DOMException e) {
+            fatal(e);
         }
     }
 }
