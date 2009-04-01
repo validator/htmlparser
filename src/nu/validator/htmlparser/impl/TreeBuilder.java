@@ -1910,7 +1910,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                                 Tokenizer.CDATA, elementName);
                                         break starttagloop;
                                     case TABLE:
+                                        int rememberPos = currentPtr;
                                         implicitlyCloseP();
+                                        if (rememberPos != currentPtr) {
+                                            warn("A \u201Ctable\u201D start tag caused a paragraph to close implicitly.");
+                                        }
                                         appendToCurrentNodeAndPushElementMayFoster(
                                                 "http://www.w3.org/1999/xhtml",
                                                 elementName, attributes);
