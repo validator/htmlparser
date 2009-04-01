@@ -5011,4 +5011,48 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         return false;
     }
 
+    /**
+     * Creates a comparable snapshot of the tree builder state. Snapshot creation
+     * is only supported immediately after a script end tag has been processed. In 
+     * C++ the caller is responsible for calling <code>delete</code> on the returned
+     * object.
+     * 
+     * @return a snapshot.
+     */
+    @SuppressWarnings("unchecked") public StateSnapshot<T> newSnapshot() {
+        StackNode<T>[] stackCopy = new StackNode[currentPtr + 1];
+        for (int i = 0; i < stackCopy.length; i++) {
+            (stackCopy[i] = stack[i]).retain();
+        }
+        StackNode<T>[] listCopy = new StackNode[listPtr + 1];
+        for (int i = 0; i < listCopy.length; i++) {
+            StackNode<T> node = listOfActiveFormattingElements[i];
+            if (node != null) {
+                node.retain();            
+            }
+            listCopy[i] = node;
+        }
+        Portability.retainElement(formPointer);
+        return new StateSnapshot<T>(stackCopy, listCopy, formPointer);
+    }
+    
+    public boolean snapshotMatches(StateSnapshot<T> snapshot) {
+        StackNode<T>[] stackCopy = snapshot.stack;
+        StackNode<T>[] listCopy = snapshot.listOfActiveFormattingElements;
+        if (stackCopy.length != currentPtr + 1 || listCopy.length != listPtr + 1 || formPointer != snapshot.formPointer) {
+            return false;
+        }
+        for (int i = listCopy.length - 1; i >= 0; i--) {
+            if (listCopy[i] != listOfActiveFormattingElements[i]) {
+                return false;
+            }
+        }
+        for (int i = listCopy.length - 1; i >= 0; i--) {
+            if (listCopy[i] != listOfActiveFormattingElements[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
 }

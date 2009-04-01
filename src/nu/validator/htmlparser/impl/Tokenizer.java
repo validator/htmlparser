@@ -5570,4 +5570,7 @@ public final class Tokenizer implements Locator {
         return col;
     }
 
+    public boolean isInDataState() {
+        return (stateSave == DATA);
+    }
 }
