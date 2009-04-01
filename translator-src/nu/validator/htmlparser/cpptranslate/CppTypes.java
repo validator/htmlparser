@@ -75,7 +75,7 @@ public class CppTypes {
         "nsTraceRefcnt", "jArray", "nsHtml5DocumentMode",
         "nsHtml5ArrayCopy", "nsHtml5NamedCharacters", "nsHtml5Parser",
         "nsHtml5StringLiterals", "nsHtml5Atoms", "nsHtml5ByteReadable", "nsHtml5TreeOperation",
-        "nsHtml5PendingNotification"};
+        "nsHtml5PendingNotification", "nsHtml5StateSnapshot"};
     
     private static final String[] INCLUDES = { "prtypes", "nsIAtom",
             "nsString", "nsINameSpaceManager", "nsIContent", "nsIDocument",

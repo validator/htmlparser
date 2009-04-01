@@ -61,6 +61,7 @@ public class Main {
         "HtmlAttributes",
         "StackNode",
         "UTF16Buffer",
+        "StateSnapshot",
         "Portability",
     };
     
@@ -73,6 +74,7 @@ public class Main {
         "HtmlAttributes",
         "StackNode",
         "UTF16Buffer",
+        "StateSnapshot",
     };
     
     /**
