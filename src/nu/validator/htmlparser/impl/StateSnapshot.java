@@ -47,11 +47,13 @@ public class StateSnapshot<T> {
         for (int i = 0; i < stack.length; i++) {
             stack[i].release();
         }
-        Portability.deleteArray(stack);
+        Portability.releaseArray(stack);
         for (int i = 0; i < listOfActiveFormattingElements.length; i++) {
-            listOfActiveFormattingElements[i].release();
+            if (listOfActiveFormattingElements[i] != null) {
+                listOfActiveFormattingElements[i].release();                
+            }
         }
-        Portability.deleteArray(listOfActiveFormattingElements);
+        Portability.releaseArray(listOfActiveFormattingElements);
         Portability.retainElement(formPointer);
     }
 }
