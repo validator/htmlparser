@@ -1354,7 +1354,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             stack[currentPtr].release();
             currentPtr--;
         }
-        Portability.deleteArray(stack);
+        Portability.releaseArray(stack);
         stack = null;
         while (listPtr > -1) {
             if (listOfActiveFormattingElements[listPtr] != null) {
@@ -1362,12 +1362,12 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             }
             listPtr--;
         }
-        Portability.deleteArray(listOfActiveFormattingElements);        
+        Portability.releaseArray(listOfActiveFormattingElements);        
         listOfActiveFormattingElements = null;
         // [NOCPP[
         idLocations.clear();
         // ]NOCPP]
-        Portability.deleteArray(charBuffer);
+        Portability.releaseArray(charBuffer);
         charBuffer = null;
         end();
     }
