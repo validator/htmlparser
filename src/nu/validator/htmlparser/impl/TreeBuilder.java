@@ -185,6 +185,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     final static int FONT = 64;
 
+    final static int KEYGEN = 65;
+    
     // start insertion modes
 
     private static final int INITIAL = 0;
@@ -1715,6 +1717,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                 case BR:
                                 case EMBED_OR_IMG:
                                 case INPUT:
+                                case KEYGEN:
                                 case HR:
                                 case TEXTAREA:
                                 case XMP:
@@ -1942,6 +1945,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         err("Saw a start tag \u201Cimage\u201D.");
                                         elementName = ElementName.IMG;
                                         continue starttagloop;
+                                    case KEYGEN:
                                     case INPUT:
                                         reconstructTheActiveFormattingElements();
                                         appendVoidElementToCurrentMayFoster(
@@ -2409,7 +2413,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         resetTheInsertionMode();
                                         break starttagloop;
                                     }
-                                case INPUT:
+                                case INPUT: // XXX keygen?
                                 case TEXTAREA:
                                     err("\u201C"
                                             + name
@@ -3355,6 +3359,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         case EMBED_OR_IMG:
                         case IMAGE:
                         case INPUT:
+                        case KEYGEN: // XXX??
                         case HR:
                         case ISINDEX:
                         case IFRAME:

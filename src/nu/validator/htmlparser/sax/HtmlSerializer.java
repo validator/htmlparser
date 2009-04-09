@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
- * Copyright (c) 2008 Mozilla Foundation
+ * Copyright (c) 2008-2009 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -40,8 +40,8 @@ public class HtmlSerializer implements ContentHandler, LexicalHandler {
 
     private static final String[] VOID_ELEMENTS = { "area", "base", "basefont",
             "bgsound", "br", "col", "command", "embed", "event-source",
-            "frame", "hr", "img", "input", "link", "meta", "param", "source",
-            "spacer", "wbr" };
+            "frame", "hr", "img", "input", "keygen", "link", "meta", "param",
+            "source", "spacer", "wbr" };
 
     private static final String[] NON_ESCAPING = { "iframe", "noembed",
             "noframes", "noscript", "plaintext", "script", "style", "xmp" };
@@ -154,7 +154,8 @@ public class HtmlSerializer implements ContentHandler, LexicalHandler {
             escapeLevel++;
         }
         boolean xhtml = "http://www.w3.org/1999/xhtml".equals(uri);
-        if (ignoreLevel > 0 || !(xhtml || "http://www.w3.org/2000/svg".equals(uri) || "http://www.w3.org/1998/Math/MathML".equals(uri))) {
+        if (ignoreLevel > 0
+                || !(xhtml || "http://www.w3.org/2000/svg".equals(uri) || "http://www.w3.org/1998/Math/MathML".equals(uri))) {
             ignoreLevel++;
             return;
         }
@@ -165,18 +166,19 @@ public class HtmlSerializer implements ContentHandler, LexicalHandler {
                 String attUri = atts.getURI(i);
                 String attLocal = atts.getLocalName(i);
                 if (attUri.length() == 0) {
-                    writer.write(' ');                                        
-                } else if (!xhtml && "http://www.w3.org/1999/xlink".equals(attUri)) {
-                    writer.write(" xlink:");                    
+                    writer.write(' ');
+                } else if (!xhtml
+                        && "http://www.w3.org/1999/xlink".equals(attUri)) {
+                    writer.write(" xlink:");
                 } else if ("http://www.w3.org/XML/1998/namespace".equals(attUri)) {
                     if (xhtml) {
                         if ("lang".equals(attLocal)) {
-                            writer.write(' ');                                                                    
+                            writer.write(' ');
                         } else {
                             continue;
-                        }                        
+                        }
                     } else {
-                        writer.write(" xml:");                        
+                        writer.write(" xml:");
                     }
                 } else {
                     continue;
@@ -209,7 +211,8 @@ public class HtmlSerializer implements ContentHandler, LexicalHandler {
                 ignoreLevel++;
                 return;
             }
-            if ("pre".equals(localName) || "textarea".equals(localName) || "listing".equals(localName)) {
+            if ("pre".equals(localName) || "textarea".equals(localName)
+                    || "listing".equals(localName)) {
                 writer.write('\n');
             }
             if (escapeLevel == 0

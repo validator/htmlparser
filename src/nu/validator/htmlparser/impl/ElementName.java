@@ -541,7 +541,7 @@ public final class ElementName
     public static final ElementName FOOTER = new ElementName("footer", "footer", TreeBuilder.ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION, true, false, false);
     public static final ElementName HEADER = new ElementName("header", "header", TreeBuilder.ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION, true, false, false);
     public static final ElementName IFRAME = new ElementName("iframe", "iframe", TreeBuilder.IFRAME, true, false, false);
-    public static final ElementName KEYGEN = new ElementName("keygen", "keygen", TreeBuilder.OTHER, false, false, false);
+    public static final ElementName KEYGEN = new ElementName("keygen", "keygen", TreeBuilder.KEYGEN, true, false, false);
     public static final ElementName LAMBDA = new ElementName("lambda", "lambda", TreeBuilder.OTHER, false, false, false);
     public static final ElementName LEGEND = new ElementName("legend", "legend", TreeBuilder.OTHER, false, false, false);
     public static final ElementName MSPACE = new ElementName("mspace", "mspace", TreeBuilder.OTHER, false, false, false);
