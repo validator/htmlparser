@@ -1086,8 +1086,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     reconstructTheActiveFormattingElements();
                                     accumulateCharacter(buf[i]);
                                     start = i + 1;
-                                    int eltPos = findLastOrRoot(TreeBuilder.TABLE);
-                                    StackNode<T> node = stack[eltPos];
                                     continue;
                                 case IN_COLUMN_GROUP:
                                     if (start < i) {
@@ -1797,7 +1795,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     case DD_OR_DT:
                                         eltPos = currentPtr;
                                         for (;;) {
-                                            StackNode<T> node = stack[eltPos];
+                                            StackNode<T> node = stack[eltPos]; // weak ref
                                             if (node.group == group) { // LI or
                                                 // DD_OR_DT
                                                 generateImpliedEndTagsExceptFor(node.name);
@@ -1808,8 +1806,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                                     pop();
                                                 }
                                                 break;
-                                            }
-                                            if (node.scoping
+                                            } else if (node.scoping
                                                     || (node.special
                                                             && node.name != "p"
                                                             && node.name != "address" && node.name != "div")) {
@@ -1836,12 +1833,14 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         if (activeAPos != -1) {
                                             err("An \u201Ca\u201D start tag seen with already an active \u201Ca\u201D element.");
                                             StackNode<T> activeA = listOfActiveFormattingElements[activeAPos];
+                                            activeA.retain();
                                             adoptionAgencyEndTag("a");
                                             removeFromStack(activeA);
                                             activeAPos = findInListOfActiveFormattingElements(activeA);
                                             if (activeAPos != -1) {
                                                 removeFromListOfActiveFormattingElements(activeAPos);
                                             }
+                                            activeA.release();
                                         }
                                         reconstructTheActiveFormattingElements();
                                         appendToCurrentNodeAndPushFormattingElementMayFoster(
@@ -2105,8 +2104,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
                                                 eltPos = currentPtr;
                                                 for (;;) {
-                                                    StackNode<T> node = stack[eltPos];
-                                                    if (node.name == "option") {
+                                                    if (stack[eltPos].name == "option") {
                                                         generateImpliedEndTags();
                                                         if (!isCurrent("option")) {
                                                             err("End tag \u201C"
@@ -3397,8 +3395,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         pop();
                                     }
                                     break endtagloop;
-                                }
-                                if (node.scoping || node.special) {
+                                } else if (node.scoping || node.special) {
                                     err("Stray end tag \u201C" + name
                                             + "\u201D.");
                                     break endtagloop;
@@ -3874,10 +3871,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     }
 
     private void clearStackBackTo(int eltPos) throws SAXException {
-        if (eltPos != currentPtr) {
-            while (currentPtr > eltPos) { // > not >= intentional
-                pop();
-            }
+        while (currentPtr > eltPos) { // > not >= intentional
+            pop();
         }
     }
 
@@ -4557,6 +4552,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         StackNode<T> node = new StackNode<T>(ns, elementName, elt);
         push(node);
         append(node);
+        node.retain(); // append doesn't retain itself
         Portability.releaseElement(elt);
     }
 
