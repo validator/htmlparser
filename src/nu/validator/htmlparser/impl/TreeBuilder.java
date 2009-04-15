@@ -40,6 +40,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import nu.validator.htmlparser.annotation.IdType;
+import nu.validator.htmlparser.annotation.Literal;
 import nu.validator.htmlparser.annotation.Local;
 import nu.validator.htmlparser.annotation.NoLength;
 import nu.validator.htmlparser.annotation.NsUri;
@@ -274,7 +275,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     // ]NOCPP]
 
-    private final static String[] QUIRKY_PUBLIC_IDS = {
+    @Literal private final static String[] QUIRKY_PUBLIC_IDS = {
             "+//silmaril//dtd html pro v0r11 19970101//",
             "-//advasoft ltd//dtd html 3.0 aswedit + extensions//",
             "-//as//dtd html 3.0 aswedit + extensions//",
@@ -1999,7 +2000,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                         }
                                         HtmlAttributes inputAttributes = new HtmlAttributes(0);
                                         inputAttributes.addAttribute(
-                                                AttributeName.NAME, "isindex"
+                                                AttributeName.NAME, Portability.newStringFromLiteral("isindex")
                                                 // [NOCPP[
                                                 , XmlViolationPolicy.ALLOW
                                         // ]NOCPP]

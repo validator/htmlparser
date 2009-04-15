@@ -22,6 +22,7 @@
 
 package nu.validator.htmlparser.impl;
 
+import nu.validator.htmlparser.annotation.Literal;
 import nu.validator.htmlparser.annotation.Local;
 import nu.validator.htmlparser.annotation.NoLength;
 
@@ -43,6 +44,10 @@ public final class Portability {
 
     public static String newEmptyString() {
         return "";
+    }
+
+    public static String newStringFromLiteral(@Literal String literal) {
+        return literal;
     }
     
     // XXX get rid of this
@@ -102,7 +107,7 @@ public final class Portability {
         return true;
     }
 
-    public static boolean lowerCaseLiteralIsPrefixOfIgnoreAsciiCaseString(String lowerCaseLiteral,
+    public static boolean lowerCaseLiteralIsPrefixOfIgnoreAsciiCaseString(@Literal String lowerCaseLiteral,
             String string) {
         if (string == null) {
             return false;
@@ -123,7 +128,7 @@ public final class Portability {
         return true;
     }
     
-    public static boolean lowerCaseLiteralEqualsIgnoreAsciiCaseString(String lowerCaseLiteral,
+    public static boolean lowerCaseLiteralEqualsIgnoreAsciiCaseString(@Literal String lowerCaseLiteral,
             String string) {
         if (string == null) {
             return false;
@@ -144,7 +149,7 @@ public final class Portability {
         return true;
     }
     
-    public static boolean literalEqualsString(String literal, String string) {
+    public static boolean literalEqualsString(@Literal String literal, String string) {
         return literal.equals(string);
     }
 
