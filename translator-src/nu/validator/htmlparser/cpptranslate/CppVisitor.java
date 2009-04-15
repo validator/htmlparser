@@ -510,6 +510,14 @@ public class CppVisitor implements VoidVisitor<Object> {
     private boolean literal() {
         return hasAnnotation("Literal");
     }
+
+    protected boolean inline() {
+        return hasAnnotation("Inline");
+    }
+    
+    protected boolean inHeader() {
+        return false;
+    }
     
     public void visit(TypeParameter n, Object arg) {
         printer.print(n.getName());
@@ -1461,11 +1469,16 @@ public class CppVisitor implements VoidVisitor<Object> {
         currentMethod = n.getName();
 
         destructor = "destructor".equals(n.getName());
-
+        
         // if (n.getJavaDoc() != null) {
         // n.getJavaDoc().accept(this, arg);
         // }
         currentAnnotations = n.getAnnotations();
+        boolean isInline = inline();
+        if (isInline && !inHeader()) {
+            return;
+        }
+        
         if (destructor) {
             printModifiers(ModifierSet.PUBLIC);
         } else {
@@ -1505,10 +1518,14 @@ public class CppVisitor implements VoidVisitor<Object> {
             printer.print("[]");
         }
 
-        printMethodBody(n.getBody(), arg);
+        if (inHeader() == isInline) {
+            printMethodBody(n.getBody(), arg);            
+        } else {
+            printer.printLn(";");
+        }
     }
 
-    protected void printMethodBody(BlockStmt n, Object arg) {
+    private void printMethodBody(BlockStmt n, Object arg) {
         if (n == null) {
             printer.print(";");
         } else {

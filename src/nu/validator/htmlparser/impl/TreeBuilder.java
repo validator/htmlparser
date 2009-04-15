@@ -40,6 +40,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import nu.validator.htmlparser.annotation.IdType;
+import nu.validator.htmlparser.annotation.Inline;
 import nu.validator.htmlparser.annotation.Literal;
 import nu.validator.htmlparser.annotation.Local;
 import nu.validator.htmlparser.annotation.NoLength;
@@ -3995,7 +3996,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         listOfActiveFormattingElements[listPtr] = node;
     }
 
-    private void insertMarker() {
+    @Inline private void insertMarker() {
         append(null);
     }
 
@@ -4010,7 +4011,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
     }
 
-    private boolean isCurrent(@Local String name) {
+    @Inline private boolean isCurrent(@Local String name) {
         return name == stack[currentPtr].name;
     }
 

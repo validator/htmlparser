@@ -112,7 +112,7 @@ public class HVisitor extends CppVisitor {
 
         for (int i = 0; i < Main.H_LIST.length; i++) {
             String klazz = Main.H_LIST[i];
-            if (!klazz.equals(javaClassName)) {
+            if (!(klazz.equals(javaClassName) || klazz.equals("StackNode"))) {
                 printer.print("class ");
                 printer.print(cppTypes.classPrefix());
                 printer.print(klazz);
@@ -187,13 +187,6 @@ public class HVisitor extends CppVisitor {
     }
 
     /**
-     * @see nu.validator.htmlparser.cpptranslate.CppVisitor#printMethodBody(japa.parser.ast.stmt.BlockStmt, java.lang.Object)
-     */
-    @Override protected void printMethodBody(BlockStmt n, Object arg) {
-        printer.printLn(";");
-    }
-
-    /**
      * @see nu.validator.htmlparser.cpptranslate.CppVisitor#printModifiers(int)
      */
     @Override protected void printModifiers(int modifiers) {
@@ -218,6 +211,9 @@ public class HVisitor extends CppVisitor {
                 printer.indent();
                 previousVisibility = Visibility.PUBLIC;
             }
+        }
+        if (inline()) {
+            printer.print("inline ");            
         }
         if (virtual()) {
             printer.print("virtual ");            
@@ -372,6 +368,13 @@ public class HVisitor extends CppVisitor {
      */
     @Override public void visit(MethodDeclaration n, Object arg) {
         printMethodDeclaration(n, arg);
+    }
+
+    /**
+     * @see nu.validator.htmlparser.cpptranslate.CppVisitor#inHeader()
+     */
+    @Override protected boolean inHeader() {
+        return true;
     }
 
 }
