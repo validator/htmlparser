@@ -442,7 +442,6 @@ public final class Tokenizer implements Locator {
      */
     private boolean wantsComments = false;
 
-    // ]NOCPP]
 
     /**
      * <code>true</code> when HTML4-specific additional errors are requested.
@@ -459,6 +458,8 @@ public final class Tokenizer implements Locator {
      */
     private boolean metaBoundaryPassed;
 
+    // ]NOCPP]
+    
     /**
      * The name of the current doctype token.
      */
@@ -775,11 +776,11 @@ public final class Tokenizer implements Locator {
 
     // end public API
 
+    // [NOCPP[
+
     public void notifyAboutMetaBoundary() {
         metaBoundaryPassed = true;
     }
-
-    // [NOCPP[
 
     void turnOnAdditionalHtml4Errors() {
         html4 = true;
@@ -1436,16 +1437,18 @@ public final class Tokenizer implements Locator {
         strBuf = new char[64];
         strBufLen = 0;
         longStrBuf = new char[1024];
-        longStrBufLen = 0;
-        alreadyComplainedAboutNonAscii = false;
+        longStrBufLen = 0;        
         stateSave = Tokenizer.DATA;
         line = linePrev = 0;
         col = colPrev = 1;
         nextCharOnNewLine = true;
         prev = '\u0000';
+        // [NOCPP[
         html4 = false;
         alreadyWarnedAboutPrivateUseCharacters = false;
+        alreadyComplainedAboutNonAscii = false;
         metaBoundaryPassed = false;
+        // ]NOCPP]
         tokenHandler.startTokenization(this);
         // [NOCPP[
         wantsComments = tokenHandler.wantsComments();
@@ -2182,9 +2185,11 @@ public final class Tokenizer implements Locator {
                              * flag of the current tag token. Emit the current
                              * tag token.
                              */
+                            // [NOCPP[
                             if (html4) {
                                 err("The \u201C/>\u201D syntax on void elements is not allowed.  (This is an HTML4-only error.)");
                             }
+                            // ]NOCPP]
                             state = emitCurrentTagToken(true);
                             if (shouldSuspend) {
                                 break stateloop;
@@ -2281,6 +2286,7 @@ public final class Tokenizer implements Locator {
                                 }
                                 // fall through
                             default:
+                                // [NOCPP[
                                 if (html4
                                         && !((c >= 'a' && c <= 'z')
                                                 || (c >= 'A' && c <= 'Z')
@@ -2289,6 +2295,7 @@ public final class Tokenizer implements Locator {
                                                 || c == '_' || c == ':')) {
                                     err("Non-name character in an unquoted attribute value. (This is an HTML4-only error.)");
                                 }
+                                // ]NOCPP]
                                 /*
                                  * Anything else Append the current input
                                  * character to the current attribute's value.
@@ -4493,6 +4500,7 @@ public final class Tokenizer implements Locator {
                                     state = Tokenizer.SELF_CLOSING_START_TAG;
                                     continue stateloop;
                                 default:
+                                    // [NOCPP[
                                     if (html4) {
                                         err((stateSave == Tokenizer.DATA ? "CDATA"
                                                 : "RCDATA")
@@ -4506,6 +4514,7 @@ public final class Tokenizer implements Locator {
                                                 + contentModelElement
                                                 + "\u201D contained the string \u201C</\u201D, but this did not close the element.");
                                     }
+                                    // ]NOCPP]
                                     tokenHandler.characters(
                                             Tokenizer.LT_SOLIDUS, 0, 2);
                                     emitStrBuf();
@@ -5476,6 +5485,15 @@ public final class Tokenizer implements Locator {
         }
     }
 
+    /**
+     * Returns the alreadyComplainedAboutNonAscii.
+     * 
+     * @return the alreadyComplainedAboutNonAscii
+     */
+    public boolean isAlreadyComplainedAboutNonAscii() {
+        return alreadyComplainedAboutNonAscii;
+    }
+    
     // ]NOCPP]
 
     public void internalEncodingDeclaration(String internalCharset)
@@ -5524,15 +5542,6 @@ public final class Tokenizer implements Locator {
 
     public void requestSuspension() {
         shouldSuspend = true;
-    }
-
-    /**
-     * Returns the alreadyComplainedAboutNonAscii.
-     * 
-     * @return the alreadyComplainedAboutNonAscii
-     */
-    public boolean isAlreadyComplainedAboutNonAscii() {
-        return alreadyComplainedAboutNonAscii;
     }
 
     public void becomeConfident() {
