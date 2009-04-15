@@ -83,8 +83,7 @@ public class Main {
      * @throws IOException 
      */
     public static void main(String[] args) throws ParseException, IOException {
-        StringLiteralParser stringParser = new StringLiteralParser(new InputStreamReader(new FileInputStream(args[3]), "utf-8"));
-        CppTypes cppTypes = new CppTypes(stringParser.parse(), new File(args[2]));
+        CppTypes cppTypes = new CppTypes(new File(args[2]));
         SymbolTable symbolTable = new SymbolTable();
         
         File javaDirectory = new File(args[0]);

@@ -90,7 +90,7 @@ public class GenerateNamedCharactersCpp {
             }
         }
         
-        CppTypes cppTypes = new CppTypes(null, null);
+        CppTypes cppTypes = new CppTypes(null);
         File targetDirectory = new File(args[1]);
         
         generateH(targetDirectory, cppTypes, entities);

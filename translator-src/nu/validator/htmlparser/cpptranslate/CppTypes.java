@@ -70,26 +70,23 @@ public class CppTypes {
         reservedWords.add("xor");
     }
 
-    private static final String[] TREE_BUILDER_INCLUDES = { "prtypes", "nsIAtom",
-        "nsString", "nsINameSpaceManager", "nsIContent", "nsIDocument",
-        "nsTraceRefcnt", "jArray", "nsHtml5DocumentMode",
-        "nsHtml5ArrayCopy", "nsHtml5NamedCharacters", "nsHtml5Parser",
-        "nsHtml5StringLiterals", "nsHtml5Atoms", "nsHtml5ByteReadable", "nsHtml5TreeOperation",
-        "nsHtml5PendingNotification", "nsHtml5StateSnapshot"};
-    
+    private static final String[] TREE_BUILDER_INCLUDES = { "prtypes",
+            "nsIAtom", "nsString", "nsINameSpaceManager", "nsIContent",
+            "nsIDocument", "nsTraceRefcnt", "jArray", "nsHtml5DocumentMode",
+            "nsHtml5ArrayCopy", "nsHtml5NamedCharacters", "nsHtml5Parser",
+            "nsHtml5Atoms", "nsHtml5ByteReadable", "nsHtml5TreeOperation",
+            "nsHtml5PendingNotification", "nsHtml5StateSnapshot" };
+
     private static final String[] INCLUDES = { "prtypes", "nsIAtom",
             "nsString", "nsINameSpaceManager", "nsIContent", "nsIDocument",
             "nsTraceRefcnt", "jArray", "nsHtml5DocumentMode",
             "nsHtml5ArrayCopy", "nsHtml5NamedCharacters", "nsHtml5Parser",
-            "nsHtml5StringLiterals", "nsHtml5Atoms", "nsHtml5ByteReadable", };
+            "nsHtml5Atoms", "nsHtml5ByteReadable", };
 
-    private static final String[] OTHER_DECLATIONS = {
-    };
-    
-    private static final String[] TREE_BUILDER_OTHER_DECLATIONS = {
-        "typedef nsIContent* nsIContentPtr;"
-    };
-    
+    private static final String[] OTHER_DECLATIONS = {};
+
+    private static final String[] TREE_BUILDER_OTHER_DECLATIONS = { "typedef nsIContent* nsIContentPtr;" };
+
     private static final String[] NAMED_CHARACTERS_INCLUDES = { "prtypes",
             "jArray", "nscore" };
 
@@ -97,12 +94,9 @@ public class CppTypes {
 
     private final Map<String, String> atomMap = new HashMap<String, String>();
 
-    private final Map<String, String> stringMap;
-
     private final Writer atomWriter;
 
-    public CppTypes(Map<String, String> stringMap, File atomList) {
-        this.stringMap = stringMap;
+    public CppTypes(File atomList) {
         if (atomList == null) {
             atomWriter = null;
         } else {
@@ -240,23 +234,7 @@ public class CppTypes {
     }
 
     public String stringForLiteral(String literal) {
-        String str = stringMap.get(literal);
-        if (str == null) {
-            str = createLiteralName(literal);
-            stringMap.put(literal, str);
-            System.err.println("MISSING STRING:  (" + str
-                    + " = new nsString())->Assign(NS_LITERAL_STRING(\""
-                    + literal + "\"));");
-        }
-        return "nsHtml5StringLiterals::" + str;
-    }
-
-    private String createLiteralName(String literal) {
-        String candidate = literal.replaceAll("[^a-zA-Z0-9_]", "_");
-        while (stringMap.values().contains(candidate)) {
-            candidate = candidate + '_';
-        }
-        return candidate;
+        return '"' + literal + '"';
     }
 
     public String staticArrayMacro() {
@@ -278,7 +256,7 @@ public class CppTypes {
             return OTHER_DECLATIONS;
         }
     }
-    
+
     public String[] namedCharactersIncludes() {
         return NAMED_CHARACTERS_INCLUDES;
     }
@@ -333,5 +311,9 @@ public class CppTypes {
 
     public String destructorBoilderplate(String className) {
         return "MOZ_COUNT_DTOR(" + className + ");";
+    }
+
+    public String literalType() {
+        return "const char*";
     }
 }

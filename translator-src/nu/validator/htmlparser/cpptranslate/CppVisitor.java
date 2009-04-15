@@ -473,6 +473,8 @@ public class CppVisitor implements VoidVisitor<Object> {
                 name = cppTypes.prefixType();
             } else if (nsUri()) {
                 name = cppTypes.nsUriType();
+            } else if (literal()) {
+                name = cppTypes.literalType();
             } else {
                 name = cppTypes.stringType();
             }
@@ -505,6 +507,10 @@ public class CppVisitor implements VoidVisitor<Object> {
         return hasAnnotation("Local");
     }
 
+    private boolean literal() {
+        return hasAnnotation("Literal");
+    }
+    
     public void visit(TypeParameter n, Object arg) {
         printer.print(n.getName());
         if (n.getTypeBound() != null) {
