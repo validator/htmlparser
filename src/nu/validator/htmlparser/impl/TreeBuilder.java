@@ -1735,8 +1735,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                 switch (group) {
                                     case HTML:
                                         err("Stray \u201Chtml\u201D start tag.");
-                                        addAttributesToElement(stack[0].node,
-                                                attributes);
+                                        addAttributesToHtml(attributes);
                                         break starttagloop;
                                     case BASE:
                                     case LINK:
@@ -2224,8 +2223,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                 switch (group) {
                                     case HTML:
                                         err("Stray \u201Chtml\u201D start tag.");
-                                        addAttributesToElement(stack[0].node,
-                                                attributes);
+                                        addAttributesToHtml(attributes);
                                         break starttagloop;
                                     case BASE:
                                     case COMMAND_OR_EVENT_SOURCE:
@@ -2296,8 +2294,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                     // XXX did Hixie really mean to omit "base"
                                     // here?
                                     err("Stray \u201Chtml\u201D start tag.");
-                                    addAttributesToElement(stack[0].node,
-                                            attributes);
+                                    addAttributesToHtml(attributes);
                                     break starttagloop;
                                 case LINK:
                                     appendVoidElementToCurrentMayFoster(
@@ -2339,8 +2336,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             switch (group) {
                                 case HTML:
                                     err("Stray \u201Chtml\u201D start tag.");
-                                    addAttributesToElement(stack[0].node,
-                                            attributes);
+                                    addAttributesToHtml(attributes);
                                     break starttagloop;
                                 case COL:
                                     appendVoidElementToCurrentMayFoster(
@@ -2377,8 +2373,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             switch (group) {
                                 case HTML:
                                     err("Stray \u201Chtml\u201D start tag.");
-                                    addAttributesToElement(stack[0].node,
-                                            attributes);
+                                    addAttributesToHtml(attributes);
                                     break starttagloop;
                                 case OPTION:
                                     if (isCurrent("option")) {
@@ -2442,8 +2437,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             switch (group) {
                                 case HTML:
                                     err("Stray \u201Chtml\u201D start tag.");
-                                    addAttributesToElement(stack[0].node,
-                                            attributes);
+                                    addAttributesToHtml(attributes);
                                     break starttagloop;
                                 default:
                                     err("Stray \u201C" + name
@@ -2471,8 +2465,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             switch (group) {
                                 case HTML:
                                     err("Stray \u201Chtml\u201D start tag.");
-                                    addAttributesToElement(stack[0].node,
-                                            attributes);
+                                    addAttributesToHtml(attributes);
                                     break starttagloop;
                                 case NOFRAMES:
                                     appendToCurrentNodeAndPushElement(
@@ -2560,8 +2553,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             switch (group) {
                                 case HTML:
                                     err("Stray \u201Chtml\u201D start tag.");
-                                    addAttributesToElement(stack[0].node,
-                                            attributes);
+                                    addAttributesToHtml(attributes);
                                     break starttagloop;
                                 case HEAD:
                                     /*
@@ -2610,8 +2602,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             switch (group) {
                                 case HTML:
                                     err("Stray \u201Chtml\u201D start tag.");
-                                    addAttributesToElement(stack[0].node,
-                                            attributes);
+                                    addAttributesToHtml(attributes);
                                     break starttagloop;
                                 case BODY:
                                     if (attributes.getLength() == 0) {
@@ -2707,8 +2698,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             switch (group) {
                                 case HTML:
                                     err("Stray \u201Chtml\u201D start tag.");
-                                    addAttributesToElement(stack[0].node,
-                                            attributes);
+                                    addAttributesToHtml(attributes);
                                     break starttagloop;
                                 default:
                                     err("Stray \u201C" + name
@@ -4283,6 +4273,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     private void addAttributesToBody(HtmlAttributes attributes)
             throws SAXException {
+        // [NOCPP[
+        checkAttributes(attributes, "http://www.w3.org/1999/xhtml");
+        // ]NOCPP]
         if (currentPtr >= 1) {
             StackNode<T> body = stack[1];
             if (body.group == TreeBuilder.BODY) {
@@ -4291,6 +4284,14 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         }
     }
 
+    private void addAttributesToHtml(HtmlAttributes attributes)
+            throws SAXException {
+        // [NOCPP[
+        checkAttributes(attributes, "http://www.w3.org/1999/xhtml");
+        // ]NOCPP]
+        addAttributesToElement(stack[0].node, attributes);
+    }
+    
     private void pushHeadPointerOntoStack() throws SAXException {
         flushCharacters();
         fatal();
