@@ -395,6 +395,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     protected char[] charBuffer;
 
     protected int charBufferLen = 0;
+    
+    private boolean quirks = false;
 
     // [NOCPP[
 
@@ -1913,10 +1915,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                                 Tokenizer.CDATA, elementName);
                                         break starttagloop;
                                     case TABLE:
-                                        int rememberPos = currentPtr;
-                                        implicitlyCloseP();
-                                        if (rememberPos != currentPtr) {
-                                            warn("A \u201Ctable\u201D start tag caused a paragraph to close implicitly.");
+                                        // The only quirk. Blame Hixie and Acid2.
+                                        if (!quirks) {
+                                            implicitlyCloseP();                                            
                                         }
                                         appendToCurrentNodeAndPushElementMayFoster(
                                                 "http://www.w3.org/1999/xhtml",
@@ -3758,6 +3759,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     private void documentModeInternal(DocumentMode m, String publicIdentifier,
             String systemIdentifier, boolean html4SpecificAdditionalErrorChecks)
             throws SAXException {
+        quirks = (m == DocumentMode.QUIRKS_MODE);
         if (documentModeHandler != null) {
             documentModeHandler.documentMode(
                     m
@@ -4891,6 +4893,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         this.contextNamespace = "http://www.w3.org/1999/xhtml";
         this.contextNode = null;
         this.fragment = (contextName != null);
+        this.quirks = false;
     }
 
     // ]NOCPP]
@@ -4900,13 +4903,14 @@ public abstract class TreeBuilder<T> implements TokenHandler {
      * 
      * @param context
      */
-    public final void setFragmentContext(@Local String context, @NsUri String ns, T node) {
+    public final void setFragmentContext(@Local String context, @NsUri String ns, T node, boolean quirks) {
         this.contextName = context;
         Portability.retainLocal(context);
         this.contextNamespace = ns;
         this.contextNode = node;
         Portability.retainElement(node);
         this.fragment = (contextName != null);
+        this.quirks = quirks;
     }
 
     protected final T currentNode() {
