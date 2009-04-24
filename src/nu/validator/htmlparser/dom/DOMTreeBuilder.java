@@ -155,7 +155,7 @@ class DOMTreeBuilder extends CoalescingTreeBuilder<Element> {
                 rv.setAttributeNS(attributes.getURI(i),
                         attributes.getLocalName(i), attributes.getValue(i));
                 if (attributes.getType(i) == "ID") {
-                    rv.setIdAttributeNS(attributes.getURI(i),
+                    rv.setIdAttributeNS(null,
                             attributes.getLocalName(i), true);
                 }
             }
