@@ -93,6 +93,20 @@ public final class HtmlAttributes implements Attributes {
 
         // ]NOCPP]
     }
+    /*
+    public HtmlAttributes(HtmlAttributes other) {
+        this.mode = other.mode;
+        this.length = other.length;
+        this.names = new AttributeName[other.length];
+        this.values = new String[other.length];
+        // [NOCPP[
+        this.idValue = other.idValue;
+        this.xmlnsLength = other.xmlnsLength;
+        this.xmlnsNames = new AttributeName[other.xmlnsLength];
+        this.xmlnsValues = new String[other.xmlnsLength];
+        // ]NOCPP]
+    }
+    */
 
     void destructor() {
         clear(0);
