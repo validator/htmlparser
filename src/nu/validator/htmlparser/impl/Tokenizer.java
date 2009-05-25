@@ -35,6 +35,7 @@
 
 package nu.validator.htmlparser.impl;
 
+import nu.validator.htmlparser.annotation.Inline;
 import nu.validator.htmlparser.annotation.Local;
 import nu.validator.htmlparser.annotation.NoLength;
 import nu.validator.htmlparser.common.EncodingDeclarationHandler;
@@ -5340,7 +5341,7 @@ public final class Tokenizer implements Locator {
         Portability.releaseString(systemIdentifier);
     }
 
-    private char read() throws SAXException {
+    @Inline private char read() throws SAXException {
         char c;
         pos++;
         if (pos == endPos) {

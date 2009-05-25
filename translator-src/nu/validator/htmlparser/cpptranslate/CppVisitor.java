@@ -1609,7 +1609,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         // printer.print(" ");
         // }
         // }
-        printModifiers(n.getModifiers());
+        // printModifiers(n.getModifiers());
 
         n.getType().accept(this, arg);
         printer.print(" ");
