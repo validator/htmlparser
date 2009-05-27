@@ -4845,12 +4845,11 @@ public final class Tokenizer implements Locator {
                     if (index < contentModelElementNameAsArray.length) {
                         break eofloop;
                     } else {
-                        err("End of file inside end tag.");
-                        endTag = true;
-                        // XXX replace contentModelElement with different
-                        // type
-                        tagName = contentModelElement;
-                        emitCurrentTagToken(false);
+                        err("End of file inside end tag. Ignoring tag.");
+                        // XXX flag script as malformed
+                        /*
+                         * Reconsume the EOF character in the data state.
+                         */
                         break eofloop;
                     }
                 case CLOSE_TAG_OPEN_PCDATA:
@@ -4869,12 +4868,7 @@ public final class Tokenizer implements Locator {
                     /*
                      * EOF Parse error.
                      */
-                    err("End of file seen when looking for tag name");
-                    /*
-                     * Emit the current tag token.
-                     */
-                    tagName = strBufToElementNameString();
-                    emitCurrentTagToken(false);
+                    err("End of file seen when looking for tag name. Ignoring tag.");
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -4883,11 +4877,7 @@ public final class Tokenizer implements Locator {
                 case AFTER_ATTRIBUTE_VALUE_QUOTED:
                 case SELF_CLOSING_START_TAG:
                     /* EOF Parse error. */
-                    err("Saw end of file without the previous tag ending with \u201C>\u201D.");
-                    /*
-                     * Emit the current tag token.
-                     */
-                    emitCurrentTagToken(false);
+                    err("Saw end of file without the previous tag ending with \u201C>\u201D. Ignoring tag.");
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -4896,13 +4886,7 @@ public final class Tokenizer implements Locator {
                     /*
                      * EOF Parse error.
                      */
-                    err("End of file occurred in an attribute name.");
-                    /*
-                     * Emit the current tag token.
-                     */
-                    attributeNameComplete();
-                    addAttributeWithoutValue();
-                    emitCurrentTagToken(false);
+                    err("End of file occurred in an attribute name. Ignoring tag.");
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -4910,26 +4894,18 @@ public final class Tokenizer implements Locator {
                 case AFTER_ATTRIBUTE_NAME:
                 case BEFORE_ATTRIBUTE_VALUE:
                     /* EOF Parse error. */
-                    err("Saw end of file without the previous tag ending with \u201C>\u201D.");
+                    err("Saw end of file without the previous tag ending with \u201C>\u201D. Ignoring Tag.");
                     /*
-                     * Emit the current tag token.
-                     */
-                    addAttributeWithoutValue();
-                    emitCurrentTagToken(false);
-                    /*
-                     * Reconsume the character in the data state.
+                     * Reconsume the EOF character in the data state.
                      */
                     break eofloop;
                 case ATTRIBUTE_VALUE_DOUBLE_QUOTED:
                 case ATTRIBUTE_VALUE_SINGLE_QUOTED:
                 case ATTRIBUTE_VALUE_UNQUOTED:
                     /* EOF Parse error. */
-                    err("End of file reached when inside an attribute value.");
-                    /* Emit the current tag token. */
-                    addAttributeWithValue();
-                    emitCurrentTagToken(false);
+                    err("End of file reached when inside an attribute value. Ignoring tag.");
                     /*
-                     * Reconsume the character in the data state.
+                     * Reconsume the EOF character in the data state.
                      */
                     break eofloop;
                 case BOGUS_COMMENT:
