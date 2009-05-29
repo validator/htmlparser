@@ -1442,7 +1442,7 @@ public final class Tokenizer implements Locator {
         stateSave = Tokenizer.DATA;
         line = linePrev = 0;
         col = colPrev = 1;
-        nextCharOnNewLine = true;
+        advanceLine();
         prev = '\u0000';
         // [NOCPP[
         html4 = false;
@@ -5324,15 +5324,7 @@ public final class Tokenizer implements Locator {
             return '\u0000';
         }
 
-        linePrev = line;
-        colPrev = col;
-        if (nextCharOnNewLine) {
-            line++;
-            col = 1;
-            nextCharOnNewLine = false;
-        } else {
-            col++;
-        }
+        advanceCol();
 
         c = buf[pos];
         // [NOCPP[
@@ -5341,7 +5333,7 @@ public final class Tokenizer implements Locator {
             // ]NOCPP]
             switch (c) {
                 case '\r':
-                    nextCharOnNewLine = true;
+                    advanceLine();
                     buf[pos] = '\n';
                     prev = '\r';
                     return '\n';
@@ -5349,7 +5341,7 @@ public final class Tokenizer implements Locator {
                     if (prev == '\r') {
                         return '\u0000';
                     }
-                    nextCharOnNewLine = true;
+                    advanceLine();
                     break;
                 case '\u0000':
                     /*
@@ -5368,7 +5360,7 @@ public final class Tokenizer implements Locator {
             }
             switch (c) {
                 case '\r':
-                    nextCharOnNewLine = true;
+                    advanceLine();
                     buf[pos] = '\n';
                     prev = '\r';
                     return '\n';
@@ -5376,7 +5368,7 @@ public final class Tokenizer implements Locator {
                     if (prev == '\r') {
                         return '\u0000';
                     }
-                    nextCharOnNewLine = true;
+                    advanceLine();
                     break;
                 case '\u0000':
                     /*
@@ -5445,6 +5437,22 @@ public final class Tokenizer implements Locator {
         // ]NOCPP]
         prev = c;
         return c;
+    }
+
+    private void advanceLine() {
+        nextCharOnNewLine = true;
+    }
+
+    private void advanceCol() {
+        linePrev = line;
+        colPrev = col;
+        if (nextCharOnNewLine) {
+            line++;
+            col = 1;
+            nextCharOnNewLine = false;
+        } else {
+            col++;
+        }
     }
 
     // [NOCPP[
