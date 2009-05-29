@@ -1190,7 +1190,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             case IN_FOREIGN:
                 err("End of file in a foreign namespace context.");
                 while (stack[currentPtr].ns != "http://www.w3.org/1999/xhtml") {
-                    pop();
+                    popOnEof();
                 }
                 foreignFlag = TreeBuilder.NOT_IN_FOREIGN;
             default:
@@ -1256,14 +1256,14 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         err("End of file seen and there were open elements.");
                     }
                     while (currentPtr > 0) {
-                        pop();
+                        popOnEof();
                     }
                     mode = AFTER_HEAD;
                     continue;
                 case IN_HEAD_NOSCRIPT:
                     err("End of file seen and there were open elements.");
                     while (currentPtr > 1) {
-                        pop();
+                        popOnEof();
                     }
                     mode = IN_HEAD;
                     continue;
@@ -1276,7 +1276,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                         assert fragment;
                         break eofloop;
                     } else {
-                        pop();
+                        popOnEof();
                         mode = IN_TABLE;
                         continue;
                     }
@@ -1307,9 +1307,9 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     err("End of file seen inside an [R]CDATA element.");
                     // XXX mark script as already executed
                     if (originalMode == AFTER_HEAD) {
-                        pop();
+                        popOnEof();
                     }
-                    pop();
+                    popOnEof();
                     mode = originalMode;
                     continue;
                 case IN_TABLE_BODY:
@@ -1338,10 +1338,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
             }
         }
         while (currentPtr > 0) {
-            pop();
+            popOnEof();
         }
         if (!fragment) {
-            pop();
+            popOnEof();
         }
         /* Stop parsing. */
     }
@@ -4385,6 +4385,16 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         node.release();
     }
 
+    private void popOnEof() throws SAXException {
+        flushCharacters();
+        StackNode<T> node = stack[currentPtr];
+        assert clearLastStackSlot();
+        currentPtr--;
+        elementPopped(node.ns, node.popName, node.node);
+        markMalformedIfScript(node.node);
+        node.release();
+    }
+    
     // [NOCPP[
     private void checkAttributes(HtmlAttributes attributes, @NsUri String ns)
             throws SAXException {
@@ -4820,7 +4830,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     protected abstract void addAttributesToElement(T element,
             HtmlAttributes attributes) throws SAXException;
+    
+    protected void markMalformedIfScript(T elt) throws SAXException {
 
+    }
+    
     protected void start(boolean fragment) throws SAXException {
 
     }
