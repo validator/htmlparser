@@ -1669,7 +1669,7 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * U+003F QUESTION MARK (?) Parse error.
                                  */
-                                err("Saw \u201C<?\u201D. Probable cause: Attempt to use an XML processing instruction in HTML. (XML processing instructions are not supported in HTML.)");
+                                errProcessingInstruction();
                                 /*
                                  * Switch to the bogus comment state.
                                  */
@@ -1680,7 +1680,7 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * U+003E GREATER-THAN SIGN (>) Parse error.
                                  */
-                                err("Saw \u201C<>\u201D. Probable causes: Unescaped \u201C<\u201D (escape as \u201C&lt;\u201D) or mistyped start tag.");
+                                errLtGt();
                                 /*
                                  * Emit a U+003C LESS-THAN SIGN character token
                                  * and a U+003E GREATER-THAN SIGN character
@@ -1695,9 +1695,7 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * Anything else Parse error.
                                  */
-                                err("Bad character \u201C"
-                                        + c
-                                        + "\u201D after \u201C<\u201D. Probable cause: Unescaped \u201C<\u201D. Try escaping it as \u201C&lt;\u201D.");
+                                errBadCharAfterLt(c);
                                 /*
                                  * Emit a U+003C LESS-THAN SIGN character token
                                  */
@@ -1833,11 +1831,7 @@ public final class Tokenizer implements Locator {
                                  * U+0022 QUOTATION MARK (") U+0027 APOSTROPHE
                                  * (') U+003D EQUALS SIGN (=) Parse error.
                                  */
-                                if (c == '=') {
-                                    err("Saw \u201C=\u201D when expecting an attribute name. Probable cause: Attribute name missing.");
-                                } else {
-                                    errQuoteBeforeAttributeName(c);
-                                }
+                                errBadCharBeforeAttributeName(c);
                                 /*
                                  * Treat it as per the "anything else" entry
                                  * below.
@@ -2017,7 +2011,7 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * U+003E GREATER-THAN SIGN (>) Parse error.
                                  */
-                                err("Attribute value missing.");
+                                errAttributeValueMissing();
                                 /*
                                  * Emit the current tag token.
                                  */
@@ -2034,21 +2028,14 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * U+003D EQUALS SIGN (=) Parse error.
                                  */
-                                err("\u201C=\u201D in an unquoted attribute value. Probable cause: Stray duplicate equals sign.");
+                                errEqualsInUnquotedAttribute();
                                 /*
                                  * Treat it as per the "anything else" entry
                                  * below.
                                  */
                             default:
                                 // [NOCPP[
-                                if (html4
-                                        && !((c >= 'a' && c <= 'z')
-                                                || (c >= 'A' && c <= 'Z')
-                                                || (c >= '0' && c <= '9')
-                                                || c == '.' || c == '-'
-                                                || c == '_' || c == ':')) {
-                                    err("Non-name character in an unquoted attribute value. (This is an HTML4-only error.)");
-                                }
+                                errHtml4NonNameInUnquotedAttribute(c);
                                 // ]NOCPP]
                                 /*
                                  * Anything else Append the current input
@@ -2161,7 +2148,7 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * Anything else Parse error.
                                  */
-                                err("No space between attributes.");
+                                errNoSpaceBetweenAttributes();
                                 /*
                                  * Reconsume the character in the before
                                  * attribute name state.
@@ -2187,9 +2174,7 @@ public final class Tokenizer implements Locator {
                              * tag token.
                              */
                             // [NOCPP[
-                            if (html4) {
-                                err("The \u201C/>\u201D syntax on void elements is not allowed.  (This is an HTML4-only error.)");
-                            }
+                            errHtml4XmlVoidSyntax();
                             // ]NOCPP]
                             state = emitCurrentTagToken(true);
                             if (shouldSuspend) {
@@ -2201,7 +2186,7 @@ public final class Tokenizer implements Locator {
                             continue stateloop;
                         default:
                             /* Anything else Parse error. */
-                            err("A slash was not immediate followed by \u201C>\u201D.");
+                            errSlashNotFollowedByGt();
                             /*
                              * Reconsume the character in the before attribute
                              * name state.
@@ -2269,33 +2254,20 @@ public final class Tokenizer implements Locator {
                             case '\"':
                             case '\'':
                             case '=':
-                                if (c == '<') {
-                                    warn("\u201C<\u201D in an unquoted attribute value. This does not end the tag. Probable cause: Missing \u201C>\u201D immediately before.");
-                                } else {
-                                    /*
-                                     * U+0022 QUOTATION MARK (") U+0027
-                                     * APOSTROPHE (') U+003D EQUALS SIGN (=)
-                                     * Parse error.
-                                     */
-                                    err("\u201C"
-                                            + c
-                                            + "\u201D in an unquoted attribute value. Probable causes: Attributes running together or a URL query string in an unquoted attribute value.");
-                                    /*
-                                     * Treat it as per the "anything else" entry
-                                     * below.
-                                     */
-                                }
+                                /*
+                                 * U+0022 QUOTATION MARK (") U+0027
+                                 * APOSTROPHE (') U+003D EQUALS SIGN (=)
+                                 * Parse error.
+                                 */
+                                errWarnUnquotedAttributeVal(c);
+                                /*
+                                 * Treat it as per the "anything else" entry
+                                 * below.
+                                 */
                                 // fall through
                             default:
-                                // [NOCPP[
-                                if (html4
-                                        && !((c >= 'a' && c <= 'z')
-                                                || (c >= 'A' && c <= 'Z')
-                                                || (c >= '0' && c <= '9')
-                                                || c == '.' || c == '-'
-                                                || c == '_' || c == ':')) {
-                                    err("Non-name character in an unquoted attribute value. (This is an HTML4-only error.)");
-                                }
+                                // [NOCPP]
+                                errHtml4NonNameInUnquotedAttribute(c);
                                 // ]NOCPP]
                                 /*
                                  * Anything else Append the current input
@@ -2522,7 +2494,7 @@ public final class Tokenizer implements Locator {
                                     // fall through
                                 }
                             default:
-                                err("Bogus comment.");
+                                errBogusComment();
                                 clearLongStrBuf();
                                 state = Tokenizer.BOGUS_COMMENT;
                                 reconsume = true;
@@ -2542,7 +2514,7 @@ public final class Tokenizer implements Locator {
                                 break markupdeclarationhyphenloop;
                             // continue stateloop;
                             default:
-                                err("Bogus comment.");
+                                errBogusComment();
                                 state = Tokenizer.BOGUS_COMMENT;
                                 reconsume = true;
                                 continue stateloop;
@@ -2573,7 +2545,7 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * U+003E GREATER-THAN SIGN (>) Parse error.
                                  */
-                                err("Premature end of comment. Use \u201C-->\u201D to end a comment properly.");
+                                errPrematureEndOfComment();
                                 /* Emit the comment token. */
                                 emitComment(0);
                                 /*
@@ -2684,7 +2656,7 @@ public final class Tokenizer implements Locator {
                                 continue stateloop;
                             case '-':
                                 /* U+002D HYPHEN-MINUS (-) Parse error. */
-                                err("Consecutive hyphens did not terminate a comment. \u201C--\u201D is not permitted inside a comment, but e.g. \u201C- -\u201D is.");
+                                errConsecutiveHyphens();
                                 /*
                                  * Append a U+002D HYPHEN-MINUS (-) character to
                                  * the comment token's data.
@@ -2695,10 +2667,7 @@ public final class Tokenizer implements Locator {
                                  */
                                 continue;
                             default:
-                                /*
-                                 * Anything else Parse error.
-                                 */
-                                err("Consecutive hyphens did not terminate a comment. \u201C--\u201D is not permitted inside a comment, but e.g. \u201C- -\u201D is.");
+                                errConsecutiveHyphens();
                                 /*
                                  * Append two U+002D HYPHEN-MINUS (-) characters
                                  * and the input character to the comment
@@ -2732,10 +2701,7 @@ public final class Tokenizer implements Locator {
                             state = Tokenizer.COMMENT_END;
                             continue stateloop;
                         case '>':
-                            /*
-                             * U+003E GREATER-THAN SIGN (>) Parse error.
-                             */
-                            err("Premature end of comment. Use \u201C-->\u201D to end a comment properly.");
+                            errPrematureEndOfComment();
                             /* Emit the comment token. */
                             emitComment(1);
                             /*
@@ -2771,7 +2737,7 @@ public final class Tokenizer implements Locator {
                             if (folded == Tokenizer.OCTYPE[index]) {
                                 appendLongStrBuf(c);
                             } else {
-                                err("Bogus comment.");
+                                errBogusComment();
                                 state = Tokenizer.BOGUS_COMMENT;
                                 reconsume = true;
                                 continue stateloop;
@@ -2860,7 +2826,7 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * U+003E GREATER-THAN SIGN (>) Parse error.
                                  */
-                                err("Nameless doctype.");
+                                errNamelessDoctype();
                                 /*
                                  * Create a new DOCTYPE token. Set its
                                  * force-quirks flag to on.
@@ -3167,7 +3133,7 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * U+003E GREATER-THAN SIGN (>) Parse error.
                                  */
-                                err("\u201C>\u201D in public identifier.");
+                                errGtInPublicId();
                                 /*
                                  * Set the DOCTYPE token's force-quirks flag to
                                  * on.
@@ -3294,7 +3260,7 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * U+003E GREATER-THAN SIGN (>) Parse error.
                                  */
-                                err("\u201C>\u201D in system identifier.");
+                                errGtInSystemId();
                                 /*
                                  * Set the DOCTYPE token's force-quirks flag to
                                  * on.
@@ -3542,10 +3508,7 @@ public final class Tokenizer implements Locator {
                                 state = Tokenizer.AFTER_DOCTYPE_SYSTEM_IDENTIFIER;
                                 continue stateloop;
                             case '>':
-                                /*
-                                 * U+003E GREATER-THAN SIGN (>) Parse error.
-                                 */
-                                err("\u201C>\u201D in system identifier.");
+                                errGtInSystemId();
                                 /*
                                  * Set the DOCTYPE token's force-quirks flag to
                                  * on.
@@ -3595,10 +3558,7 @@ public final class Tokenizer implements Locator {
                                 state = Tokenizer.AFTER_DOCTYPE_PUBLIC_IDENTIFIER;
                                 continue stateloop;
                             case '>':
-                                /*
-                                 * U+003E GREATER-THAN SIGN (>) Parse error.
-                                 */
-                                err("\u201C>\u201D in public identifier.");
+                                errGtInPublicId();
                                 /*
                                  * Set the DOCTYPE token's force-quirks flag to
                                  * on.
@@ -3640,7 +3600,7 @@ public final class Tokenizer implements Locator {
                             if (c == Tokenizer.CDATA_LSQB[index]) {
                                 appendLongStrBuf(c);
                             } else {
-                                err("Bogus comment.");
+                                errBogusComment();
                                 state = Tokenizer.BOGUS_COMMENT;
                                 reconsume = true;
                                 continue stateloop;
@@ -4072,8 +4032,7 @@ public final class Tokenizer implements Locator {
                                 // FALL THROUGH continue stateloop;
                                 break decimalloop;
                             } else {
-                                err("No digits after \u201C" + strBufToString()
-                                        + "\u201D.");
+                                errNoDigitsInNCR();
                                 appendStrBuf(';');
                                 emitOrAppendStrBuf(returnState);
                                 if ((returnState & (~1)) == 0) {
@@ -4095,8 +4054,7 @@ public final class Tokenizer implements Locator {
                              * is a parse error.
                              */
                             if (!seenDigits) {
-                                err("No digits after \u201C" + strBufToString()
-                                        + "\u201D.");
+                                errNoDigitsInNCR();
                                 emitOrAppendStrBuf(returnState);
                                 if ((returnState & (~1)) == 0) {
                                     cstart = pos;
@@ -4105,7 +4063,7 @@ public final class Tokenizer implements Locator {
                                 reconsume = true;
                                 continue stateloop;
                             } else {
-                                err("Character reference was not terminated by a semicolon.");
+                                errCharRefLacksSemicolon();
                                 state = Tokenizer.HANDLE_NCR_VALUE;
                                 reconsume = true;
                                 if ((returnState & (~1)) == 0) {
@@ -4164,8 +4122,7 @@ public final class Tokenizer implements Locator {
                                 state = Tokenizer.HANDLE_NCR_VALUE;
                                 continue stateloop;
                             } else {
-                                err("No digits after \u201C" + strBufToString()
-                                        + "\u201D.");
+                                errNoDigitsInNCR();
                                 appendStrBuf(';');
                                 emitOrAppendStrBuf(returnState);
                                 if ((returnState & (~1)) == 0) {
@@ -4187,8 +4144,7 @@ public final class Tokenizer implements Locator {
                              * is a parse error.
                              */
                             if (!seenDigits) {
-                                err("No digits after \u201C" + strBufToString()
-                                        + "\u201D.");
+                                errNoDigitsInNCR();
                                 emitOrAppendStrBuf(returnState);
                                 if ((returnState & (~1)) == 0) {
                                     cstart = pos;
@@ -4197,7 +4153,7 @@ public final class Tokenizer implements Locator {
                                 reconsume = true;
                                 continue stateloop;
                             } else {
-                                err("Character reference was not terminated by a semicolon.");
+                                errCharRefLacksSemicolon();
                                 if ((returnState & (~1)) == 0) {
                                     cstart = pos;
                                 }
@@ -4440,15 +4396,7 @@ public final class Tokenizer implements Locator {
                             }
                             if (folded != e) {
                                 // [NOCPP[
-                                if (html4
-                                        && (index > 0 || (folded >= 'a' && folded <= 'z'))
-                                        && ElementName.IFRAME != contentModelElement) {
-                                    err((stateSave == Tokenizer.DATA ? "CDATA"
-                                            : "RCDATA")
-                                            + " element \u201C"
-                                            + contentModelElement.name
-                                            + "\u201D contained the string \u201C</\u201D, but it was not the start of the end tag. (HTML4-only error)");
-                                }
+                                errHtml4LtSlashInRcdata(folded);
                                 // ]NOCPP]
                                 tokenHandler.characters(Tokenizer.LT_SOLIDUS,
                                         0, 2);
@@ -4502,19 +4450,7 @@ public final class Tokenizer implements Locator {
                                     continue stateloop;
                                 default:
                                     // [NOCPP[
-                                    if (html4) {
-                                        err((stateSave == Tokenizer.DATA ? "CDATA"
-                                                : "RCDATA")
-                                                + " element \u201C"
-                                                + contentModelElement
-                                                + "\u201D contained the string \u201C</\u201D, but it was not the start of the end tag. (HTML4-only error)");
-                                    } else {
-                                        warn((stateSave == Tokenizer.DATA ? "CDATA"
-                                                : "RCDATA")
-                                                + " element \u201C"
-                                                + contentModelElement
-                                                + "\u201D contained the string \u201C</\u201D, but this did not close the element.");
-                                    }
+                                    errWarnLtSlashInRcdata();
                                     // ]NOCPP]
                                     tokenHandler.characters(
                                             Tokenizer.LT_SOLIDUS, 0, 2);
@@ -4574,7 +4510,7 @@ public final class Tokenizer implements Locator {
                         continue stateloop;
                     } else if (c == '>') {
                         /* U+003E GREATER-THAN SIGN (>) Parse error. */
-                        err("Saw \u201C</>\u201D. Probable causes: Unescaped \u201C<\u201D (escape as \u201C&lt;\u201D) or mistyped end tag.");
+                        errLtSlashGt();
                         /*
                          * Switch to the data state.
                          */
@@ -4583,7 +4519,7 @@ public final class Tokenizer implements Locator {
                         continue stateloop;
                     } else {
                         /* Anything else Parse error. */
-                        err("Garbage after \u201C</\u201D.");
+                        errGarbageAfterLtSlash();
                         /*
                          * Switch to the bogus comment state.
                          */
@@ -4655,6 +4591,144 @@ public final class Tokenizer implements Locator {
         // Save locals
         stateSave = state;
         returnStateSave = returnState;
+    }
+
+    private void errGarbageAfterLtSlash() throws SAXException {
+        err("Garbage after \u201C</\u201D.");
+    }
+
+    private void errLtSlashGt() throws SAXException {
+        err("Saw \u201C</>\u201D. Probable causes: Unescaped \u201C<\u201D (escape as \u201C&lt;\u201D) or mistyped end tag.");
+    }
+
+    private void errWarnLtSlashInRcdata() throws SAXException {
+        if (html4) {
+            err((stateSave == Tokenizer.DATA ? "CDATA"
+                    : "RCDATA")
+                    + " element \u201C"
+                    + contentModelElement
+                    + "\u201D contained the string \u201C</\u201D, but it was not the start of the end tag. (HTML4-only error)");
+        } else {
+            warn((stateSave == Tokenizer.DATA ? "CDATA"
+                    : "RCDATA")
+                    + " element \u201C"
+                    + contentModelElement
+                    + "\u201D contained the string \u201C</\u201D, but this did not close the element.");
+        }
+    }
+
+    private void errHtml4LtSlashInRcdata(char folded) throws SAXException {
+        if (html4
+                && (index > 0 || (folded >= 'a' && folded <= 'z'))
+                && ElementName.IFRAME != contentModelElement) {
+            err((stateSave == Tokenizer.DATA ? "CDATA"
+                    : "RCDATA")
+                    + " element \u201C"
+                    + contentModelElement.name
+                    + "\u201D contained the string \u201C</\u201D, but it was not the start of the end tag. (HTML4-only error)");
+        }
+    }
+
+    private void errCharRefLacksSemicolon() throws SAXException {
+        err("Character reference was not terminated by a semicolon.");
+    }
+
+    private void errNoDigitsInNCR() throws SAXException {
+        err("No digits after \u201C" + strBufToString()
+                + "\u201D.");
+    }
+
+    private void errGtInSystemId() throws SAXException {
+        err("\u201C>\u201D in system identifier.");
+    }
+
+    private void errGtInPublicId() throws SAXException {
+        err("\u201C>\u201D in public identifier.");
+    }
+
+    private void errNamelessDoctype() throws SAXException {
+        err("Nameless doctype.");
+    }
+
+    private void errConsecutiveHyphens() throws SAXException {
+        err("Consecutive hyphens did not terminate a comment. \u201C--\u201D is not permitted inside a comment, but e.g. \u201C- -\u201D is.");
+    }
+
+    private void errPrematureEndOfComment() throws SAXException {
+        err("Premature end of comment. Use \u201C-->\u201D to end a comment properly.");
+    }
+
+    private void errBogusComment() throws SAXException {
+        err("Bogus comment.");
+    }
+
+    private void errWarnUnquotedAttributeVal(char c) throws SAXException {
+        if (c == '<') {
+            warn("\u201C<\u201D in an unquoted attribute value. This does not end the tag. Probable cause: Missing \u201C>\u201D immediately before.");
+        } else {
+            err("\u201C"
+                    + c
+                    + "\u201D in an unquoted attribute value. Probable causes: Attributes running together or a URL query string in an unquoted attribute value.");
+        }
+    }
+
+    private void errSlashNotFollowedByGt() throws SAXException {
+        err("A slash was not immediate followed by \u201C>\u201D.");
+    }
+
+    private void errHtml4XmlVoidSyntax() throws SAXException {
+        if (html4) {
+            err("The \u201C/>\u201D syntax on void elements is not allowed.  (This is an HTML4-only error.)");
+        }
+    }
+
+    private void errNoSpaceBetweenAttributes() throws SAXException {
+        err("No space between attributes.");
+    }
+
+    private void errHtml4NonNameInUnquotedAttribute(char c) throws SAXException {
+        if (html4
+                && !((c >= 'a' && c <= 'z')
+                        || (c >= 'A' && c <= 'Z')
+                        || (c >= '0' && c <= '9')
+                        || c == '.' || c == '-'
+                        || c == '_' || c == ':')) {
+            err("Non-name character in an unquoted attribute value. (This is an HTML4-only error.)");
+        }
+    }
+
+    private void errEqualsInUnquotedAttribute() throws SAXException {
+        err("\u201C=\u201D in an unquoted attribute value. Probable cause: Stray duplicate equals sign.");
+    }
+
+    private void errAttributeValueMissing() throws SAXException {
+        err("Attribute value missing.");
+    }
+
+    private void errBadCharBeforeAttributeName(char c) throws SAXException {
+        if (c == '=') {
+            errEqualsSignBeforeAttributeName();
+        } else {
+            errQuoteBeforeAttributeName(c);
+        }
+    }
+
+    private void errEqualsSignBeforeAttributeName() throws SAXException {
+        err("Saw \u201C=\u201D when expecting an attribute name. Probable cause: Attribute name missing.");
+    }
+
+    private void errBadCharAfterLt(char c) throws SAXException {
+        err("Bad character \u201C"
+                + c
+                + "\u201D after \u201C<\u201D. Probable cause: Unescaped \u201C<\u201D. Try escaping it as \u201C&lt;\u201D.");
+    }
+
+    private void errLtGt() throws SAXException {
+        err("Saw \u201C<>\u201D. Probable causes: Unescaped \u201C<\u201D (escape as \u201C&lt;\u201D) or mistyped start tag.");
+    }
+
+    private void errProcessingInstruction() throws SAXException {
+        err("Saw \u201C<?\u201D. Probable cause: Attempt to use an XML processing instruction in HTML. (XML processing instructions are not supported in HTML.)");
     }
 
     private void errUnescapedAmpersandInterpretedAsCharacterReference()
@@ -4918,17 +4992,17 @@ public final class Tokenizer implements Locator {
                     emitComment(0);
                     break eofloop;
                 case MARKUP_DECLARATION_OPEN:
-                    err("Bogus comment.");
+                    errBogusComment();
                     clearLongStrBuf();
                     emitComment(0);
                     break eofloop;
                 case MARKUP_DECLARATION_HYPHEN:
-                    err("Bogus comment.");
+                    errBogusComment();
                     emitComment(0);
                     break eofloop;
                 case MARKUP_DECLARATION_OCTYPE:
                     if (index < 6) {
-                        err("Bogus comment.");
+                        errBogusComment();
                         emitComment(0);
                     } else {
                         err("Expected space characters after \u201CDOCTYPE\u201D.");
@@ -5280,14 +5354,12 @@ public final class Tokenizer implements Locator {
                      * consume that too. If it isn't, there is a parse error.
                      */
                     if (!seenDigits) {
-                        err("No digits after \u201C" + strBufToString()
-                                + "\u201D.");
+                        errNoDigitsInNCR();
                         emitOrAppendStrBuf(returnState);
                         state = returnState;
                         continue;
                     } else {
-                        err("Character reference was not terminated by a semicolon.");
-                        // FALL THROUGH continue stateloop;
+                        errCharRefLacksSemicolon();
                     }
                     // WARNING previous state sets reconsume
                     handleNcrValue(returnState);
