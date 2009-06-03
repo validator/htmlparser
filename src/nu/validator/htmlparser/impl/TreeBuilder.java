@@ -3560,6 +3560,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     switch (group) {
                         case HEAD:
                         case BR:
+                        case HTML:
+                        case BODY:
                             appendToCurrentNodeAndPushHeadElement(HtmlAttributes.EMPTY_ATTRIBUTES);
                             mode = IN_HEAD;
                             continue;
@@ -3574,6 +3576,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                             mode = AFTER_HEAD;
                             break endtagloop;
                         case BR:
+                        case HTML:
+                        case BODY:
                             pop();
                             mode = AFTER_HEAD;
                             continue;
@@ -3598,6 +3602,8 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     }
                 case AFTER_HEAD:
                     switch (group) {
+                        case HTML:
+                        case BODY:
                         case BR:
                             appendToCurrentNodeAndPushBodyElement();
                             mode = FRAMESET_OK;
