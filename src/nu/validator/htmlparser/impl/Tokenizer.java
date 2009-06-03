@@ -4895,39 +4895,39 @@ public final class Tokenizer implements Locator {
         err("Expected a public identifier but the doctype ended.");
     }
 
-    private void initDoctypeFields() {
+    @Inline private void initDoctypeFields() {
         doctypeName = "";
         systemIdentifier = null;
         publicIdentifier = null;
         forceQuirks = false;
     }
 
-    private void adjustDoubleHyphenAndAppendToLongStrBufCarriageReturn() throws SAXException {
+    @Inline private void adjustDoubleHyphenAndAppendToLongStrBufCarriageReturn() throws SAXException {
         silentCarriageReturn();
         adjustDoubleHyphenAndAppendToLongStrBuf('\n');
     }
 
-    private void adjustDoubleHyphenAndAppendToLongStrBufLineFeed() throws SAXException {
+    @Inline private void adjustDoubleHyphenAndAppendToLongStrBufLineFeed() throws SAXException {
         silentLineFeed();
         adjustDoubleHyphenAndAppendToLongStrBuf('\n');
     }
 
-    private void appendLongStrBufLineFeed() {
+    @Inline private void appendLongStrBufLineFeed() {
         silentLineFeed();
         appendLongStrBuf('\n');
     }
 
-    private void appendLongStrBufCarriageReturn() {
+    @Inline private void appendLongStrBufCarriageReturn() {
         silentCarriageReturn();
         appendLongStrBuf('\n');
     }
 
-    private void silentCarriageReturn() {
+    @Inline private void silentCarriageReturn() {
         nextCharOnNewLine = true;
         prevCR = true;
     }
 
-    private void silentLineFeed() {
+    @Inline private void silentLineFeed() {
         nextCharOnNewLine = true;
     }
 
