@@ -62,7 +62,7 @@ import org.xml.sax.SAXParseException;
  * @version $Id$
  * @author hsivonen
  */
-public final class Tokenizer implements Locator {
+public class Tokenizer implements Locator {
 
     public static final int DATA = 0;
 
@@ -1248,9 +1248,7 @@ public final class Tokenizer implements Locator {
 
     private int emitCurrentTagToken(boolean selfClosing, int pos) throws SAXException {
         cstart = pos + 1;
-        if (selfClosing && endTag) {
-            err("Stray \u201C/\u201D at the end of an end tag.");
-        }
+        maybeErrSlashInEndTag(selfClosing);
         stateSave = Tokenizer.DATA;
         HtmlAttributes attrs = (attributes == null ? HtmlAttributes.EMPTY_ATTRIBUTES
                 : attributes);
@@ -1259,13 +1257,7 @@ public final class Tokenizer implements Locator {
              * When an end tag token is emitted, the content model flag must be
              * switched to the PCDATA state.
              */
-            if (attrs.getLength() != 0) {
-                /*
-                 * When an end tag token is emitted with attributes, that is a
-                 * parse error.
-                 */
-                err("End tag had attributes.");
-            }
+            maybeErrAttributesOnEndTag(attrs);
             tokenHandler.endTag(tagName);
         } else {
             tokenHandler.startTag(tagName, attrs, selfClosing);
@@ -1301,8 +1293,7 @@ public final class Tokenizer implements Locator {
          * along with the value that gets associated with it (if any).
          */
         if (attributes.contains(attributeName)) {
-            err("Duplicate attribute \u201C"
-                    + attributeName.getLocal(AttributeName.HTML) + "\u201D.");
+            errDuplicateAttribute();
             attributeName.release();
             attributeName = null;
         }
@@ -2898,7 +2889,7 @@ public final class Tokenizer implements Locator {
                                 /*
                                  * Anything else Parse error.
                                  */
-                                err("Missing space before doctype name.");
+                                errMissingSpaceBeforeDoctypeName();
                                 /*
                                  * Reconsume the current character in the before
                                  * DOCTYPE name state.
@@ -3628,7 +3619,7 @@ public final class Tokenizer implements Locator {
                             // continue stateloop;
                             case '>':
                                 /* U+003E GREATER-THAN SIGN (>) Parse error. */
-                                err("Expected a system identifier but the doctype ended.");
+                                errExpectedSystemId();
                                 /*
                                  * Set the DOCTYPE token's force-quirks flag to
                                  * on.
@@ -4105,7 +4096,7 @@ public final class Tokenizer implements Locator {
                                      * after the U+0026 AMPERSAND (&) must be
                                      * unconsumed, and nothing is returned.
                                      */
-                                    errNotSemicolonMatchInAttribute();
+                                    errNoNamedCharacterMatch();
                                     appendStrBufToLongStrBuf();
                                     state = returnState;
                                     reconsume = true;
@@ -4240,10 +4231,10 @@ public final class Tokenizer implements Locator {
                             continue;
                         } else if (c == ';') {
                             if (seenDigits) {
-                                state = Tokenizer.HANDLE_NCR_VALUE;
                                 if ((returnState & (~1)) == 0) {
                                     cstart = pos + 1;
                                 }
+                                state = Tokenizer.HANDLE_NCR_VALUE;
                                 // FALL THROUGH continue stateloop;
                                 break decimalloop;
                             } else {
@@ -4891,10 +4882,6 @@ public final class Tokenizer implements Locator {
         return pos;
     }
 
-    private void errExpectedPublicId() throws SAXException {
-        err("Expected a public identifier but the doctype ended.");
-    }
-
     @Inline private void initDoctypeFields() {
         doctypeName = "";
         systemIdentifier = null;
@@ -4944,180 +4931,7 @@ public final class Tokenizer implements Locator {
         tokenHandler.characters(Tokenizer.REPLACEMENT_CHARACTER, 0, 1);
         cstart = Integer.MAX_VALUE;
     }
-
-    private void errGarbageAfterLtSlash() throws SAXException {
-        err("Garbage after \u201C</\u201D.");
-    }
-
-    private void errLtSlashGt() throws SAXException {
-        err("Saw \u201C</>\u201D. Probable causes: Unescaped \u201C<\u201D (escape as \u201C&lt;\u201D) or mistyped end tag.");
-    }
-
-    private void errWarnLtSlashInRcdata() throws SAXException {
-        if (html4) {
-            err((stateSave == Tokenizer.DATA ? "CDATA" : "RCDATA")
-                    + " element \u201C"
-                    + contentModelElement
-                    + "\u201D contained the string \u201C</\u201D, but it was not the start of the end tag. (HTML4-only error)");
-        } else {
-            warn((stateSave == Tokenizer.DATA ? "CDATA" : "RCDATA")
-                    + " element \u201C"
-                    + contentModelElement
-                    + "\u201D contained the string \u201C</\u201D, but this did not close the element.");
-        }
-    }
-
-    private void errHtml4LtSlashInRcdata(char folded) throws SAXException {
-        if (html4 && (index > 0 || (folded >= 'a' && folded <= 'z'))
-                && ElementName.IFRAME != contentModelElement) {
-            err((stateSave == Tokenizer.DATA ? "CDATA" : "RCDATA")
-                    + " element \u201C"
-                    + contentModelElement.name
-                    + "\u201D contained the string \u201C</\u201D, but it was not the start of the end tag. (HTML4-only error)");
-        }
-    }
-
-    private void errCharRefLacksSemicolon() throws SAXException {
-        err("Character reference was not terminated by a semicolon.");
-    }
-
-    private void errNoDigitsInNCR() throws SAXException {
-        err("No digits after \u201C" + strBufToString() + "\u201D.");
-    }
-
-    private void errGtInSystemId() throws SAXException {
-        err("\u201C>\u201D in system identifier.");
-    }
-
-    private void errGtInPublicId() throws SAXException {
-        err("\u201C>\u201D in public identifier.");
-    }
-
-    private void errNamelessDoctype() throws SAXException {
-        err("Nameless doctype.");
-    }
-
-    private void errConsecutiveHyphens() throws SAXException {
-        err("Consecutive hyphens did not terminate a comment. \u201C--\u201D is not permitted inside a comment, but e.g. \u201C- -\u201D is.");
-    }
-
-    private void errPrematureEndOfComment() throws SAXException {
-        err("Premature end of comment. Use \u201C-->\u201D to end a comment properly.");
-    }
-
-    private void errBogusComment() throws SAXException {
-        err("Bogus comment.");
-    }
-
-    private void errWarnUnquotedAttributeValOrNull(char c) throws SAXException {
-        if (c == '<') {
-            warn("\u201C<\u201D in an unquoted attribute value. This does not end the tag. Probable cause: Missing \u201C>\u201D immediately before.");
-        } else {
-            err("\u201C"
-                    + c
-                    + "\u201D in an unquoted attribute value. Probable causes: Attributes running together or a URL query string in an unquoted attribute value.");
-        }
-    }
-
-    private void errSlashNotFollowedByGt() throws SAXException {
-        err("A slash was not immediate followed by \u201C>\u201D.");
-    }
-
-    private void errHtml4XmlVoidSyntax() throws SAXException {
-        if (html4) {
-            err("The \u201C/>\u201D syntax on void elements is not allowed.  (This is an HTML4-only error.)");
-        }
-    }
-
-    private void errNoSpaceBetweenAttributes() throws SAXException {
-        err("No space between attributes.");
-    }
-
-    private void errHtml4NonNameInUnquotedAttribute(char c) throws SAXException {
-        if (html4
-                && !((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
-                        || (c >= '0' && c <= '9') || c == '.' || c == '-'
-                        || c == '_' || c == ':')) {
-            err("Non-name character in an unquoted attribute value. (This is an HTML4-only error.)");
-        }
-    }
-
-    private void errEqualsInUnquotedAttributeOrNull(char c) throws SAXException {
-        err("\u201C=\u201D in an unquoted attribute value. Probable cause: Stray duplicate equals sign.");
-    }
-
-    private void errAttributeValueMissing() throws SAXException {
-        err("Attribute value missing.");
-    }
-
-    private void errBadCharBeforeAttributeNameOrNull(char c)
-            throws SAXException {
-        if (c == '=') {
-            errEqualsSignBeforeAttributeName();
-        } else {
-            errQuoteBeforeAttributeName(c);
-        }
-    }
-
-    private void errEqualsSignBeforeAttributeName() throws SAXException {
-        err("Saw \u201C=\u201D when expecting an attribute name. Probable cause: Attribute name missing.");
-    }
-
-    private void errBadCharAfterLt(char c) throws SAXException {
-        err("Bad character \u201C"
-                + c
-                + "\u201D after \u201C<\u201D. Probable cause: Unescaped \u201C<\u201D. Try escaping it as \u201C&lt;\u201D.");
-    }
-
-    private void errLtGt() throws SAXException {
-        err("Saw \u201C<>\u201D. Probable causes: Unescaped \u201C<\u201D (escape as \u201C&lt;\u201D) or mistyped start tag.");
-    }
-
-    private void errProcessingInstruction() throws SAXException {
-        err("Saw \u201C<?\u201D. Probable cause: Attempt to use an XML processing instruction in HTML. (XML processing instructions are not supported in HTML.)");
-    }
-
-    private void errUnescapedAmpersandInterpretedAsCharacterReference()
-            throws SAXException {
-        if (errorHandler == null) {
-            return;
-        }
-        SAXParseException spe = new SAXParseException(
-                "The string following \u201C&\u201D was interpreted as a character reference. (\u201C&\u201D probably should have been escaped as \u201C&amp;\u201D.)",
-                ampersandLocation);
-        errorHandler.error(spe);
-    }
-
-    private void errNotSemicolonTerminated() throws SAXException {
-        err("Named character reference was not terminated by a semicolon. (Or \u201C&\u201D should have been escaped as \u201C&amp;\u201D.)");
-    }
-
-    private void errNotSemicolonMatchInAttribute() throws SAXException {
-        errNoNamedCharacterMatch();
-    }
-
-    private void errNoNamedCharacterMatch() throws SAXException {
-        if (errorHandler == null) {
-            return;
-        }
-        SAXParseException spe = new SAXParseException(
-                "\u201C&\u201D did not start a character reference. (\u201C&\u201D probably should have been escaped as \u201C&amp;\u201D.)",
-                ampersandLocation);
-        errorHandler.error(spe);
-    }
-
-    private void errQuoteBeforeAttributeName(char c) throws SAXException {
-        err("Saw \u201C"
-                + c
-                + "\u201D when expecting an attribute name. Probable cause: \u201C=\u201D missing immediately before.");
-    }
-
-    private void errQuoteInAttributeNameOrNull(char c) throws SAXException {
-        err("Quote \u201C"
-                + c
-                + "\u201D in attribute name. Probable cause: Matching quote missing somewhere earlier.");
-    }
-
+    
     private void rememberAmpersandLocation(char add) {
         additional = add;
         // [NOCPP[
@@ -5126,12 +4940,12 @@ public final class Tokenizer implements Locator {
     }
 
     private void bogusDoctype() throws SAXException {
-        err("Bogus doctype.");
+        errBogusDoctype();
         forceQuirks = true;
     }
 
     private void bogusDoctypeWithoutQuirks() throws SAXException {
-        err("Bogus doctype.");
+        errBogusDoctype();
         forceQuirks = false;
     }
 
@@ -5154,7 +4968,7 @@ public final class Tokenizer implements Locator {
              * If that number is one of the numbers in the first column of the
              * following table, then this is a parse error.
              */
-            err("A numeric character reference expanded to the C1 controls range.");
+            errNcrInC1Range();
             /*
              * Find the row with that number in the first column, and return a
              * character token for the Unicode character given in the second
@@ -5163,7 +4977,7 @@ public final class Tokenizer implements Locator {
             @NoLength char[] val = NamedCharacters.WINDOWS_1252[value - 0x80];
             emitOrAppendOne(val, returnState);
         } else if (value == 0x0D) {
-            err("A numeric character reference expanded to carriage return.");
+            errRcnCr();
             emitOrAppendOne(Tokenizer.LF, returnState);
             // [NOCPP[
         } else if (value == 0xC
@@ -5188,17 +5002,16 @@ public final class Tokenizer implements Locator {
              * error; return a character token for the U+FFFD REPLACEMENT
              * CHARACTER character instead.
              */
-            err("Character reference expands to a control character ("
-                    + toUPlusString((char) value) + ").");
+            errNcrControlChar();
             emitOrAppendOne(Tokenizer.REPLACEMENT_CHARACTER, returnState);
         } else if ((value & 0xF800) == 0xD800) {
-            err("Character reference expands to a surrogate.");
+            errNcrSurrogate();
             emitOrAppendOne(Tokenizer.REPLACEMENT_CHARACTER, returnState);
         } else if (isNonCharacter(value)) {
-            err("Character reference expands to a non-character.");
+            errNcrNonCharacter();
             emitOrAppendOne(Tokenizer.REPLACEMENT_CHARACTER, returnState);
         } else if (value >= 0xFDD0 && value <= 0xFDEF) {
-            err("Character reference expands to a permanently unassigned code point.");
+            errNcrUnassigned();
             emitOrAppendOne(Tokenizer.REPLACEMENT_CHARACTER, returnState);
         } else if (value <= 0xFFFF) {
             /*
@@ -5207,23 +5020,19 @@ public final class Tokenizer implements Locator {
              */
             char ch = (char) value;
             // [NOCPP[
-            if (errorHandler != null && isPrivateUse(ch)) {
-                warnAboutPrivateUseChar();
-            }
+            maybeWarnPrivateUse(ch);
             // ]NOCPP]
             bmpChar[0] = ch;
             emitOrAppendOne(bmpChar, returnState);
         } else if (value <= 0x10FFFF) {
             // [NOCPP[
-            if (errorHandler != null && isAstralPrivateUse(value)) {
-                warnAboutPrivateUseChar();
-            }
+            maybeWarnPrivateUseAstral();
             // ]NOCPP]
             astralChar[0] = (char) (Tokenizer.LEAD_OFFSET + (value >> 10));
             astralChar[1] = (char) (0xDC00 + (value & 0x3FF));
             emitOrAppend(astralChar, returnState);
         } else {
-            err("Character reference outside the permissible Unicode range.");
+            errNcrOutOfRange();
             emitOrAppendOne(Tokenizer.REPLACEMENT_CHARACTER, returnState);
         }
     }
@@ -5252,7 +5061,7 @@ public final class Tokenizer implements Locator {
                     /*
                      * Anything else Parse error.
                      */
-                    err("End of file in the tag open state.");
+                    errEofAfterLt();
                     /*
                      * Emit a U+003C LESS-THAN SIGN character token
                      */
@@ -5266,8 +5075,7 @@ public final class Tokenizer implements Locator {
                     if (index < contentModelElementNameAsArray.length) {
                         break eofloop;
                     } else {
-                        err("End of file inside end tag. Ignoring tag.");
-                        // XXX flag script as malformed
+                        errEofInEndTag();
                         /*
                          * Reconsume the EOF character in the data state.
                          */
@@ -5275,7 +5083,7 @@ public final class Tokenizer implements Locator {
                     }
                 case CLOSE_TAG_OPEN_PCDATA:
                     /* EOF Parse error. */
-                    err("Saw \u201C</\u201D immediately before end of file.");
+                    errEofAfterLt();
                     /*
                      * Emit a U+003C LESS-THAN SIGN character token and a U+002F
                      * SOLIDUS character token.
@@ -5289,7 +5097,7 @@ public final class Tokenizer implements Locator {
                     /*
                      * EOF Parse error.
                      */
-                    err("End of file seen when looking for tag name. Ignoring tag.");
+                    errEofInTagName();
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -5298,7 +5106,7 @@ public final class Tokenizer implements Locator {
                 case AFTER_ATTRIBUTE_VALUE_QUOTED:
                 case SELF_CLOSING_START_TAG:
                     /* EOF Parse error. */
-                    err("Saw end of file without the previous tag ending with \u201C>\u201D. Ignoring tag.");
+                    errEofWithoutGt();
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -5307,7 +5115,7 @@ public final class Tokenizer implements Locator {
                     /*
                      * EOF Parse error.
                      */
-                    err("End of file occurred in an attribute name. Ignoring tag.");
+                    errEofInAttributeName();
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -5315,7 +5123,7 @@ public final class Tokenizer implements Locator {
                 case AFTER_ATTRIBUTE_NAME:
                 case BEFORE_ATTRIBUTE_VALUE:
                     /* EOF Parse error. */
-                    err("Saw end of file without the previous tag ending with \u201C>\u201D. Ignoring Tag.");
+                    errEofWithoutGt();
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -5324,7 +5132,7 @@ public final class Tokenizer implements Locator {
                 case ATTRIBUTE_VALUE_SINGLE_QUOTED:
                 case ATTRIBUTE_VALUE_UNQUOTED:
                     /* EOF Parse error. */
-                    err("End of file reached when inside an attribute value. Ignoring tag.");
+                    errEofInAttributeValue();
                     /*
                      * Reconsume the EOF character in the data state.
                      */
@@ -5352,9 +5160,8 @@ public final class Tokenizer implements Locator {
                         errBogusComment();
                         emitComment(0, 0);
                     } else {
-                        err("Expected space characters after \u201CDOCTYPE\u201D.");
                         /* EOF Parse error. */
-                        err("End of file inside doctype.");
+                        errEofInDoctype();
                         /*
                          * Create a new DOCTYPE token. Set its force-quirks flag
                          * to on.
@@ -5378,7 +5185,7 @@ public final class Tokenizer implements Locator {
                     /*
                      * EOF Parse error.
                      */
-                    err("End of file inside comment.");
+                    errEofInComment();
                     /* Emit the comment token. */
                     emitComment(0, 0);
                     /*
@@ -5386,10 +5193,7 @@ public final class Tokenizer implements Locator {
                      */
                     break eofloop;
                 case COMMENT_END:
-                    /*
-                     * EOF Parse error.
-                     */
-                    err("End of file inside comment.");
+                    errEofInComment();
                     /* Emit the comment token. */
                     emitComment(2, 0);
                     /*
@@ -5398,10 +5202,7 @@ public final class Tokenizer implements Locator {
                     break eofloop;
                 case COMMENT_END_DASH:
                 case COMMENT_START_DASH:
-                    /*
-                     * EOF Parse error.
-                     */
-                    err("End of file inside comment.");
+                    errEofInComment();
                     /* Emit the comment token. */
                     emitComment(1, 0);
                     /*
@@ -5410,8 +5211,7 @@ public final class Tokenizer implements Locator {
                     break eofloop;
                 case DOCTYPE:
                 case BEFORE_DOCTYPE_NAME:
-                    /* EOF Parse error. */
-                    err("End of file inside doctype.");
+                    errEofInDoctype();
                     /*
                      * Create a new DOCTYPE token. Set its force-quirks flag to
                      * on.
@@ -5426,8 +5226,7 @@ public final class Tokenizer implements Locator {
                      */
                     break eofloop;
                 case DOCTYPE_NAME:
-                    /* EOF Parse error. */
-                    err("End of file inside doctype.");
+                    errEofInDoctype();
                     strBufToDoctypeName();
                     /*
                      * Set the DOCTYPE token's force-quirks flag to on.
@@ -5445,8 +5244,7 @@ public final class Tokenizer implements Locator {
                 case DOCTYPE_YSTEM:
                 case AFTER_DOCTYPE_NAME:
                 case BEFORE_DOCTYPE_PUBLIC_IDENTIFIER:
-                    /* EOF Parse error. */
-                    err("End of file inside doctype.");
+                    errEofInDoctype();
                     /*
                      * Set the DOCTYPE token's force-quirks flag to on.
                      */
@@ -5462,7 +5260,7 @@ public final class Tokenizer implements Locator {
                 case DOCTYPE_PUBLIC_IDENTIFIER_DOUBLE_QUOTED:
                 case DOCTYPE_PUBLIC_IDENTIFIER_SINGLE_QUOTED:
                     /* EOF Parse error. */
-                    err("End of file inside public identifier.");
+                    errEofInPublicId();
                     /*
                      * Set the DOCTYPE token's force-quirks flag to on.
                      */
@@ -5478,8 +5276,7 @@ public final class Tokenizer implements Locator {
                     break eofloop;
                 case AFTER_DOCTYPE_PUBLIC_IDENTIFIER:
                 case BEFORE_DOCTYPE_SYSTEM_IDENTIFIER:
-                    /* EOF Parse error. */
-                    err("End of file inside doctype.");
+                    errEofInDoctype();
                     /*
                      * Set the DOCTYPE token's force-quirks flag to on.
                      */
@@ -5495,7 +5292,7 @@ public final class Tokenizer implements Locator {
                 case DOCTYPE_SYSTEM_IDENTIFIER_DOUBLE_QUOTED:
                 case DOCTYPE_SYSTEM_IDENTIFIER_SINGLE_QUOTED:
                     /* EOF Parse error. */
-                    err("End of file inside system identifier.");
+                    errEofInSystemId();
                     /*
                      * Set the DOCTYPE token's force-quirks flag to on.
                      */
@@ -5510,8 +5307,7 @@ public final class Tokenizer implements Locator {
                      */
                     break eofloop;
                 case AFTER_DOCTYPE_SYSTEM_IDENTIFIER:
-                    /* EOF Parse error. */
-                    err("End of file inside doctype.");
+                    errEofInDoctype();
                     /*
                      * Set the DOCTYPE token's force-quirks flag to on.
                      */
@@ -5646,7 +5442,7 @@ public final class Tokenizer implements Locator {
                                      * after the U+0026 AMPERSAND (&) must be
                                      * unconsumed, and nothing is returned.
                                      */
-                                    errNotSemicolonMatchInAttribute();
+                                    errNoNamedCharacterMatch();
                                     appendStrBufToLongStrBuf();
                                     state = returnState;
                                     continue eofloop;
@@ -5917,4 +5713,294 @@ public final class Tokenizer implements Locator {
     public boolean isInDataState() {
         return (stateSave == DATA);
     }
+    
+
+    private void errGarbageAfterLtSlash() throws SAXException {
+        err("Garbage after \u201C</\u201D.");
+    }
+
+    private void errLtSlashGt() throws SAXException {
+        err("Saw \u201C</>\u201D. Probable causes: Unescaped \u201C<\u201D (escape as \u201C&lt;\u201D) or mistyped end tag.");
+    }
+
+    private void errWarnLtSlashInRcdata() throws SAXException {
+        if (html4) {
+            err((stateSave == Tokenizer.DATA ? "CDATA" : "RCDATA")
+                    + " element \u201C"
+                    + contentModelElement
+                    + "\u201D contained the string \u201C</\u201D, but it was not the start of the end tag. (HTML4-only error)");
+        } else {
+            warn((stateSave == Tokenizer.DATA ? "CDATA" : "RCDATA")
+                    + " element \u201C"
+                    + contentModelElement
+                    + "\u201D contained the string \u201C</\u201D, but this did not close the element.");
+        }
+    }
+
+    private void errHtml4LtSlashInRcdata(char folded) throws SAXException {
+        if (html4 && (index > 0 || (folded >= 'a' && folded <= 'z'))
+                && ElementName.IFRAME != contentModelElement) {
+            err((stateSave == Tokenizer.DATA ? "CDATA" : "RCDATA")
+                    + " element \u201C"
+                    + contentModelElement.name
+                    + "\u201D contained the string \u201C</\u201D, but it was not the start of the end tag. (HTML4-only error)");
+        }
+    }
+
+    private void errCharRefLacksSemicolon() throws SAXException {
+        err("Character reference was not terminated by a semicolon.");
+    }
+
+    private void errNoDigitsInNCR() throws SAXException {
+        err("No digits after \u201C" + strBufToString() + "\u201D.");
+    }
+
+    private void errGtInSystemId() throws SAXException {
+        err("\u201C>\u201D in system identifier.");
+    }
+
+    private void errGtInPublicId() throws SAXException {
+        err("\u201C>\u201D in public identifier.");
+    }
+
+    private void errNamelessDoctype() throws SAXException {
+        err("Nameless doctype.");
+    }
+
+    private void errConsecutiveHyphens() throws SAXException {
+        err("Consecutive hyphens did not terminate a comment. \u201C--\u201D is not permitted inside a comment, but e.g. \u201C- -\u201D is.");
+    }
+
+    private void errPrematureEndOfComment() throws SAXException {
+        err("Premature end of comment. Use \u201C-->\u201D to end a comment properly.");
+    }
+
+    private void errBogusComment() throws SAXException {
+        err("Bogus comment.");
+    }
+
+    private void errWarnUnquotedAttributeValOrNull(char c) throws SAXException {
+        if (c == '<') {
+            warn("\u201C<\u201D in an unquoted attribute value. This does not end the tag. Probable cause: Missing \u201C>\u201D immediately before.");
+        } else {
+            err("\u201C"
+                    + c
+                    + "\u201D in an unquoted attribute value. Probable causes: Attributes running together or a URL query string in an unquoted attribute value.");
+        }
+    }
+
+    private void errSlashNotFollowedByGt() throws SAXException {
+        err("A slash was not immediate followed by \u201C>\u201D.");
+    }
+
+    private void errHtml4XmlVoidSyntax() throws SAXException {
+        if (html4) {
+            err("The \u201C/>\u201D syntax on void elements is not allowed.  (This is an HTML4-only error.)");
+        }
+    }
+
+    private void errNoSpaceBetweenAttributes() throws SAXException {
+        err("No space between attributes.");
+    }
+
+    private void errHtml4NonNameInUnquotedAttribute(char c) throws SAXException {
+        if (html4
+                && !((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+                        || (c >= '0' && c <= '9') || c == '.' || c == '-'
+                        || c == '_' || c == ':')) {
+            err("Non-name character in an unquoted attribute value. (This is an HTML4-only error.)");
+        }
+    }
+
+    private void errEqualsInUnquotedAttributeOrNull(char c) throws SAXException {
+        err("\u201C=\u201D in an unquoted attribute value. Probable cause: Stray duplicate equals sign.");
+    }
+
+    private void errAttributeValueMissing() throws SAXException {
+        err("Attribute value missing.");
+    }
+
+    private void errBadCharBeforeAttributeNameOrNull(char c)
+            throws SAXException {
+        if (c == '=') {
+            errEqualsSignBeforeAttributeName();
+        } else {
+            errQuoteBeforeAttributeName(c);
+        }
+    }
+
+    private void errEqualsSignBeforeAttributeName() throws SAXException {
+        err("Saw \u201C=\u201D when expecting an attribute name. Probable cause: Attribute name missing.");
+    }
+
+    private void errBadCharAfterLt(char c) throws SAXException {
+        err("Bad character \u201C"
+                + c
+                + "\u201D after \u201C<\u201D. Probable cause: Unescaped \u201C<\u201D. Try escaping it as \u201C&lt;\u201D.");
+    }
+
+    private void errLtGt() throws SAXException {
+        err("Saw \u201C<>\u201D. Probable causes: Unescaped \u201C<\u201D (escape as \u201C&lt;\u201D) or mistyped start tag.");
+    }
+
+    private void errProcessingInstruction() throws SAXException {
+        err("Saw \u201C<?\u201D. Probable cause: Attempt to use an XML processing instruction in HTML. (XML processing instructions are not supported in HTML.)");
+    }
+
+    private void errUnescapedAmpersandInterpretedAsCharacterReference()
+            throws SAXException {
+        if (errorHandler == null) {
+            return;
+        }
+        SAXParseException spe = new SAXParseException(
+                "The string following \u201C&\u201D was interpreted as a character reference. (\u201C&\u201D probably should have been escaped as \u201C&amp;\u201D.)",
+                ampersandLocation);
+        errorHandler.error(spe);
+    }
+
+    private void errNotSemicolonTerminated() throws SAXException {
+        err("Named character reference was not terminated by a semicolon. (Or \u201C&\u201D should have been escaped as \u201C&amp;\u201D.)");
+    }
+
+    private void errNoNamedCharacterMatch() throws SAXException {
+        if (errorHandler == null) {
+            return;
+        }
+        SAXParseException spe = new SAXParseException(
+                "\u201C&\u201D did not start a character reference. (\u201C&\u201D probably should have been escaped as \u201C&amp;\u201D.)",
+                ampersandLocation);
+        errorHandler.error(spe);
+    }
+
+    private void errQuoteBeforeAttributeName(char c) throws SAXException {
+        err("Saw \u201C"
+                + c
+                + "\u201D when expecting an attribute name. Probable cause: \u201C=\u201D missing immediately before.");
+    }
+
+    private void errQuoteInAttributeNameOrNull(char c) throws SAXException {
+        err("Quote \u201C"
+                + c
+                + "\u201D in attribute name. Probable cause: Matching quote missing somewhere earlier.");
+    }
+    
+    private void errExpectedPublicId() throws SAXException {
+        err("Expected a public identifier but the doctype ended.");
+    }
+
+    private void errBogusDoctype() throws SAXException {
+        err("Bogus doctype.");
+    }
+
+    private void maybeWarnPrivateUseAstral() throws SAXException {
+        if (errorHandler != null && isAstralPrivateUse(value)) {
+            warnAboutPrivateUseChar();
+        }
+    }
+
+    private void maybeWarnPrivateUse(char ch) throws SAXException {
+        if (errorHandler != null && isPrivateUse(ch)) {
+            warnAboutPrivateUseChar();
+        }
+    }
+
+    private void maybeErrAttributesOnEndTag(HtmlAttributes attrs)
+            throws SAXException {
+        if (attrs.getLength() != 0) {
+            /*
+             * When an end tag token is emitted with attributes, that is a parse
+             * error.
+             */
+            err("End tag had attributes.");
+        }
+    }
+
+    private void maybeErrSlashInEndTag(boolean selfClosing) throws SAXException {
+        if (selfClosing && endTag) {
+            err("Stray \u201C/\u201D at the end of an end tag.");
+        }
+    }
+
+    private void errNcrNonCharacter() throws SAXException {
+        err("Character reference expands to a non-character.");
+    }
+
+    private void errNcrSurrogate() throws SAXException {
+        err("Character reference expands to a surrogate.");
+    }
+
+    private void errNcrControlChar() throws SAXException {
+        err("Character reference expands to a control character ("
+                + toUPlusString((char) value) + ").");
+    }
+
+    private void errRcnCr() throws SAXException {
+        err("A numeric character reference expanded to carriage return.");
+    }
+
+    private void errNcrInC1Range() throws SAXException {
+        err("A numeric character reference expanded to the C1 controls range.");
+    }
+
+    private void errEofInPublicId() throws SAXException {
+        err("End of file inside public identifier.");
+    }
+
+    private void errEofInComment() throws SAXException {
+        err("End of file inside comment.");
+    }
+
+    private void errEofInDoctype() throws SAXException {
+        err("End of file inside doctype.");
+    }
+
+    private void errEofInAttributeValue() throws SAXException {
+        err("End of file reached when inside an attribute value. Ignoring tag.");
+    }
+
+    private void errEofInAttributeName() throws SAXException {
+        err("End of file occurred in an attribute name. Ignoring tag.");
+    }
+
+    private void errEofWithoutGt() throws SAXException {
+        err("Saw end of file without the previous tag ending with \u201C>\u201D. Ignoring tag.");
+    }
+
+    private void errEofInTagName() throws SAXException {
+        err("End of file seen when looking for tag name. Ignoring tag.");
+    }
+
+    private void errEofInEndTag() throws SAXException {
+        err("End of file inside end tag. Ignoring tag.");
+    }
+
+    private void errEofAfterLt() throws SAXException {
+        err("End of file after \u201C<\u201D.");
+    }
+
+    private void errNcrOutOfRange() throws SAXException {
+        err("Character reference outside the permissible Unicode range.");
+    }
+
+    private void errNcrUnassigned() throws SAXException {
+        err("Character reference expands to a permanently unassigned code point.");
+    }
+    
+    private void errDuplicateAttribute() throws SAXException {
+        err("Duplicate attribute \u201C"
+                + attributeName.getLocal(AttributeName.HTML) + "\u201D.");
+    }
+    
+    private void errEofInSystemId() throws SAXException {
+        err("End of file inside system identifier.");
+    }
+    
+    private void errExpectedSystemId() throws SAXException {
+        err("Expected a system identifier but the doctype ended.");
+    }
+
+    private void errMissingSpaceBeforeDoctypeName() throws SAXException {
+        err("Missing space before doctype name.");
+    }
+
 }
