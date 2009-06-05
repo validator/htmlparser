@@ -77,12 +77,9 @@ public class Driver implements EncodingDeclarationHandler {
      */
     private CharacterHandler[] characterHandlers = new CharacterHandler[0];
 
-    public Driver(TokenHandler tokenHandler) {
-        this.tokenizer = new Tokenizer(tokenHandler, this);
-    }
-
-    public Driver(TokenHandler tokenHandler, boolean newAttributesEachTime) {
-        this.tokenizer = new Tokenizer(tokenHandler, this, newAttributesEachTime);
+    public Driver(Tokenizer tokenizer) {
+        this.tokenizer = tokenizer;
+        tokenizer.setEncodingDeclarationHandler(this);
     }
     
     /**
