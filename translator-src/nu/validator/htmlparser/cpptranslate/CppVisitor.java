@@ -1454,12 +1454,13 @@ public class CppVisitor implements VoidVisitor<Object> {
     }
 
     private boolean isPrintableMethod(int modifiers) {
-        return !(ModifierSet.isAbstract(modifiers) || (ModifierSet.isProtected(modifiers) && !ModifierSet.isFinal(modifiers)));
+        return !(ModifierSet.isAbstract(modifiers) || (ModifierSet.isProtected(modifiers) && !(ModifierSet.isFinal(modifiers) || "Tokenizer".equals(javaClassName))));
     }
 
     protected void printMethodDeclaration(MethodDeclaration n, Object arg) {
         if (n.getName().startsWith("fatal") || n.getName().startsWith("err")
-                || n.getName().startsWith("warn")
+                || n.getName().startsWith("warn")|| n.getName().startsWith("maybeErr")
+                || n.getName().startsWith("maybeWarn")
                 || "releaseArray".equals(n.getName())
                 || "deleteArray".equals(n.getName())
                 || "delete".equals(n.getName())) {
