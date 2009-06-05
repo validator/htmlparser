@@ -1694,7 +1694,8 @@ public class CppVisitor implements VoidVisitor<Object> {
             MethodCallExpr methodCallExpr = (MethodCallExpr) e;
             String name = methodCallExpr.getName();
             if (name.startsWith("fatal") || name.startsWith("err")
-                    || name.startsWith("warn")) {
+                    || name.startsWith("warn") || name.startsWith("maybeErr")
+                    || name.startsWith("maybeWarn")) {
                 return true;
             }
         }
