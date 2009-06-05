@@ -490,7 +490,9 @@ public class Tokenizer implements Locator {
     public Tokenizer(TokenHandler tokenHandler) {
         this.tokenHandler = tokenHandler;
         this.encodingDeclarationHandler = null;
+        // [NOCPP[
         this.newAttributesEachTime = false;
+        // ]NOCPP]
         this.bmpChar = new char[1];
         this.astralChar = new char[2];
     }
@@ -683,6 +685,22 @@ public class Tokenizer implements Locator {
     // start Locator impl
 
     /**
+     * @see org.xml.sax.Locator#getLineNumber()
+     */
+    public int getLineNumber() {
+        return line;
+    }
+
+    // [NOCPP[
+
+    /**
+     * @see org.xml.sax.Locator#getColumnNumber()
+     */
+    public int getColumnNumber() {
+        return -1;
+    }
+
+    /**
      * @see org.xml.sax.Locator#getPublicId()
      */
     public String getPublicId() {
@@ -696,25 +714,10 @@ public class Tokenizer implements Locator {
         return systemId;
     }
 
-    /**
-     * @see org.xml.sax.Locator#getLineNumber()
-     */
-    public int getLineNumber() {
-        return line;
-    }
-
-    /**
-     * @see org.xml.sax.Locator#getColumnNumber()
-     */
-    public int getColumnNumber() {
-        return -1;
-    }
-
     // end Locator impl
 
     // end public API
 
-    // [NOCPP[
 
     public void notifyAboutMetaBoundary() {
         metaBoundaryPassed = true;
@@ -1027,7 +1030,7 @@ public class Tokenizer implements Locator {
      * 
      * @throws SAXException
      */
-    protected void flushChars(char[] buf, int pos) throws SAXException {
+    protected void flushChars(@NoLength char[] buf, int pos) throws SAXException {
         if (pos > cstart) {
             tokenHandler.characters(buf, cstart, pos - cstart);
         }
@@ -4796,14 +4799,14 @@ public class Tokenizer implements Locator {
         ++line;
     }
 
-    private void emitCarriageReturn(char[] buf, int pos) throws SAXException {
+    private void emitCarriageReturn(@NoLength char[] buf, int pos) throws SAXException {
         silentCarriageReturn();
         flushChars(buf, pos);
         tokenHandler.characters(Tokenizer.LF, 0, 1);
         cstart = Integer.MAX_VALUE;
     }
 
-    private void emitReplacementCharacter(char[] buf, int pos) throws SAXException {
+    private void emitReplacementCharacter(@NoLength char[] buf, int pos) throws SAXException {
         silentCarriageReturn();
         flushChars(buf, pos);
         tokenHandler.characters(Tokenizer.REPLACEMENT_CHARACTER, 0, 1);
@@ -5411,7 +5414,7 @@ public class Tokenizer implements Locator {
         Portability.releaseString(systemIdentifier);
     }
 
-    protected char checkChar(@NoLength char[] buf, int pos) throws SAXException {
+    @Inline protected char checkChar(@NoLength char[] buf, int pos) throws SAXException {
         return buf[pos];
     }
 
