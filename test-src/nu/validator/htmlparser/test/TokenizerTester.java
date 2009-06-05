@@ -33,6 +33,7 @@ import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 
 import nu.validator.htmlparser.common.XmlViolationPolicy;
+import nu.validator.htmlparser.impl.ErrorReportingTokenizer;
 import nu.validator.htmlparser.impl.Tokenizer;
 import nu.validator.htmlparser.io.Driver;
 
@@ -86,20 +87,20 @@ public class TokenizerTester {
 
     private final JSONArrayTokenHandler tokenHandler;
 
-    private final Driver tokenizer;
+    private final Driver driver;
 
     private final Writer writer;
 
     private TokenizerTester(InputStream stream) throws TokenStreamException,
             RecognitionException, UnsupportedEncodingException {
         tokenHandler = new JSONArrayTokenHandler();
-        tokenizer = new Driver(tokenHandler);
-        tokenizer.setCommentPolicy(XmlViolationPolicy.ALLOW);
-        tokenizer.setContentNonXmlCharPolicy(XmlViolationPolicy.ALLOW);
-        tokenizer.setContentSpacePolicy(XmlViolationPolicy.ALLOW);
-        tokenizer.setNamePolicy(XmlViolationPolicy.ALLOW);
-        tokenizer.setXmlnsPolicy(XmlViolationPolicy.ALLOW);
-        tokenizer.setErrorHandler(tokenHandler);
+        driver = new Driver(new ErrorReportingTokenizer(tokenHandler));
+        driver.setCommentPolicy(XmlViolationPolicy.ALLOW);
+        driver.setContentNonXmlCharPolicy(XmlViolationPolicy.ALLOW);
+        driver.setContentSpacePolicy(XmlViolationPolicy.ALLOW);
+        driver.setNamePolicy(XmlViolationPolicy.ALLOW);
+        driver.setXmlnsPolicy(XmlViolationPolicy.ALLOW);
+        driver.setErrorHandler(tokenHandler);
         writer = new OutputStreamWriter(System.out, "UTF-8");
         JSONParser jsonParser = new JSONParser(new InputStreamReader(stream,
                 "UTF-8"));
@@ -107,10 +108,10 @@ public class TokenizerTester {
         tests = (JSONArray) obj.get("tests");
         if (tests == null) {
             tests = (JSONArray) obj.get("xmlViolationTests");
-            tokenizer.setCommentPolicy(XmlViolationPolicy.ALTER_INFOSET);
-            tokenizer.setContentNonXmlCharPolicy(XmlViolationPolicy.ALTER_INFOSET);
-            tokenizer.setNamePolicy(XmlViolationPolicy.ALTER_INFOSET);
-            tokenizer.setXmlnsPolicy(XmlViolationPolicy.ALTER_INFOSET);
+            driver.setCommentPolicy(XmlViolationPolicy.ALTER_INFOSET);
+            driver.setContentNonXmlCharPolicy(XmlViolationPolicy.ALTER_INFOSET);
+            driver.setNamePolicy(XmlViolationPolicy.ALTER_INFOSET);
+            driver.setXmlnsPolicy(XmlViolationPolicy.ALTER_INFOSET);
         }
     }
 
@@ -166,7 +167,7 @@ public class TokenizerTester {
         tokenHandler.setContentModelFlag(contentModelFlag, contentModelElement);
         InputSource is = new InputSource(new StringReader(inputString));
         try {
-            tokenizer.tokenize(is);
+            driver.tokenize(is);
             JSONArray actualTokens = tokenHandler.getArray();
             if (jsonDeepEquals(actualTokens, expectedTokens)) {
                 writer.write("Success\n");

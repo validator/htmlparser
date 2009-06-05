@@ -33,7 +33,10 @@ import nu.validator.htmlparser.common.CharacterHandler;
 import nu.validator.htmlparser.common.DoctypeExpectation;
 import nu.validator.htmlparser.common.DocumentModeHandler;
 import nu.validator.htmlparser.common.Heuristics;
+import nu.validator.htmlparser.common.TokenHandler;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
+import nu.validator.htmlparser.impl.ErrorReportingTokenizer;
+import nu.validator.htmlparser.impl.Tokenizer;
 import nu.validator.htmlparser.impl.TreeBuilder;
 import nu.validator.htmlparser.io.Driver;
 import nu.validator.saxtree.Document;
@@ -83,7 +86,7 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 public class HtmlParser implements XMLReader {
 
-    private Driver tokenizer = null;
+    private Driver driver = null;
 
     private TreeBuilder<?> treeBuilder = null;
 
@@ -149,35 +152,47 @@ public class HtmlParser implements XMLReader {
         setXmlPolicy(xmlPolicy);
     }    
 
+    private Tokenizer newTokenizer(TokenHandler handler, boolean newAttributesEachTime) {
+        if (errorHandler != null) {
+            return new ErrorReportingTokenizer(handler, newAttributesEachTime);
+        } else {
+            if (contentNonXmlCharPolicy == XmlViolationPolicy.ALLOW) {
+                return new Tokenizer(handler, newAttributesEachTime);
+            } else {
+                return new ErrorReportingTokenizer(handler, newAttributesEachTime);
+            }
+        }
+   }
+    
     /**
-     * This class wraps differnt tree builders depending on configuration. This 
+     * This class wraps different tree builders depending on configuration. This 
      * method does the work of hiding this from the user of the class.
      */
     private void lazyInit() {
-        if (tokenizer == null) {
+        if (driver == null) {
             if (streamabilityViolationPolicy == XmlViolationPolicy.ALLOW) {
                 this.saxTreeBuilder = new SAXTreeBuilder();
                 this.treeBuilder = this.saxTreeBuilder;
                 this.saxStreamer = null;
-                this.tokenizer = new Driver(treeBuilder, true);
+                this.driver = new Driver(newTokenizer(treeBuilder, true));
             } else {
                 this.saxStreamer = new SAXStreamer();
                 this.treeBuilder = this.saxStreamer;
                 this.saxTreeBuilder = null;
-                this.tokenizer = new Driver(treeBuilder);
+                this.driver = new Driver(newTokenizer(treeBuilder, false));
             }
-            this.tokenizer.setErrorHandler(errorHandler);
+            this.driver.setErrorHandler(errorHandler);
             this.treeBuilder.setErrorHandler(treeBuilderErrorHandler);
-            this.tokenizer.setCheckingNormalization(checkingNormalization);
-            this.tokenizer.setCommentPolicy(commentPolicy);
-            this.tokenizer.setContentNonXmlCharPolicy(contentNonXmlCharPolicy);
-            this.tokenizer.setContentSpacePolicy(contentSpacePolicy);
-            this.tokenizer.setHtml4ModeCompatibleWithXhtml1Schemata(html4ModeCompatibleWithXhtml1Schemata);
-            this.tokenizer.setMappingLangToXmlLang(mappingLangToXmlLang);
-            this.tokenizer.setXmlnsPolicy(xmlnsPolicy);
-            this.tokenizer.setHeuristics(heuristics);
+            this.driver.setCheckingNormalization(checkingNormalization);
+            this.driver.setCommentPolicy(commentPolicy);
+            this.driver.setContentNonXmlCharPolicy(contentNonXmlCharPolicy);
+            this.driver.setContentSpacePolicy(contentSpacePolicy);
+            this.driver.setHtml4ModeCompatibleWithXhtml1Schemata(html4ModeCompatibleWithXhtml1Schemata);
+            this.driver.setMappingLangToXmlLang(mappingLangToXmlLang);
+            this.driver.setXmlnsPolicy(xmlnsPolicy);
+            this.driver.setHeuristics(heuristics);
             for (CharacterHandler characterHandler : characterHandlers) {
-                this.tokenizer.addCharacterHandler(characterHandler);
+                this.driver.addCharacterHandler(characterHandler);
             }
             this.treeBuilder.setDoctypeExpectation(doctypeExpectation);
             this.treeBuilder.setDocumentModeHandler(documentModeHandler);
@@ -189,7 +204,7 @@ public class HtmlParser implements XMLReader {
                 saxStreamer.setContentHandler(contentHandler == null ? new DefaultHandler()
                         : contentHandler);
                 saxStreamer.setLexicalHandler(lexicalHandler);
-                tokenizer.setAllowRewinding(false);
+                driver.setAllowRewinding(false);
             }
         }
     }
@@ -456,7 +471,7 @@ public class HtmlParser implements XMLReader {
                 is.setByteStream(new URL(systemId).openStream());
             }
         }
-        tokenizer.tokenize(is);
+        driver.tokenize(is);
     }
 
     /**
@@ -511,10 +526,7 @@ public class HtmlParser implements XMLReader {
     public void setErrorHandler(ErrorHandler handler) {
         errorHandler = handler;
         treeBuilderErrorHandler = handler;
-        if (tokenizer != null) {
-            tokenizer.setErrorHandler(handler);
-            treeBuilder.setErrorHandler(handler);
-        }
+        driver = null;
     }
 
     /**
@@ -523,7 +535,7 @@ public class HtmlParser implements XMLReader {
      */
     public void setTreeBuilderErrorHandlerOverride(ErrorHandler handler) {
         treeBuilderErrorHandler = handler;
-        if (tokenizer != null) {
+        if (driver != null) {
             treeBuilder.setErrorHandler(handler);
         }
     }
@@ -676,8 +688,8 @@ public class HtmlParser implements XMLReader {
      */
     public void setCheckingNormalization(boolean enable) {
         this.checkingNormalization = enable;
-        if (tokenizer != null) {
-            tokenizer.setCheckingNormalization(checkingNormalization);
+        if (driver != null) {
+            driver.setCheckingNormalization(checkingNormalization);
         }
     }
 
@@ -688,8 +700,8 @@ public class HtmlParser implements XMLReader {
      */
     public void setCommentPolicy(XmlViolationPolicy commentPolicy) {
         this.commentPolicy = commentPolicy;
-        if (tokenizer != null) {
-            tokenizer.setCommentPolicy(commentPolicy);
+        if (driver != null) {
+            driver.setCommentPolicy(commentPolicy);
         }
     }
 
@@ -701,9 +713,7 @@ public class HtmlParser implements XMLReader {
     public void setContentNonXmlCharPolicy(
             XmlViolationPolicy contentNonXmlCharPolicy) {
         this.contentNonXmlCharPolicy = contentNonXmlCharPolicy;
-        if (tokenizer != null) {
-            tokenizer.setContentNonXmlCharPolicy(contentNonXmlCharPolicy);
-        }
+        driver = null;
     }
 
     /**
@@ -713,8 +723,8 @@ public class HtmlParser implements XMLReader {
      */
     public void setContentSpacePolicy(XmlViolationPolicy contentSpacePolicy) {
         this.contentSpacePolicy = contentSpacePolicy;
-        if (tokenizer != null) {
-            tokenizer.setContentSpacePolicy(contentSpacePolicy);
+        if (driver != null) {
+            driver.setContentSpacePolicy(contentSpacePolicy);
         }
     }
 
@@ -801,6 +811,7 @@ public class HtmlParser implements XMLReader {
     public void setStreamabilityViolationPolicy(
             XmlViolationPolicy streamabilityViolationPolicy) {
         this.streamabilityViolationPolicy = streamabilityViolationPolicy;
+        driver = null;
     }
 
     /**
@@ -811,8 +822,8 @@ public class HtmlParser implements XMLReader {
     public void setHtml4ModeCompatibleWithXhtml1Schemata(
             boolean html4ModeCompatibleWithXhtml1Schemata) {
         this.html4ModeCompatibleWithXhtml1Schemata = html4ModeCompatibleWithXhtml1Schemata;
-        if (tokenizer != null) {
-            tokenizer.setHtml4ModeCompatibleWithXhtml1Schemata(html4ModeCompatibleWithXhtml1Schemata);
+        if (driver != null) {
+            driver.setHtml4ModeCompatibleWithXhtml1Schemata(html4ModeCompatibleWithXhtml1Schemata);
         }
     }
 
@@ -821,7 +832,7 @@ public class HtmlParser implements XMLReader {
      * @return the <code>Locator</code>
      */
     public Locator getDocumentLocator() {
-        return tokenizer.getDocumentLocator();
+        return driver.getDocumentLocator();
     }
 
     /**
@@ -841,8 +852,8 @@ public class HtmlParser implements XMLReader {
      */
     public void setMappingLangToXmlLang(boolean mappingLangToXmlLang) {
         this.mappingLangToXmlLang = mappingLangToXmlLang;
-        if (tokenizer != null) {
-            tokenizer.setMappingLangToXmlLang(mappingLangToXmlLang);
+        if (driver != null) {
+            driver.setMappingLangToXmlLang(mappingLangToXmlLang);
         }
     }
 
@@ -866,8 +877,8 @@ public class HtmlParser implements XMLReader {
             throw new IllegalArgumentException("Can't use FATAL here.");
         }
         this.xmlnsPolicy = xmlnsPolicy;
-        if (tokenizer != null) {
-            tokenizer.setXmlnsPolicy(xmlnsPolicy);
+        if (driver != null) {
+            driver.setXmlnsPolicy(xmlnsPolicy);
         }
     }
 
@@ -943,8 +954,8 @@ public class HtmlParser implements XMLReader {
      */
     public void setNamePolicy(XmlViolationPolicy namePolicy) {
         this.namePolicy = namePolicy;
-        if (tokenizer != null) {
-            tokenizer.setNamePolicy(namePolicy);
+        if (driver != null) {
+            driver.setNamePolicy(namePolicy);
             treeBuilder.setNamePolicy(namePolicy);
         }
     }
@@ -957,8 +968,8 @@ public class HtmlParser implements XMLReader {
      */
     public void setHeuristics(Heuristics heuristics) {
         this.heuristics = heuristics;
-        if (tokenizer != null) {
-            tokenizer.setHeuristics(heuristics);
+        if (driver != null) {
+            driver.setHeuristics(heuristics);
         }
     }
     
@@ -1009,8 +1020,8 @@ public class HtmlParser implements XMLReader {
     
     public void addCharacterHandler(CharacterHandler characterHandler) {
         this.characterHandlers.add(characterHandler);
-        if (tokenizer != null) {
-            tokenizer.addCharacterHandler(characterHandler);
+        if (driver != null) {
+            driver.addCharacterHandler(characterHandler);
         }
     }
 }
