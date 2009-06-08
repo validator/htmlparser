@@ -682,12 +682,19 @@ public class Tokenizer implements Locator {
         }
     }
 
+    /**
+     * For C++ use only.
+     */
+    public void setLineNumber(int line) {
+        this.line = line;
+    }
+    
     // start Locator impl
 
     /**
      * @see org.xml.sax.Locator#getLineNumber()
      */
-    public int getLineNumber() {
+    @Inline public int getLineNumber() {
         return line;
     }
 
@@ -696,7 +703,7 @@ public class Tokenizer implements Locator {
     /**
      * @see org.xml.sax.Locator#getColumnNumber()
      */
-    public int getColumnNumber() {
+    @Inline public int getColumnNumber() {
         return -1;
     }
 
@@ -1272,7 +1279,7 @@ public class Tokenizer implements Locator {
         longStrBuf = new char[1024];
         longStrBufLen = 0;
         stateSave = Tokenizer.DATA;
-        line = -1;
+        line = 1;
         lastCR = false;
         // [NOCPP[
         html4 = false;
