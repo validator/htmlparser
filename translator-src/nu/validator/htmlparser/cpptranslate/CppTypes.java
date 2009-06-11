@@ -68,6 +68,7 @@ public class CppTypes {
         reservedWords.add("and");
         reservedWords.add("not");
         reservedWords.add("xor");
+        reservedWords.add("constant");
     }
 
     private static final String[] TREE_BUILDER_INCLUDES = { "prtypes",
