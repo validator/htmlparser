@@ -400,6 +400,26 @@ public final class HtmlAttributes implements Attributes {
         xmlnsLength = 0;
         // ]NOCPP]
     }
+    
+    /**
+     * This is used in C++ to release special <code>isindex</code>
+     * attribute values whose ownership is not transferred.
+     */
+    void releaseValue(int i) {
+        Portability.releaseString(values[i]);        
+    }
+    
+    /**
+     * This is only used for <code>AttributeName</code> ownership transfer
+     * in the isindex case to avoid freeing custom names twice in C++.
+     */
+    void clearWithoutReleasingContents() {
+        for (int i = 0; i < length; i++) {
+            names[i] = null;
+            values[i] = null;
+        }
+        length = 0;
+    }
 
     boolean contains(AttributeName name) {
         for (int i = 0; i < length; i++) {
