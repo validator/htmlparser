@@ -2019,8 +2019,11 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                                 // ]NOCPP]
 
                                                 );
+                                            } else {
+                                                attributes.releaseValue(i);
                                             }
                                         }
+                                        attributes.clearWithoutReleasingContents();
                                         appendVoidElementToCurrentMayFoster(
                                                 "http://www.w3.org/1999/xhtml",
                                                 "input", inputAttributes,
