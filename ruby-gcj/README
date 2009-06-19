@@ -40,14 +40,18 @@ Build instructions:
     svn co http://svn.versiondude.net/whattf/build/trunk/ build
     python build/build.py checkout dldeps
 
-  You'll need ruby1.8, ruby1.8-dev, gcj and libjaxp1.3-java-gcj:
+  You'll need ruby, rake, gcj and jaxp:
 
-    apt-get install ruby ruby1.8-dev gcj libjaxp1.3-java-gcj
+    apt-get install ruby ruby1.8-dev rake gcj libjaxp1.3-java-gcj
+
+  Also at this time, you need to install a jdk (e.g. sun-java6-jdk), simply
+  because the javac that comes with gcj doesn't support -sourcepath, and
+  I haven't spent the time to find a replacement.
 
   If this is done, you should be all set.
  
     cd htmlparser/ruby-gcj
-    make -f htmlparser.mak tests
+    rake test
 
   If things are successful, you the last line of the output will read
   "iso-8859-7".  I realize that at this point that uninspiring, but rest
