@@ -1,0 +1,56 @@
+Disclaimer:
+
+  This code is experimental.
+
+  When some people say experimental, they mean "it may not do what it is
+  intended to do; in fact, it might even wipe out your hard drive".  I mean
+  that too.  But I mean something more than that.
+
+  In this case, experimental means that I don't even know what it is intended
+  to do.  I just have a vague vision, and I am trying out various things in
+  the hopes that one of them will work out.
+
+Vision:
+
+  My vague vision is that I would like to see HTML 5 be a success.  For me to
+  consider it to be a success, it needs to be a standard, be interoperable,
+  and be ubiquitous.
+
+  I believe that the Validator.nu parser can be used to bootstrap that
+  process.  It is written in Java.  Has been compiled into JavaScript.  Has
+  been translated into C++ based on the Mozilla libraries with the intent of
+  being included in Firefox.  It very closely tracks to the standard.
+
+  For the moment, the effort is on extending that to another language (Ruby)
+  on a single environment (Ubuntu Linux).  Once that is complete, intent is to
+  evaluate the results, decide what needs to be changed, and what needs to be
+  done to support other languages and environments.
+
+  The bar I'm setting for myself isn't just another SWIG generated low level
+  interface to a DOM, but rather a best of breed interface; which for Ruby
+  seems to be the one pioneered by Hpricot and adopted by Nokogiri.  Success
+  will mean passing all of the tests from one of those two parsers as well as
+  all of the HTML5 tests.
+
+Build instructions:
+
+  You'll need icu4j and chardet jars.  If you checked out and ran dldeps you
+  are already all set:
+
+    svn co http://svn.versiondude.net/whattf/build/trunk/ build
+    python build/build.py checkout dldeps
+
+  You'll need ruby1.8, ruby1.8-dev, gcj and libjaxp1.3-java-gcj:
+
+    apt-get install ruby ruby1.8-dev gcj libjaxp1.3-java-gcj
+
+  If this is done, you should be all set.
+ 
+    cd htmlparser/ruby-gcj
+    make -f htmlparser.mak tests
+
+  If things are successful, you the last line of the output will read
+  "iso-8859-7".  I realize that at this point that uninspiring, but rest
+  assured that a lot of infrastructure had to be correctly in place in order
+  for that result to appear.  Next step is to flesh out the API and to replace
+  that "test" with real tests.
