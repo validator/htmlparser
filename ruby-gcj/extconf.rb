@@ -2,7 +2,6 @@ require 'mkmf'
 
 # system dependencies
 gcj  = with_config('gcj', '/usr/share/java/libgcj.jar')
-jaxp = with_config('jaxp', '/usr/share/java/jaxp-1.3.jar')
 
 # headers for JAXP
 CONFIG['CC'] = 'g++'
@@ -10,8 +9,9 @@ with_cppflags('-xc++') do
 
   unless find_header('org/w3c/dom/Document.h', 'headers')
   
-    `jar tf #{jaxp}`.split.each do |file|
+    `jar tf #{gcj}`.split.each do |file|
       next unless file =~ /\.class$/
+      next unless file =~ /^(javax|org)\/(w3c|xml)/
       next if file.include? '$'
     
       dest = 'headers/' + file.sub(/\.class$/,'.h')
@@ -19,7 +19,7 @@ with_cppflags('-xc++') do
     
       next if File.exist? dest
     
-      cmd = "gcjh -cp #{jaxp}:#{gcj} -o #{dest} #{name}"
+      cmd = "gcjh -cp #{gcj} -o #{dest} #{name}"
       puts cmd
       break unless system cmd
     end
