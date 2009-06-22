@@ -22,7 +22,7 @@ Vision:
   being included in Firefox.  It very closely tracks to the standard.
 
   For the moment, the effort is on extending that to another language (Ruby)
-  on a single environment (Ubuntu Linux).  Once that is complete, intent is to
+  on a single environment (i.e., Linux).  Once that is complete, intent is to
   evaluate the results, decide what needs to be changed, and what needs to be
   done to support other languages and environments.
 
@@ -40,20 +40,28 @@ Build instructions:
     svn co http://svn.versiondude.net/whattf/build/trunk/ build
     python build/build.py checkout dldeps
 
-  You'll need ruby, rake, gcj and jaxp:
+  Fedora 11:
 
-    apt-get install ruby ruby1.8-dev rake gcj libjaxp1.3-java-gcj
+    yum install ruby-devel rubygem-rake java-1.5.0-gcj-devel gcc-c++ 
 
-  Also at this time, you need to install a jdk (e.g. sun-java6-jdk), simply
-  because the javac that comes with gcj doesn't support -sourcepath, and
-  I haven't spent the time to find a replacement.
+  Ubuntu 9.04:
+
+    apt-get install ruby ruby1.8-dev rake gcj g++
+
+    Also at this time, you need to install a jdk (e.g. sun-java6-jdk), simply
+    because the javac that comes with gcj doesn't support -sourcepath, and
+    I haven't spent the time to find a replacement.
+
+    Finally, make sure that libjaxp1.3-java is *not* installed.
+
+      http://gcc.gnu.org/ml/java/2009-06/msg00055.html
 
   If this is done, you should be all set.
  
     cd htmlparser/ruby-gcj
     rake test
 
-  If things are successful, you the last line of the output will read
+  If things are successful, the last line of the output will read
   "iso-8859-7".  I realize that at this point that uninspiring, but rest
   assured that a lot of infrastructure had to be correctly in place in order
   for that result to appear.  Next step is to flesh out the API and to replace
