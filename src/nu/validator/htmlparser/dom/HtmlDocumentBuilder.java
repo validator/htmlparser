@@ -264,6 +264,7 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
                 is.setByteStream(new URL(systemId).openStream());
             }
         }
+        if (driver == null) lazyInit();
         driver.tokenize(is);
     }
     
