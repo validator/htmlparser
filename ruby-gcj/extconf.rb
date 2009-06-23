@@ -22,6 +22,10 @@ with_cppflags('-xc++') do
       cmd = "gcjh -cp #{gcj} -o #{dest} #{name}"
       puts cmd
       break unless system cmd
+      system "ruby -pi -e '$_.sub!(/namespace namespace$/," +
+        "\"namespace namespace$\")' #{dest}"
+      system "ruby -pi -e '$_.sub!(/::namespace::/," +
+        "\"::namespace$::\")' #{dest}"
     end
 
     exit unless find_header('org/w3c/dom/Document.h', 'headers')

@@ -64,7 +64,7 @@ end
 
 task :test => [:default, 'nu/validator.so'] do
   ENV['LD_LIBRARY_PATH']='lib'
-  sh 'ruby test/domencoding.rb test/greek.xml'
+  sh 'ruby test/fonts.rb test/google.html'
 end
 
 task :clean do
