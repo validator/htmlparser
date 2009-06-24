@@ -697,6 +697,26 @@ public class CppVisitor implements VoidVisitor<Object> {
                             declarator.getInit().accept(this, arg);
                             printer.printLn(";");
                         }
+                    } else if ((rt.getType() instanceof PrimitiveType)) {
+                        rt.getType().accept(this, arg);
+                        printer.print(" ");
+                        declarator.getId().accept(this, arg);
+                        printer.print("_DATA[] = ");
+                        declarator.getInit().accept(this, arg);
+                        printer.printLn(";");
+
+                        declarator.getId().accept(this, arg);
+                        printer.print(" = ");
+                        printer.print(cppTypes.staticArrayMacro());
+                        printer.print("(");
+                        suppressPointer = true;
+                        rt.getType().accept(this, arg);
+                        suppressPointer = false;
+                        printer.print(", ");
+                        printer.print(cppTypes.intType());
+                        printer.print(", ");
+                        declarator.getId().accept(this, arg);
+                        printer.printLn("_DATA);");
                     }
                 } else {
                     staticReleases.add("delete " + declarator.getId().getName());
