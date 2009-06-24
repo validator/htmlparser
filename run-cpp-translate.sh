@@ -46,4 +46,4 @@ fi
 
 cd "$2/translator-src"
 javac -d "$2/classes" -cp "$1" nu/validator/htmlparser/cpptranslate/CppTypes.java nu/validator/htmlparser/cpptranslate/CppVisitor.java nu/validator/htmlparser/cpptranslate/GkAtomParser.java nu/validator/htmlparser/cpptranslate/HVisitor.java nu/validator/htmlparser/cpptranslate/LabelVisitor.java nu/validator/htmlparser/cpptranslate/LicenseExtractor.java nu/validator/htmlparser/cpptranslate/Main.java nu/validator/htmlparser/cpptranslate/NoCppInputStream.java nu/validator/htmlparser/cpptranslate/StringLiteralParser.java nu/validator/htmlparser/cpptranslate/SymbolTable.java nu/validator/htmlparser/generator/GenerateNamedCharacters.java nu/validator/htmlparser/generator/GenerateNamedCharactersCpp.java 
-java -cp "$1:$2/classes" nu.validator.htmlparser.cpptranslate.Main "$2/src/nu/validator/htmlparser/impl/" "$3/content/html/parser/src/" "$3/content/html/parser/src/nsHtml5AtomList.h"
+java -cp "$1:$2/classes" nu.validator.htmlparser.cpptranslate.Main "$2/src/nu/validator/htmlparser/impl/" "$3/content/html/parser/" "$3/content/html/parser/src/nsHtml5AtomList.h"
