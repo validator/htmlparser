@@ -164,6 +164,11 @@ public class HVisitor extends CppVisitor {
             printer.print("#include \"");
             printer.print(cppTypes.MetaScannerHSupplement());
             printer.printLn("\"");
+        } else if ("StackNode".equals(javaClassName)) {
+            printer.printLn();
+            printer.print("#include \"");
+            printer.print(cppTypes.StackNodeHSupplement());
+            printer.printLn("\"");
         }
         
         printer.printLn("};");
