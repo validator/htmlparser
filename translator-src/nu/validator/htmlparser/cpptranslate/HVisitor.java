@@ -289,15 +289,6 @@ public class HVisitor extends CppVisitor {
                         mainPrinterHolder = printer;
                         printer = arrayInitPrinter;
                         
-                        rt.getType().accept(this, arg);
-                        printer.print(" ");
-                        printer.print(className);
-                        printer.print("::");
-                        declarator.getId().accept(this, arg);
-                        printer.print("_DATA[] = ");                    
-                        declarator.getInit().accept(this, arg);
-                        printer.printLn(";");                    
-
                         printer.print(cppTypes.arrayTemplate());
                         printer.print("<");
                         suppressPointer = true;
@@ -309,32 +300,10 @@ public class HVisitor extends CppVisitor {
                         printer.print(className);
                         printer.print("::");
                         declarator.getId().accept(this, arg);
-                        printer.print(" = ");                    
-                        printer.print(cppTypes.staticArrayMacro());
-                        printer.print("(");
-                        suppressPointer = true;
-                        rt.getType().accept(this, arg);
-                        suppressPointer = false;
-                        printer.print(", ");
-                        printer.print(cppTypes.intType());
-                        printer.print(", ");
-                        declarator.getId().accept(this, arg);                        
-                        printer.printLn("_DATA);");                    
-                        
+                        printer.printLn(" = 0;");                    
                         
                         printer = mainPrinterHolder;    
-                        
-                        printer.print("#ifdef ");
-                        printer.print(className);
-                        printer.printLn("_cpp__");
-                        // XXX strictly speaking, there's a visibility bug here, but practically not
-                        printModifiers(ModifierSet.STATIC | ModifierSet.PRIVATE);
-                        rt.getType().accept(this, arg);
-                        printer.print(" ");
-                        declarator.getId().accept(this, arg);
-                        printer.printLn("_DATA[];");
-                        printer.printLn("#endif");
-                    }
+                                            }
                 } else if (ModifierSet.isStatic(modifiers)) {
                     mainPrinterHolder = printer;
                     printer = arrayInitPrinter;
