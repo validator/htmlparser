@@ -306,6 +306,14 @@ public class CppTypes {
         return "nsHtml5MetaScannerCppSupplement.h";
     }
 
+    public String StackNodeHSupplement() {
+        return "nsHtml5StackNodeHSupplement.h";
+    }
+
+    public String stackNodeCppSupplement() {
+        return "nsHtml5StackNodeCppSupplement.h";
+    }
+
     public String constructorBoilerplate(String className) {
         return "MOZ_COUNT_CTOR(" + className + ");";
     }
@@ -317,4 +325,5 @@ public class CppTypes {
     public String literalType() {
         return "const char*";
     }
+
 }

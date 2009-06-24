@@ -403,6 +403,11 @@ public class CppVisitor implements VoidVisitor<Object> {
             printer.print("#include \"");
             printer.print(cppTypes.metaScannerCppSupplement());
             printer.printLn("\"");
+        } else if ("StackNode".equals(javaClassName)) {
+            printer.printLn();
+            printer.print("#include \"");
+            printer.print(cppTypes.stackNodeCppSupplement());
+            printer.printLn("\"");
         }
     }
 
