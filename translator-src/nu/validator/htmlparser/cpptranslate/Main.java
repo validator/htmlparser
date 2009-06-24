@@ -87,10 +87,13 @@ public class Main {
         SymbolTable symbolTable = new SymbolTable();
         
         File javaDirectory = new File(args[0]);
-        File cppDirectory = new File(args[1]);
+        File targetDirectory = new File(args[1]);
+        File cppDirectory = new File(targetDirectory, "src");
+        File javaCopyDirectory = new File(targetDirectory, "javasrc");
         
         for (int i = 0; i < H_LIST.length; i++) {
             parseFile(cppTypes, javaDirectory, cppDirectory, H_LIST[i], ".h", new HVisitor(cppTypes, symbolTable));
+            copyFile(new File(javaDirectory, H_LIST[i] + ".java"), new File(javaCopyDirectory, H_LIST[i] + ".java"));
         }
         for (int i = 0; i < CPP_LIST.length; i++) {
             parseFile(cppTypes, javaDirectory, cppDirectory, CPP_LIST[i], ".cpp", new CppVisitor(cppTypes, symbolTable));
@@ -98,6 +101,19 @@ public class Main {
         cppTypes.finished();
     }
 
+    private static void copyFile(File input, File output) throws IOException {
+        // This is horribly inefficient, but perf is not really much of a concern here.
+        FileInputStream in = new FileInputStream(input);
+        FileOutputStream out = new FileOutputStream(output);
+        int b;
+        while ((b = in.read()) != -1) {
+            out.write(b);
+        }
+        out.flush();
+        out.close();
+        in.close();
+    }
+    
     private static void parseFile(CppTypes cppTypes, File javaDirectory, File cppDirectory, String className, String fne, CppVisitor visitor) throws ParseException,
             FileNotFoundException, UnsupportedEncodingException, IOException {
         File file = new File(javaDirectory, className + ".java");
