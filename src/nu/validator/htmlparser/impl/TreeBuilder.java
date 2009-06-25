@@ -4975,8 +4975,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         this.namePolicy = namePolicy;
     }
 
-    // ]NOCPP]
-
     /**
      * Sets the documentModeHandler.
      * 
@@ -4987,8 +4985,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         this.documentModeHandler = documentModeHandler;
     }
 
-    // [NOCPP[
-    
     /**
      * Sets the reportingDoctype.
      * 
