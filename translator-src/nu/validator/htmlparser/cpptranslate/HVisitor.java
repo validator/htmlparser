@@ -149,26 +149,11 @@ public class HVisitor extends CppVisitor {
         printer.unindent();
         printer.unindent();
         
-        if ("TreeBuilder".equals(javaClassName)) {
+        if (cppTypes.hasSupplement(javaClassName)) {
             printer.printLn();
             printer.print("#include \"");
-            printer.print(cppTypes.treeBuiderHSupplement());
-            printer.printLn("\"");
-        } else if ("UTF16Buffer".equals(javaClassName)) {
-            printer.printLn();
-            printer.print("#include \"");
-            printer.print(cppTypes.utf16BufferHSupplement());
-            printer.printLn("\"");
-        } else if ("MetaScanner".equals(javaClassName)) {
-            printer.printLn();
-            printer.print("#include \"");
-            printer.print(cppTypes.MetaScannerHSupplement());
-            printer.printLn("\"");
-        } else if ("StackNode".equals(javaClassName)) {
-            printer.printLn();
-            printer.print("#include \"");
-            printer.print(cppTypes.StackNodeHSupplement());
-            printer.printLn("\"");
+            printer.print(className);
+            printer.printLn("HSupplement.h\"");
         }
         
         printer.printLn("};");

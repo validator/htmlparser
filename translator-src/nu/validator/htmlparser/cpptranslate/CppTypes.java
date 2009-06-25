@@ -42,6 +42,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -72,7 +73,7 @@ public class CppTypes {
     }
 
     private static final String[] TREE_BUILDER_INCLUDES = { "prtypes",
-            "nsIAtom", "nsString", "nsINameSpaceManager", "nsIContent",
+            "nsIAtom", "nsITimer", "nsString", "nsINameSpaceManager", "nsIContent",
             "nsIDocument", "nsTraceRefcnt", "jArray", "nsHtml5DocumentMode",
             "nsHtml5ArrayCopy", "nsHtml5NamedCharacters", "nsHtml5Parser",
             "nsHtml5Atoms", "nsHtml5ByteReadable", "nsHtml5TreeOperation",
@@ -81,7 +82,7 @@ public class CppTypes {
     private static final String[] INCLUDES = { "prtypes", "nsIAtom",
             "nsString", "nsINameSpaceManager", "nsIContent", "nsIDocument",
             "nsTraceRefcnt", "jArray", "nsHtml5DocumentMode",
-            "nsHtml5ArrayCopy", "nsHtml5NamedCharacters", "nsHtml5Parser",
+            "nsHtml5ArrayCopy", "nsHtml5NamedCharacters",
             "nsHtml5Atoms", "nsHtml5ByteReadable", };
 
     private static final String[] OTHER_DECLATIONS = {};
@@ -92,7 +93,14 @@ public class CppTypes {
             "jArray", "nscore" };
 
     private static final String[] FORWARD_DECLARATIONS = { "nsHtml5Parser", };
-
+    
+    private static final String[] CLASSES_THAT_NEED_SUPPLEMENT = {
+        "MetaScanner",
+        "StackNode",
+        "TreeBuilder",
+        "UTF16Buffer",
+    };
+    
     private final Map<String, String> atomMap = new HashMap<String, String>();
 
     private final Writer atomWriter;
@@ -249,7 +257,7 @@ public class CppTypes {
             return INCLUDES;
         }
     }
-
+    
     public String[] boilerplateDeclarations(String javaClass) {
         if ("TreeBuilder".equals(javaClass)) {
             return TREE_BUILDER_OTHER_DECLATIONS;
@@ -264,14 +272,6 @@ public class CppTypes {
 
     public String[] boilerplateForwardDeclarations() {
         return FORWARD_DECLARATIONS;
-    }
-
-    public String treeBuiderHSupplement() {
-        return "nsHtml5TreeBuilderHSupplement.h";
-    }
-
-    public String treeBuiderCppSupplement() {
-        return "nsHtml5TreeBuilderCppSupplement.h";
     }
 
     public String documentModeHandlerType() {
@@ -290,30 +290,6 @@ public class CppTypes {
         return "PR_INT32_MAX";
     }
 
-    public String utf16BufferCppSupplement() {
-        return "nsHtml5UTF16BufferCppSupplement.h";
-    }
-
-    public String utf16BufferHSupplement() {
-        return "nsHtml5UTF16BufferHSupplement.h";
-    }
-
-    public String MetaScannerHSupplement() {
-        return "nsHtml5MetaScannerHSupplement.h";
-    }
-
-    public String metaScannerCppSupplement() {
-        return "nsHtml5MetaScannerCppSupplement.h";
-    }
-
-    public String StackNodeHSupplement() {
-        return "nsHtml5StackNodeHSupplement.h";
-    }
-
-    public String stackNodeCppSupplement() {
-        return "nsHtml5StackNodeCppSupplement.h";
-    }
-
     public String constructorBoilerplate(String className) {
         return "MOZ_COUNT_CTOR(" + className + ");";
     }
@@ -324,6 +300,10 @@ public class CppTypes {
 
     public String literalType() {
         return "const char*";
+    }
+    
+    public boolean hasSupplement(String javaClass) {
+        return Arrays.binarySearch(CLASSES_THAT_NEED_SUPPLEMENT, javaClass) > -1;
     }
 
 }

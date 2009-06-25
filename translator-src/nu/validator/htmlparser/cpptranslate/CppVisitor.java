@@ -308,6 +308,8 @@ public class CppVisitor implements VoidVisitor<Object> {
             printer.print("ALL_NO_PREFIX");
         } else if ("HTML_LOCAL".equals(n.getName())) {
             printer.print(cppTypes.localForLiteral("html"));
+        } else if ("documentModeHandler".equals(n.getName())) {
+            printer.print("parser");
         } else {
             String prefixedName = javaClassName + "." + n.getName();
             String constant = symbolTable.cppDefinesByJavaNames.get(prefixedName);
@@ -388,26 +390,11 @@ public class CppVisitor implements VoidVisitor<Object> {
         printer.printLn("}");
         printer.printLn();
 
-        if ("TreeBuilder".equals(javaClassName)) {
+        if (cppTypes.hasSupplement(javaClassName)) {
             printer.printLn();
             printer.print("#include \"");
-            printer.print(cppTypes.treeBuiderCppSupplement());
-            printer.printLn("\"");
-        } else if ("UTF16Buffer".equals(javaClassName)) {
-            printer.printLn();
-            printer.print("#include \"");
-            printer.print(cppTypes.utf16BufferCppSupplement());
-            printer.printLn("\"");
-        } else if ("MetaScanner".equals(javaClassName)) {
-            printer.printLn();
-            printer.print("#include \"");
-            printer.print(cppTypes.metaScannerCppSupplement());
-            printer.printLn("\"");
-        } else if ("StackNode".equals(javaClassName)) {
-            printer.printLn();
-            printer.print("#include \"");
-            printer.print(cppTypes.stackNodeCppSupplement());
-            printer.printLn("\"");
+            printer.print(className);
+            printer.printLn("CppSupplement.h\"");
         }
     }
 
@@ -756,7 +743,12 @@ public class CppVisitor implements VoidVisitor<Object> {
     }
 
     public void visit(VariableDeclaratorId n, Object arg) {
-        printer.print(n.getName());
+        String name = n.getName();
+        if ("documentModeHandler".equals(name)) {
+            printer.print("parser");
+        } else {
+            printer.print(n.getName());
+        }
         if (noLength()) {
             for (int i = 0; i < currentArrayCount; i++) {
                 if (inPrimitiveNoLengthFieldDeclarator) {
@@ -1263,8 +1255,8 @@ public class CppVisitor implements VoidVisitor<Object> {
                 } else {
                     String clazzName = classNameFromExpression(scope);
                     if (clazzName == null) {
-                        scope.accept(this, arg);
-                        printer.print("->");
+                            scope.accept(this, arg);
+                            printer.print("->");
                     } else {
                         printer.print(cppTypes.classPrefix());
                         printer.print(clazzName);
