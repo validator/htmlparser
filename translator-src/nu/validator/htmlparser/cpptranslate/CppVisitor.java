@@ -685,25 +685,30 @@ public class CppVisitor implements VoidVisitor<Object> {
                             printer.printLn(";");
                         }
                     } else if ((rt.getType() instanceof PrimitiveType)) {
+                        printer = tempPrinterHolder;                        
+                        printer.print("static ");
                         rt.getType().accept(this, arg);
-                        printer.print(" ");
+                        printer.print(" const ");
                         declarator.getId().accept(this, arg);
                         printer.print("_DATA[] = ");
                         declarator.getInit().accept(this, arg);
                         printer.printLn(";");
+                        printer = staticInitializerPrinter;
 
                         declarator.getId().accept(this, arg);
                         printer.print(" = ");
-                        printer.print(cppTypes.staticArrayMacro());
-                        printer.print("(");
-                        suppressPointer = true;
+                        printer.print(cppTypes.arrayTemplate());
+                        printer.print("<");
                         rt.getType().accept(this, arg);
-                        suppressPointer = false;
-                        printer.print(", ");
+                        printer.print(",");
                         printer.print(cppTypes.intType());
-                        printer.print(", ");
+                        printer.print(">((");
+                        rt.getType().accept(this, arg);
+                        printer.print("*)");
                         declarator.getId().accept(this, arg);
-                        printer.printLn("_DATA);");
+                        printer.print("_DATA, ");
+                        printer.print(Integer.toString(((ArrayInitializerExpr)declarator.getInit()).getValues().size()));
+                        printer.printLn(");");
                     }
                 } else {
                     staticReleases.add("delete " + declarator.getId().getName());
