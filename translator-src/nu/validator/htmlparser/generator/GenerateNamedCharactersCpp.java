@@ -245,6 +245,11 @@ public class GenerateNamedCharactersCpp {
             k++;
         }
 
+        out.write("\n// XXX for some reason, it takes forever for msvc to optimize this function\n");
+        out.write("#ifdef _MSC_VER\n");
+        out.write("#pragma optimize(\"\", off)\n");
+        out.write("#endif\n\n");
+        
         out.write("void\n");
         out.write(cppTypes.classPrefix()
                 + "NamedCharacters::initializeStatics()\n");
@@ -280,6 +285,11 @@ public class GenerateNamedCharactersCpp {
         out.write("  }\n");
         out.write("}\n");
         out.write("\n");
+
+        out.write("#ifdef _MSC_VER\n");
+        out.write("#pragma optimize(\"\", on)\n");
+        out.write("#endif\n\n");
+        
         out.write("void\n");
         out.write(cppTypes.classPrefix()
                 + "NamedCharacters::releaseStatics()\n");
@@ -287,7 +297,6 @@ public class GenerateNamedCharactersCpp {
         out.write("  NAMES.release();\n");
         out.write("  delete[] VALUES;\n");
         out.write("}\n");
-        out.write("\n");
         out.flush();
         out.close();
     }
