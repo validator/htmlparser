@@ -245,7 +245,7 @@ public class GenerateNamedCharactersCpp {
             k++;
         }
 
-        out.write("\n// XXX for some reason, it takes forever for msvc to optimize this function\n");
+        out.write("\n// XXX bug 501082: for some reason, msvc takes forever to optimize this function\n");
         out.write("#ifdef _MSC_VER\n");
         out.write("#pragma optimize(\"\", off)\n");
         out.write("#endif\n\n");
