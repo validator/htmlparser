@@ -59,13 +59,13 @@ public final class ElementName
         if (index < 0) {
             return new ElementName(Portability.newLocalNameFromBuffer(buf, offset, length));
         } else {
-            ElementName rv = ElementName.ELEMENT_NAMES[index];
-            @Local String name = rv.name;
+            ElementName elementName = ElementName.ELEMENT_NAMES[index];
+            @Local String name = elementName.name;
             if (!Portability.localEqualsBuffer(name, buf, offset, length)) {
                 return new ElementName(Portability.newLocalNameFromBuffer(buf,
                         offset, length));                
             }
-            return rv;
+            return elementName;
         }
     }
 
