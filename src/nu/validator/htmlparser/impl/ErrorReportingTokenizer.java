@@ -401,10 +401,10 @@ public class ErrorReportingTokenizer extends Tokenizer {
         err("Bogus comment.");
     }
 
-    @Override protected void errWarnUnquotedAttributeValOrNull(char c)
+    @Override protected void errUnquotedAttributeValOrNull(char c)
             throws SAXException {
                 if (c == '<') {
-                    warn("\u201C<\u201D in an unquoted attribute value. This does not end the tag. Probable cause: Missing \u201C>\u201D immediately before.");
+                    err("\u201C<\u201D in an unquoted attribute value. Probable cause: Missing \u201C>\u201D immediately before.");
                 } else if (c != '\uFFFD') {
                     err("\u201C"
                             + c
@@ -437,10 +437,15 @@ public class ErrorReportingTokenizer extends Tokenizer {
                 }
             }
 
-    @Override protected void errEqualsInUnquotedAttributeOrNull(char c)
+    @Override protected void errLtOrEqualsInUnquotedAttributeOrNull(char c)
             throws SAXException {
-        if (c != '\uFFFD') {
-            err("\u201C=\u201D in an unquoted attribute value. Probable cause: Stray duplicate equals sign.");
+        switch (c) {
+            case '=':
+                err("\u201C=\u201D in an unquoted attribute value. Probable cause: Stray duplicate equals sign.");
+                return;
+            case '<':
+                err("\u201C<\u201D in an unquoted attribute value. Probable cause: Missing \u201C>\u201D immediately before.");
+                return;
         }
     }
 
@@ -450,7 +455,9 @@ public class ErrorReportingTokenizer extends Tokenizer {
 
     @Override protected void errBadCharBeforeAttributeNameOrNull(char c)
             throws SAXException {
-                if (c == '=') {
+                if (c == '<') {
+                    err("Saw \u201C<\u201D when expecting an attribute name. Probable cause: Missing \u201C>\u201D immediately before.");                    
+                } else if (c == '=') {
                     errEqualsSignBeforeAttributeName();
                 } else if (c != '\uFFFD') {
                     errQuoteBeforeAttributeName(c);
@@ -509,9 +516,11 @@ public class ErrorReportingTokenizer extends Tokenizer {
                         + "\u201D when expecting an attribute name. Probable cause: \u201C=\u201D missing immediately before.");
     }
 
-    @Override protected void errQuoteInAttributeNameOrNull(char c)
+    @Override protected void errQuoteOrLtInAttributeNameOrNull(char c)
             throws SAXException {
-        if (c != '\uFFFD') {
+        if (c == '<') {
+            err("\u201C<\u201D in attribute name. Probable cause: \u201C>\u201D missing immediately before.");            
+        } else if (c != '\uFFFD') {
             err("Quote \u201C"
                     + c
                     + "\u201D in attribute name. Probable cause: Matching quote missing somewhere earlier.");
@@ -637,7 +646,10 @@ public class ErrorReportingTokenizer extends Tokenizer {
 
     @Override protected void errMissingSpaceBeforeDoctypeName()
             throws SAXException {
-                err("Missing space before doctype name.");
-            }
+        err("Missing space before doctype name.");
+    }
 
+    @Override protected void errHyphenHyphenBang() throws SAXException {
+        err("\u201C--!\u201D found in comment.");
+    }
 }
