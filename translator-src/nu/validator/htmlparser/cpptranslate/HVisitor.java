@@ -297,6 +297,11 @@ public class HVisitor extends CppVisitor {
                     printer.print(" ");
                     printer.print(className);
                     printer.print("::");
+                    if ("AttributeName".equals(n.getType().toString())) {
+                        printer.print("ATTR_");
+                    } else if ("ElementName".equals(n.getType().toString())) {
+                        printer.print("ELT_");
+                    }
                     declarator.getId().accept(this, arg);
                     printer.print(" = ");
                     printer.print(cppTypes.nullLiteral());
@@ -308,6 +313,13 @@ public class HVisitor extends CppVisitor {
             printModifiers(modifiers);
             n.getType().accept(this, arg);
             printer.print(" ");
+            if (ModifierSet.isStatic(modifiers)) {
+                if ("AttributeName".equals(n.getType().toString())) {
+                    printer.print("ATTR_");
+                } else if ("ElementName".equals(n.getType().toString())) {
+                    printer.print("ELT_");
+                }
+            }
             declarator.getId().accept(this, arg);
             printer.printLn(";");
             currentArrayCount = 0;
