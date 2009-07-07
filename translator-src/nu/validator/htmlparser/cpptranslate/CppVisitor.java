@@ -128,9 +128,9 @@ import java.util.Set;
 public class CppVisitor implements VoidVisitor<Object> {
 
     private static final String[] CLASS_NAMES = { "AttributeName",
-            "ElementName", "HtmlAttributes", "LocatorImpl", "MetaScanner", "NamedCharacters",
-            "Portability", "StackNode", "Tokenizer", "TreeBuilder",
-            "UTF16Buffer" };
+            "ElementName", "HtmlAttributes", "LocatorImpl", "MetaScanner",
+            "NamedCharacters", "Portability", "StackNode", "Tokenizer",
+            "TreeBuilder", "UTF16Buffer" };
 
     public class SourcePrinter {
 
@@ -176,8 +176,7 @@ public class CppVisitor implements VoidVisitor<Object> {
             return buf.toString();
         }
 
-        @Override
-        public String toString() {
+        @Override public String toString() {
             return getSource();
         }
     }
@@ -428,12 +427,13 @@ public class CppVisitor implements VoidVisitor<Object> {
         printer.print("#include \"");
         printer.print(className);
         printer.printLn(".h\"");
-        if ("AttributeName".equals(javaClassName) || "ElementName".equals(javaClassName)) {
+        if ("AttributeName".equals(javaClassName)
+                || "ElementName".equals(javaClassName)) {
             printer.print("#include \"");
             printer.print(cppTypes.classPrefix());
             printer.print("Releasable");
             printer.print(javaClassName);
-            printer.printLn(".h\"");            
+            printer.printLn(".h\"");
         }
         printer.printLn();
     }
@@ -506,11 +506,11 @@ public class CppVisitor implements VoidVisitor<Object> {
     protected boolean inline() {
         return hasAnnotation("Inline");
     }
-    
+
     protected boolean inHeader() {
         return false;
     }
-    
+
     public void visit(TypeParameter n, Object arg) {
         printer.print(n.getName());
         if (n.getTypeBound() != null) {
@@ -578,7 +578,7 @@ public class CppVisitor implements VoidVisitor<Object> {
     protected boolean virtual() {
         return hasAnnotation("Virtual");
     }
-    
+
     private boolean hasAnnotation(String anno) {
         if (currentAnnotations == null) {
             return false;
@@ -685,7 +685,7 @@ public class CppVisitor implements VoidVisitor<Object> {
                             printer.printLn(";");
                         }
                     } else if ((rt.getType() instanceof PrimitiveType)) {
-                        printer = tempPrinterHolder;                        
+                        printer = tempPrinterHolder;
                         printer.print("static ");
                         rt.getType().accept(this, arg);
                         printer.print(" const ");
@@ -707,12 +707,23 @@ public class CppVisitor implements VoidVisitor<Object> {
                         printer.print("*)");
                         declarator.getId().accept(this, arg);
                         printer.print("_DATA, ");
-                        printer.print(Integer.toString(((ArrayInitializerExpr)declarator.getInit()).getValues().size()));
+                        printer.print(Integer.toString(((ArrayInitializerExpr) declarator.getInit()).getValues().size()));
                         printer.printLn(");");
                     }
                 } else {
-                    staticReleases.add("delete " + declarator.getId().getName());
 
+                    if ("AttributeName".equals(n.getType().toString())) {
+                        printer.print("ATTR_");
+                        staticReleases.add("delete ATTR_"
+                                + declarator.getId().getName());
+                    } else if ("ElementName".equals(n.getType().toString())) {
+                        printer.print("ELT_");
+                        staticReleases.add("delete ELT_"
+                                + declarator.getId().getName());
+                    } else {
+                        staticReleases.add("delete "
+                                + declarator.getId().getName());
+                    }
                     declarator.accept(this, arg);
                     printer.printLn(";");
                 }
@@ -733,6 +744,13 @@ public class CppVisitor implements VoidVisitor<Object> {
             printer.print("[");
             printer.print("" + i);
             printer.print("] = ");
+            if (exp instanceof NameExpr) {
+                if ("AttributeName".equals(javaClassName)) {
+                    printer.print("ATTR_");
+                } else if ("ElementName".equals(javaClassName)) {
+                    printer.print("ELT_");
+                }
+            }
             exp.accept(this, arg);
             printer.printLn(";");
         }
@@ -1037,6 +1055,13 @@ public class CppVisitor implements VoidVisitor<Object> {
                     printer.print(cppTypes.classPrefix());
                     printer.print(clazzName);
                     printer.print("::");
+                    if (symbolTable.isNotAnAttributeOrElementName(field)) {
+                        if ("AttributeName".equals(clazzName)) {
+                            printer.print("ATTR_");
+                        } else if ("ElementName".equals(clazzName)) {
+                            printer.print("ELT_");
+                        }
+                    }
                 }
             }
             printer.print(field);
@@ -1260,8 +1285,8 @@ public class CppVisitor implements VoidVisitor<Object> {
                 } else {
                     String clazzName = classNameFromExpression(scope);
                     if (clazzName == null) {
-                            scope.accept(this, arg);
-                            printer.print("->");
+                        scope.accept(this, arg);
+                        printer.print("->");
                     } else {
                         printer.print(cppTypes.classPrefix());
                         printer.print(clazzName);
@@ -1295,7 +1320,8 @@ public class CppVisitor implements VoidVisitor<Object> {
 
         suppressPointer = true;
         printTypeArgs(n.getTypeArgs(), arg);
-        if ("createAttributeName".equals(currentMethod) || "elementNameByBuffer".equals(currentMethod)) {
+        if ("createAttributeName".equals(currentMethod)
+                || "elementNameByBuffer".equals(currentMethod)) {
             printer.print(cppTypes.classPrefix());
             printer.print("Releasable");
             printer.print(n.getType().getName());
@@ -1372,7 +1398,8 @@ public class CppVisitor implements VoidVisitor<Object> {
     }
 
     public void visit(ConstructorDeclaration n, Object arg) {
-        if ("TreeBuilder".equals(javaClassName) || "MetaScanner".equals(javaClassName)) {
+        if ("TreeBuilder".equals(javaClassName)
+                || "MetaScanner".equals(javaClassName)) {
             return;
         }
 
@@ -1481,7 +1508,8 @@ public class CppVisitor implements VoidVisitor<Object> {
 
     protected void printMethodDeclaration(MethodDeclaration n, Object arg) {
         if (n.getName().startsWith("fatal") || n.getName().startsWith("err")
-                || n.getName().startsWith("warn")|| n.getName().startsWith("maybeErr")
+                || n.getName().startsWith("warn")
+                || n.getName().startsWith("maybeErr")
                 || n.getName().startsWith("maybeWarn")
                 || "releaseArray".equals(n.getName())
                 || "deleteArray".equals(n.getName())
@@ -1492,7 +1520,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         currentMethod = n.getName();
 
         destructor = "destructor".equals(n.getName());
-        
+
         // if (n.getJavaDoc() != null) {
         // n.getJavaDoc().accept(this, arg);
         // }
@@ -1501,7 +1529,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         if (isInline && !inHeader()) {
             return;
         }
-        
+
         if (destructor) {
             printModifiers(ModifierSet.PUBLIC);
         } else {
@@ -1542,7 +1570,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         }
 
         if (inHeader() == isInline) {
-            printMethodBody(n.getBody(), arg);            
+            printMethodBody(n.getBody(), arg);
         } else {
             printer.printLn(";");
         }

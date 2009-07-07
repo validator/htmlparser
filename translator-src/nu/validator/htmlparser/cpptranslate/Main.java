@@ -88,7 +88,7 @@ public class Main {
         
         File javaDirectory = new File(args[0]);
         File targetDirectory = new File(args[1]);
-        File cppDirectory = new File(targetDirectory, "src");
+        File cppDirectory = targetDirectory;
         File javaCopyDirectory = new File(targetDirectory, "javasrc");
         
         for (int i = 0; i < H_LIST.length; i++) {
