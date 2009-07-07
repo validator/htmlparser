@@ -159,16 +159,7 @@ public class GenerateNamedCharactersCpp {
         out.write("" + cppTypes.arrayTemplate() + "<"
                 + cppTypes.arrayTemplate() + "<" + cppTypes.charType() + ","
                 + cppTypes.intType() + ">," + cppTypes.intType() + "> "
-                + cppTypes.classPrefix() + "NamedCharacters::NAMES = "
-                + cppTypes.arrayTemplate() + "<" + cppTypes.arrayTemplate()
-                + "<" + cppTypes.charType() + "," + cppTypes.intType() + ">,"
-                + cppTypes.intType() + ">();\n");
-        out.write("" + cppTypes.arrayTemplate() + "<" + cppTypes.charType()
-                + "," + cppTypes.intType() + ">* " + cppTypes.classPrefix()
-                + "NamedCharacters::VALUES = " + cppTypes.nullLiteral() + ";\n");
-        out.write("" + cppTypes.charType() + "** " + cppTypes.classPrefix()
-                + "NamedCharacters::WINDOWS_1252 = " + cppTypes.nullLiteral()
-                + ";\n");
+                + cppTypes.classPrefix() + "NamedCharacters::NAMES;\n");
 
         out.write("static " + cppTypes.charType() + " const WINDOWS_1252_DATA[] = {\n");
         out.write("  0x20AC,\n");
@@ -296,6 +287,7 @@ public class GenerateNamedCharactersCpp {
         out.write("{\n");
         out.write("  NAMES.release();\n");
         out.write("  delete[] VALUES;\n");
+        out.write("  delete[] WINDOWS_1252;\n");
         out.write("}\n");
         out.flush();
         out.close();
