@@ -79,7 +79,6 @@ import japa.parser.ast.expr.QualifiedNameExpr;
 import japa.parser.ast.expr.SingleMemberAnnotationExpr;
 import japa.parser.ast.expr.StringLiteralExpr;
 import japa.parser.ast.expr.SuperExpr;
-import japa.parser.ast.expr.SuperMemberAccessExpr;
 import japa.parser.ast.expr.ThisExpr;
 import japa.parser.ast.expr.UnaryExpr;
 import japa.parser.ast.expr.VariableDeclarationExpr;
@@ -1185,7 +1184,7 @@ public class CppVisitor implements VoidVisitor<Object> {
     }
 
     public void visit(BooleanLiteralExpr n, Object arg) {
-        if ("true".equals(n.getValue().toString())) {
+        if (n.getValue()) {
             printer.print(cppTypes.trueLiteral());
         } else {
             printer.print(cppTypes.falseLiteral());
@@ -1356,11 +1355,6 @@ public class CppVisitor implements VoidVisitor<Object> {
             printer.unindent();
             printer.print("}");
         }
-    }
-
-    public void visit(SuperMemberAccessExpr n, Object arg) {
-        printer.print("super.");
-        printer.print(n.getName());
     }
 
     public void visit(UnaryExpr n, Object arg) {
