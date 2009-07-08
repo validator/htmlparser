@@ -102,6 +102,9 @@ public class Main {
     }
 
     private static void copyFile(File input, File output) throws IOException {
+        if (input.getCanonicalFile().equals(output.getCanonicalFile())) {
+            return; // files are the same!
+        }
         // This is horribly inefficient, but perf is not really much of a concern here.
         FileInputStream in = new FileInputStream(input);
         FileOutputStream out = new FileOutputStream(output);
