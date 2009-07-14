@@ -577,7 +577,30 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                                                 systemIdentifier, false);
                                     } else {
                                         // [NOCPP[
-                                        if (!((systemIdentifier == null || Portability.literalEqualsString(
+                                        if ((Portability.literalEqualsString(
+                                                "-//W3C//DTD HTML 4.0//EN",
+                                                publicIdentifier) && (systemIdentifier == null || Portability.literalEqualsString(
+                                                "http://www.w3.org/TR/REC-html40/strict.dtd",
+                                                systemIdentifier)))
+                                                || (Portability.literalEqualsString(
+                                                        "-//W3C//DTD HTML 4.01//EN",
+                                                        publicIdentifier) && (systemIdentifier == null || Portability.literalEqualsString(
+                                                        "http://www.w3.org/TR/html4/strict.dtd",
+                                                        systemIdentifier)))
+                                                || (Portability.literalEqualsString(
+                                                        "-//W3C//DTD XHTML 1.0 Strict//EN",
+                                                        publicIdentifier) && Portability.literalEqualsString(
+                                                        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd",
+                                                        systemIdentifier))
+                                                || (Portability.literalEqualsString(
+                                                        "-//W3C//DTD XHTML 1.1//EN",
+                                                        publicIdentifier) && Portability.literalEqualsString(
+                                                        "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd",
+                                                        systemIdentifier))
+
+                                        ) {
+                                            warn("Obsolete doctype. Expected \u201C<!DOCTYPE html>\u201D.");
+                                        } else if (!((systemIdentifier == null || Portability.literalEqualsString(
                                                 "about:legacy-compat",
                                                 systemIdentifier)) && publicIdentifier == null)) {
                                             err("Legacy doctype. Expected \u201C<!DOCTYPE html>\u201D.");
