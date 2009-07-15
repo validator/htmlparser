@@ -15,7 +15,7 @@
  *
  * The Initial Developer of the Original Code is
  * Mozilla Foundation.
- * Portions created by the Initial Developer are Copyright (C) 2008
+ * Portions created by the Initial Developer are Copyright (C) 2009
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
@@ -40,41 +40,50 @@ package nu.validator.htmlparser.cpptranslate;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SymbolTable {
-    
-    public final Map<String, String> cppDefinesByJavaNames = new HashMap<String, String>();
+public class LocalSymbolTable {
 
-    private final Map<StringPair, Type> fields = new HashMap<StringPair, Type>();
+    private final Map<String, Type> locals = new HashMap<String, Type>();
+
+    private final String javaClassName;
     
-    private final Map<StringPair, Type> methodReturns = new HashMap<StringPair, Type>();
-    
+    private final SymbolTable delegate;    
+
     /**
-     * This is a sad hack to work around the fact the there's no real symbol
-     * table yet.
-     * 
-     * @param name
-     * @return
+     * @param javaClassName
+     * @param delegate
      */
-    public boolean isNotAnAttributeOrElementName(String name) {
-        return !("ATTRIBUTE_HASHES".equals(name)
-                || "ATTRIBUTE_NAMES".equals(name)
-                || "ELEMENT_HASHES".equals(name)
-                || "ELEMENT_NAMES".equals(name) || "ALL_NO_NS".equals(name));
+    public LocalSymbolTable(String javaClassName, SymbolTable delegate) {
+        this.javaClassName = javaClassName;
+        this.delegate = delegate;
     }
-    
-    public void putFieldType(String klazz, String field, Type type) {
-        fields.put(new StringPair(klazz, field), type);
+
+    public void putLocalType(String name, Type type) {
+        locals.put(name, type);
     }
-    
-    public void putMethodReturnType(String klazz, String method, Type type) {
-        methodReturns.put(new StringPair(klazz, method), type);
+
+    /**
+     * @param klazz
+     * @param variable
+     * @return
+     * @see nu.validator.htmlparser.cpptranslate.SymbolTable#getFieldType(java.lang.String, java.lang.String)
+     */
+    public Type getVariableType(String klazz, String variable) {
+        if (klazz == null) {
+            Type type = locals.get(variable);
+            if (type != null) {
+                return type;
+            }
+        }
+        return delegate.getFieldType(((klazz == null || "this".equals(klazz)) ? javaClassName : klazz), variable);
     }
-    
-    public Type getFieldType(String klazz, String field) {
-        return fields.get(new StringPair(klazz, field));
-    }
-    
+
+    /**
+     * @param klazz may be <code>null</code> or "this"
+     * @param method 
+     * @return
+     * @see nu.validator.htmlparser.cpptranslate.SymbolTable#getMethodReturnType(java.lang.String, java.lang.String)
+     */
     public Type getMethodReturnType(String klazz, String method) {
-        return methodReturns.get(new StringPair(klazz, method));
+        return delegate.getMethodReturnType(((klazz == null || "this".equals(klazz)) ? javaClassName : klazz), method);
     }
 }

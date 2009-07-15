@@ -214,9 +214,9 @@ public class HVisitor extends CppVisitor {
     }
 
     /**
-     * @see nu.validator.htmlparser.cpptranslate.CppVisitor#fieldDeclaration(japa.parser.ast.body.FieldDeclaration, java.lang.Object)
+     * @see nu.validator.htmlparser.cpptranslate.CppVisitor#fieldDeclaration(japa.parser.ast.body.FieldDeclaration, java.lang.LocalSymbolTable)
      */
-    @Override protected void fieldDeclaration(FieldDeclaration n, Object arg) {
+    @Override protected void fieldDeclaration(FieldDeclaration n, LocalSymbolTable arg) {
         int modifiers = n.getModifiers();
         List<VariableDeclarator> variables = n.getVariables();
         VariableDeclarator declarator = variables.get(0);
@@ -328,16 +328,17 @@ public class HVisitor extends CppVisitor {
     }
 
     /**
-     * @see nu.validator.htmlparser.cpptranslate.CppVisitor#printConstructorBody(japa.parser.ast.stmt.BlockStmt, java.lang.Object)
+     * @see nu.validator.htmlparser.cpptranslate.CppVisitor#printConstructorBody(japa.parser.ast.stmt.BlockStmt, java.lang.LocalSymbolTable)
      */
-    @Override protected void printConstructorBody(BlockStmt block, Object arg) {
+    @Override protected void printConstructorBody(BlockStmt block, LocalSymbolTable arg) {
         printer.printLn(";");
     }
 
     /**
-     * @see nu.validator.htmlparser.cpptranslate.CppVisitor#visit(japa.parser.ast.body.MethodDeclaration, java.lang.Object)
+     * @see nu.validator.htmlparser.cpptranslate.CppVisitor#visit(japa.parser.ast.body.MethodDeclaration, java.lang.LocalSymbolTable)
      */
-    @Override public void visit(MethodDeclaration n, Object arg) {
+    @Override public void visit(MethodDeclaration n, LocalSymbolTable arg) {
+        arg = new LocalSymbolTable(javaClassName, symbolTable);
         printMethodDeclaration(n, arg);
     }
 
