@@ -15,7 +15,7 @@
  *
  * The Initial Developer of the Original Code is
  * Mozilla Foundation.
- * Portions created by the Initial Developer are Copyright (C) 2008
+ * Portions created by the Initial Developer are Copyright (C) 2009
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
@@ -37,44 +37,35 @@
 
 package nu.validator.htmlparser.cpptranslate;
 
-import java.util.HashMap;
-import java.util.Map;
+import japa.parser.ast.body.ClassOrInterfaceDeclaration;
+import japa.parser.ast.body.FieldDeclaration;
+import japa.parser.ast.body.MethodDeclaration;
 
-public class SymbolTable {
-    
-    public final Map<String, String> cppDefinesByJavaNames = new HashMap<String, String>();
+public class SymbolTableVisitor extends AnnotationHelperVisitor<SymbolTable> {
 
-    private final Map<StringPair, Type> fields = new HashMap<StringPair, Type>();
-    
-    private final Map<StringPair, Type> methodReturns = new HashMap<StringPair, Type>();
+    private String javaClassName;
     
     /**
-     * This is a sad hack to work around the fact the there's no real symbol
-     * table yet.
-     * 
-     * @param name
-     * @return
+     * @see japa.parser.ast.visitor.VoidVisitorAdapter#visit(japa.parser.ast.body.FieldDeclaration, java.lang.Object)
      */
-    public boolean isNotAnAttributeOrElementName(String name) {
-        return !("ATTRIBUTE_HASHES".equals(name)
-                || "ATTRIBUTE_NAMES".equals(name)
-                || "ELEMENT_HASHES".equals(name)
-                || "ELEMENT_NAMES".equals(name) || "ALL_NO_NS".equals(name));
+    @Override public void visit(FieldDeclaration n, SymbolTable arg) {
+        currentAnnotations = n.getAnnotations();
+        arg.putFieldType(javaClassName, n.getVariables().get(0).getId().getName(), convertType(n.getType(), n.getModifiers()));
     }
-    
-    public void putFieldType(String klazz, String field, Type type) {
-        fields.put(new StringPair(klazz, field), type);
+
+    /**
+     * @see japa.parser.ast.visitor.VoidVisitorAdapter#visit(japa.parser.ast.body.MethodDeclaration, java.lang.Object)
+     */
+    @Override public void visit(MethodDeclaration n, SymbolTable arg) {
+        currentAnnotations = n.getAnnotations();
+        arg.putMethodReturnType(javaClassName, n.getName(), convertType(n.getType(), n.getModifiers()));
     }
-    
-    public void putMethodReturnType(String klazz, String method, Type type) {
-        methodReturns.put(new StringPair(klazz, method), type);
+
+    /**
+     * @see japa.parser.ast.visitor.VoidVisitorAdapter#visit(japa.parser.ast.body.ClassOrInterfaceDeclaration, java.lang.Object)
+     */
+    @Override public void visit(ClassOrInterfaceDeclaration n, SymbolTable arg) {
+        javaClassName = n.getName();
     }
-    
-    public Type getFieldType(String klazz, String field) {
-        return fields.get(new StringPair(klazz, field));
-    }
-    
-    public Type getMethodReturnType(String klazz, String method) {
-        return methodReturns.get(new StringPair(klazz, method));
-    }
+
 }

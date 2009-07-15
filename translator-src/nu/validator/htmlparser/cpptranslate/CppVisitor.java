@@ -48,7 +48,6 @@ import japa.parser.ast.body.Parameter;
 import japa.parser.ast.body.TypeDeclaration;
 import japa.parser.ast.body.VariableDeclarator;
 import japa.parser.ast.body.VariableDeclaratorId;
-import japa.parser.ast.expr.AnnotationExpr;
 import japa.parser.ast.expr.ArrayAccessExpr;
 import japa.parser.ast.expr.ArrayCreationExpr;
 import japa.parser.ast.expr.ArrayInitializerExpr;
@@ -110,7 +109,6 @@ import japa.parser.ast.type.ReferenceType;
 import japa.parser.ast.type.Type;
 import japa.parser.ast.type.VoidType;
 import japa.parser.ast.type.WildcardType;
-import japa.parser.ast.visitor.VoidVisitor;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -124,7 +122,7 @@ import java.util.Set;
  * @author Henri Sivonen
  */
 
-public class CppVisitor implements VoidVisitor<Object> {
+public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
 
     private static final String[] CLASS_NAMES = { "AttributeName",
             "ElementName", "HtmlAttributes", "LocatorImpl", "MetaScanner",
@@ -190,8 +188,6 @@ public class CppVisitor implements VoidVisitor<Object> {
 
     protected String className = "";
 
-    protected List<AnnotationExpr> currentAnnotations;
-
     protected int currentArrayCount;
 
     protected Set<String> forLoopsWithCondition = new HashSet<String>();
@@ -243,13 +239,13 @@ public class CppVisitor implements VoidVisitor<Object> {
     protected void printModifiers(int modifiers) {
     }
 
-    private void printMembers(List<BodyDeclaration> members, Object arg) {
+    private void printMembers(List<BodyDeclaration> members, LocalSymbolTable arg) {
         for (BodyDeclaration member : members) {
             member.accept(this, arg);
         }
     }
 
-    private void printTypeArgs(List<Type> args, Object arg) {
+    private void printTypeArgs(List<Type> args, LocalSymbolTable arg) {
         // if (args != null) {
         // printer.print("<");
         // for (Iterator<Type> i = args.iterator(); i.hasNext();) {
@@ -263,7 +259,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         // }
     }
 
-    private void printTypeParameters(List<TypeParameter> args, Object arg) {
+    private void printTypeParameters(List<TypeParameter> args, LocalSymbolTable arg) {
         // if (args != null) {
         // printer.print("<");
         // for (Iterator<TypeParameter> i = args.iterator(); i.hasNext();) {
@@ -277,11 +273,11 @@ public class CppVisitor implements VoidVisitor<Object> {
         // }
     }
 
-    public void visit(Node n, Object arg) {
+    public void visit(Node n, LocalSymbolTable arg) {
         throw new IllegalStateException(n.getClass().getName());
     }
 
-    public void visit(CompilationUnit n, Object arg) {
+    public void visit(CompilationUnit n, LocalSymbolTable arg) {
         if (n.getTypes() != null) {
             for (Iterator<TypeDeclaration> i = n.getTypes().iterator(); i.hasNext();) {
                 i.next().accept(this, arg);
@@ -293,11 +289,11 @@ public class CppVisitor implements VoidVisitor<Object> {
         }
     }
 
-    public void visit(PackageDeclaration n, Object arg) {
+    public void visit(PackageDeclaration n, LocalSymbolTable arg) {
         throw new IllegalStateException(n.getClass().getName());
     }
 
-    public void visit(NameExpr n, Object arg) {
+    public void visit(NameExpr n, LocalSymbolTable arg) {
         if ("mappingLangToXmlLang".equals(n.getName())) {
             printer.print("0");
         } else if ("LANG_NS".equals(n.getName())) {
@@ -319,17 +315,17 @@ public class CppVisitor implements VoidVisitor<Object> {
         }
     }
 
-    public void visit(QualifiedNameExpr n, Object arg) {
+    public void visit(QualifiedNameExpr n, LocalSymbolTable arg) {
         n.getQualifier().accept(this, arg);
         printer.print(".");
         printer.print(n.getName());
     }
 
-    public void visit(ImportDeclaration n, Object arg) {
+    public void visit(ImportDeclaration n, LocalSymbolTable arg) {
         throw new IllegalStateException(n.getClass().getName());
     }
 
-    public void visit(ClassOrInterfaceDeclaration n, Object arg) {
+    public void visit(ClassOrInterfaceDeclaration n, LocalSymbolTable arg) {
         javaClassName = n.getName();
         className = cppTypes.classPrefix() + javaClassName;
         definePrefix = makeDefinePrefix(className);
@@ -437,20 +433,20 @@ public class CppVisitor implements VoidVisitor<Object> {
         printer.printLn();
     }
 
-    public void visit(EmptyTypeDeclaration n, Object arg) {
+    public void visit(EmptyTypeDeclaration n, LocalSymbolTable arg) {
         if (n.getJavaDoc() != null) {
             n.getJavaDoc().accept(this, arg);
         }
         printer.print(";");
     }
 
-    public void visit(JavadocComment n, Object arg) {
+    public void visit(JavadocComment n, LocalSymbolTable arg) {
         printer.print("/**");
         printer.print(n.getContent());
         printer.printLn("*/");
     }
 
-    public void visit(ClassOrInterfaceType n, Object arg) {
+    public void visit(ClassOrInterfaceType n, LocalSymbolTable arg) {
         if (n.getScope() != null) {
             n.getScope().accept(this, arg);
             printer.print(".");
@@ -486,31 +482,11 @@ public class CppVisitor implements VoidVisitor<Object> {
         printTypeArgs(n.getTypeArgs(), arg);
     }
 
-    private boolean nsUri() {
-        return hasAnnotation("NsUri");
-    }
-
-    private boolean prefix() {
-        return hasAnnotation("Prefix");
-    }
-
-    private boolean local() {
-        return hasAnnotation("Local");
-    }
-
-    private boolean literal() {
-        return hasAnnotation("Literal");
-    }
-
-    protected boolean inline() {
-        return hasAnnotation("Inline");
-    }
-
     protected boolean inHeader() {
         return false;
     }
 
-    public void visit(TypeParameter n, Object arg) {
+    public void visit(TypeParameter n, LocalSymbolTable arg) {
         printer.print(n.getName());
         if (n.getTypeBound() != null) {
             printer.print(" extends ");
@@ -524,7 +500,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         }
     }
 
-    public void visit(PrimitiveType n, Object arg) {
+    public void visit(PrimitiveType n, LocalSymbolTable arg) {
         switch (n.getType()) {
             case Boolean:
                 printer.print(cppTypes.booleanType());
@@ -548,7 +524,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         }
     }
 
-    public void visit(ReferenceType n, Object arg) {
+    public void visit(ReferenceType n, LocalSymbolTable arg) {
         if (noLength()) {
             n.getType().accept(this, arg);
             for (int i = 0; i < n.getArrayCount(); i++) {
@@ -570,30 +546,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         }
     }
 
-    protected boolean noLength() {
-        return hasAnnotation("NoLength");
-    }
-
-    protected boolean virtual() {
-        return hasAnnotation("Virtual");
-    }
-
-    private boolean hasAnnotation(String anno) {
-        if (currentAnnotations == null) {
-            return false;
-        }
-        for (AnnotationExpr ann : currentAnnotations) {
-            if (ann instanceof MarkerAnnotationExpr) {
-                MarkerAnnotationExpr marker = (MarkerAnnotationExpr) ann;
-                if (marker.getName().getName().equals(anno)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    public void visit(WildcardType n, Object arg) {
+    public void visit(WildcardType n, LocalSymbolTable arg) {
         printer.print("?");
         if (n.getExtends() != null) {
             printer.print(" extends ");
@@ -605,7 +558,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         }
     }
 
-    public void visit(FieldDeclaration n, Object arg) {
+    public void visit(FieldDeclaration n, LocalSymbolTable arg) {
         currentAnnotations = n.getAnnotations();
         fieldDeclaration(n, arg);
         currentAnnotations = null;
@@ -620,7 +573,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         }
     }
 
-    protected void fieldDeclaration(FieldDeclaration n, Object arg) {
+    protected void fieldDeclaration(FieldDeclaration n, LocalSymbolTable arg) {
         tempPrinterHolder = printer;
         printer = staticInitializerPrinter;
         int modifiers = n.getModifiers();
@@ -736,7 +689,7 @@ public class CppVisitor implements VoidVisitor<Object> {
     }
 
     private void printArrayInit(VariableDeclaratorId variableDeclaratorId,
-            List<Expression> values, Object arg) {
+            List<Expression> values, LocalSymbolTable arg) {
         for (int i = 0; i < values.size(); i++) {
             Expression exp = values.get(i);
             variableDeclaratorId.accept(this, arg);
@@ -755,7 +708,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         }
     }
 
-    public void visit(VariableDeclarator n, Object arg) {
+    public void visit(VariableDeclarator n, LocalSymbolTable arg) {
         n.getId().accept(this, arg);
 
         if (n.getInit() != null) {
@@ -764,7 +717,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         }
     }
 
-    public void visit(VariableDeclaratorId n, Object arg) {
+    public void visit(VariableDeclaratorId n, LocalSymbolTable arg) {
         String name = n.getName();
         if ("documentModeHandler".equals(name)) {
             printer.print("parser");
@@ -783,7 +736,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         }
     }
 
-    public void visit(ArrayInitializerExpr n, Object arg) {
+    public void visit(ArrayInitializerExpr n, LocalSymbolTable arg) {
         printer.print("{");
         if (n.getValues() != null) {
             printer.print(" ");
@@ -799,18 +752,18 @@ public class CppVisitor implements VoidVisitor<Object> {
         printer.print("}");
     }
 
-    public void visit(VoidType n, Object arg) {
+    public void visit(VoidType n, LocalSymbolTable arg) {
         printer.print("void");
     }
 
-    public void visit(ArrayAccessExpr n, Object arg) {
+    public void visit(ArrayAccessExpr n, LocalSymbolTable arg) {
         n.getName().accept(this, arg);
         printer.print("[");
         n.getIndex().accept(this, arg);
         printer.print("]");
     }
 
-    public void visit(ArrayCreationExpr n, Object arg) {
+    public void visit(ArrayCreationExpr n, LocalSymbolTable arg) {
         // printer.print("new ");
         // n.getType().accept(this, arg);
         // printTypeArgs(n.getTypeArgs(), arg);
@@ -848,7 +801,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         }
     }
 
-    public void visit(AssignExpr n, Object arg) {
+    public void visit(AssignExpr n, LocalSymbolTable arg) {
         if (inConstructorBody) {
             n.getTarget().accept(this, arg);
             printer.print("(");
@@ -900,7 +853,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         }
     }
 
-    public void visit(BinaryExpr n, Object arg) {
+    public void visit(BinaryExpr n, LocalSymbolTable arg) {
         Expression right = n.getRight();
         switch (n.getOperator()) {
             case notEquals:
@@ -997,19 +950,19 @@ public class CppVisitor implements VoidVisitor<Object> {
         n.getRight().accept(this, arg);
     }
 
-    public void visit(CastExpr n, Object arg) {
+    public void visit(CastExpr n, LocalSymbolTable arg) {
         printer.print("(");
         n.getType().accept(this, arg);
         printer.print(") ");
         n.getExpr().accept(this, arg);
     }
 
-    public void visit(ClassExpr n, Object arg) {
+    public void visit(ClassExpr n, LocalSymbolTable arg) {
         n.getType().accept(this, arg);
         printer.print(".class");
     }
 
-    public void visit(ConditionalExpr n, Object arg) {
+    public void visit(ConditionalExpr n, LocalSymbolTable arg) {
         n.getCondition().accept(this, arg);
         printer.print(" ? ");
         n.getThenExpr().accept(this, arg);
@@ -1017,13 +970,13 @@ public class CppVisitor implements VoidVisitor<Object> {
         n.getElseExpr().accept(this, arg);
     }
 
-    public void visit(EnclosedExpr n, Object arg) {
+    public void visit(EnclosedExpr n, LocalSymbolTable arg) {
         printer.print("(");
         n.getInner().accept(this, arg);
         printer.print(")");
     }
 
-    public void visit(FieldAccessExpr n, Object arg) {
+    public void visit(FieldAccessExpr n, LocalSymbolTable arg) {
         Expression scope = n.getScope();
         String field = n.getField();
         if (inConstructorBody && (scope instanceof ThisExpr)) {
@@ -1067,13 +1020,13 @@ public class CppVisitor implements VoidVisitor<Object> {
         }
     }
 
-    public void visit(InstanceOfExpr n, Object arg) {
+    public void visit(InstanceOfExpr n, LocalSymbolTable arg) {
         n.getExpr().accept(this, arg);
         printer.print(" instanceof ");
         n.getType().accept(this, arg);
     }
 
-    public void visit(CharLiteralExpr n, Object arg) {
+    public void visit(CharLiteralExpr n, LocalSymbolTable arg) {
         printCharLiteral(n.getValue());
     }
 
@@ -1134,27 +1087,27 @@ public class CppVisitor implements VoidVisitor<Object> {
         }
     }
 
-    public void visit(DoubleLiteralExpr n, Object arg) {
+    public void visit(DoubleLiteralExpr n, LocalSymbolTable arg) {
         printer.print(n.getValue());
     }
 
-    public void visit(IntegerLiteralExpr n, Object arg) {
+    public void visit(IntegerLiteralExpr n, LocalSymbolTable arg) {
         printer.print(n.getValue());
     }
 
-    public void visit(LongLiteralExpr n, Object arg) {
+    public void visit(LongLiteralExpr n, LocalSymbolTable arg) {
         printer.print(n.getValue());
     }
 
-    public void visit(IntegerLiteralMinValueExpr n, Object arg) {
+    public void visit(IntegerLiteralMinValueExpr n, LocalSymbolTable arg) {
         printer.print(n.getValue());
     }
 
-    public void visit(LongLiteralMinValueExpr n, Object arg) {
+    public void visit(LongLiteralMinValueExpr n, LocalSymbolTable arg) {
         printer.print(n.getValue());
     }
 
-    public void visit(StringLiteralExpr n, Object arg) {
+    public void visit(StringLiteralExpr n, LocalSymbolTable arg) {
         String val = n.getValue();
         if ("http://www.w3.org/1999/xhtml".equals(val)) {
             printer.print(cppTypes.xhtmlNamespaceLiteral());
@@ -1183,7 +1136,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         }
     }
 
-    public void visit(BooleanLiteralExpr n, Object arg) {
+    public void visit(BooleanLiteralExpr n, LocalSymbolTable arg) {
         if (n.getValue()) {
             printer.print(cppTypes.trueLiteral());
         } else {
@@ -1191,11 +1144,11 @@ public class CppVisitor implements VoidVisitor<Object> {
         }
     }
 
-    public void visit(NullLiteralExpr n, Object arg) {
+    public void visit(NullLiteralExpr n, LocalSymbolTable arg) {
         printer.print(cppTypes.nullLiteral());
     }
 
-    public void visit(ThisExpr n, Object arg) {
+    public void visit(ThisExpr n, LocalSymbolTable arg) {
         if (n.getClassExpr() != null) {
             n.getClassExpr().accept(this, arg);
             printer.print(".");
@@ -1203,7 +1156,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         printer.print("this");
     }
 
-    public void visit(SuperExpr n, Object arg) {
+    public void visit(SuperExpr n, LocalSymbolTable arg) {
         if (n.getClassExpr() != null) {
             n.getClassExpr().accept(this, arg);
             printer.print(".");
@@ -1211,7 +1164,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         printer.print("super");
     }
 
-    public void visit(MethodCallExpr n, Object arg) {
+    public void visit(MethodCallExpr n, LocalSymbolTable arg) {
         if ("releaseArray".equals(n.getName())
                 && "Portability".equals(n.getScope().toString())) {
             n.getArgs().get(0).accept(this, arg);
@@ -1309,7 +1262,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         }
     }
 
-    public void visit(ObjectCreationExpr n, Object arg) {
+    public void visit(ObjectCreationExpr n, LocalSymbolTable arg) {
         if (n.getScope() != null) {
             n.getScope().accept(this, arg);
             printer.print(".");
@@ -1357,7 +1310,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         }
     }
 
-    public void visit(UnaryExpr n, Object arg) {
+    public void visit(UnaryExpr n, LocalSymbolTable arg) {
         switch (n.getOperator()) {
             case positive:
                 printer.print("+");
@@ -1391,28 +1344,20 @@ public class CppVisitor implements VoidVisitor<Object> {
         }
     }
 
-    public void visit(ConstructorDeclaration n, Object arg) {
+    public void visit(ConstructorDeclaration n, LocalSymbolTable arg) {
         if ("TreeBuilder".equals(javaClassName)
                 || "MetaScanner".equals(javaClassName)) {
             return;
         }
 
+        arg = new LocalSymbolTable(javaClassName, symbolTable);
+        
         // if (n.getJavaDoc() != null) {
         // n.getJavaDoc().accept(this, arg);
         // }
         currentAnnotations = n.getAnnotations();
-        // if (annotations != null) {
-        // for (AnnotationExpr a : annotations) {
-        // a.accept(this, arg);
-        // printer.printLn();
-        // }
-        // }
-        printModifiers(n.getModifiers());
 
-        // printTypeParameters(n.getTypeParameters(), arg);
-        // if (n.getTypeParameters() != null) {
-        // printer.print(" ");
-        // }
+        printModifiers(n.getModifiers());
 
         printMethodNamespace();
         printer.print(className);
@@ -1430,20 +1375,10 @@ public class CppVisitor implements VoidVisitor<Object> {
         }
         printer.print(")");
 
-        // if (n.getThrows() != null) {
-        // printer.print(" throws ");
-        // for (Iterator<NameExpr> i = n.getThrows().iterator(); i.hasNext();) {
-        // NameExpr name = i.next();
-        // name.accept(this, arg);
-        // if (i.hasNext()) {
-        // printer.print(", ");
-        // }
-        // }
-        // }
         printConstructorBody(n.getBlock(), arg);
     }
 
-    protected void printConstructorBody(BlockStmt block, Object arg) {
+    protected void printConstructorBody(BlockStmt block, LocalSymbolTable arg) {
         inConstructorBody = true;
         List<Statement> statements = block.getStmts();
         List<Statement> nonAssigns = new LinkedList<Statement>();
@@ -1488,7 +1423,8 @@ public class CppVisitor implements VoidVisitor<Object> {
         printer.printLn();
     }
 
-    public void visit(MethodDeclaration n, Object arg) {
+    public void visit(MethodDeclaration n, LocalSymbolTable arg) {
+        arg = new LocalSymbolTable(javaClassName, symbolTable);
         if (isPrintableMethod(n.getModifiers())
                 && !(n.getName().equals("endCoalescing") || n.getName().equals(
                         "startCoalescing"))) {
@@ -1500,7 +1436,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         return !(ModifierSet.isAbstract(modifiers) || (ModifierSet.isProtected(modifiers) && !(ModifierSet.isFinal(modifiers) || "Tokenizer".equals(javaClassName))));
     }
 
-    protected void printMethodDeclaration(MethodDeclaration n, Object arg) {
+    protected void printMethodDeclaration(MethodDeclaration n, LocalSymbolTable arg) {
         if (n.getName().startsWith("fatal") || n.getName().startsWith("err")
                 || n.getName().startsWith("warn")
                 || n.getName().startsWith("maybeErr")
@@ -1570,7 +1506,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         }
     }
 
-    private void printMethodBody(BlockStmt n, Object arg) {
+    private void printMethodBody(BlockStmt n, LocalSymbolTable arg) {
         if (n == null) {
             printer.print(";");
         } else {
@@ -1602,16 +1538,11 @@ public class CppVisitor implements VoidVisitor<Object> {
         printer.print("::");
     }
 
-    public void visit(Parameter n, Object arg) {
+    public void visit(Parameter n, LocalSymbolTable arg) {
         currentAnnotations = n.getAnnotations();
-        // if (annotations != null) {
-        // for (AnnotationExpr a : annotations) {
-        // a.accept(this, arg);
-        // printer.print(" ");
-        // }
-        // }
-        // printModifiers(n.getModifiers());
 
+        arg.putLocalType(n.getId().getName(), convertType(n.getType(), n.getModifiers()));
+        
         n.getType().accept(this, arg);
         if (n.isVarArgs()) {
             printer.print("...");
@@ -1621,7 +1552,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         currentAnnotations = null;
     }
 
-    public void visit(ExplicitConstructorInvocationStmt n, Object arg) {
+    public void visit(ExplicitConstructorInvocationStmt n, LocalSymbolTable arg) {
         if (n.isThis()) {
             printTypeArgs(n.getTypeArgs(), arg);
             printer.print("this");
@@ -1646,16 +1577,11 @@ public class CppVisitor implements VoidVisitor<Object> {
         printer.print(");");
     }
 
-    public void visit(VariableDeclarationExpr n, Object arg) {
+    public void visit(VariableDeclarationExpr n, LocalSymbolTable arg) {
         currentAnnotations = n.getAnnotations();
-        // if (annotations != null) {
-        // for (AnnotationExpr a : annotations) {
-        // a.accept(this, arg);
-        // printer.print(" ");
-        // }
-        // }
-        // printModifiers(n.getModifiers());
 
+        arg.putLocalType(n.getVars().get(0).toString(), convertType(n.getType(), n.getModifiers()));
+        
         n.getType().accept(this, arg);
         printer.print(" ");
 
@@ -1669,14 +1595,14 @@ public class CppVisitor implements VoidVisitor<Object> {
         currentAnnotations = null;
     }
 
-    public void visit(TypeDeclarationStmt n, Object arg) {
+    public void visit(TypeDeclarationStmt n, LocalSymbolTable arg) {
         n.getTypeDeclaration().accept(this, arg);
     }
 
-    public void visit(AssertStmt n, Object arg) {
+    public void visit(AssertStmt n, LocalSymbolTable arg) {
     }
 
-    public void visit(BlockStmt n, Object arg) {
+    public void visit(BlockStmt n, LocalSymbolTable arg) {
         printer.printLn("{");
         if (n.getStmts() != null) {
             printer.indent();
@@ -1690,7 +1616,7 @@ public class CppVisitor implements VoidVisitor<Object> {
 
     }
 
-    public void visit(LabeledStmt n, Object arg) {
+    public void visit(LabeledStmt n, LocalSymbolTable arg) {
         // Only conditionless for loops are needed and supported
         // Not implementing general Java continue semantics in order
         // to keep the generated C++ more readable.
@@ -1719,11 +1645,11 @@ public class CppVisitor implements VoidVisitor<Object> {
         }
     }
 
-    public void visit(EmptyStmt n, Object arg) {
+    public void visit(EmptyStmt n, LocalSymbolTable arg) {
         printer.print(";");
     }
 
-    public void visit(ExpressionStmt n, Object arg) {
+    public void visit(ExpressionStmt n, LocalSymbolTable arg) {
         Expression e = n.getExpression();
         if (isDroppedExpression(e)) {
             return;
@@ -1747,7 +1673,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         return false;
     }
 
-    public void visit(SwitchStmt n, Object arg) {
+    public void visit(SwitchStmt n, LocalSymbolTable arg) {
         printer.print("switch(");
         n.getSelector().accept(this, arg);
         printer.printLn(") {");
@@ -1762,7 +1688,7 @@ public class CppVisitor implements VoidVisitor<Object> {
 
     }
 
-    public void visit(SwitchEntryStmt n, Object arg) {
+    public void visit(SwitchEntryStmt n, LocalSymbolTable arg) {
         if (n.getLabel() != null) {
             printer.print("case ");
             n.getLabel().accept(this, arg);
@@ -1813,7 +1739,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         return false;
     }
 
-    public void visit(BreakStmt n, Object arg) {
+    public void visit(BreakStmt n, LocalSymbolTable arg) {
         if (n.getId() != null) {
             printer.print("goto ");
             printer.print(n.getId());
@@ -1824,7 +1750,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         printer.print(";");
     }
 
-    public void visit(ReturnStmt n, Object arg) {
+    public void visit(ReturnStmt n, LocalSymbolTable arg) {
         printer.print("return");
         if (n.getExpr() != null) {
             printer.print(" ");
@@ -1833,7 +1759,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         printer.print(";");
     }
 
-    public void visit(EnumDeclaration n, Object arg) {
+    public void visit(EnumDeclaration n, LocalSymbolTable arg) {
         if (n.getJavaDoc() != null) {
             n.getJavaDoc().accept(this, arg);
         }
@@ -1886,7 +1812,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         printer.print("}");
     }
 
-    public void visit(EnumConstantDeclaration n, Object arg) {
+    public void visit(EnumConstantDeclaration n, LocalSymbolTable arg) {
         if (n.getJavaDoc() != null) {
             n.getJavaDoc().accept(this, arg);
         }
@@ -1922,14 +1848,14 @@ public class CppVisitor implements VoidVisitor<Object> {
         }
     }
 
-    public void visit(EmptyMemberDeclaration n, Object arg) {
+    public void visit(EmptyMemberDeclaration n, LocalSymbolTable arg) {
         if (n.getJavaDoc() != null) {
             n.getJavaDoc().accept(this, arg);
         }
         printer.print(";");
     }
 
-    public void visit(InitializerDeclaration n, Object arg) {
+    public void visit(InitializerDeclaration n, LocalSymbolTable arg) {
         if (n.getJavaDoc() != null) {
             n.getJavaDoc().accept(this, arg);
         }
@@ -1939,7 +1865,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         n.getBlock().accept(this, arg);
     }
 
-    public void visit(IfStmt n, Object arg) {
+    public void visit(IfStmt n, LocalSymbolTable arg) {
         if (!isErrorHandlerIf(n.getCondition())) {
             printer.print("if (");
             n.getCondition().accept(this, arg);
@@ -1960,14 +1886,14 @@ public class CppVisitor implements VoidVisitor<Object> {
         return false;
     }
 
-    public void visit(WhileStmt n, Object arg) {
+    public void visit(WhileStmt n, LocalSymbolTable arg) {
         printer.print("while (");
         n.getCondition().accept(this, arg);
         printer.print(") ");
         n.getBody().accept(this, arg);
     }
 
-    public void visit(ContinueStmt n, Object arg) {
+    public void visit(ContinueStmt n, LocalSymbolTable arg) {
         // Not supporting the general Java continue semantics.
         // Instead, making the generated code more readable for the
         // case at hand.
@@ -1985,7 +1911,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         printer.print(";");
     }
 
-    public void visit(DoStmt n, Object arg) {
+    public void visit(DoStmt n, LocalSymbolTable arg) {
         printer.print("do ");
         n.getBody().accept(this, arg);
         printer.print(" while (");
@@ -1993,7 +1919,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         printer.print(");");
     }
 
-    public void visit(ForeachStmt n, Object arg) {
+    public void visit(ForeachStmt n, LocalSymbolTable arg) {
         printer.print("for (");
         n.getVariable().accept(this, arg);
         printer.print(" : ");
@@ -2002,7 +1928,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         n.getBody().accept(this, arg);
     }
 
-    public void visit(ForStmt n, Object arg) {
+    public void visit(ForStmt n, LocalSymbolTable arg) {
         printer.print("for (");
         if (n.getInit() != null) {
             for (Iterator<Expression> i = n.getInit().iterator(); i.hasNext();) {
@@ -2031,20 +1957,20 @@ public class CppVisitor implements VoidVisitor<Object> {
         n.getBody().accept(this, arg);
     }
 
-    public void visit(ThrowStmt n, Object arg) {
+    public void visit(ThrowStmt n, LocalSymbolTable arg) {
         printer.print("throw ");
         n.getExpr().accept(this, arg);
         printer.print(";");
     }
 
-    public void visit(SynchronizedStmt n, Object arg) {
+    public void visit(SynchronizedStmt n, LocalSymbolTable arg) {
         printer.print("synchronized (");
         n.getExpr().accept(this, arg);
         printer.print(") ");
         n.getBlock().accept(this, arg);
     }
 
-    public void visit(TryStmt n, Object arg) {
+    public void visit(TryStmt n, LocalSymbolTable arg) {
         printer.print("try ");
         n.getTryBlock().accept(this, arg);
         if (n.getCatchs() != null) {
@@ -2058,7 +1984,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         }
     }
 
-    public void visit(CatchClause n, Object arg) {
+    public void visit(CatchClause n, LocalSymbolTable arg) {
         printer.print(" catch (");
         n.getExcept().accept(this, arg);
         printer.print(") ");
@@ -2066,7 +1992,7 @@ public class CppVisitor implements VoidVisitor<Object> {
 
     }
 
-    public void visit(AnnotationDeclaration n, Object arg) {
+    public void visit(AnnotationDeclaration n, LocalSymbolTable arg) {
         if (n.getJavaDoc() != null) {
             n.getJavaDoc().accept(this, arg);
         }
@@ -2091,7 +2017,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         printer.print("}");
     }
 
-    public void visit(AnnotationMemberDeclaration n, Object arg) {
+    public void visit(AnnotationMemberDeclaration n, LocalSymbolTable arg) {
         if (n.getJavaDoc() != null) {
             n.getJavaDoc().accept(this, arg);
         }
@@ -2116,12 +2042,12 @@ public class CppVisitor implements VoidVisitor<Object> {
         printer.print(";");
     }
 
-    public void visit(MarkerAnnotationExpr n, Object arg) {
+    public void visit(MarkerAnnotationExpr n, LocalSymbolTable arg) {
         printer.print("@");
         n.getName().accept(this, arg);
     }
 
-    public void visit(SingleMemberAnnotationExpr n, Object arg) {
+    public void visit(SingleMemberAnnotationExpr n, LocalSymbolTable arg) {
         printer.print("@");
         n.getName().accept(this, arg);
         printer.print("(");
@@ -2129,7 +2055,7 @@ public class CppVisitor implements VoidVisitor<Object> {
         printer.print(")");
     }
 
-    public void visit(NormalAnnotationExpr n, Object arg) {
+    public void visit(NormalAnnotationExpr n, LocalSymbolTable arg) {
         printer.print("@");
         n.getName().accept(this, arg);
         printer.print("(");
@@ -2145,18 +2071,18 @@ public class CppVisitor implements VoidVisitor<Object> {
         printer.print(")");
     }
 
-    public void visit(MemberValuePair n, Object arg) {
+    public void visit(MemberValuePair n, LocalSymbolTable arg) {
         printer.print(n.getName());
         printer.print(" = ");
         n.getValue().accept(this, arg);
     }
 
-    public void visit(LineComment n, Object arg) {
+    public void visit(LineComment n, LocalSymbolTable arg) {
         printer.print("//");
         printer.printLn(n.getContent());
     }
 
-    public void visit(BlockComment n, Object arg) {
+    public void visit(BlockComment n, LocalSymbolTable arg) {
         printer.print("/*");
         printer.print(n.getContent());
         printer.printLn("*/");

@@ -15,7 +15,7 @@
  *
  * The Initial Developer of the Original Code is
  * Mozilla Foundation.
- * Portions created by the Initial Developer are Copyright (C) 2008
+ * Portions created by the Initial Developer are Copyright (C) 2009
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
@@ -37,44 +37,37 @@
 
 package nu.validator.htmlparser.cpptranslate;
 
-import java.util.HashMap;
-import java.util.Map;
+public class StringPair {
 
-public class SymbolTable {
-    
-    public final Map<String, String> cppDefinesByJavaNames = new HashMap<String, String>();
-
-    private final Map<StringPair, Type> fields = new HashMap<StringPair, Type>();
-    
-    private final Map<StringPair, Type> methodReturns = new HashMap<StringPair, Type>();
-    
     /**
-     * This is a sad hack to work around the fact the there's no real symbol
-     * table yet.
-     * 
-     * @param name
-     * @return
+     * @param first
+     * @param second
      */
-    public boolean isNotAnAttributeOrElementName(String name) {
-        return !("ATTRIBUTE_HASHES".equals(name)
-                || "ATTRIBUTE_NAMES".equals(name)
-                || "ELEMENT_HASHES".equals(name)
-                || "ELEMENT_NAMES".equals(name) || "ALL_NO_NS".equals(name));
+    public StringPair(String first, String second) {
+        this.first = first;
+        this.second = second;
     }
-    
-    public void putFieldType(String klazz, String field, Type type) {
-        fields.put(new StringPair(klazz, field), type);
+
+    private final String first;
+
+    private final String second;
+
+    /**
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override public boolean equals(Object o) {
+        if (o instanceof StringPair) {
+            StringPair other = (StringPair) o;
+            return first.equals(other.first) && second.equals(other.second);
+        }
+        return false;
     }
-    
-    public void putMethodReturnType(String klazz, String method, Type type) {
-        methodReturns.put(new StringPair(klazz, method), type);
+
+    /**
+     * @see java.lang.Object#hashCode()
+     */
+    @Override public int hashCode() {
+        return first.hashCode() ^ second.hashCode();
     }
-    
-    public Type getFieldType(String klazz, String field) {
-        return fields.get(new StringPair(klazz, field));
-    }
-    
-    public Type getMethodReturnType(String klazz, String method) {
-        return methodReturns.get(new StringPair(klazz, method));
-    }
+
 }

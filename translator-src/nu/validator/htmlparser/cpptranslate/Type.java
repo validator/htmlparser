@@ -15,7 +15,7 @@
  *
  * The Initial Developer of the Original Code is
  * Mozilla Foundation.
- * Portions created by the Initial Developer are Copyright (C) 2008
+ * Portions created by the Initial Developer are Copyright (C) 2009
  * the Initial Developer. All Rights Reserved.
  *
  * Contributor(s):
@@ -37,44 +37,63 @@
 
 package nu.validator.htmlparser.cpptranslate;
 
-import java.util.HashMap;
-import java.util.Map;
+public class Type {
 
-public class SymbolTable {
-    
-    public final Map<String, String> cppDefinesByJavaNames = new HashMap<String, String>();
-
-    private final Map<StringPair, Type> fields = new HashMap<StringPair, Type>();
-    
-    private final Map<StringPair, Type> methodReturns = new HashMap<StringPair, Type>();
-    
     /**
-     * This is a sad hack to work around the fact the there's no real symbol
-     * table yet.
-     * 
-     * @param name
-     * @return
+     * @param type
+     * @param arrayCount
+     * @param noLength
+     * @param modifiers
      */
-    public boolean isNotAnAttributeOrElementName(String name) {
-        return !("ATTRIBUTE_HASHES".equals(name)
-                || "ATTRIBUTE_NAMES".equals(name)
-                || "ELEMENT_HASHES".equals(name)
-                || "ELEMENT_NAMES".equals(name) || "ALL_NO_NS".equals(name));
+    public Type(String type, int arrayCount, boolean noLength, int modifiers) {
+        this.type = type;
+        this.arrayCount = arrayCount;
+        this.noLength = noLength;
+        this.modifiers = modifiers;
+    }
+
+    private final String type;
+    
+    private final int arrayCount;
+    
+    private final boolean noLength;
+    
+    private final int modifiers;
+
+    /**
+     * Returns the type.
+     * 
+     * @return the type
+     */
+    public String getType() {
+        return type;
+    }
+
+    /**
+     * Returns the arrayCount.
+     * 
+     * @return the arrayCount
+     */
+    public int getArrayCount() {
+        return arrayCount;
+    }
+
+    /**
+     * Returns the noLength.
+     * 
+     * @return the noLength
+     */
+    public boolean isNoLength() {
+        return noLength;
+    }
+
+    /**
+     * Returns the modifiers.
+     * 
+     * @return the modifiers
+     */
+    public int getModifiers() {
+        return modifiers;
     }
     
-    public void putFieldType(String klazz, String field, Type type) {
-        fields.put(new StringPair(klazz, field), type);
-    }
-    
-    public void putMethodReturnType(String klazz, String method, Type type) {
-        methodReturns.put(new StringPair(klazz, method), type);
-    }
-    
-    public Type getFieldType(String klazz, String field) {
-        return fields.get(new StringPair(klazz, field));
-    }
-    
-    public Type getMethodReturnType(String klazz, String method) {
-        return methodReturns.get(new StringPair(klazz, method));
-    }
 }
