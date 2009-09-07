@@ -352,11 +352,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
 
     protected ErrorHandler errorHandler;
 
-    // ]NOCPP]
-
     private DocumentModeHandler documentModeHandler;
-
-    // [NOCPP[
 
     private DoctypeExpectation doctypeExpectation = DoctypeExpectation.HTML;
 
