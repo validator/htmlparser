@@ -1101,6 +1101,18 @@ public class Tokenizer implements Locator {
     }
 
     /**
+     * Reports a warning/error based on the profile
+     * 
+     * @param profile
+     *            the profile this message belongs to
+     * @param message
+     *            the message itself
+     * @throws SAXException
+     */
+    public void note(String profile, String message) throws SAXException {
+    }
+
+    /**
      * Reports a warning
      * 
      * @param message
@@ -1193,6 +1205,8 @@ public class Tokenizer implements Locator {
     }
 
     private void addAttributeWithoutValue() throws SAXException {
+        note("xhtml2", "Attribute without value");
+
         // [NOCPP[
         if (metaBoundaryPassed && AttributeName.CHARSET == attributeName
                 && ElementName.META == tagName) {
@@ -1878,6 +1892,7 @@ public class Tokenizer implements Locator {
                                  */
                                 clearLongStrBuf();
                                 state = Tokenizer.ATTRIBUTE_VALUE_UNQUOTED;
+                                note("xhtml1", "Unquoted attribute value.");
                                 reconsume = true;
                                 continue stateloop;
                             case '\'':
@@ -1933,6 +1948,7 @@ public class Tokenizer implements Locator {
                                  */
 
                                 state = Tokenizer.ATTRIBUTE_VALUE_UNQUOTED;
+                                note("xhtml1", "Unquoted attribute value.");
                                 continue stateloop;
                         }
                     }

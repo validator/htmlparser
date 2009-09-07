@@ -28,6 +28,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.HashMap;
 
 import nu.validator.htmlparser.common.CharacterHandler;
 import nu.validator.htmlparser.common.DoctypeExpectation;
@@ -136,6 +137,8 @@ public class HtmlParser implements XMLReader {
 
     private Heuristics heuristics = Heuristics.NONE;
 
+    private HashMap<String, String> errorProfileMap = null;
+
     /**
      * Instantiates the parser with a fatal XML violation policy.
      *
@@ -153,15 +156,14 @@ public class HtmlParser implements XMLReader {
     }    
 
     private Tokenizer newTokenizer(TokenHandler handler, boolean newAttributesEachTime) {
-        if (errorHandler != null) {
-            return new ErrorReportingTokenizer(handler, newAttributesEachTime);
-        } else {
-            if (contentNonXmlCharPolicy == XmlViolationPolicy.ALLOW) {
-                return new Tokenizer(handler, newAttributesEachTime);
-            } else {
-                return new ErrorReportingTokenizer(handler, newAttributesEachTime);
-            }
+        if (errorHandler == null && 
+            contentNonXmlCharPolicy == XmlViolationPolicy.ALLOW) {
+            return new Tokenizer(handler, newAttributesEachTime);
         }
+        ErrorReportingTokenizer tokenizer = 
+            new ErrorReportingTokenizer(handler, newAttributesEachTime);
+        tokenizer.setErrorProfile(errorProfileMap);
+        return tokenizer;
    }
     
     /**
@@ -945,6 +947,14 @@ public class HtmlParser implements XMLReader {
      */
     public boolean isReportingDoctype() {
         return reportingDoctype;
+    }
+
+    /**
+     * @param errorProfile
+     * @see nu.validator.htmlparser.impl.errorReportingTokenizer#setErrorProfile(set)
+     */
+    public void setErrorProfile(HashMap<String, String> errorProfileMap) {
+        this.errorProfileMap = errorProfileMap;
     }
 
     /**
