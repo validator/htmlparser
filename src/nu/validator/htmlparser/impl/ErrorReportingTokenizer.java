@@ -27,6 +27,8 @@ import nu.validator.htmlparser.annotation.NoLength;
 import nu.validator.htmlparser.common.TokenHandler;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
 
+import java.util.HashMap;
+
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
@@ -72,6 +74,8 @@ public class ErrorReportingTokenizer extends Tokenizer {
 
     private char prev;
     
+    private HashMap<String, String> errorProfileMap = null;
+
     /**
      * @param tokenHandler
      * @param newAttributesEachTime
@@ -121,6 +125,37 @@ public class ErrorReportingTokenizer extends Tokenizer {
         this.contentNonXmlCharPolicy = contentNonXmlCharPolicy;
     }
     
+    /**
+     * Sets the errorProfile.
+     * 
+     * @param errorProfile
+     */
+    public void setErrorProfile(HashMap<String, String> errorProfileMap) {
+        this.errorProfileMap = errorProfileMap;
+    }
+
+
+    /**
+     * Reports on an event based on profile selected.
+     * 
+     * @param profile
+     *            the profile this message belongs to
+     * @param message
+     *            the message itself
+     * @throws SAXException
+     */
+    public void note(String profile, String message) throws SAXException {
+        if (errorProfileMap == null) return;
+        String level = errorProfileMap.get(profile); 
+        if ("warn".equals(level)) {
+           warn(message);
+        } else if ("err".equals(level)) {
+           err(message);
+        // } else if ("info".equals(level)) {
+        //   info(message);
+        }
+    }
+
     protected void startErrorReporting() throws SAXException {
         alreadyComplainedAboutNonAscii = false;   
         line = linePrev = 0;
