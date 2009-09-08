@@ -687,4 +687,12 @@ public class ErrorReportingTokenizer extends Tokenizer {
     @Override protected void errHyphenHyphenBang() throws SAXException {
         err("\u201C--!\u201D found in comment.");
     }
+
+    @Override protected void noteAttributeWithoutValue() throws SAXException {
+        note("xhtml2", "Attribute without value");
+    }
+
+    @Override protected void noteUnquotedAttributeValue() throws SAXException {
+        note("xhtml1", "Unquoted attribute value.");
+    }
 }
