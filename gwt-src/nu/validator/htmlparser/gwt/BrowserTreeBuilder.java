@@ -303,23 +303,9 @@ class BrowserTreeBuilder extends CoalescingTreeBuilder<JavaScriptObject> {
                         return node.nodeType;
                     }-*/;
 
-    private static native JavaScriptObject cloneNode(JavaScriptObject node) /*-{
-                        return node.cloneNode(false);
-                    }-*/;
-
     private static native JavaScriptObject cloneNodeDeep(JavaScriptObject node) /*-{
               return node.cloneNode(true);
            }-*/;
-
-    @Override protected JavaScriptObject shallowClone(JavaScriptObject element)
-            throws SAXException {
-        try {
-            return cloneNode(element);
-        } catch (JavaScriptException e) {
-            fatal(e);
-            throw new RuntimeException("Unreachable");
-        }
-    }
 
     /**
      * Returns the document.

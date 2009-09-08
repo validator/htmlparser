@@ -100,11 +100,6 @@ class SAXStreamer extends TreeBuilder<Attributes>{
     protected boolean hasChildren(Attributes element) throws SAXException {
         return false;
     }
-
-    @Override
-    protected Attributes shallowClone(Attributes element) throws SAXException {
-        return element;
-    }
     
     public void setContentHandler(ContentHandler handler) {
         contentHandler = handler;

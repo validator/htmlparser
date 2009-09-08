@@ -50,6 +50,10 @@ public final class Portability {
         return literal;
     }
     
+    public static String newStringFromString(String string) {
+        return string;
+    }
+    
     // XXX get rid of this
     public static char[] newCharArrayFromLocal(@Local String local) {
         return local.toCharArray();

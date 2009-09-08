@@ -69,13 +69,6 @@ class SAXTreeBuilder extends TreeBuilder<Element> {
     }
 
     @Override
-    protected Element shallowClone(Element element) {
-        Element newElt =  new Element(element, element.getUri(), element.getLocalName(), element.getQName(), element.getAttributes(), true, element.getPrefixMappings());
-        newElt.copyEndLocator(element);
-        return newElt;
-    }
-
-    @Override
     protected void appendElement(Element child, Element newParent) {
         newParent.appendChild(child);
     }

@@ -4182,14 +4182,17 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 // if (hasChildren(node.node)) { XXX AAA CHANGE
                 assert node == listOfActiveFormattingElements[nodeListPos];
                 assert node == stack[nodePos];
-                T clone = shallowClone(node.node);
+                T clone = createElement("http://www.w3.org/1999/xhtml",
+                        node.name, node.attributes.cloneAttributes());
                 StackNode<T> newNode = new StackNode<T>(node.group, node.ns,
                         node.name, clone, node.scoping, node.special,
-                        node.fosterParenting, node.popName); // creation
+                        node.fosterParenting, node.popName,
+                        node.attributes); // creation
                 // ownership
                 // goes
                 // to
                 // stack
+                node.dropAttributes(); // adopt ownership to newNode
                 stack[nodePos] = newNode;
                 newNode.retain(); // retain for list
                 listOfActiveFormattingElements[nodeListPos] = newNode;
@@ -4210,15 +4213,18 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                 detachFromParent(lastNode.node);
                 appendElement(lastNode.node, commonAncestor.node);
             }
-            T clone = shallowClone(formattingElt.node);
+            T clone = createElement("http://www.w3.org/1999/xhtml",
+                    formattingElt.name, formattingElt.attributes.cloneAttributes());
             StackNode<T> formattingClone = new StackNode<T>(
                     formattingElt.group, formattingElt.ns, formattingElt.name,
                     clone, formattingElt.scoping, formattingElt.special,
-                    formattingElt.fosterParenting, formattingElt.popName); // Ownership
-                                                                           // transfers
-                                                                           // to
-                                                                           // stack
-                                                                           // below
+                    formattingElt.fosterParenting, formattingElt.popName,
+                    formattingElt.attributes); // Ownership
+            // transfers
+            // to
+            // stack
+            // below
+            formattingElt.dropAttributes(); // transfer ownership to formattingClone
             appendChildrenToNewParent(furthestBlock.node, clone);
             appendElement(clone, furthestBlock.node);
             removeFromListOfActiveFormattingElements(formattingEltListPos);
@@ -4364,10 +4370,13 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         while (entryPos < listPtr) {
             entryPos++;
             StackNode<T> entry = listOfActiveFormattingElements[entryPos];
-            T clone = shallowClone(entry.node);
+            T clone = createElement("http://www.w3.org/1999/xhtml", entry.name,
+                    entry.attributes.cloneAttributes());
             StackNode<T> entryClone = new StackNode<T>(entry.group, entry.ns,
                     entry.name, clone, entry.scoping, entry.special,
-                    entry.fosterParenting, entry.popName);
+                    entry.fosterParenting, entry.popName,
+                    entry.attributes);
+            entry.dropAttributes(); // transfer ownership to entryClone
             StackNode<T> currentNode = stack[currentPtr];
             if (currentNode.fosterParenting) {
                 insertIntoFosterParent(clone);
@@ -4591,7 +4600,7 @@ public abstract class TreeBuilder<T> implements TokenHandler {
         } else {
             appendElement(elt, current.node);
         }
-        StackNode<T> node = new StackNode<T>(ns, elementName, elt);
+        StackNode<T> node = new StackNode<T>(ns, elementName, elt, attributes.cloneAttributes());
         push(node);
         append(node);
         node.retain(); // append doesn't retain itself
@@ -4831,8 +4840,6 @@ public abstract class TreeBuilder<T> implements TokenHandler {
     protected abstract void detachFromParent(T element) throws SAXException;
 
     protected abstract boolean hasChildren(T element) throws SAXException;
-
-    protected abstract T shallowClone(T element) throws SAXException;
 
     protected abstract void appendElement(T child, T newParent)
             throws SAXException;

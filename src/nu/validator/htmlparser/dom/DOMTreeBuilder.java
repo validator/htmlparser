@@ -216,20 +216,6 @@ class DOMTreeBuilder extends CoalescingTreeBuilder<Element> {
     }
 
     /**
-     * 
-     * @see nu.validator.htmlparser.impl.TreeBuilder#shallowClone(java.lang.Object)
-     */
-    @Override protected Element shallowClone(Element element)
-            throws SAXException {
-        try {
-            return (Element) element.cloneNode(false);
-        } catch (DOMException e) {
-            fatal(e);
-            throw new RuntimeException("Unreachable");
-        }
-    }
-
-    /**
      * @see nu.validator.htmlparser.impl.TreeBuilder#createElement(String,
      *      java.lang.String, org.xml.sax.Attributes, java.lang.Object)
      */
