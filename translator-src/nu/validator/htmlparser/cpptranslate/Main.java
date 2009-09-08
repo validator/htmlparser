@@ -117,21 +117,32 @@ public class Main {
         in.close();
     }
     
-    private static void parseFile(CppTypes cppTypes, File javaDirectory, File cppDirectory, String className, String fne, CppVisitor visitor) throws ParseException,
-            FileNotFoundException, UnsupportedEncodingException, IOException {
-        File file = new File(javaDirectory, className + ".java");
-        String license = new LicenseExtractor(file).extract();
-        CompilationUnit cu = JavaParser.parse(new NoCppInputStream(new FileInputStream(file)), "utf-8");
-        LabelVisitor labelVisitor = new LabelVisitor();
-        cu.accept(labelVisitor, null);
-        visitor.setLabels(labelVisitor.getLabels());
-        cu.accept(visitor, null);
-        FileOutputStream out = new FileOutputStream(new File(cppDirectory, cppTypes.classPrefix() + className + fne));
-        OutputStreamWriter w = new OutputStreamWriter(out, "utf-8");
-        w.write(license);
-        w.write("\n\n/*\n * THIS IS A GENERATED FILE. PLEASE DO NOT EDIT.\n * Please edit " + className + ".java instead and regenerate.\n */\n\n");
-        w.write(visitor.getSource());
-        w.close();
+    private static void parseFile(CppTypes cppTypes, File javaDirectory,
+            File cppDirectory, String className, String fne, CppVisitor visitor)
+            throws FileNotFoundException, UnsupportedEncodingException,
+            IOException {
+        File file = null;
+        try {
+            file = new File(javaDirectory, className + ".java");
+            String license = new LicenseExtractor(file).extract();
+            CompilationUnit cu = JavaParser.parse(new NoCppInputStream(
+                    new FileInputStream(file)), "utf-8");
+            LabelVisitor labelVisitor = new LabelVisitor();
+            cu.accept(labelVisitor, null);
+            visitor.setLabels(labelVisitor.getLabels());
+            cu.accept(visitor, null);
+            FileOutputStream out = new FileOutputStream(new File(cppDirectory,
+                    cppTypes.classPrefix() + className + fne));
+            OutputStreamWriter w = new OutputStreamWriter(out, "utf-8");
+            w.write(license);
+            w.write("\n\n/*\n * THIS IS A GENERATED FILE. PLEASE DO NOT EDIT.\n * Please edit "
+                    + className + ".java instead and regenerate.\n */\n\n");
+            w.write(visitor.getSource());
+            w.close();
+        } catch (ParseException e) {
+            System.err.println(file);
+            e.printStackTrace();
+        }
     }
 
 }

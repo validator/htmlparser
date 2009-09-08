@@ -187,24 +187,6 @@ class XOMTreeBuilder extends CoalescingTreeBuilder<Element> {
         }
     }
 
-    @Override
-    protected Element shallowClone(Element element) throws SAXException {
-        try {
-            Element rv = nodeFactory.makeElement(element.getLocalName(),
-                    element.getNamespaceURI());
-            for (int i = 0; i < element.getAttributeCount(); i++) {
-                Attribute attribute = element.getAttribute(i);
-                rv.addAttribute(nodeFactory.makeAttribute(
-                        attribute.getLocalName(), attribute.getNamespaceURI(),
-                        attribute.getValue(), attribute.getType()));
-            }
-            return rv;
-        } catch (XMLException e) {
-            fatal(e);
-            throw new RuntimeException("Unreachable");
-        }
-    }
-
     /**
      * Returns the document.
      * 

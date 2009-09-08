@@ -447,6 +447,25 @@ public final class HtmlAttributes implements Attributes {
         mode = AttributeName.SVG;
     }
 
+    public HtmlAttributes cloneAttributes() throws SAXException {
+        assert (length == 0 && xmlnsLength == 0) || mode == 0;
+        HtmlAttributes clone = new HtmlAttributes(0);
+        for (int i = 0; i < length; i++) {
+            clone.addAttribute(names[i].cloneAttributeName(), Portability.newStringFromString(values[i])
+            // [NOCPP[
+                   , XmlViolationPolicy.ALLOW
+            // ]NOCPP]
+            );
+        }
+        // [NOCPP[
+        for (int i = 0; i < xmlnsLength; i++) {
+            clone.addAttribute(xmlnsNames[i].cloneAttributeName(),
+                    xmlnsValues[i], XmlViolationPolicy.ALLOW);
+        }
+        // ]NOCPP]
+        return clone; // XXX!!!
+    }
+    
     // [NOCPP[
     
     void processNonNcNames(TreeBuilder<?> treeBuilder, XmlViolationPolicy namePolicy) throws SAXException {

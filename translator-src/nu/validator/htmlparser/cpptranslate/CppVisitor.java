@@ -1436,6 +1436,7 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
                 || n.getName().startsWith("warn")
                 || n.getName().startsWith("maybeErr")
                 || n.getName().startsWith("maybeWarn")
+                || n.getName().startsWith("note")
                 || "releaseArray".equals(n.getName())
                 || "deleteArray".equals(n.getName())
                 || "delete".equals(n.getName())) {
@@ -1661,7 +1662,7 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
             String name = methodCallExpr.getName();
             if (name.startsWith("fatal") || name.startsWith("err")
                     || name.startsWith("warn") || name.startsWith("maybeErr")
-                    || name.startsWith("maybeWarn")) {
+                    || name.startsWith("maybeWarn") || name.startsWith("note")) {
                 return true;
             }
         }

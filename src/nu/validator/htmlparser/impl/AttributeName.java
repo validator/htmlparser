@@ -37,7 +37,7 @@ public final class AttributeName
 //        implements Comparable<AttributeName> 
 {
 
-    private static final @NoLength @NsUri String[] ALL_NO_NS = { "", "", "",
+    static final @NoLength @NsUri String[] ALL_NO_NS = { "", "", "",
     // [NOCPP[
             ""
     // ]NOCPP]
@@ -71,7 +71,7 @@ public final class AttributeName
 
     // ]NOCPP]
 
-    private static final @NoLength @Prefix String[] ALL_NO_PREFIX = { null,
+    static final @NoLength @Prefix String[] ALL_NO_PREFIX = { null,
             null, null,
             // [NOCPP[
             null
@@ -158,7 +158,7 @@ public final class AttributeName
         return arr;
     }
 
-    private static @NoLength @Local String[] SAME_LOCAL(@Local String name) {
+    static @NoLength @Local String[] SAME_LOCAL(@Local String name) {
         @NoLength @Local String[] arr = new String[4];
         arr[0] = name;
         arr[1] = name;
@@ -347,6 +347,10 @@ public final class AttributeName
         Portability.deleteArray(local);
     }
 
+    @Virtual public AttributeName cloneAttributeName() {
+        return this;
+    }
+    
     // [NOCPP[
     static AttributeName create(@Local String name) {
         return new AttributeName(AttributeName.ALL_NO_NS,
