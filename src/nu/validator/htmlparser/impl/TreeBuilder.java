@@ -4462,10 +4462,10 @@ public abstract class TreeBuilder<T> implements TokenHandler {
                     }
                 } else if (ns != "http://www.w3.org/1999/xhtml" && name == AttributeName.XMLNS_XLINK) {
                     String xmlns = attributes.getXmlnsValue(i);
-                    if (!"http://www.w3org/1999/xlink".equals(xmlns)) {
+                    if (!"http://www.w3.org/1999/xlink".equals(xmlns)) {
                         err("Bad value \u201C"
                                 + xmlns
-                                + "\u201D for the attribute \u201Cxmlns:link\u201D (only \u201Chttp://www.w3org/1999/xlink\u201D permitted here).");
+                                + "\u201D for the attribute \u201Cxmlns:link\u201D (only \u201Chttp://www.w3.org/1999/xlink\u201D permitted here).");
                         switch (namePolicy) {
                             case ALTER_INFOSET:
                                 // fall through
