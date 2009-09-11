@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 Mozilla Foundation
+ * Copyright (c) 2008-2009 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -469,7 +469,7 @@ public final class NCName {
     private static void appendUHexTo(StringBuilder sb, int c) {
         sb.append('U');
         for (int i = 0; i < 6; i++) {
-            sb.append(HEX_TABLE[(c & 0xF0000) >> 16]);
+            sb.append(HEX_TABLE[(c & 0xF00000) >> 20]);
             c <<= 4;
         }
     }
