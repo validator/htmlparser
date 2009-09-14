@@ -73,35 +73,32 @@ public class CppTypes {
     }
 
     private static final String[] TREE_BUILDER_INCLUDES = { "prtypes",
-            "nsIAtom", "nsITimer", "nsString", "nsINameSpaceManager", "nsIContent",
-            "nsIDocument", "nsTraceRefcnt", "jArray", "nsHtml5DocumentMode",
-            "nsHtml5ArrayCopy", "nsHtml5NamedCharacters", "nsHtml5Parser",
-            "nsHtml5Atoms", "nsHtml5ByteReadable", "nsHtml5TreeOperation",
-            "nsHtml5PendingNotification", "nsHtml5StateSnapshot", "nsHtml5StackNode", 
-            "nsHtml5TreeOpExecutor", "nsHtml5StreamParser" };
+            "nsIAtom", "nsITimer", "nsString", "nsINameSpaceManager",
+            "nsIContent", "nsIDocument", "nsTraceRefcnt", "jArray",
+            "nsHtml5DocumentMode", "nsHtml5ArrayCopy",
+            "nsHtml5NamedCharacters", "nsHtml5Parser", "nsHtml5Atoms",
+            "nsHtml5ByteReadable", "nsHtml5TreeOperation",
+            "nsHtml5PendingNotification", "nsHtml5StateSnapshot",
+            "nsHtml5StackNode", "nsHtml5TreeOpExecutor", "nsHtml5StreamParser" };
 
     private static final String[] INCLUDES = { "prtypes", "nsIAtom",
-            "nsString", "nsINameSpaceManager", "nsIContent", "nsIDocument",
-            "nsTraceRefcnt", "jArray", "nsHtml5DocumentMode",
-            "nsHtml5ArrayCopy", "nsHtml5NamedCharacters",
-            "nsHtml5Atoms", "nsHtml5ByteReadable", "nsIUnicodeDecoder", };
+            "nsIAtomService", "nsString", "nsINameSpaceManager", "nsIContent",
+            "nsIDocument", "nsTraceRefcnt", "jArray", "nsHtml5DocumentMode",
+            "nsHtml5ArrayCopy", "nsHtml5NamedCharacters", "nsHtml5Atoms",
+            "nsHtml5ByteReadable", "nsIUnicodeDecoder", };
 
     private static final String[] OTHER_DECLATIONS = {};
 
-    private static final String[] TREE_BUILDER_OTHER_DECLATIONS = { };
+    private static final String[] TREE_BUILDER_OTHER_DECLATIONS = {};
 
     private static final String[] NAMED_CHARACTERS_INCLUDES = { "prtypes",
             "jArray", "nscore" };
 
     private static final String[] FORWARD_DECLARATIONS = { "nsHtml5StreamParser", };
-    
+
     private static final String[] CLASSES_THAT_NEED_SUPPLEMENT = {
-        "MetaScanner",
-        "StackNode",
-        "TreeBuilder",
-        "UTF16Buffer",
-    };
-    
+            "MetaScanner", "TreeBuilder", "UTF16Buffer", };
+
     private final Map<String, String> atomMap = new HashMap<String, String>();
 
     private final Writer atomWriter;
@@ -179,7 +176,7 @@ public class CppTypes {
     }
 
     public String nodeType() {
-        return "nsIContent*";
+        return "nsIContent**";
     }
 
     public String xhtmlNamespaceLiteral() {
@@ -258,7 +255,7 @@ public class CppTypes {
             return INCLUDES;
         }
     }
-    
+
     public String[] boilerplateDeclarations(String javaClass) {
         if ("TreeBuilder".equals(javaClass)) {
             return TREE_BUILDER_OTHER_DECLATIONS;
@@ -302,9 +299,13 @@ public class CppTypes {
     public String literalType() {
         return "const char*";
     }
-    
+
     public boolean hasSupplement(String javaClass) {
         return Arrays.binarySearch(CLASSES_THAT_NEED_SUPPLEMENT, javaClass) > -1;
+    }
+
+    public String internerType() {
+        return "nsIAtomService*";
     }
 
 }

@@ -471,6 +471,8 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
             name = cppTypes.classPrefix() + "TreeBuilder*";
         } else if ("EncodingDeclarationHandler".equals(name)) {
             name = cppTypes.encodingDeclarationHandlerType();
+        } else if ("Interner".equals(name)) {
+            name = cppTypes.internerType();
         } else if ("DocumentModeHandler".equals(name)) {
             name = cppTypes.documentModeHandlerType();
         } else if ("DocumentMode".equals(name)) {

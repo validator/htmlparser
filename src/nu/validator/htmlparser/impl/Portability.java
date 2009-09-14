@@ -25,6 +25,7 @@ package nu.validator.htmlparser.impl;
 import nu.validator.htmlparser.annotation.Literal;
 import nu.validator.htmlparser.annotation.Local;
 import nu.validator.htmlparser.annotation.NoLength;
+import nu.validator.htmlparser.common.Interner;
 
 public final class Portability {
 
@@ -34,7 +35,7 @@ public final class Portability {
      * Allocates a new local name object. In C++, the refcount must be set up in such a way that 
      * calling <code>releaseLocal</code> on the return value balances the refcount set by this method.
      */
-    public static @Local String newLocalNameFromBuffer(@NoLength char[] buf, int offset, int length) {
+    public static @Local String newLocalNameFromBuffer(@NoLength char[] buf, int offset, int length, Interner interner) {
         return new String(buf, offset, length).intern();
     }
 

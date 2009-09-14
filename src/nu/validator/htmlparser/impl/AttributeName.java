@@ -31,6 +31,7 @@ import nu.validator.htmlparser.annotation.NsUri;
 import nu.validator.htmlparser.annotation.Prefix;
 import nu.validator.htmlparser.annotation.QName;
 import nu.validator.htmlparser.annotation.Virtual;
+import nu.validator.htmlparser.common.Interner;
 
 public final class AttributeName
 // Uncomment to regenerate
@@ -188,13 +189,14 @@ public final class AttributeName
             // [NOCPP[
             , boolean checkNcName
     // ]NOCPP]
+            , Interner interner
     ) {
         // XXX deal with offset
         int hash = AttributeName.bufToHash(buf, length);
         int index = Arrays.binarySearch(AttributeName.ATTRIBUTE_HASHES, hash);
         if (index < 0) {
             return AttributeName.createAttributeName(
-                    Portability.newLocalNameFromBuffer(buf, offset, length)
+                    Portability.newLocalNameFromBuffer(buf, offset, length, interner)
                     // [NOCPP[
                     , checkNcName
             // ]NOCPP]
@@ -204,7 +206,7 @@ public final class AttributeName
             @Local String name = attributeName.getLocal(AttributeName.HTML);
             if (!Portability.localEqualsBuffer(name, buf, offset, length)) {
                 return AttributeName.createAttributeName(
-                        Portability.newLocalNameFromBuffer(buf, offset, length)
+                        Portability.newLocalNameFromBuffer(buf, offset, length, interner)
                         // [NOCPP[
                         , checkNcName
                 // ]NOCPP]
