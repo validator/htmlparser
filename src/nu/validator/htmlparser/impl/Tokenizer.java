@@ -39,6 +39,7 @@ import nu.validator.htmlparser.annotation.Inline;
 import nu.validator.htmlparser.annotation.Local;
 import nu.validator.htmlparser.annotation.NoLength;
 import nu.validator.htmlparser.common.EncodingDeclarationHandler;
+import nu.validator.htmlparser.common.Interner;
 import nu.validator.htmlparser.common.TokenHandler;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
 
@@ -468,6 +469,8 @@ public class Tokenizer implements Locator {
 
     private int line;
 
+    private Interner interner;
+
     // [NOCPP[
 
     protected LocatorImpl ampersandLocation;
@@ -496,6 +499,10 @@ public class Tokenizer implements Locator {
         // ]NOCPP]
         this.bmpChar = new char[1];
         this.astralChar = new char[2];
+    }
+    
+    public void setInterner(Interner interner) {
+        this.interner = interner;
     }
 
     public void initLocation(String newPublicId, String newSystemId) {
@@ -626,7 +633,7 @@ public class Tokenizer implements Locator {
         // XXX does this make any sense?
         char[] asArray = Portability.newCharArrayFromLocal(contentModelElement);
         this.contentModelElement = ElementName.elementNameByBuffer(asArray, 0,
-                asArray.length);
+                asArray.length, interner);
         Portability.releaseArray(asArray);
         contentModelElementToArray();
     }
@@ -833,7 +840,7 @@ public class Tokenizer implements Locator {
      * @return the smaller buffer as local name
      */
     private void strBufToDoctypeName() {
-        doctypeName = Portability.newLocalNameFromBuffer(strBuf, 0, strBufLen);
+        doctypeName = Portability.newLocalNameFromBuffer(strBuf, 0, strBufLen, interner);
     }
 
     /**
@@ -1121,11 +1128,11 @@ public class Tokenizer implements Locator {
     private void resetAttributes() {
         // [NOCPP[
         if (newAttributesEachTime) {
-            attributes = null;
-        } else {
             // ]NOCPP]
-            attributes.clear(mappingLangToXmlLang);
+            attributes = null;
             // [NOCPP[
+        } else {
+            attributes.clear(mappingLangToXmlLang);
         }
         // ]NOCPP]
     }
@@ -1134,7 +1141,7 @@ public class Tokenizer implements Locator {
         // if (strBufOffset != -1) {
         // return ElementName.elementNameByBuffer(buf, strBufOffset, strBufLen);
         // } else {
-        tagName = ElementName.elementNameByBuffer(strBuf, 0, strBufLen);
+        tagName = ElementName.elementNameByBuffer(strBuf, 0, strBufLen, interner);
         // }
     }
 
@@ -1168,14 +1175,13 @@ public class Tokenizer implements Locator {
         // [NOCPP[
                 , namePolicy != XmlViolationPolicy.ALLOW
         // ]NOCPP]
+                , interner
         );
         // }
 
-        // [NOCPP[
         if (attributes == null) {
             attributes = new HtmlAttributes(mappingLangToXmlLang);
         }
-        // ]NOCPP]
 
         /*
          * When the user agent leaves the attribute name state (and before
@@ -1314,8 +1320,10 @@ public class Tokenizer implements Locator {
         shouldSuspend = false;
         // [NOCPP[
         if (!newAttributesEachTime) {
-            // ]NOCPP]
             attributes = new HtmlAttributes(mappingLangToXmlLang);
+        } else {
+            // ]NOCPP]
+            attributes = null;
             // [NOCPP[
         }
         startErrorReporting();
