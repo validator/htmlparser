@@ -2145,11 +2145,12 @@ public class Tokenizer implements Locator {
                             case '&':
                                 /*
                                  * U+0026 AMPERSAND (&) Switch to the character
-                                 * reference in attribute value state, with no +
-                                 * additional allowed character.
+                                 * reference in attribute value state, with the
+                                 * additional allowed character being
+                                 * U+003E GREATER-THAN SIGN (>)
                                  */
                                 clearStrBufAndAppendCurrentC(c);
-                                rememberAmpersandLocation('\u0000');
+                                rememberAmpersandLocation('>');
                                 returnState = state;
                                 state = Tokenizer.CONSUME_CHARACTER_REFERENCE;
                                 continue stateloop;
