@@ -131,7 +131,12 @@ public class HVisitor extends CppVisitor {
         printer.printLn();
 
         printer.print("class ");
-        printer.printLn(className);
+        printer.print(className);
+        if ("StateSnapshot".equals(javaClassName) || "TreeBuilder".equals(javaClassName)) {
+            printer.print(" : public ");
+            printer.print(cppTypes.treeBuilderStateInterface());
+        }
+        printer.printLn();
         printer.printLn("{");
         printer.indent();
         printer.indent();

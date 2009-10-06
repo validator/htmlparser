@@ -349,7 +349,7 @@ public final class AttributeName
         Portability.deleteArray(local);
     }
 
-    @Virtual public AttributeName cloneAttributeName() {
+    @Virtual public AttributeName cloneAttributeName(Interner interner) {
         return this;
     }
     

@@ -481,6 +481,9 @@ public class Tokenizer implements Locator {
         this.newAttributesEachTime = newAttributesEachTime;
         this.bmpChar = new char[1];
         this.astralChar = new char[2];
+        this.attributes = null;
+        this.tagName = null;
+        this.attributeName = null;
     }
 
     // ]NOCPP]
@@ -499,6 +502,9 @@ public class Tokenizer implements Locator {
         // ]NOCPP]
         this.bmpChar = new char[1];
         this.astralChar = new char[2];
+        this.attributes = null;
+        this.tagName = null;
+        this.attributeName = null;
     }
     
     public void setInterner(Interner interner) {
@@ -1162,6 +1168,8 @@ public class Tokenizer implements Locator {
         } else {
             tokenHandler.startTag(tagName, attrs, selfClosing);
         }
+        tagName.release();
+        tagName = null;
         resetAttributes();
         return stateSave;
     }
@@ -1290,42 +1298,9 @@ public class Tokenizer implements Locator {
     }
 
     public void start() throws SAXException {
-        confident = false;
-        strBuf = new char[64];
-        strBufLen = 0;
-        longStrBuf = new char[1024];
-        longStrBufLen = 0;
-        stateSave = Tokenizer.DATA;
-        line = 1;
-        lastCR = false;
-        // [NOCPP[
-        html4 = false;
-        metaBoundaryPassed = false;
-        // ]NOCPP]
+        initializeWithoutStarting();
         tokenHandler.startTokenization(this);
         // [NOCPP[
-        wantsComments = tokenHandler.wantsComments();
-        // ]NOCPP]
-        index = 0;
-        forceQuirks = false;
-        additional = '\u0000';
-        entCol = -1;
-        lo = 0;
-        hi = (NamedCharacters.NAMES.length - 1);
-        candidate = -1;
-        strBufMark = 0;
-        prevValue = -1;
-        value = 0;
-        seenDigits = false;
-        shouldSuspend = false;
-        // [NOCPP[
-        if (!newAttributesEachTime) {
-            attributes = new HtmlAttributes(mappingLangToXmlLang);
-        } else {
-            // ]NOCPP]
-            attributes = null;
-            // [NOCPP[
-        }
         startErrorReporting();
         // ]NOCPP]
     }
@@ -5660,8 +5635,14 @@ public class Tokenizer implements Locator {
         systemIdentifier = null;
         publicIdentifier = null;
         doctypeName = null;
-        tagName = null;
-        attributeName = null;
+        if (tagName != null) {
+            tagName.release();
+            tagName = null;
+        }
+        if (attributeName != null) {
+            attributeName.release();
+            attributeName = null;
+        }
         tokenHandler.endTokenization();
         if (attributes != null) {
             attributes.clear(mappingLangToXmlLang);
@@ -5713,6 +5694,96 @@ public class Tokenizer implements Locator {
         return (stateSave == DATA);
     }
 
+    public void resetToDataState() {
+        strBufLen = 0;
+        longStrBufLen = 0;
+        stateSave = Tokenizer.DATA;
+//        line = 1; XXX line numbers
+        lastCR = false;
+        index = 0;
+        forceQuirks = false;
+        additional = '\u0000';
+        entCol = -1;
+        lo = 0;
+        hi = (NamedCharacters.NAMES.length - 1);
+        candidate = -1;
+        strBufMark = 0;
+        prevValue = -1;
+        value = 0;
+        seenDigits = false;
+        shouldSuspend = false;
+        if (tagName != null) {
+            tagName.release();
+            tagName = null;
+        }
+        if (attributeName != null) {
+            attributeName.release();
+            attributeName = null;
+        }
+        // [NOCPP[
+        if (newAttributesEachTime) {
+            // ]NOCPP]
+            if (attributes != null) {
+                Portability.delete(attributes);
+                attributes = null;                
+            }
+            // [NOCPP[
+        }
+        // ]NOCPP]
+    }
+    
+    public void loadState(Tokenizer other) throws SAXException {
+        strBufLen = other.strBufLen;
+        if (strBufLen > strBuf.length) {
+            Portability.releaseArray(strBuf);
+            strBuf = new char[strBufLen];
+        }
+        System.arraycopy(other.strBuf, 0, strBuf, 0, strBufLen);
+
+        longStrBufLen = other.longStrBufLen;
+        if (longStrBufLen > longStrBuf.length) {
+            Portability.releaseArray(longStrBuf);
+            longStrBuf = new char[longStrBufLen];
+        }
+        System.arraycopy(other.longStrBuf, 0, longStrBuf, 0, longStrBufLen);
+        
+        stateSave = other.stateSave;
+//        line = 1; XXX line numbers
+        lastCR = other.lastCR;
+        index = other.index;
+        forceQuirks = other.forceQuirks;
+        additional = other.additional;
+        entCol = other.entCol;
+        lo = other.lo;
+        hi = other.hi;
+        candidate = other.candidate;
+        strBufMark = other.strBufMark;
+        prevValue = other.prevValue;
+        value = other.value;
+        seenDigits = other.seenDigits;
+        shouldSuspend = false;
+        if (other.attributes == null) {
+            attributes = null;
+        } else {
+            attributes = other.attributes.cloneAttributes(interner);
+        }
+    }
+    
+    public void initializeWithoutStarting() throws SAXException {
+        confident = false;
+        strBuf = new char[64];
+        longStrBuf = new char[1024];
+        // [NOCPP[
+        html4 = false;
+        metaBoundaryPassed = false;
+        wantsComments = tokenHandler.wantsComments();
+        if (!newAttributesEachTime) {
+            attributes = new HtmlAttributes(mappingLangToXmlLang);
+        }
+        // ]NOCPP]        
+        resetToDataState();
+    }
+    
     protected void errGarbageAfterLtSlash() throws SAXException {
     }
 
