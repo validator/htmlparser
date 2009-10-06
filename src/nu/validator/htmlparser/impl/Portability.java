@@ -64,6 +64,10 @@ public final class Portability {
         return string.toCharArray();
     }
     
+    public static @Local String reget(@Local String local, Interner interner) {
+        return local;
+    }
+    
     // Deallocation methods
     
     public static void releaseString(String str) {
@@ -90,6 +94,9 @@ public final class Portability {
         // No-op in Java
     }    
     
+    // [NOCPP[
+    // These are no longer used in Gecko. Need to decide what to do about these in the long term.    
+    
     public static void retainElement(Object elt) {
         // No-op in Java
     }
@@ -97,6 +104,8 @@ public final class Portability {
     public static void releaseElement(Object elt) {
         // No-op in Java
     }
+    
+    // ]NOCPP]
     
     // Comparison methods
     

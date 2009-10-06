@@ -73,19 +73,21 @@ public class CppTypes {
     }
 
     private static final String[] TREE_BUILDER_INCLUDES = { "prtypes",
-            "nsIAtom", "nsITimer", "nsString", "nsINameSpaceManager",
-            "nsIContent", "nsIDocument", "nsTraceRefcnt", "jArray",
-            "nsHtml5DocumentMode", "nsHtml5ArrayCopy",
-            "nsHtml5NamedCharacters", "nsHtml5Parser", "nsHtml5Atoms",
-            "nsHtml5ByteReadable", "nsHtml5TreeOperation",
+            "nsIAtom", "nsHtml5AtomTable", "nsITimer", "nsString",
+            "nsINameSpaceManager", "nsIContent", "nsIDocument",
+            "nsTraceRefcnt", "jArray", "nsHtml5DocumentMode",
+            "nsHtml5ArrayCopy", "nsHtml5NamedCharacters", "nsHtml5Parser",
+            "nsHtml5Atoms", "nsHtml5ByteReadable", "nsHtml5TreeOperation",
             "nsHtml5PendingNotification", "nsHtml5StateSnapshot",
-            "nsHtml5StackNode", "nsHtml5TreeOpExecutor", "nsHtml5StreamParser" };
+            "nsHtml5StackNode", "nsHtml5TreeOpExecutor", "nsHtml5StreamParser",
+            "nsAHtml5TreeBuilderState" };
 
     private static final String[] INCLUDES = { "prtypes", "nsIAtom",
-            "nsIAtomService", "nsString", "nsINameSpaceManager", "nsIContent",
-            "nsIDocument", "nsTraceRefcnt", "jArray", "nsHtml5DocumentMode",
-            "nsHtml5ArrayCopy", "nsHtml5NamedCharacters", "nsHtml5Atoms",
-            "nsHtml5ByteReadable", "nsIUnicodeDecoder", };
+            "nsHtml5AtomTable", "nsString", "nsINameSpaceManager",
+            "nsIContent", "nsIDocument", "nsTraceRefcnt", "jArray",
+            "nsHtml5DocumentMode", "nsHtml5ArrayCopy",
+            "nsHtml5NamedCharacters", "nsHtml5Atoms", "nsHtml5ByteReadable",
+            "nsIUnicodeDecoder", "nsAHtml5TreeBuilderState" };
 
     private static final String[] OTHER_DECLATIONS = {};
 
@@ -305,7 +307,14 @@ public class CppTypes {
     }
 
     public String internerType() {
-        return "nsIAtomService*";
+        return "nsHtml5AtomTable*";
     }
 
+    public String treeBuilderStateInterface() {
+        return "nsAHtml5TreeBuilderState";
+    }
+
+    public String treeBuilderStateType() {
+        return "nsAHtml5TreeBuilderState*";
+    }
 }

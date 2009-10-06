@@ -239,7 +239,8 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
     protected void printModifiers(int modifiers) {
     }
 
-    private void printMembers(List<BodyDeclaration> members, LocalSymbolTable arg) {
+    private void printMembers(List<BodyDeclaration> members,
+            LocalSymbolTable arg) {
         for (BodyDeclaration member : members) {
             member.accept(this, arg);
         }
@@ -259,7 +260,8 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
         // }
     }
 
-    private void printTypeParameters(List<TypeParameter> args, LocalSymbolTable arg) {
+    private void printTypeParameters(List<TypeParameter> args,
+            LocalSymbolTable arg) {
         // if (args != null) {
         // printer.print("<");
         // for (Iterator<TypeParameter> i = args.iterator(); i.hasNext();) {
@@ -473,6 +475,8 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
             name = cppTypes.encodingDeclarationHandlerType();
         } else if ("Interner".equals(name)) {
             name = cppTypes.internerType();
+        } else if ("TreeBuilderState".equals(name)) {
+            name = cppTypes.treeBuilderStateType();
         } else if ("DocumentModeHandler".equals(name)) {
             name = cppTypes.documentModeHandlerType();
         } else if ("DocumentMode".equals(name)) {
@@ -1174,6 +1178,9 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
                 && "Portability".equals(n.getScope().toString())) {
             printer.print("delete ");
             n.getArgs().get(0).accept(this, arg);
+        } else if (("retainElement".equals(n.getName()) || "releaseElement".equals(n.getName()))
+                && "Portability".equals(n.getScope().toString())) {
+            // ignore for now
         } else if ("arraycopy".equals(n.getName())
                 && "System".equals(n.getScope().toString())) {
             printer.print(cppTypes.arrayCopy());
@@ -1348,7 +1355,7 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
         }
 
         arg = new LocalSymbolTable(javaClassName, symbolTable);
-        
+
         // if (n.getJavaDoc() != null) {
         // n.getJavaDoc().accept(this, arg);
         // }
@@ -1433,7 +1440,8 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
         return !(ModifierSet.isAbstract(modifiers) || (ModifierSet.isProtected(modifiers) && !(ModifierSet.isFinal(modifiers) || "Tokenizer".equals(javaClassName))));
     }
 
-    protected void printMethodDeclaration(MethodDeclaration n, LocalSymbolTable arg) {
+    protected void printMethodDeclaration(MethodDeclaration n,
+            LocalSymbolTable arg) {
         if (n.getName().startsWith("fatal") || n.getName().startsWith("err")
                 || n.getName().startsWith("warn")
                 || n.getName().startsWith("maybeErr")
@@ -1539,8 +1547,9 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
     public void visit(Parameter n, LocalSymbolTable arg) {
         currentAnnotations = n.getAnnotations();
 
-        arg.putLocalType(n.getId().getName(), convertType(n.getType(), n.getModifiers()));
-        
+        arg.putLocalType(n.getId().getName(), convertType(n.getType(),
+                n.getModifiers()));
+
         n.getType().accept(this, arg);
         if (n.isVarArgs()) {
             printer.print("...");
@@ -1578,8 +1587,9 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
     public void visit(VariableDeclarationExpr n, LocalSymbolTable arg) {
         currentAnnotations = n.getAnnotations();
 
-        arg.putLocalType(n.getVars().get(0).toString(), convertType(n.getType(), n.getModifiers()));
-        
+        arg.putLocalType(n.getVars().get(0).toString(), convertType(
+                n.getType(), n.getModifiers()));
+
         n.getType().accept(this, arg);
         printer.print(" ");
 
