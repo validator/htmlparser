@@ -25,8 +25,6 @@ package nu.validator.htmlparser.impl;
 
 public class StateSnapshot<T> implements TreeBuilderState<T> {
 
-    private final int mode;
-
     private final StackNode<T>[] stack;
 
     private final StackNode<T>[] listOfActiveFormattingElements;
@@ -34,6 +32,8 @@ public class StateSnapshot<T> implements TreeBuilderState<T> {
     private final T formPointer;
 
     private final T headPointer;
+
+    private final int mode;
 
     private final int originalMode;
 

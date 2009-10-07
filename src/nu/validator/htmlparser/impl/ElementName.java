@@ -127,6 +127,10 @@ public final class ElementName
         // for non-static cases the camel case contains the same pointer as a weak reference.
     }
 
+    @Virtual public ElementName cloneElementName(Interner interner) {
+        return this;
+    }
+    
     // START CODE ONLY USED FOR GENERATING CODE uncomment and run to regenerate
 
 //    /**
@@ -1509,6 +1513,5 @@ public final class ElementName
     642202932,
     644420819,
     };
-
 
 }

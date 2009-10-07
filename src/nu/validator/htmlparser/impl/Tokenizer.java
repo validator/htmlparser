@@ -1247,6 +1247,7 @@ public class Tokenizer implements Locator {
                 // [NOCPP[
             }
             // ]NOCPP]
+            attributeName = null; // attributeName has been adopted by the |attributes| object
         }
     }
 
@@ -1271,6 +1272,7 @@ public class Tokenizer implements Locator {
                     , xmlnsPolicy
             // ]NOCPP]
             );
+            attributeName = null; // attributeName has been adopted by the |attributes| object
         }
     }
 
@@ -5762,6 +5764,25 @@ public class Tokenizer implements Locator {
         value = other.value;
         seenDigits = other.seenDigits;
         shouldSuspend = false;
+        if (tagName != null) {
+            tagName.release();
+        }
+        if (other.tagName == null) {
+            tagName = null;
+        } else {
+            tagName = other.tagName.cloneElementName(interner);            
+        }
+        if (attributeName != null) {
+            attributeName.release();
+        }
+        if (other.attributeName == null) {
+            attributeName = null;
+        } else {
+            attributeName = other.attributeName.cloneAttributeName(interner);            
+        }
+        if (attributes != null) {
+            Portability.delete(attributes);
+        }
         if (other.attributes == null) {
             attributes = null;
         } else {
