@@ -64,7 +64,7 @@ public final class Portability {
         return string.toCharArray();
     }
     
-    public static @Local String reget(@Local String local, Interner interner) {
+    public static @Local String newLocalFromLocal(@Local String local, Interner interner) {
         return local;
     }
     

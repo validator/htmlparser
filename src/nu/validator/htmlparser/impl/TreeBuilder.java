@@ -1375,25 +1375,31 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         formPointer = null;
         Portability.releaseElement(headPointer);
         headPointer = null;
-        while (currentPtr > -1) {
-            stack[currentPtr].release();
-            currentPtr--;
-        }
-        Portability.releaseArray(stack);
-        stack = null;
-        while (listPtr > -1) {
-            if (listOfActiveFormattingElements[listPtr] != null) {
-                listOfActiveFormattingElements[listPtr].release();
+        if (stack != null) {
+            while (currentPtr > -1) {
+                stack[currentPtr].release();
+                currentPtr--;
             }
-            listPtr--;
+            Portability.releaseArray(stack);
+            stack = null;
         }
-        Portability.releaseArray(listOfActiveFormattingElements);
-        listOfActiveFormattingElements = null;
+        if (listOfActiveFormattingElements != null) {
+            while (listPtr > -1) {
+                if (listOfActiveFormattingElements[listPtr] != null) {
+                    listOfActiveFormattingElements[listPtr].release();
+                }
+                listPtr--;
+            }
+            Portability.releaseArray(listOfActiveFormattingElements);
+            listOfActiveFormattingElements = null;
+        }
         // [NOCPP[
         idLocations.clear();
         // ]NOCPP]
-        Portability.releaseArray(charBuffer);
-        charBuffer = null;
+        if (charBuffer != null) {
+            Portability.releaseArray(charBuffer);
+            charBuffer = null;
+        }
         end();
     }
 
@@ -5128,7 +5134,11 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         return foreignFlag == IN_FOREIGN;
     }
 
-    private final void flushCharacters() throws SAXException {
+    /**
+     * Flushes the pending characters. Public for document.write use cases only.
+     * @throws SAXException
+     */
+    public final void flushCharacters() throws SAXException {
         if (charBufferLen > 0) {
             StackNode<T> current = stack[currentPtr];
             if (current.fosterParenting && charBufferContainsNonWhitespace()) {
@@ -5209,7 +5219,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         return new StateSnapshot<T>(stackCopy, listCopy, formPointer, headPointer, mode, originalMode, foreignFlag, needToDropLF, quirks);
     }
 
-    public boolean snapshotMatches(StateSnapshot<T> snapshot) {
+    public boolean snapshotMatches(TreeBuilderState<T> snapshot) {
         StackNode<T>[] stackCopy = snapshot.getStack();
         int stackLen = snapshot.getStackLength();
         StackNode<T>[] listCopy = snapshot.getListOfActiveFormattingElements();
@@ -5279,9 +5289,9 @@ public abstract class TreeBuilder<T> implements TokenHandler,
             StackNode<T> node = listCopy[i];
             if (node != null) {
                 StackNode<T> newNode = new StackNode<T>(node.group, node.ns,
-                        Portability.reget(node.name, interner), node.node,
+                        Portability.newLocalFromLocal(node.name, interner), node.node,
                         node.scoping, node.special, node.fosterParenting,
-                        Portability.reget(node.popName, interner),
+                        Portability.newLocalFromLocal(node.popName, interner),
                         node.attributes.cloneAttributes(null));
                 listOfActiveFormattingElements[i] = newNode;
             } else {
@@ -5293,9 +5303,9 @@ public abstract class TreeBuilder<T> implements TokenHandler,
             int listIndex = findInArray(node, listCopy);
             if (listIndex == -1) {
                 StackNode<T> newNode = new StackNode<T>(node.group, node.ns,
-                        Portability.reget(node.name, interner), node.node,
+                        Portability.newLocalFromLocal(node.name, interner), node.node,
                         node.scoping, node.special, node.fosterParenting,
-                        Portability.reget(node.popName, interner),
+                        Portability.newLocalFromLocal(node.popName, interner),
                         null);
                 stack[i] = newNode;
             } else {
