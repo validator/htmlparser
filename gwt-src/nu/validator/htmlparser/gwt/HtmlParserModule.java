@@ -67,6 +67,7 @@ public class HtmlParserModule implements EntryPoint {
         }
         zapChildren(document);
         HtmlParser parser = new HtmlParser(document);
+        parser.setScriptingEnabled(true);
         // XXX error handler
         
         installDocWrite(document, parser);
