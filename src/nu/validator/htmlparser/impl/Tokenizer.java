@@ -368,10 +368,6 @@ public class Tokenizer implements Locator {
      * otherwise an offset to the main buffer.
      */
     // private int longStrBufOffset = -1;
-    /**
-     * The attribute holder.
-     */
-    private HtmlAttributes attributes;
 
     /**
      * Buffer for expanding NCRs falling into the Basic Multilingual Plane.
@@ -439,6 +435,11 @@ public class Tokenizer implements Locator {
      */
     private String systemIdentifier;
 
+    /**
+     * The attribute holder.
+     */
+    private HtmlAttributes attributes;
+
     // [NOCPP[
 
     /**
@@ -481,9 +482,12 @@ public class Tokenizer implements Locator {
         this.newAttributesEachTime = newAttributesEachTime;
         this.bmpChar = new char[1];
         this.astralChar = new char[2];
-        this.attributes = null;
         this.tagName = null;
         this.attributeName = null;
+        this.doctypeName = null;
+        this.publicIdentifier = null;
+        this.systemIdentifier = null;
+        this.attributes = null;
     }
 
     // ]NOCPP]
@@ -502,9 +506,12 @@ public class Tokenizer implements Locator {
         // ]NOCPP]
         this.bmpChar = new char[1];
         this.astralChar = new char[2];
-        this.attributes = null;
         this.tagName = null;
         this.attributeName = null;
+        this.doctypeName = null;
+        this.publicIdentifier = null;
+        this.systemIdentifier = null;
+        this.attributes = null;
     }
     
     public void setInterner(Interner interner) {
@@ -4921,10 +4928,17 @@ public class Tokenizer implements Locator {
         return pos;
     }
 
-    @Inline private void initDoctypeFields() {
+    private void initDoctypeFields() {
+        Portability.releaseLocal(doctypeName);
         doctypeName = "";
-        systemIdentifier = null;
-        publicIdentifier = null;
+        if (systemIdentifier != null) {
+            Portability.releaseString(systemIdentifier);
+            systemIdentifier = null;
+        }
+        if (publicIdentifier != null) {
+            Portability.releaseString(publicIdentifier);
+            publicIdentifier = null;            
+        }
         forceQuirks = false;
     }
 
@@ -5209,9 +5223,16 @@ public class Tokenizer implements Locator {
                          * Create a new DOCTYPE token. Set its force-quirks flag
                          * to on.
                          */
+                        Portability.releaseLocal(doctypeName);
                         doctypeName = "";
-                        publicIdentifier = null;
-                        systemIdentifier = null;
+                        if (systemIdentifier != null) {
+                            Portability.releaseString(systemIdentifier);
+                            systemIdentifier = null;
+                        }
+                        if (publicIdentifier != null) {
+                            Portability.releaseString(publicIdentifier);
+                            publicIdentifier = null;            
+                        }
                         forceQuirks = true;
                         /*
                          * Emit the token.
@@ -5581,8 +5602,11 @@ public class Tokenizer implements Locator {
         // there's no way out of the doctype states than through paths
         // that call this method.
         Portability.releaseLocal(doctypeName);
+        doctypeName = null;
         Portability.releaseString(publicIdentifier);
+        publicIdentifier = null;
         Portability.releaseString(systemIdentifier);
+        systemIdentifier = null;
     }
 
     @Inline protected char checkChar(@NoLength char[] buf, int pos)
@@ -5632,11 +5656,20 @@ public class Tokenizer implements Locator {
     }
 
     public void end() throws SAXException {
+        Portability.releaseArray(strBuf);
         strBuf = null;
+        Portability.releaseArray(longStrBuf);
         longStrBuf = null;
-        systemIdentifier = null;
-        publicIdentifier = null;
+        Portability.releaseLocal(doctypeName);
         doctypeName = null;
+        if (systemIdentifier != null) {
+            Portability.releaseString(systemIdentifier);
+            systemIdentifier = null;
+        }
+        if (publicIdentifier != null) {
+            Portability.releaseString(publicIdentifier);
+            publicIdentifier = null;            
+        }
         if (tagName != null) {
             tagName.release();
             tagName = null;
@@ -5714,6 +5747,7 @@ public class Tokenizer implements Locator {
         value = 0;
         seenDigits = false;
         shouldSuspend = false;
+        initDoctypeFields();
         if (tagName != null) {
             tagName.release();
             tagName = null;
@@ -5764,6 +5798,28 @@ public class Tokenizer implements Locator {
         value = other.value;
         seenDigits = other.seenDigits;
         shouldSuspend = false;
+        
+        Portability.releaseLocal(doctypeName);
+        if (other.doctypeName == null) {
+            doctypeName = null;
+        } else {
+            doctypeName = Portability.newLocalFromLocal(other.doctypeName, interner);
+        }
+        
+        Portability.releaseString(systemIdentifier);
+        if (other.systemIdentifier == null) {
+            systemIdentifier = null;
+        } else {
+            systemIdentifier = Portability.newStringFromString(other.systemIdentifier);
+        }
+        
+        Portability.releaseString(publicIdentifier);
+        if (other.publicIdentifier == null) {
+            publicIdentifier = null;
+        } else {
+            publicIdentifier = Portability.newStringFromString(other.publicIdentifier);
+        }
+
         if (tagName != null) {
             tagName.release();
         }
@@ -5772,6 +5828,7 @@ public class Tokenizer implements Locator {
         } else {
             tagName = other.tagName.cloneElementName(interner);            
         }
+        
         if (attributeName != null) {
             attributeName.release();
         }
@@ -5780,6 +5837,7 @@ public class Tokenizer implements Locator {
         } else {
             attributeName = other.attributeName.cloneAttributeName(interner);            
         }
+        
         if (attributes != null) {
             Portability.delete(attributes);
         }
