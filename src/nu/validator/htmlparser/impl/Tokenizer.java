@@ -5852,6 +5852,7 @@ public class Tokenizer implements Locator {
         confident = false;
         strBuf = new char[64];
         longStrBuf = new char[1024];
+        line = 1;
         // [NOCPP[
         html4 = false;
         metaBoundaryPassed = false;
