@@ -161,13 +161,13 @@ public abstract class TreeBuilder<T> implements TokenHandler,
 
     final static int DIV_OR_BLOCKQUOTE_OR_CENTER_OR_MENU = 50;
 
-    final static int ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION = 51;
+    final static int ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_HGROUP_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION = 51;
 
     final static int RUBY_OR_SPAN_OR_SUB_OR_SUP_OR_VAR = 52;
 
     final static int RT_OR_RP = 53;
 
-    final static int COMMAND_OR_EVENT_SOURCE = 54;
+    final static int COMMAND = 54;
 
     final static int PARAM_OR_SOURCE = 55;
 
@@ -233,7 +233,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
 
     private static final int AFTER_AFTER_FRAMESET = 19;
 
-    private static final int IN_CDATA_RCDATA = 20;
+    private static final int TEXT = 20;
 
     private static final int FRAMESET_OK = 21;
 
@@ -848,7 +848,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
             case IN_CAPTION:
                 reconstructTheActiveFormattingElements();
                 // fall through
-            case IN_CDATA_RCDATA:
+            case TEXT:
                 accumulateCharacters(buf, start, length);
                 return;
             default:
@@ -1324,7 +1324,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                     }
                     // ]NOCPP]
                     break eofloop;
-                case IN_CDATA_RCDATA:
+                case TEXT:
                     err("End of file seen inside an [R]CDATA element.");
                     // XXX mark script as already executed
                     if (originalMode == AFTER_HEAD) {
@@ -1649,7 +1649,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                                 "http://www.w3.org/1999/xhtml",
                                                 elementName, attributes);
                                         originalMode = mode;
-                                        mode = IN_CDATA_RCDATA;
+                                        mode = TEXT;
                                         tokenizer.setContentModelFlag(
                                                 Tokenizer.CDATA, elementName);
                                         attributes = null; // CPP
@@ -1664,6 +1664,14 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                                 "http://www.w3.org/1999/xhtml",
                                                 name, attributes, formPointer);
                                         selfClosing = false;
+                                        attributes = null; // CPP
+                                        break starttagloop;
+                                    case FORM:
+                                        err("Start tag \u201Cform\u201D seen in \u201Ctable\u201D.");
+                                        // XXX why isn't the form pointer used here?
+                                        appendVoidElementToCurrent(
+                                                "http://www.w3.org/1999/xhtml",
+                                                name, attributes);
                                         attributes = null; // CPP
                                         break starttagloop;
                                     default:
@@ -1731,7 +1739,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                             err("Stray \u201Cframeset\u201D start tag.");
                                             break starttagloop;
                                         } else {
-                                            err("\u201Cframeset\u201D start tag after \u201Cbody\u201D already open.");
+                                            err("\u201Cframeset\u201D start tag seen.");
                                             detachFromParent(stack[1].node);
                                             while (currentPtr > 0) {
                                                 pop();
@@ -1786,7 +1794,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                     case STYLE:
                                     case SCRIPT:
                                     case TITLE:
-                                    case COMMAND_OR_EVENT_SOURCE:
+                                    case COMMAND:
                                         // Fall through to IN_HEAD
                                         break inbodyloop;
                                     case BODY:
@@ -1797,7 +1805,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                     case P:
                                     case DIV_OR_BLOCKQUOTE_OR_CENTER_OR_MENU:
                                     case UL_OR_OL_OR_DL:
-                                    case ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION:
+                                    case ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_HGROUP_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION:
                                         implicitlyCloseP();
                                         appendToCurrentNodeAndPushElementMayFoster(
                                                 "http://www.w3.org/1999/xhtml",
@@ -1960,17 +1968,6 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                         insertMarker();
                                         attributes = null; // CPP
                                         break starttagloop;
-                                    case XMP:
-                                        reconstructTheActiveFormattingElements();
-                                        appendToCurrentNodeAndPushElementMayFoster(
-                                                "http://www.w3.org/1999/xhtml",
-                                                elementName, attributes);
-                                        originalMode = mode;
-                                        mode = IN_CDATA_RCDATA;
-                                        tokenizer.setContentModelFlag(
-                                                Tokenizer.CDATA, elementName);
-                                        attributes = null; // CPP
-                                        break starttagloop;
                                     case TABLE:
                                         // The only quirk. Blame Hixie and
                                         // Acid2.
@@ -2041,10 +2038,6 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                                 HtmlAttributes.EMPTY_ATTRIBUTES);
                                         appendToCurrentNodeAndPushElementMayFoster(
                                                 "http://www.w3.org/1999/xhtml",
-                                                ElementName.P,
-                                                HtmlAttributes.EMPTY_ATTRIBUTES);
-                                        appendToCurrentNodeAndPushElementMayFoster(
-                                                "http://www.w3.org/1999/xhtml",
                                                 ElementName.LABEL,
                                                 HtmlAttributes.EMPTY_ATTRIBUTES);
                                         int promptIndex = attributes.getIndex(AttributeName.PROMPT);
@@ -2095,7 +2088,6 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                                 formPointer);
                                         // XXX localization
                                         pop(); // label
-                                        pop(); // p
                                         appendVoidElementToCurrentMayFoster(
                                                 "http://www.w3.org/1999/xhtml",
                                                 ElementName.HR,
@@ -2114,8 +2106,20 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                         tokenizer.setContentModelFlag(
                                                 Tokenizer.RCDATA, elementName);
                                         originalMode = mode;
-                                        mode = IN_CDATA_RCDATA;
+                                        mode = TEXT;
                                         needToDropLF = true;
+                                        attributes = null; // CPP
+                                        break starttagloop;
+                                    case XMP:
+                                        implicitlyCloseP();
+                                        reconstructTheActiveFormattingElements();
+                                        appendToCurrentNodeAndPushElementMayFoster(
+                                                "http://www.w3.org/1999/xhtml",
+                                                elementName, attributes);
+                                        originalMode = mode;
+                                        mode = TEXT;
+                                        tokenizer.setContentModelFlag(
+                                                Tokenizer.CDATA, elementName);
                                         attributes = null; // CPP
                                         break starttagloop;
                                     case NOSCRIPT:
@@ -2136,7 +2140,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                                 "http://www.w3.org/1999/xhtml",
                                                 elementName, attributes);
                                         originalMode = mode;
-                                        mode = IN_CDATA_RCDATA;
+                                        mode = TEXT;
                                         tokenizer.setContentModelFlag(
                                                 Tokenizer.CDATA, elementName);
                                         attributes = null; // CPP
@@ -2307,7 +2311,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                         attributes = null; // CPP
                                         break starttagloop;
                                     case BASE:
-                                    case COMMAND_OR_EVENT_SOURCE:
+                                    case COMMAND:
                                         appendVoidElementToCurrentMayFoster(
                                                 "http://www.w3.org/1999/xhtml",
                                                 elementName, attributes);
@@ -2323,7 +2327,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                                 "http://www.w3.org/1999/xhtml",
                                                 elementName, attributes);
                                         originalMode = mode;
-                                        mode = IN_CDATA_RCDATA;
+                                        mode = TEXT;
                                         tokenizer.setContentModelFlag(
                                                 Tokenizer.RCDATA, elementName);
                                         attributes = null; // CPP
@@ -2334,7 +2338,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                                     "http://www.w3.org/1999/xhtml",
                                                     elementName, attributes);
                                             originalMode = mode;
-                                            mode = IN_CDATA_RCDATA;
+                                            mode = TEXT;
                                             tokenizer.setContentModelFlag(
                                                     Tokenizer.CDATA,
                                                     elementName);
@@ -2357,7 +2361,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                                 "http://www.w3.org/1999/xhtml",
                                                 elementName, attributes);
                                         originalMode = mode;
-                                        mode = IN_CDATA_RCDATA;
+                                        mode = TEXT;
                                         tokenizer.setContentModelFlag(
                                                 Tokenizer.CDATA, elementName);
                                         attributes = null; // CPP
@@ -2403,7 +2407,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                             "http://www.w3.org/1999/xhtml",
                                             elementName, attributes);
                                     originalMode = mode;
-                                    mode = IN_CDATA_RCDATA;
+                                    mode = TEXT;
                                     tokenizer.setContentModelFlag(
                                             Tokenizer.CDATA, elementName);
                                     attributes = null; // CPP
@@ -2455,7 +2459,15 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                     err("\u201C"
                                             + name
                                             + "\u201D start tag with \u201Cselect\u201D open.");
-                                    endSelect();
+                                    eltPos = findLastInTableScope("select");
+                                    if (eltPos == TreeBuilder.NOT_FOUND_ON_STACK) {
+                                        assert fragment;
+                                        break starttagloop; // http://www.w3.org/Bugs/Public/show_bug.cgi?id=8375
+                                    }
+                                    while (currentPtr >= eltPos) {
+                                        pop();
+                                    }
+                                    resetTheInsertionMode();
                                     continue;
                                 default:
                                     // fall through to IN_SELECT
@@ -2502,12 +2514,21 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                         resetTheInsertionMode();
                                         break starttagloop;
                                     }
-                                case INPUT: // XXX keygen?
+                                case INPUT:
                                 case TEXTAREA:
+                                case KEYGEN:
                                     err("\u201C"
                                             + name
                                             + "\u201D start tag seen in \u201Cselect\2201D.");
-                                    endSelect();
+                                    eltPos = findLastInTableScope("select");
+                                    if (eltPos == TreeBuilder.NOT_FOUND_ON_STACK) {
+                                        assert fragment;
+                                        break starttagloop;
+                                    }
+                                    while (currentPtr >= eltPos) {
+                                        pop();
+                                    }
+                                    resetTheInsertionMode();
                                     continue;
                                 case SCRIPT:
                                     // XXX need to manage much more stuff
@@ -2518,7 +2539,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                             "http://www.w3.org/1999/xhtml",
                                             elementName, attributes);
                                     originalMode = mode;
-                                    mode = IN_CDATA_RCDATA;
+                                    mode = TEXT;
                                     tokenizer.setContentModelFlag(
                                             Tokenizer.CDATA, elementName);
                                     attributes = null; // CPP
@@ -2571,7 +2592,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                             "http://www.w3.org/1999/xhtml",
                                             elementName, attributes);
                                     originalMode = mode;
-                                    mode = IN_CDATA_RCDATA;
+                                    mode = TEXT;
                                     tokenizer.setContentModelFlag(
                                             Tokenizer.CDATA, elementName);
                                     attributes = null; // CPP
@@ -2718,7 +2739,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                     } else {
                                         appendToCurrentNodeAndPushBodyElement(attributes);
                                     }
-                                    mode = FRAMESET_OK;
+                                    mode = IN_BODY;
                                     attributes = null; // CPP
                                     break starttagloop;
                                 case FRAMESET:
@@ -2766,7 +2787,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                             "http://www.w3.org/1999/xhtml",
                                             elementName, attributes);
                                     originalMode = mode;
-                                    mode = IN_CDATA_RCDATA;
+                                    mode = TEXT;
                                     tokenizer.setContentModelFlag(
                                             Tokenizer.CDATA, elementName);
                                     attributes = null; // CPP
@@ -2781,7 +2802,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                             "http://www.w3.org/1999/xhtml",
                                             elementName, attributes);
                                     originalMode = mode;
-                                    mode = IN_CDATA_RCDATA;
+                                    mode = TEXT;
                                     tokenizer.setContentModelFlag(
                                             Tokenizer.CDATA, elementName);
                                     attributes = null; // CPP
@@ -2793,7 +2814,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                             "http://www.w3.org/1999/xhtml",
                                             elementName, attributes);
                                     originalMode = mode;
-                                    mode = IN_CDATA_RCDATA;
+                                    mode = TEXT;
                                     tokenizer.setContentModelFlag(
                                             Tokenizer.RCDATA, elementName);
                                     attributes = null; // CPP
@@ -2827,7 +2848,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                             "http://www.w3.org/1999/xhtml",
                                             elementName, attributes);
                                     originalMode = mode;
-                                    mode = IN_CDATA_RCDATA;
+                                    mode = TEXT;
                                     tokenizer.setContentModelFlag(
                                             Tokenizer.CDATA, elementName);
                                     attributes = null; // CPP
@@ -2838,7 +2859,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                     break starttagloop;
                             }
                             // [NOCPP[
-                        case IN_CDATA_RCDATA:
+                        case TEXT:
                             assert false;
                             // ]NOCPP]
                     }
@@ -3319,7 +3340,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                         case UL_OR_OL_OR_DL:
                         case PRE_OR_LISTING:
                         case FIELDSET:
-                        case ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_DIALOG_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION:
+                        case ADDRESS_OR_DIR_OR_ARTICLE_OR_ASIDE_OR_DATAGRID_OR_DETAILS_OR_HGROUP_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_NAV_OR_SECTION:
                             eltPos = findLastInScope(name);
                             if (eltPos == TreeBuilder.NOT_FOUND_ON_STACK) {
                                 err("Stray end tag \u201C" + name + "\u201D.");
@@ -3384,8 +3405,21 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                 pop();
                             }
                             break endtagloop;
-                        case DD_OR_DT:
                         case LI:
+                            eltPos = findLastInListScope(name);
+                            if (eltPos == TreeBuilder.NOT_FOUND_ON_STACK) {
+                                err("No \u201Cli\u201D element in list scope but a \u201Cli\u201D end tag seen.");
+                            } else {
+                                generateImpliedEndTagsExceptFor(name);
+                                if (eltPos != currentPtr) {
+                                    err("End tag for \u201Cli\u201D seen, but there were unclosed elements.");
+                                }
+                                while (currentPtr >= eltPos) {
+                                    pop();
+                                }
+                            }
+                            break endtagloop;
+                        case DD_OR_DT:
                             eltPos = findLastInScope(name);
                             if (eltPos == TreeBuilder.NOT_FOUND_ON_STACK) {
                                 err("No \u201C"
@@ -3548,7 +3582,15 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                     + name
                                     + "\u201D end tag with \u201Cselect\u201D open.");
                             if (findLastInTableScope(name) != TreeBuilder.NOT_FOUND_ON_STACK) {
-                                endSelect();
+                                eltPos = findLastInTableScope("select");
+                                if (eltPos == TreeBuilder.NOT_FOUND_ON_STACK) {
+                                    assert fragment;
+                                    break endtagloop; // http://www.w3.org/Bugs/Public/show_bug.cgi?id=8375
+                                }
+                                while (currentPtr >= eltPos) {
+                                    pop();
+                                }
+                                resetTheInsertionMode();
                                 continue;
                             } else {
                                 break endtagloop;
@@ -3578,7 +3620,16 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                             }
                             break endtagloop;
                         case SELECT:
-                            endSelect();
+                            eltPos = findLastInTableScope("select");
+                            if (eltPos == TreeBuilder.NOT_FOUND_ON_STACK) {
+                                assert fragment;
+                                err("Stray end tag \u201Cselect\u201D");
+                                break endtagloop;
+                            }
+                            while (currentPtr >= eltPos) {
+                                pop();
+                            }
+                            resetTheInsertionMode();
                             break endtagloop;
                         default:
                             err("Stray end tag \u201C" + name + "\u201D");
@@ -3662,17 +3713,26 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                      */
                     continue;
                 case BEFORE_HTML:
-                    /*
-                     * Create an HTMLElement node with the tag name html, in the
-                     * HTML namespace. Append it to the Document object.
-                     */
-                    appendHtmlElementToDocumentAndPush();
-                    /* Switch to the main mode */
-                    mode = BEFORE_HEAD;
-                    /*
-                     * reprocess the current token.
-                     */
-                    continue;
+                    switch (group) {
+                        case HEAD:
+                        case BR:
+                        case HTML:
+                        case BODY:
+                            /*
+                             * Create an HTMLElement node with the tag name html, in the
+                             * HTML namespace. Append it to the Document object.
+                             */
+                            appendHtmlElementToDocumentAndPush();
+                            /* Switch to the main mode */
+                            mode = BEFORE_HEAD;
+                            /*
+                             * reprocess the current token.
+                             */
+                            continue;
+                        default:
+                            err("Stray end tag \u201C" + name + "\u201D.");
+                            break endtagloop;
+                    }
                 case BEFORE_HEAD:
                     switch (group) {
                         case HEAD:
@@ -3737,7 +3797,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                     err("Stray \u201C" + name + "\u201D end tag.");
                     mode = IN_FRAMESET;
                     continue;
-                case IN_CDATA_RCDATA:
+                case TEXT:
                     // XXX need to manage insertion point here
                     if (originalMode == AFTER_HEAD) {
                         pop();
@@ -3756,22 +3816,6 @@ public abstract class TreeBuilder<T> implements TokenHandler,
              */
             foreignFlag = TreeBuilder.NOT_IN_FOREIGN;
         }
-    }
-
-    /**
-     * @throws SAXException
-     */
-    private void endSelect() throws SAXException {
-        int eltPos = findLastInTableScope("select");
-        if (eltPos == TreeBuilder.NOT_FOUND_ON_STACK) {
-            assert fragment;
-            err("Stray end tag \u201Cselect\u201D");
-            return;
-        }
-        while (currentPtr >= eltPos) {
-            pop();
-        }
-        resetTheInsertionMode();
     }
 
     private int findLastInTableScopeOrRootTbodyTheadTfoot() {
@@ -3814,6 +3858,17 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         return TreeBuilder.NOT_FOUND_ON_STACK;
     }
 
+    private int findLastInListScope(@Local String name) {
+        for (int i = currentPtr; i > 0; i--) {
+            if (stack[i].name == name) {
+                return i;
+            } else if (stack[i].scoping || stack[i].name == "ul" || stack[i].name == "ol") {
+                return TreeBuilder.NOT_FOUND_ON_STACK;
+            }
+        }
+        return TreeBuilder.NOT_FOUND_ON_STACK;
+    }
+    
     private int findLastInScopeHn() {
         for (int i = currentPtr; i > 0; i--) {
             if (stack[i].group == TreeBuilder.H1_OR_H2_OR_H3_OR_H4_OR_H5_OR_H6) {
@@ -4890,7 +4945,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         Portability.releaseElement(elt);
     }
 
-    @SuppressWarnings("unchecked") private void appendVoidElementToCurrent(
+    private void appendVoidElementToCurrent(
             @NsUri String ns, @Local String name, HtmlAttributes attributes,
             T form) throws SAXException {
         flushCharacters();
@@ -4899,6 +4954,21 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         // ]NOCPP]
         // Can't be called for custom elements
         T elt = createElement(ns, name, attributes, form);
+        StackNode<T> current = stack[currentPtr];
+        appendElement(elt, current.node);
+        elementPushed(ns, name, elt);
+        elementPopped(ns, name, elt);
+        Portability.releaseElement(elt);
+    }
+
+    private void appendVoidElementToCurrent(
+            @NsUri String ns, @Local String name, HtmlAttributes attributes) throws SAXException {
+        flushCharacters();
+        // [NOCPP[
+        checkAttributes(attributes, ns);
+        // ]NOCPP]
+        // Can't be called for custom elements
+        T elt = createElement(ns, name, attributes);
         StackNode<T> current = stack[currentPtr];
         appendElement(elt, current.node);
         elementPushed(ns, name, elt);
