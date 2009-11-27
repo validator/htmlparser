@@ -140,7 +140,7 @@ public class TokenizerTester {
                             Tokenizer.DATA, lastStartTag);
                 } else if (CDATA.equals(value)) {
                     runTestInner(inputString, expectedTokens, description,
-                            Tokenizer.CDATA, lastStartTag);
+                            Tokenizer.SCRIPT_DATA, lastStartTag);
                 } else if (RCDATA.equals(value)) {
                     runTestInner(inputString, expectedTokens, description,
                             Tokenizer.RCDATA, lastStartTag);
