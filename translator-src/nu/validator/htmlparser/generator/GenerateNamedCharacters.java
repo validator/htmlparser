@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 Mozilla Foundation
+ * Copyright (c) 2008-2009 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -34,7 +34,7 @@ public class GenerateNamedCharacters {
 
     private static final int LEAD_OFFSET = 0xD800 - (0x10000 >> 10);
     
-    private static final Pattern LINE_PATTERN = Pattern.compile("^\\s*<tr> <td> <code title=\"\">([^<]*)</code> </td> <td> U\\+(\\S*) </td> </tr>.*$");
+    private static final Pattern LINE_PATTERN = Pattern.compile("<td> <code title=\"\">([^<]*)</code> </td> <td> U\\+(\\S*) </td>");
     
     private static String toUString(int c) {
         String hexString = Integer.toHexString(c);
@@ -63,7 +63,7 @@ public class GenerateNamedCharacters {
         String line;
         while ((line = reader.readLine()) != null) {
             Matcher m = LINE_PATTERN.matcher(line);
-            if (m.matches()) {
+            while (m.find()) {
                 entities.put(m.group(1), m.group(2));
             }
         }

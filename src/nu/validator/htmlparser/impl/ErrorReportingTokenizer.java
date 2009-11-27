@@ -438,14 +438,22 @@ public class ErrorReportingTokenizer extends Tokenizer {
 
     @Override protected void errUnquotedAttributeValOrNull(char c)
             throws SAXException {
-                if (c == '<') {
-                    err("\u201C<\u201D in an unquoted attribute value. Probable cause: Missing \u201C>\u201D immediately before.");
-                } else if (c != '\uFFFD') {
-                    err("\u201C"
-                            + c
-                            + "\u201D in an unquoted attribute value. Probable causes: Attributes running together or a URL query string in an unquoted attribute value.");
-                }
-            }
+        switch (c) {
+            case '<':
+                err("\u201C<\u201D in an unquoted attribute value. Probable cause: Missing \u201C>\u201D immediately before.");
+                return;
+            case '`':
+                err("\u201C`\u201D in an unquoted attribute value. Probable cause: Using the wrong character as a quote.");
+                return;
+            case '\uFFFD':
+                return;
+            default:
+                err("\u201C"
+                        + c
+                        + "\u201D in an unquoted attribute value. Probable causes: Attributes running together or a URL query string in an unquoted attribute value.");
+                return;
+        }
+    }
 
     @Override protected void errSlashNotFollowedByGt() throws SAXException {
         err("A slash was not immediate followed by \u201C>\u201D.");
@@ -472,14 +480,17 @@ public class ErrorReportingTokenizer extends Tokenizer {
                 }
             }
 
-    @Override protected void errLtOrEqualsInUnquotedAttributeOrNull(char c)
+    @Override protected void errLtOrEqualsOrGraveInUnquotedAttributeOrNull(char c)
             throws SAXException {
         switch (c) {
             case '=':
-                err("\u201C=\u201D in an unquoted attribute value. Probable cause: Stray duplicate equals sign.");
+                err("\u201C=\u201D at the start of an unquoted attribute value. Probable cause: Stray duplicate equals sign.");
                 return;
             case '<':
-                err("\u201C<\u201D in an unquoted attribute value. Probable cause: Missing \u201C>\u201D immediately before.");
+                err("\u201C<\u201D at the start of an unquoted attribute value. Probable cause: Missing \u201C>\u201D immediately before.");
+                return;
+            case '`':
+                err("\u201C`\u201D at the start of an unquoted attribute value. Probable cause: Using the wrong character as a quote.");
                 return;
         }
     }
@@ -601,17 +612,40 @@ public class ErrorReportingTokenizer extends Tokenizer {
                 }
             }
 
-    @Override protected void errNcrNonCharacter() throws SAXException {
-        err("Character reference expands to a non-character.");
+    @Override protected char errNcrNonCharacter(char ch) throws SAXException {
+        switch (contentNonXmlCharPolicy) {
+            case FATAL:
+                fatal("Character reference expands to a non-character ("
+                + toUPlusString((char) value) + ").");
+                break;
+            case ALTER_INFOSET:
+                ch = '\uFFFD';
+                // fall through
+            case ALLOW:
+                err("Character reference expands to a non-character ("
+                + toUPlusString((char) value) + ").");
+        }
+        return ch;
     }
 
     @Override protected void errNcrSurrogate() throws SAXException {
         err("Character reference expands to a surrogate.");
     }
 
-    @Override protected void errNcrControlChar() throws SAXException {
-        err("Character reference expands to a control character ("
+    @Override protected char errNcrControlChar(char ch) throws SAXException {
+        switch (contentNonXmlCharPolicy) {
+            case FATAL:
+                fatal("Character reference expands to a control character ("
                 + toUPlusString((char) value) + ").");
+                break;
+            case ALTER_INFOSET:
+                ch = '\uFFFD';
+                // fall through
+            case ALLOW:
+                err("Character reference expands to a control character ("
+                + toUPlusString((char) value) + ").");
+        }
+        return ch;
     }
 
     @Override protected void errRcnCr() throws SAXException {
@@ -688,6 +722,27 @@ public class ErrorReportingTokenizer extends Tokenizer {
         err("\u201C--!\u201D found in comment.");
     }
 
+    @Override protected void errNcrControlChar() throws SAXException {
+        err("Character reference expands to a control character ("
+                + toUPlusString((char) value) + ").");
+    }
+
+    @Override protected void errNcrZero() throws SAXException {
+        err("Character reference expands to zero.");
+    }
+
+    @Override protected void errNoSpaceBetweenDoctypeSystemKeywordAndQuote() throws SAXException {
+        err("No space between the doctype \u201CSYSTEM\u201D keyword and the quote.");
+    }
+
+    @Override protected void errNoSpaceBetweenPublicAndSystemIds() throws SAXException {
+        err("No space between the doctype public and system identifiers.");
+    }
+
+    @Override protected void errNoSpaceBetweenDoctypePublicKeywordAndQuote() throws SAXException {
+        err("No space between the doctype \u201CPUBLIC\u201D keyword and the quote.");
+    }
+    
     @Override protected void noteAttributeWithoutValue() throws SAXException {
         note("xhtml2", "Attribute without value");
     }

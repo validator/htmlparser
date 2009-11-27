@@ -512,13 +512,16 @@ public abstract class TreeBuilder<T> implements TokenHandler,
             resetTheInsertionMode();
             if ("title" == contextName || "textarea" == contextName) {
                 tokenizer.setContentModelFlag(Tokenizer.RCDATA, contextName);
-            } else if ("style" == contextName || "script" == contextName
-                    || "xmp" == contextName || "iframe" == contextName
-                    || "noembed" == contextName || "noframes" == contextName
+            } else if ("style" == contextName || "xmp" == contextName
+                    || "iframe" == contextName || "noembed" == contextName
+                    || "noframes" == contextName
                     || (scriptingEnabled && "noscript" == contextName)) {
-                tokenizer.setContentModelFlag(Tokenizer.CDATA, contextName);
+                tokenizer.setContentModelFlag(Tokenizer.RAWTEXT, contextName);
             } else if ("plaintext" == contextName) {
                 tokenizer.setContentModelFlag(Tokenizer.PLAINTEXT, contextName);
+            } else if ("script" == contextName) {
+                tokenizer.setContentModelFlag(Tokenizer.SCRIPT_DATA,
+                        contextName);
             } else {
                 tokenizer.setContentModelFlag(Tokenizer.DATA, contextName);
             }
@@ -1640,7 +1643,6 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                         resetTheInsertionMode();
                                         continue starttagloop;
                                     case SCRIPT:
-                                    case STYLE:
                                         // XXX need to manage much more stuff
                                         // here if
                                         // supporting
@@ -1651,7 +1653,17 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                         originalMode = mode;
                                         mode = TEXT;
                                         tokenizer.setContentModelFlag(
-                                                Tokenizer.CDATA, elementName);
+                                                Tokenizer.SCRIPT_DATA, elementName);
+                                        attributes = null; // CPP
+                                        break starttagloop;
+                                    case STYLE:
+                                        appendToCurrentNodeAndPushElement(
+                                                "http://www.w3.org/1999/xhtml",
+                                                elementName, attributes);
+                                        originalMode = mode;
+                                        mode = TEXT;
+                                        tokenizer.setContentModelFlag(
+                                                Tokenizer.RAWTEXT, elementName);
                                         attributes = null; // CPP
                                         break starttagloop;
                                     case INPUT:
@@ -2119,7 +2131,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                         originalMode = mode;
                                         mode = TEXT;
                                         tokenizer.setContentModelFlag(
-                                                Tokenizer.CDATA, elementName);
+                                                Tokenizer.RAWTEXT, elementName);
                                         attributes = null; // CPP
                                         break starttagloop;
                                     case NOSCRIPT:
@@ -2142,7 +2154,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                         originalMode = mode;
                                         mode = TEXT;
                                         tokenizer.setContentModelFlag(
-                                                Tokenizer.CDATA, elementName);
+                                                Tokenizer.RAWTEXT, elementName);
                                         attributes = null; // CPP
                                         break starttagloop;
                                     case SELECT:
@@ -2340,7 +2352,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                             originalMode = mode;
                                             mode = TEXT;
                                             tokenizer.setContentModelFlag(
-                                                    Tokenizer.CDATA,
+                                                    Tokenizer.RAWTEXT,
                                                     elementName);
                                         } else {
                                             appendToCurrentNodeAndPushElementMayFoster(
@@ -2351,8 +2363,6 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                         attributes = null; // CPP
                                         break starttagloop;
                                     case SCRIPT:
-                                    case STYLE:
-                                    case NOFRAMES:
                                         // XXX need to manage much more stuff
                                         // here if
                                         // supporting
@@ -2363,7 +2373,18 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                         originalMode = mode;
                                         mode = TEXT;
                                         tokenizer.setContentModelFlag(
-                                                Tokenizer.CDATA, elementName);
+                                                Tokenizer.SCRIPT_DATA, elementName);
+                                        attributes = null; // CPP
+                                        break starttagloop;
+                                    case STYLE:
+                                    case NOFRAMES:
+                                        appendToCurrentNodeAndPushElementMayFoster(
+                                                "http://www.w3.org/1999/xhtml",
+                                                elementName, attributes);
+                                        originalMode = mode;
+                                        mode = TEXT;
+                                        tokenizer.setContentModelFlag(
+                                                Tokenizer.RAWTEXT, elementName);
                                         attributes = null; // CPP
                                         break starttagloop;
                                     case HEAD:
@@ -2409,7 +2430,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                     originalMode = mode;
                                     mode = TEXT;
                                     tokenizer.setContentModelFlag(
-                                            Tokenizer.CDATA, elementName);
+                                            Tokenizer.RAWTEXT, elementName);
                                     attributes = null; // CPP
                                     break starttagloop;
                                 case HEAD:
@@ -2541,7 +2562,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                     originalMode = mode;
                                     mode = TEXT;
                                     tokenizer.setContentModelFlag(
-                                            Tokenizer.CDATA, elementName);
+                                            Tokenizer.SCRIPT_DATA, elementName);
                                     attributes = null; // CPP
                                     break starttagloop;
                                 default:
@@ -2594,7 +2615,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                     originalMode = mode;
                                     mode = TEXT;
                                     tokenizer.setContentModelFlag(
-                                            Tokenizer.CDATA, elementName);
+                                            Tokenizer.RAWTEXT, elementName);
                                     attributes = null; // CPP
                                     break starttagloop;
                                 default:
@@ -2789,7 +2810,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                     originalMode = mode;
                                     mode = TEXT;
                                     tokenizer.setContentModelFlag(
-                                            Tokenizer.CDATA, elementName);
+                                            Tokenizer.SCRIPT_DATA, elementName);
                                     attributes = null; // CPP
                                     break starttagloop;
                                 case STYLE:
@@ -2804,7 +2825,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                     originalMode = mode;
                                     mode = TEXT;
                                     tokenizer.setContentModelFlag(
-                                            Tokenizer.CDATA, elementName);
+                                            Tokenizer.RAWTEXT, elementName);
                                     attributes = null; // CPP
                                     break starttagloop;
                                 case TITLE:
@@ -2850,7 +2871,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                     originalMode = mode;
                                     mode = TEXT;
                                     tokenizer.setContentModelFlag(
-                                            Tokenizer.CDATA, elementName);
+                                            Tokenizer.SCRIPT_DATA, elementName);
                                     attributes = null; // CPP
                                     break starttagloop;
                                 default:

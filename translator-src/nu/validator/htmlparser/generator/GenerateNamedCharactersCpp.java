@@ -269,7 +269,7 @@ public class GenerateNamedCharactersCpp {
 
         out.write("static " + cppTypes.charType() + " const WINDOWS_1252_DATA[] = {\n");
         out.write("  0x20AC,\n");
-        out.write("  0xFFFD,\n");
+        out.write("  0x0081,\n");
         out.write("  0x201A,\n");
         out.write("  0x0192,\n");
         out.write("  0x201E,\n");
@@ -281,10 +281,10 @@ public class GenerateNamedCharactersCpp {
         out.write("  0x0160,\n");
         out.write("  0x2039,\n");
         out.write("  0x0152,\n");
-        out.write("  0xFFFD,\n");
+        out.write("  0x008D,\n");
         out.write("  0x017D,\n");
-        out.write("  0xFFFD,\n");
-        out.write("  0xFFFD,\n");
+        out.write("  0x008F,\n");
+        out.write("  0x0090,\n");
         out.write("  0x2018,\n");
         out.write("  0x2019,\n");
         out.write("  0x201C,\n");
@@ -297,7 +297,7 @@ public class GenerateNamedCharactersCpp {
         out.write("  0x0161,\n");
         out.write("  0x203A,\n");
         out.write("  0x0153,\n");
-        out.write("  0xFFFD,\n");
+        out.write("  0x009D,\n");
         out.write("  0x017E,\n");
         out.write("  0x0178\n");
         out.write("};\n");
