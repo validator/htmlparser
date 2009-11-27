@@ -3208,6 +3208,7 @@ public class Tokenizer implements Locator {
                         switch (c) {
                             case '\r':
                                 silentCarriageReturn();
+                                state = Tokenizer.BEFORE_DOCTYPE_PUBLIC_IDENTIFIER;
                                 break stateloop;
                             case '\n':
                                 silentLineFeed();
@@ -3448,6 +3449,7 @@ public class Tokenizer implements Locator {
                         switch (c) {
                             case '\r':
                                 silentCarriageReturn();
+                                state = Tokenizer.BETWEEN_DOCTYPE_PUBLIC_AND_SYSTEM_IDENTIFIERS;
                                 break stateloop;
                             case '\n':
                                 silentLineFeed();
@@ -3802,6 +3804,7 @@ public class Tokenizer implements Locator {
                         switch (c) {
                             case '\r':
                                 silentCarriageReturn();
+                                state = Tokenizer.BEFORE_DOCTYPE_SYSTEM_IDENTIFIER;
                                 break stateloop;
                             case '\n':
                                 silentLineFeed();
