@@ -173,15 +173,15 @@ public class Tokenizer implements Locator {
 
     private static final int SCRIPT_DATA_LESS_THAN_SIGN_STATE = 53;
 
-    private static final int ESCAPE_EXCLAMATION = 54;
+    private static final int SCRIPT_DATA_ESCAPE_START = 54;
 
-    private static final int ESCAPE_EXCLAMATION_HYPHEN = 55;
+    private static final int SCRIPT_DATA_ESCAPE_START_DASH = 55;
 
-    private static final int ESCAPE = 56;
+    private static final int SCRIPT_DATA_ESCAPED = 56;
 
-    private static final int ESCAPE_HYPHEN = 57;
+    private static final int SCRIPT_DATA_ESCAPED_DASH = 57;
 
-    private static final int ESCAPE_HYPHEN_HYPHEN = 58;
+    private static final int SCRIPT_DATA_ESCAPED_DASH_DASH = 58;
 
     private static final int BOGUS_COMMENT_HYPHEN = 59;
 
@@ -192,8 +192,22 @@ public class Tokenizer implements Locator {
     private static final int AFTER_DOCTYPE_PUBLIC_KEYWORD = 62;
 
     private static final int BETWEEN_DOCTYPE_PUBLIC_AND_SYSTEM_IDENTIFIERS = 63;
-    
+
     private static final int AFTER_DOCTYPE_SYSTEM_KEYWORD = 64;
+
+    private static final int SCRIPT_DATA_ESCAPED_LESS_THAN = 65;
+
+    private static final int SCRIPT_DATA_DOUBLE_ESCAPE_START = 66;
+
+    private static final int SCRIPT_DATA_DOUBLE_ESCAPED = 67;
+
+    private static final int SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN = 68;
+
+    private static final int SCRIPT_DATA_DOUBLE_ESCAPED_DASH = 69;
+
+    private static final int SCRIPT_DATA_DOUBLE_ESCAPED_DASH_DASH = 70;
+    
+    private static final int SCRIPT_DATA_DOUBLE_ESCAPE_END = 71;
 
     /**
      * Magic value for UTF-16 operations.
@@ -1353,11 +1367,18 @@ public class Tokenizer implements Locator {
             case PLAINTEXT:
             case RAWTEXT:
             case CDATA_SECTION:
-            case ESCAPE:
-            case ESCAPE_EXCLAMATION:
-            case ESCAPE_EXCLAMATION_HYPHEN:
-            case ESCAPE_HYPHEN:
-            case ESCAPE_HYPHEN_HYPHEN:
+            case SCRIPT_DATA_ESCAPED:
+            case SCRIPT_DATA_ESCAPE_START:
+            case SCRIPT_DATA_ESCAPE_START_DASH:
+            case SCRIPT_DATA_ESCAPED_DASH:
+            case SCRIPT_DATA_ESCAPED_DASH_DASH:
+            case SCRIPT_DATA_ESCAPED_LESS_THAN:
+            case SCRIPT_DATA_DOUBLE_ESCAPE_START:
+            case SCRIPT_DATA_DOUBLE_ESCAPED:
+            case SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN:
+            case SCRIPT_DATA_DOUBLE_ESCAPED_DASH:
+            case SCRIPT_DATA_DOUBLE_ESCAPED_DASH_DASH:
+            case SCRIPT_DATA_DOUBLE_ESCAPE_END:
                 cstart = start;
                 break;
             default:
@@ -4777,10 +4798,9 @@ public class Tokenizer implements Locator {
                                 state = Tokenizer.NON_DATA_END_TAG_NAME;
                                 continue stateloop;
                             case '!':
-                                // XXX SCRIPT ESCAPES!!!
                                 tokenHandler.characters(Tokenizer.LT_GT, 0, 1);
                                 cstart = pos;
-                                state = Tokenizer.ESCAPE_EXCLAMATION;
+                                state = Tokenizer.SCRIPT_DATA_ESCAPE_START;
                                 break scriptdatalessthansignloop; // FALL THRU
                             // continue
                             // stateloop;
@@ -4795,89 +4815,160 @@ public class Tokenizer implements Locator {
                                  * the data state.
                                  */
                                 cstart = pos;
-                                state = SCRIPT_DATA;
+                                state = Tokenizer.SCRIPT_DATA;
                                 reconsume = true;
                                 continue stateloop;
                         }
                     }
                     // WARNING FALLTHRU CASE TRANSITION: DON'T REORDER
-                case ESCAPE_EXCLAMATION:
-                    escapeexclamationloop: for (;;) {
+                case SCRIPT_DATA_ESCAPE_START:
+                    scriptdataescapestartloop: for (;;) {
                         if (++pos == endPos) {
                             break stateloop;
                         }
                         c = checkChar(buf, pos);
+                        /*
+                         * Consume the next input character:
+                         */
                         switch (c) {
                             case '-':
-                                state = Tokenizer.ESCAPE_EXCLAMATION_HYPHEN;
-                                break escapeexclamationloop; // FALL THRU
+                                /*
+                                 * U+002D HYPHEN-MINUS (-) Emit a U+002D
+                                 * HYPHEN-MINUS character token. Switch to the
+                                 * script data escape start dash state.
+                                 */
+                                state = Tokenizer.SCRIPT_DATA_ESCAPE_START_DASH;
+                                break scriptdataescapestartloop; // FALL THRU
                             // continue
                             // stateloop;
                             default:
-                                state = returnState;
+                                /*
+                                 * Anything else Reconsume the current input
+                                 * character in the script data state.
+                                 */
+                                state = Tokenizer.SCRIPT_DATA;
                                 reconsume = true;
                                 continue stateloop;
                         }
                     }
                     // WARNING FALLTHRU CASE TRANSITION: DON'T REORDER
-                case ESCAPE_EXCLAMATION_HYPHEN:
-                    escapeexclamationhyphenloop: for (;;) {
+                case SCRIPT_DATA_ESCAPE_START_DASH:
+                    scriptdataescapestartdashloop: for (;;) {
                         if (++pos == endPos) {
                             break stateloop;
                         }
                         c = checkChar(buf, pos);
+                        /*
+                         * Consume the next input character:
+                         */
                         switch (c) {
                             case '-':
-                                state = Tokenizer.ESCAPE_HYPHEN_HYPHEN;
-                                break escapeexclamationhyphenloop;
+                                /*
+                                 * U+002D HYPHEN-MINUS (-) Emit a U+002D
+                                 * HYPHEN-MINUS character token. Switch to the
+                                 * script data escaped dash dash state.
+                                 */
+                                state = Tokenizer.SCRIPT_DATA_ESCAPED_DASH_DASH;
+                                break scriptdataescapestartdashloop;
                             // continue stateloop;
                             default:
-                                state = returnState;
+                                /*
+                                 * Anything else Reconsume the current input
+                                 * character in the script data state.
+                                 */
+                                state = Tokenizer.SCRIPT_DATA;
                                 reconsume = true;
                                 continue stateloop;
                         }
                     }
                     // WARNING FALLTHRU CASE TRANSITION: DON'T REORDER
-                case ESCAPE_HYPHEN_HYPHEN:
-                    escapehyphenhyphenloop: for (;;) {
+                case SCRIPT_DATA_ESCAPED_DASH_DASH:
+                    scriptdataescapeddashdashloop: for (;;) {
                         if (++pos == endPos) {
                             break stateloop;
                         }
                         c = checkChar(buf, pos);
+                        /*
+                         * Consume the next input character:
+                         */
                         switch (c) {
                             case '-':
+                                /*
+                                 * U+002D HYPHEN-MINUS (-) Emit a U+002D
+                                 * HYPHEN-MINUS character token. Stay in the
+                                 * script data escaped dash dash state.
+                                 */
                                 continue;
+                            case '<':
+                                /*
+                                 * U+003C LESS-THAN SIGN (<) Switch to the
+                                 * script data escaped less-than sign state.
+                                 */
+                                flushChars(buf, pos);
+                                state = Tokenizer.SCRIPT_DATA_ESCAPED_LESS_THAN;
+                                continue stateloop;
                             case '>':
-                                state = returnState;
+                                /*
+                                 * U+003E GREATER-THAN SIGN (>) Emit a U+003E
+                                 * GREATER-THAN SIGN character token. Switch to
+                                 * the script data state.
+                                 */
+                                state = Tokenizer.SCRIPT_DATA;
                                 continue stateloop;
                             case '\u0000':
                                 emitReplacementCharacter(buf, pos);
-                                state = Tokenizer.ESCAPE;
-                                break escapehyphenhyphenloop;
+                                state = Tokenizer.SCRIPT_DATA_ESCAPED;
+                                break scriptdataescapeddashdashloop;
                             case '\r':
                                 emitCarriageReturn(buf, pos);
-                                state = Tokenizer.ESCAPE;
+                                state = Tokenizer.SCRIPT_DATA_ESCAPED;
                                 break stateloop;
                             case '\n':
                                 silentLineFeed();
                             default:
-                                state = Tokenizer.ESCAPE;
-                                break escapehyphenhyphenloop;
+                                /*
+                                 * Anything else Emit the current input
+                                 * character as a character token. Switch to the
+                                 * script data escaped state.
+                                 */
+                                state = Tokenizer.SCRIPT_DATA_ESCAPED;
+                                break scriptdataescapeddashdashloop;
                             // continue stateloop;
                         }
                     }
                     // WARNING FALLTHRU CASE TRANSITION: DON'T REORDER
-                case ESCAPE:
-                    escapeloop: for (;;) {
-                        if (++pos == endPos) {
-                            break stateloop;
+                case SCRIPT_DATA_ESCAPED:
+                    scriptdataescapedloop: for (;;) {
+                        if (reconsume) {
+                            reconsume = false;
+                        } else {
+                            if (++pos == endPos) {
+                                break stateloop;
+                            }
+                            c = checkChar(buf, pos);
                         }
-                        c = checkChar(buf, pos);
+                        /*
+                         * Consume the next input character:
+                         */
                         switch (c) {
                             case '-':
-                                state = Tokenizer.ESCAPE_HYPHEN;
-                                break escapeloop; // FALL THRU continue
+                                /*
+                                 * U+002D HYPHEN-MINUS (-) Emit a U+002D
+                                 * HYPHEN-MINUS character token. Switch to the
+                                 * script data escaped dash state.
+                                 */
+                                state = Tokenizer.SCRIPT_DATA_ESCAPED_DASH;
+                                break scriptdataescapedloop; // FALL THRU
+                            // continue
                             // stateloop;
+                            case '<':
+                                /*
+                                 * U+003C LESS-THAN SIGN (<) Switch to the
+                                 * script data escaped less-than sign state.
+                                 */
+                                flushChars(buf, pos);
+                                state = Tokenizer.SCRIPT_DATA_ESCAPED_LESS_THAN;
+                                continue stateloop;
                             case '\u0000':
                                 emitReplacementCharacter(buf, pos);
                                 continue;
@@ -4887,32 +4978,413 @@ public class Tokenizer implements Locator {
                             case '\n':
                                 silentLineFeed();
                             default:
+                                /*
+                                 * Anything else Emit the current input
+                                 * character as a character token. Stay in the
+                                 * script data escaped state.
+                                 */
                                 continue;
                         }
                     }
                     // WARNING FALLTHRU CASE TRANSITION: DON'T REORDER
-                case ESCAPE_HYPHEN:
-                    escapehyphenloop: for (;;) {
+                case SCRIPT_DATA_ESCAPED_DASH:
+                    scriptdataescapeddashloop: for (;;) {
                         if (++pos == endPos) {
                             break stateloop;
                         }
                         c = checkChar(buf, pos);
+                        /*
+                         * Consume the next input character:
+                         */
                         switch (c) {
                             case '-':
-                                state = Tokenizer.ESCAPE_HYPHEN_HYPHEN;
+                                /*
+                                 * U+002D HYPHEN-MINUS (-) Emit a U+002D
+                                 * HYPHEN-MINUS character token. Switch to the
+                                 * script data escaped dash dash state.
+                                 */
+                                state = Tokenizer.SCRIPT_DATA_ESCAPED_DASH_DASH;
                                 continue stateloop;
+                            case '<':
+                                /*
+                                 * U+003C LESS-THAN SIGN (<) Switch to the
+                                 * script data escaped less-than sign state.
+                                 */
+                                flushChars(buf, pos);
+                                state = Tokenizer.SCRIPT_DATA_ESCAPED_LESS_THAN;
+                                break scriptdataescapeddashloop;
+                            // continue stateloop;
                             case '\u0000':
                                 emitReplacementCharacter(buf, pos);
-                                state = Tokenizer.ESCAPE;
+                                state = Tokenizer.SCRIPT_DATA_ESCAPED;
                                 continue stateloop;
                             case '\r':
                                 emitCarriageReturn(buf, pos);
-                                state = Tokenizer.ESCAPE;
-                                continue stateloop;
+                                state = Tokenizer.SCRIPT_DATA_ESCAPED;
+                                break stateloop;
                             case '\n':
                                 silentLineFeed();
                             default:
-                                state = Tokenizer.ESCAPE;
+                                /*
+                                 * Anything else Emit the current input
+                                 * character as a character token. Switch to the
+                                 * script data escaped state.
+                                 */
+                                state = Tokenizer.SCRIPT_DATA_ESCAPED;
+                                continue stateloop;
+                        }
+                    }
+                    // WARNING FALLTHRU CASE TRANSITION: DON'T REORDER
+                case SCRIPT_DATA_ESCAPED_LESS_THAN:
+                    scriptdataescapedlessthanloop: for (;;) {
+                        if (++pos == endPos) {
+                            break stateloop;
+                        }
+                        c = checkChar(buf, pos);
+                        /*
+                         * Consume the next input character:
+                         */
+                        switch (c) {
+                            case '/':
+                                /*
+                                 * U+002F SOLIDUS (/) Set the temporary buffer
+                                 * to the empty string. Switch to the script
+                                 * data escaped end tag open state.
+                                 */
+                                index = 0;
+                                clearStrBufForNextState();
+                                returnState = Tokenizer.SCRIPT_DATA_ESCAPED;
+                                state = Tokenizer.NON_DATA_END_TAG_NAME;
+                                continue stateloop;
+                            case 'S':
+                            case 's':
+                                /*
+                                 * U+0041 LATIN CAPITAL LETTER A through to
+                                 * U+005A LATIN CAPITAL LETTER Z Emit a U+003C
+                                 * LESS-THAN SIGN character token and the
+                                 * current input character as a character token.
+                                 */
+                                tokenHandler.characters(Tokenizer.LT_GT, 0, 1);
+                                cstart = pos;
+                                index = 1;
+                                /*
+                                 * Set the temporary buffer to the empty string.
+                                 * Append the lowercase version of the current
+                                 * input character (add 0x0020 to the
+                                 * character's code point) to the temporary
+                                 * buffer. Switch to the script data double
+                                 * escape start state.
+                                 */
+                                state = Tokenizer.SCRIPT_DATA_DOUBLE_ESCAPE_START;
+                                break scriptdataescapedlessthanloop;
+                            // continue stateloop;
+                            default:
+                                /*
+                                 * Anything else Emit a U+003C LESS-THAN SIGN
+                                 * character token and reconsume the current
+                                 * input character in the script data escaped
+                                 * state.
+                                 */
+                                tokenHandler.characters(Tokenizer.LT_GT, 0, 1);
+                                cstart = pos;
+                                reconsume = true;
+                                state = Tokenizer.SCRIPT_DATA_ESCAPED;
+                                continue stateloop;
+                        }
+                    }
+                    // WARNING FALLTHRU CASE TRANSITION: DON'T REORDER
+                case SCRIPT_DATA_DOUBLE_ESCAPE_START:
+                    scriptdatadoubleescapestartloop: for (;;) {
+                        if (++pos == endPos) {
+                            break stateloop;
+                        }
+                        c = checkChar(buf, pos);
+                        assert (index > 0);
+                        if (index < 6) { // SCRIPT_ARR.length
+                            char folded = c;
+                            if (c >= 'A' && c <= 'Z') {
+                                folded += 0x20;
+                            }
+                            if (folded != Tokenizer.SCRIPT_ARR[index]) {
+                                reconsume = true;
+                                state = Tokenizer.SCRIPT_DATA_ESCAPED;
+                                continue stateloop;
+                            }
+                            index++;
+                            continue;
+                        }
+                        switch (c) {
+                            case '\r':
+                                emitCarriageReturn(buf, pos);
+                                state = Tokenizer.SCRIPT_DATA_DOUBLE_ESCAPED;
+                                break stateloop;
+                            case '\n':
+                                silentLineFeed();
+                            case ' ':
+                            case '\t':
+                            case '\u000C':
+                            case '/':
+                            case '>':
+                                /*
+                                 * U+0009 CHARACTER TABULATION U+000A LINE FEED
+                                 * (LF) U+000C FORM FEED (FF) U+0020 SPACE
+                                 * U+002F SOLIDUS (/) U+003E GREATER-THAN SIGN
+                                 * (>) Emit the current input character as a
+                                 * character token. If the temporary buffer is
+                                 * the string "script", then switch to the
+                                 * script data double escaped state.
+                                 */
+                                state = Tokenizer.SCRIPT_DATA_DOUBLE_ESCAPED;
+                                break scriptdatadoubleescapestartloop;
+                            // continue stateloop;
+                            default:
+                                /*
+                                 * Anything else Reconsume the current input
+                                 * character in the script data escaped state.
+                                 */
+                                reconsume = true;
+                                state = Tokenizer.SCRIPT_DATA_ESCAPED;
+                                continue stateloop;
+                        }
+                    }
+                    // WARNING FALLTHRU CASE TRANSITION: DON'T REORDER
+                case SCRIPT_DATA_DOUBLE_ESCAPED:
+                    scriptdatadoubleescapedloop: for (;;) {
+                        if (reconsume) {
+                            reconsume = false;
+                        } else {
+                            if (++pos == endPos) {
+                                break stateloop;
+                            }
+                            c = checkChar(buf, pos);
+                        }
+                        /*
+                         * Consume the next input character:
+                         */
+                        switch (c) {
+                            case '-':
+                                /*
+                                 * U+002D HYPHEN-MINUS (-) Emit a U+002D
+                                 * HYPHEN-MINUS character token. Switch to the
+                                 * script data double escaped dash state.
+                                 */
+                                state = Tokenizer.SCRIPT_DATA_DOUBLE_ESCAPED_DASH;
+                                break scriptdatadoubleescapedloop; // FALL THRU
+                            // continue
+                            // stateloop;
+                            case '<':
+                                /*
+                                 * U+003C LESS-THAN SIGN (<) Emit a U+003C
+                                 * LESS-THAN SIGN character token. Switch to the
+                                 * script data double escaped less-than sign
+                                 * state.
+                                 */
+                                flushChars(buf, pos);
+                                state = Tokenizer.SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN;
+                                continue stateloop;
+                            case '\u0000':
+                                emitReplacementCharacter(buf, pos);
+                                continue;
+                            case '\r':
+                                emitCarriageReturn(buf, pos);
+                                break stateloop;
+                            case '\n':
+                                silentLineFeed();
+                            default:
+                                /*
+                                 * Anything else Emit the current input
+                                 * character as a character token. Stay in the
+                                 * script data double escaped state.
+                                 */
+                                continue;
+                        }
+                    }
+                    // WARNING FALLTHRU CASE TRANSITION: DON'T REORDER
+                case SCRIPT_DATA_DOUBLE_ESCAPED_DASH:
+                    scriptdatadoubleescapeddashloop: for (;;) {
+                        if (++pos == endPos) {
+                            break stateloop;
+                        }
+                        c = checkChar(buf, pos);
+                        /*
+                         * Consume the next input character:
+                         */
+                        switch (c) {
+                            case '-':
+                                /*
+                                 * U+002D HYPHEN-MINUS (-) Emit a U+002D
+                                 * HYPHEN-MINUS character token. Switch to the
+                                 * script data double escaped dash dash state.
+                                 */
+                                state = Tokenizer.SCRIPT_DATA_DOUBLE_ESCAPED_DASH_DASH;
+                                break scriptdatadoubleescapeddashloop;
+                            // continue stateloop;
+                            case '<':
+                                /*
+                                 * U+003C LESS-THAN SIGN (<) Switch to the
+                                 * script data double escaped less-than sign
+                                 * state.
+                                 */
+                                flushChars(buf, pos);
+                                state = Tokenizer.SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN;
+                                continue stateloop;
+                            case '\u0000':
+                                emitReplacementCharacter(buf, pos);
+                                state = Tokenizer.SCRIPT_DATA_DOUBLE_ESCAPED;
+                                continue stateloop;
+                            case '\r':
+                                emitCarriageReturn(buf, pos);
+                                state = Tokenizer.SCRIPT_DATA_DOUBLE_ESCAPED;
+                                break stateloop;
+                            case '\n':
+                                silentLineFeed();
+                            default:
+                                /*
+                                 * Anything else Emit the current input
+                                 * character as a character token. Switch to the
+                                 * script data double escaped state.
+                                 */
+                                state = Tokenizer.SCRIPT_DATA_DOUBLE_ESCAPED;
+                                continue stateloop;
+                        }
+                    }
+                    // WARNING FALLTHRU CASE TRANSITION: DON'T REORDER
+                case SCRIPT_DATA_DOUBLE_ESCAPED_DASH_DASH:
+                    scriptdatadoubleescapeddashdashloop: for (;;) {
+                        if (++pos == endPos) {
+                            break stateloop;
+                        }
+                        c = checkChar(buf, pos);
+                        /*
+                         * Consume the next input character:
+                         */
+                        switch (c) {
+                            case '-':
+                                /*
+                                 * U+002D HYPHEN-MINUS (-) Emit a U+002D
+                                 * HYPHEN-MINUS character token. Stay in the
+                                 * script data double escaped dash dash state.
+                                 */
+                                continue;
+                            case '<':
+                                /*
+                                 * U+003C LESS-THAN SIGN (<) Emit a U+003C
+                                 * LESS-THAN SIGN character token. Switch to the
+                                 * script data double escaped less-than sign
+                                 * state.
+                                 */
+                                state = Tokenizer.SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN;
+                                break scriptdatadoubleescapeddashdashloop;
+                            case '>':
+                                /*
+                                 * U+003E GREATER-THAN SIGN (>) Emit a U+003E
+                                 * GREATER-THAN SIGN character token. Switch to
+                                 * the script data state.
+                                 */
+                                state = Tokenizer.SCRIPT_DATA;
+                                continue stateloop;
+                            case '\u0000':
+                                emitReplacementCharacter(buf, pos);
+                                state = Tokenizer.SCRIPT_DATA_DOUBLE_ESCAPED;
+                                continue stateloop;
+                            case '\r':
+                                emitCarriageReturn(buf, pos);
+                                state = Tokenizer.SCRIPT_DATA_DOUBLE_ESCAPED;
+                                break stateloop;
+                            case '\n':
+                                silentLineFeed();
+                            default:
+                                /*
+                                 * Anything else Emit the current input
+                                 * character as a character token. Switch to the
+                                 * script data double escaped state.
+                                 */
+                                state = Tokenizer.SCRIPT_DATA_DOUBLE_ESCAPED;
+                                continue stateloop;
+                        }
+                    }
+                    // WARNING FALLTHRU CASE TRANSITION: DON'T REORDER
+                case SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN:
+                    scriptdatadoubleescapedlessthanloop: for (;;) {
+                        if (++pos == endPos) {
+                            break stateloop;
+                        }
+                        c = checkChar(buf, pos);
+                        /*
+                         * Consume the next input character:
+                         */
+                        switch (c) {
+                            case '/':
+                                /*
+                                 * U+002F SOLIDUS (/) Emit a U+002F SOLIDUS
+                                 * character token. Set the temporary buffer to
+                                 * the empty string. Switch to the script data
+                                 * double escape end state.
+                                 */
+                                index = 0;
+                                state = Tokenizer.SCRIPT_DATA_DOUBLE_ESCAPE_END;
+                                break scriptdatadoubleescapedlessthanloop;
+                            default:
+                                /*
+                                 * Anything else Reconsume the current input
+                                 * character in the script data double escaped
+                                 * state.
+                                 */
+                                reconsume = true;
+                                state = Tokenizer.SCRIPT_DATA_DOUBLE_ESCAPED;
+                                continue stateloop;
+                        }
+                    }
+                    // WARNING FALLTHRU CASE TRANSITION: DON'T REORDER
+                case SCRIPT_DATA_DOUBLE_ESCAPE_END:
+                    scriptdatadoubleescapeendloop: for (;;) {
+                        if (++pos == endPos) {
+                            break stateloop;
+                        }
+                        c = checkChar(buf, pos);
+                        if (index < 6) { // SCRIPT_ARR.length
+                            char folded = c;
+                            if (c >= 'A' && c <= 'Z') {
+                                folded += 0x20;
+                            }
+                            if (folded != Tokenizer.SCRIPT_ARR[index]) {
+                                reconsume = true;
+                                state = Tokenizer.SCRIPT_DATA_DOUBLE_ESCAPED;
+                                continue stateloop;
+                            }
+                            index++;
+                            continue;
+                        }
+                        switch (c) {
+                            case '\r':
+                                emitCarriageReturn(buf, pos);
+                                state = Tokenizer.SCRIPT_DATA_ESCAPED;
+                                break stateloop;
+                            case '\n':
+                                silentLineFeed();
+                            case ' ':
+                            case '\t':
+                            case '\u000C':
+                            case '/':
+                            case '>':
+                                /*
+                                 * U+0009 CHARACTER TABULATION U+000A LINE FEED
+                                 * (LF) U+000C FORM FEED (FF) U+0020 SPACE
+                                 * U+002F SOLIDUS (/) U+003E GREATER-THAN SIGN
+                                 * (>) Emit the current input character as a
+                                 * character token. If the temporary buffer is
+                                 * the string "script", then switch to the
+                                 * script data escaped state.
+                                 */
+                                state = Tokenizer.SCRIPT_DATA_ESCAPED;
+                                continue stateloop;
+                            default:
+                                /*
+                                 * Reconsume the current input character in the
+                                 * script data double escaped state.
+                                 */
+                                reconsume = true;
+                                state = Tokenizer.SCRIPT_DATA_DOUBLE_ESCAPED;
                                 continue stateloop;
                         }
                     }
@@ -5373,7 +5845,7 @@ public class Tokenizer implements Locator {
             } else if ((value & 0xFFFE) == 0xFFFE) {
                 ch = errNcrNonCharacter(ch);
             } else if (value >= 0x007F && value <= 0x009F) {
-                errNcrControlChar();                
+                errNcrControlChar();
             } else {
                 maybeWarnPrivateUse(ch);
             }
@@ -6350,13 +6822,15 @@ public class Tokenizer implements Locator {
     protected void errNcrZero() throws SAXException {
     }
 
-    protected void errNoSpaceBetweenDoctypeSystemKeywordAndQuote() throws SAXException {
+    protected void errNoSpaceBetweenDoctypeSystemKeywordAndQuote()
+            throws SAXException {
     }
 
     protected void errNoSpaceBetweenPublicAndSystemIds() throws SAXException {
     }
 
-    protected void errNoSpaceBetweenDoctypePublicKeywordAndQuote() throws SAXException {
+    protected void errNoSpaceBetweenDoctypePublicKeywordAndQuote()
+            throws SAXException {
     }
 
     protected void noteAttributeWithoutValue() throws SAXException {
