@@ -1198,6 +1198,7 @@ public class Tokenizer implements Locator {
              */
             maybeErrAttributesOnEndTag(attrs);
             tokenHandler.endTag(tagName);
+            Portability.delete(attributes);
         } else {
             tokenHandler.startTag(tagName, attrs, selfClosing);
         }
