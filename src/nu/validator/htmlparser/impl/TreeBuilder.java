@@ -2106,8 +2106,9 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                                 HtmlAttributes.EMPTY_ATTRIBUTES);
                                         pop(); // form
                                         selfClosing = false;
-                                        Portability.delete(formAttrs);
-                                        Portability.delete(inputAttributes);
+                                        // Portability.delete(formAttrs);
+                                        // Portability.delete(inputAttributes);
+                                        Portability.delete(attributes);
                                         attributes = null; // CPP
                                         break starttagloop;
                                     case TEXTAREA:
