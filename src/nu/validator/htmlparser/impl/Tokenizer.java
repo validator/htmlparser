@@ -206,7 +206,7 @@ public class Tokenizer implements Locator {
     private static final int SCRIPT_DATA_DOUBLE_ESCAPED_DASH = 69;
 
     private static final int SCRIPT_DATA_DOUBLE_ESCAPED_DASH_DASH = 70;
-    
+
     private static final int SCRIPT_DATA_DOUBLE_ESCAPE_END = 71;
 
     /**
@@ -5800,59 +5800,61 @@ public class Tokenizer implements Locator {
          * interpret the string of characters as a number (either hexadecimal or
          * decimal as appropriate).
          */
-        if (value >= 0x80 && value <= 0x9f) {
-            /*
-             * If that number is one of the numbers in the first column of the
-             * following table, then this is a parse error.
-             */
-            errNcrInC1Range();
-            /*
-             * Find the row with that number in the first column, and return a
-             * character token for the Unicode character given in the second
-             * column of that row.
-             */
-            @NoLength char[] val = NamedCharacters.WINDOWS_1252[value - 0x80];
-            emitOrAppendOne(val, returnState);
-        } else if (value == 0x0D) {
-            errRcnCr();
-            emitOrAppendOne(Tokenizer.LF, returnState);
-            // [NOCPP[
-        } else if (value == 0xC
-                && contentSpacePolicy != XmlViolationPolicy.ALLOW) {
-            if (contentSpacePolicy == XmlViolationPolicy.ALTER_INFOSET) {
-                emitOrAppendOne(Tokenizer.SPACE, returnState);
-            } else if (contentSpacePolicy == XmlViolationPolicy.FATAL) {
-                fatal("A character reference expanded to a form feed which is not legal XML 1.0 white space.");
-            }
-            // ]NOCPP]
-        } else if (value == 0x0) {
-            errNcrZero();
-            emitOrAppendOne(Tokenizer.REPLACEMENT_CHARACTER, returnState);
-        } else if ((value & 0xF800) == 0xD800) {
-            errNcrSurrogate();
-            emitOrAppendOne(Tokenizer.REPLACEMENT_CHARACTER, returnState);
-        } else if (value <= 0xFFFF) {
-            /*
-             * Otherwise, return a character token for the Unicode character
-             * whose code point is that number.
-             */
-            char ch = (char) value;
-            // [NOCPP[
-            if ((value <= 0x0008) || (value == 0x000B)
-                    || (value >= 0x000E && value <= 0x001F)) {
-                ch = errNcrControlChar(ch);
-            } else if (value >= 0xFDD0 && value <= 0xFDEF) {
-                errNcrUnassigned();
-            } else if ((value & 0xFFFE) == 0xFFFE) {
-                ch = errNcrNonCharacter(ch);
-            } else if (value >= 0x007F && value <= 0x009F) {
-                errNcrControlChar();
+        if (value <= 0xFFFF) {
+            if (value >= 0x80 && value <= 0x9f) {
+                /*
+                 * If that number is one of the numbers in the first column of
+                 * the following table, then this is a parse error.
+                 */
+                errNcrInC1Range();
+                /*
+                 * Find the row with that number in the first column, and return
+                 * a character token for the Unicode character given in the
+                 * second column of that row.
+                 */
+                @NoLength char[] val = NamedCharacters.WINDOWS_1252[value - 0x80];
+                emitOrAppendOne(val, returnState);
+            } else if (value == 0x0D) {
+                errRcnCr();
+                emitOrAppendOne(Tokenizer.LF, returnState);
+                // [NOCPP[
+            } else if (value == 0xC
+                    && contentSpacePolicy != XmlViolationPolicy.ALLOW) {
+                if (contentSpacePolicy == XmlViolationPolicy.ALTER_INFOSET) {
+                    emitOrAppendOne(Tokenizer.SPACE, returnState);
+                } else if (contentSpacePolicy == XmlViolationPolicy.FATAL) {
+                    fatal("A character reference expanded to a form feed which is not legal XML 1.0 white space.");
+                }
+                // ]NOCPP]
+            } else if (value == 0x0) {
+                errNcrZero();
+                emitOrAppendOne(Tokenizer.REPLACEMENT_CHARACTER, returnState);
+            } else if ((value & 0xF800) == 0xD800) {
+                errNcrSurrogate();
+                emitOrAppendOne(Tokenizer.REPLACEMENT_CHARACTER, returnState);
             } else {
-                maybeWarnPrivateUse(ch);
+                /*
+                 * Otherwise, return a character token for the Unicode character
+                 * whose code point is that number.
+                 */
+                char ch = (char) value;
+                // [NOCPP[
+                if ((value <= 0x0008) || (value == 0x000B)
+                        || (value >= 0x000E && value <= 0x001F)) {
+                    ch = errNcrControlChar(ch);
+                } else if (value >= 0xFDD0 && value <= 0xFDEF) {
+                    errNcrUnassigned();
+                } else if ((value & 0xFFFE) == 0xFFFE) {
+                    ch = errNcrNonCharacter(ch);
+                } else if (value >= 0x007F && value <= 0x009F) {
+                    errNcrControlChar();
+                } else {
+                    maybeWarnPrivateUse(ch);
+                }
+                // ]NOCPP]
+                bmpChar[0] = ch;
+                emitOrAppendOne(bmpChar, returnState);
             }
-            // ]NOCPP]
-            bmpChar[0] = ch;
-            emitOrAppendOne(bmpChar, returnState);
         } else if (value <= 0x10FFFF) {
             // [NOCPP[
             maybeWarnPrivateUseAstral();
