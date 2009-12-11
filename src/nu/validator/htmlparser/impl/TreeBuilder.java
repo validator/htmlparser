@@ -3820,10 +3820,10 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                     continue;
                 case TEXT:
                     // XXX need to manage insertion point here
-                    if (originalMode == AFTER_HEAD) {
-                        pop();
-                    }
                     pop();
+                    if (originalMode == AFTER_HEAD) {
+                        silentPop();
+                    }
                     mode = originalMode;
                     break endtagloop;
             }
@@ -4175,6 +4175,17 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         elementPushed(node.ns, node.popName, node.node);
     }
 
+    private void silentPush(StackNode<T> node) throws SAXException {
+        currentPtr++;
+        if (currentPtr == stack.length) {
+            StackNode<T>[] newStack = new StackNode[stack.length + 64];
+            System.arraycopy(stack, 0, newStack, 0, stack.length);
+            Portability.releaseArray(stack);
+            stack = newStack;
+        }
+        stack[currentPtr] = node;
+    }
+
     private void append(StackNode<T> node) {
         listPtr++;
         if (listPtr == listOfActiveFormattingElements.length) {
@@ -4502,15 +4513,13 @@ public abstract class TreeBuilder<T> implements TokenHandler,
     }
 
     private void pushHeadPointerOntoStack() throws SAXException {
+        assert headPointer != null;
+        assert !fragment;
+        assert mode == AFTER_HEAD;
         flushCharacters();
         fatal();
-        if (headPointer == null) {
-            assert fragment;
-            push(stack[currentPtr]);
-        } else {
-            push(new StackNode<T>("http://www.w3.org/1999/xhtml",
-                    ElementName.HEAD, headPointer));
-        }
+        silentPush(new StackNode<T>("http://www.w3.org/1999/xhtml", ElementName.HEAD,
+                headPointer));
     }
 
     /**
@@ -4591,6 +4600,14 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         assert clearLastStackSlot();
         currentPtr--;
         elementPopped(node.ns, node.popName, node.node);
+        node.release();
+    }
+
+    private void silentPop() throws SAXException {
+        flushCharacters();
+        StackNode<T> node = stack[currentPtr];
+        assert clearLastStackSlot();
+        currentPtr--;
         node.release();
     }
 
