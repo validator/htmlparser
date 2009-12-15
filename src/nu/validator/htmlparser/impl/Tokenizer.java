@@ -834,27 +834,6 @@ public class Tokenizer implements Locator {
     }
 
     /**
-     * Appends to the smaller buffer.
-     * 
-     * @param c
-     *            the UTF-16 code unit to append
-     */
-    private void appendStrBufForceWrite(char c) {
-        // if (strBufOffset != -1) {
-        // strBufLen++;
-        // buf[pos] = c;
-        // } else {
-        if (strBufLen == strBuf.length) {
-            char[] newBuf = new char[strBuf.length + Tokenizer.BUFFER_GROW_BY];
-            System.arraycopy(strBuf, 0, newBuf, 0, strBuf.length);
-            Portability.releaseArray(strBuf);
-            strBuf = newBuf;
-        }
-        strBuf[strBufLen++] = c;
-        // }
-    }
-
-    /**
      * The smaller buffer as a String. Currently only used for error reporting.
      * 
      * <p>
@@ -1293,15 +1272,15 @@ public class Tokenizer implements Locator {
         }
         // ]NOCPP]
         if (attributeName != null) {
-            String value = longStrBufToString(); // Ownership transferred to
+            String val = longStrBufToString(); // Ownership transferred to
             // HtmlAttributes
             // [NOCPP[
             if (!endTag && html4 && html4ModeCompatibleWithXhtml1Schemata
                     && attributeName.isCaseFolded()) {
-                value = newAsciiLowerCaseStringFromString(value);
+                val = newAsciiLowerCaseStringFromString(val);
             }
             // ]NOCPP]
-            attributes.addAttribute(attributeName, value
+            attributes.addAttribute(attributeName, val
             // [NOCPP[
                     , xmlnsPolicy
             // ]NOCPP]
@@ -1405,7 +1384,7 @@ public class Tokenizer implements Locator {
 
     // WARNING When editing this, makes sure the bytecode length shown by javap
     // stays under 8000 bytes!
-    private int stateLoop(int state, char c, int pos, @NoLength char[] buf,
+    @SuppressWarnings("unused") private int stateLoop(int state, char c, int pos, @NoLength char[] buf,
             boolean reconsume, int returnState, int endPos) throws SAXException {
         stateloop: for (;;) {
             switch (state) {

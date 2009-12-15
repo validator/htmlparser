@@ -477,7 +477,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         // ]NOCPP]
     }
 
-    public final void startTokenization(Tokenizer self) throws SAXException {
+    @SuppressWarnings("unchecked") public final void startTokenization(Tokenizer self) throws SAXException {
         tokenizer = self;
         stack = new StackNode[64];
         listOfActiveFormattingElements = new StackNode[64];
@@ -4109,7 +4109,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
             } else if ("table" == name) {
                 mode = IN_TABLE;
                 return;
-            } else if ("http://www.w3.org/1999/xhtml" != node.ns) {
+            } else if ("http://www.w3.org/1999/xhtml" != ns) {
                 foreignFlag = TreeBuilder.IN_FOREIGN;
                 mode = IN_BODY;
                 return;
@@ -4164,7 +4164,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         return true;
     }
 
-    private void push(StackNode<T> node) throws SAXException {
+    @SuppressWarnings("unchecked") private void push(StackNode<T> node) throws SAXException {
         currentPtr++;
         if (currentPtr == stack.length) {
             StackNode<T>[] newStack = new StackNode[stack.length + 64];
@@ -4176,7 +4176,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         elementPushed(node.ns, node.popName, node.node);
     }
 
-    private void silentPush(StackNode<T> node) throws SAXException {
+    @SuppressWarnings("unchecked") private void silentPush(StackNode<T> node) throws SAXException {
         currentPtr++;
         if (currentPtr == stack.length) {
             StackNode<T>[] newStack = new StackNode[stack.length + 64];
@@ -4187,7 +4187,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         stack[currentPtr] = node;
     }
 
-    private void append(StackNode<T> node) {
+    @SuppressWarnings("unchecked") private void append(StackNode<T> node) {
         listPtr++;
         if (listPtr == listOfActiveFormattingElements.length) {
             StackNode<T>[] newList = new StackNode[listOfActiveFormattingElements.length + 64];
@@ -4915,7 +4915,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         Portability.releaseElement(elt);
     }
 
-    @SuppressWarnings("unchecked") private void appendVoidElementToCurrentMayFoster(
+    private void appendVoidElementToCurrentMayFoster(
             @NsUri String ns, @Local String name, HtmlAttributes attributes,
             T form) throws SAXException {
         flushCharacters();
@@ -4936,7 +4936,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         Portability.releaseElement(elt);
     }
 
-    @SuppressWarnings("unchecked") private void appendVoidElementToCurrentMayFoster(
+    private void appendVoidElementToCurrentMayFoster(
             @NsUri String ns, ElementName elementName, HtmlAttributes attributes)
             throws SAXException {
         flushCharacters();
@@ -4960,7 +4960,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         Portability.releaseElement(elt);
     }
 
-    @SuppressWarnings("unchecked") private void appendVoidElementToCurrentMayFosterCamelCase(
+    private void appendVoidElementToCurrentMayFosterCamelCase(
             @NsUri String ns, ElementName elementName, HtmlAttributes attributes)
             throws SAXException {
         flushCharacters();
@@ -5082,7 +5082,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
 
     }
 
-    protected void start(boolean fragment) throws SAXException {
+    protected void start(boolean fragmentMode) throws SAXException {
 
     }
 
