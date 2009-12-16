@@ -1328,7 +1328,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                     // ]NOCPP]
                     break eofloop;
                 case TEXT:
-                    err("End of file seen inside an [R]CDATA element.");
+                    err("End of file seen when expecting text or an end tag.");
                     // XXX mark script as already executed
                     if (originalMode == AFTER_HEAD) {
                         popOnEof();
