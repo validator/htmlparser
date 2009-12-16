@@ -1384,8 +1384,9 @@ public class Tokenizer implements Locator {
 
     // WARNING When editing this, makes sure the bytecode length shown by javap
     // stays under 8000 bytes!
-    @SuppressWarnings("unused") private int stateLoop(int state, char c, int pos, @NoLength char[] buf,
-            boolean reconsume, int returnState, int endPos) throws SAXException {
+    @SuppressWarnings("unused") private int stateLoop(int state, char c,
+            int pos, @NoLength char[] buf, boolean reconsume, int returnState,
+            int endPos) throws SAXException {
         stateloop: for (;;) {
             switch (state) {
                 case DATA:
@@ -5881,16 +5882,33 @@ public class Tokenizer implements Locator {
                      * state.
                      */
                     break eofloop;
+                case RAWTEXT_RCDATA_LESS_THAN_SIGN_STATE:
+                    /*
+                     * Emit a U+003C LESS-THAN SIGN character token
+                     */
+                    tokenHandler.characters(Tokenizer.LT_GT, 0, 1);
+                    /*
+                     * and reconsume the current input character in the RCDATA
+                     * state.
+                     */
+                    break eofloop;
                 case NON_DATA_END_TAG_NAME:
-                    if (index < contentModelElementNameAsArray.length) {
-                        break eofloop;
-                    } else {
-                        errEofInEndTag();
-                        /*
-                         * Reconsume the EOF character in the data state.
-                         */
-                        break eofloop;
-                    }
+                    /*
+                     * Emit a U+003C LESS-THAN SIGN character token, a U+002F
+                     * SOLIDUS character token,
+                     */
+                    tokenHandler.characters(Tokenizer.LT_SOLIDUS, 0, 2);
+                    /*
+                     * a character token for each of the characters in the
+                     * temporary buffer (in the order they were added to the
+                     * buffer),
+                     */
+                    emitStrBuf();
+                    /*
+                     * and reconsume the current input character in the RCDATA
+                     * state.
+                     */
+                    break eofloop;
                 case CLOSE_TAG_OPEN:
                     /* EOF Parse error. */
                     errEofAfterLt();
