@@ -5838,6 +5838,9 @@ public class Tokenizer implements Locator {
         } else if (value <= 0x10FFFF) {
             // [NOCPP[
             maybeWarnPrivateUseAstral();
+            if ((value & 0xFFFE) == 0xFFFE) {
+                errAstralNonCharacter(value);
+            }
             // ]NOCPP]
             astralChar[0] = (char) (Tokenizer.LEAD_OFFSET + (value >> 10));
             astralChar[1] = (char) (0xDC00 + (value & 0x3FF));
@@ -6755,6 +6758,9 @@ public class Tokenizer implements Locator {
         return ch;
     }
 
+    protected void errAstralNonCharacter(int ch) throws SAXException {
+    }
+    
     protected void errNcrSurrogate() throws SAXException {
     }
 
