@@ -51,13 +51,13 @@ import com.sdicons.json.parser.JSONParser;
 
 public class TokenizerTester {
 
-    private static JSONString PLAINTEXT = new JSONString("PLAINTEXT");
+    private static JSONString PLAINTEXT = new JSONString("PLAINTEXT state");
 
-    private static JSONString PCDATA = new JSONString("PCDATA");
+    private static JSONString PCDATA = new JSONString("DATA state");
 
-    private static JSONString RCDATA = new JSONString("RCDATA");
+    private static JSONString RCDATA = new JSONString("RCDATA state");
 
-    private static JSONString CDATA = new JSONString("CDATA");
+    private static JSONString RAWTEXT = new JSONString("RAWTEXT state");
 
     private static boolean jsonDeepEquals(JSONValue one, JSONValue other) {
         if (one.isSimple()) {
@@ -129,7 +129,7 @@ public class TokenizerTester {
         JSONString lastStartTagJSON = ((JSONString) test.get("lastStartTag"));
         String lastStartTag = lastStartTagJSON == null ? null
                 : lastStartTagJSON.getValue();
-        JSONArray contentModelFlags = (JSONArray) test.get("contentModelFlags");
+        JSONArray contentModelFlags = (JSONArray) test.get("initialStates");
         if (contentModelFlags == null) {
             runTestInner(inputString, expectedTokens, description,
                     Tokenizer.DATA, null);
@@ -138,9 +138,9 @@ public class TokenizerTester {
                 if (PCDATA.equals(value)) {
                     runTestInner(inputString, expectedTokens, description,
                             Tokenizer.DATA, lastStartTag);
-                } else if (CDATA.equals(value)) {
+                } else if (RAWTEXT.equals(value)) {
                     runTestInner(inputString, expectedTokens, description,
-                            Tokenizer.SCRIPT_DATA, lastStartTag);
+                            Tokenizer.RAWTEXT, lastStartTag);
                 } else if (RCDATA.equals(value)) {
                     runTestInner(inputString, expectedTokens, description,
                             Tokenizer.RCDATA, lastStartTag);
