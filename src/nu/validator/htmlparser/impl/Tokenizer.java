@@ -171,7 +171,7 @@ public class Tokenizer implements Locator {
 
     private static final int CDATA_RSQB_RSQB = 52;
 
-    private static final int SCRIPT_DATA_LESS_THAN_SIGN_STATE = 53;
+    private static final int SCRIPT_DATA_LESS_THAN_SIGN = 53;
 
     private static final int SCRIPT_DATA_ESCAPE_START = 54;
 
@@ -187,7 +187,7 @@ public class Tokenizer implements Locator {
 
     public static final int RAWTEXT = 60;
 
-    private static final int RAWTEXT_RCDATA_LESS_THAN_SIGN_STATE = 61;
+    private static final int RAWTEXT_RCDATA_LESS_THAN_SIGN = 61;
 
     private static final int AFTER_DOCTYPE_PUBLIC_KEYWORD = 62;
 
@@ -195,13 +195,13 @@ public class Tokenizer implements Locator {
 
     private static final int AFTER_DOCTYPE_SYSTEM_KEYWORD = 64;
 
-    private static final int SCRIPT_DATA_ESCAPED_LESS_THAN = 65;
+    private static final int SCRIPT_DATA_ESCAPED_LESS_THAN_SIGN = 65;
 
     private static final int SCRIPT_DATA_DOUBLE_ESCAPE_START = 66;
 
     private static final int SCRIPT_DATA_DOUBLE_ESCAPED = 67;
 
-    private static final int SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN = 68;
+    private static final int SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN_SIGN = 68;
 
     private static final int SCRIPT_DATA_DOUBLE_ESCAPED_DASH = 69;
 
@@ -1352,10 +1352,9 @@ public class Tokenizer implements Locator {
             case SCRIPT_DATA_ESCAPE_START_DASH:
             case SCRIPT_DATA_ESCAPED_DASH:
             case SCRIPT_DATA_ESCAPED_DASH_DASH:
-            case SCRIPT_DATA_ESCAPED_LESS_THAN:
             case SCRIPT_DATA_DOUBLE_ESCAPE_START:
             case SCRIPT_DATA_DOUBLE_ESCAPED:
-            case SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN:
+            case SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN_SIGN:
             case SCRIPT_DATA_DOUBLE_ESCAPED_DASH:
             case SCRIPT_DATA_DOUBLE_ESCAPED_DASH_DASH:
             case SCRIPT_DATA_DOUBLE_ESCAPE_END:
@@ -4740,7 +4739,7 @@ public class Tokenizer implements Locator {
                                  */
                                 flushChars(buf, pos);
                                 returnState = state;
-                                state = Tokenizer.SCRIPT_DATA_LESS_THAN_SIGN_STATE;
+                                state = Tokenizer.SCRIPT_DATA_LESS_THAN_SIGN;
                                 break scriptdataloop; // FALL THRU continue
                             // stateloop;
                             case '\u0000':
@@ -4761,7 +4760,7 @@ public class Tokenizer implements Locator {
                         }
                     }
                     // WARNING FALLTHRU CASE TRANSITION: DON'T REORDER
-                case SCRIPT_DATA_LESS_THAN_SIGN_STATE:
+                case SCRIPT_DATA_LESS_THAN_SIGN:
                     scriptdatalessthansignloop: for (;;) {
                         if (++pos == endPos) {
                             break stateloop;
@@ -4886,7 +4885,7 @@ public class Tokenizer implements Locator {
                                  * script data escaped less-than sign state.
                                  */
                                 flushChars(buf, pos);
-                                state = Tokenizer.SCRIPT_DATA_ESCAPED_LESS_THAN;
+                                state = Tokenizer.SCRIPT_DATA_ESCAPED_LESS_THAN_SIGN;
                                 continue stateloop;
                             case '>':
                                 /*
@@ -4948,7 +4947,7 @@ public class Tokenizer implements Locator {
                                  * script data escaped less-than sign state.
                                  */
                                 flushChars(buf, pos);
-                                state = Tokenizer.SCRIPT_DATA_ESCAPED_LESS_THAN;
+                                state = Tokenizer.SCRIPT_DATA_ESCAPED_LESS_THAN_SIGN;
                                 continue stateloop;
                             case '\u0000':
                                 emitReplacementCharacter(buf, pos);
@@ -4992,7 +4991,7 @@ public class Tokenizer implements Locator {
                                  * script data escaped less-than sign state.
                                  */
                                 flushChars(buf, pos);
-                                state = Tokenizer.SCRIPT_DATA_ESCAPED_LESS_THAN;
+                                state = Tokenizer.SCRIPT_DATA_ESCAPED_LESS_THAN_SIGN;
                                 break scriptdataescapeddashloop;
                             // continue stateloop;
                             case '\u0000':
@@ -5016,7 +5015,7 @@ public class Tokenizer implements Locator {
                         }
                     }
                     // WARNING FALLTHRU CASE TRANSITION: DON'T REORDER
-                case SCRIPT_DATA_ESCAPED_LESS_THAN:
+                case SCRIPT_DATA_ESCAPED_LESS_THAN_SIGN:
                     scriptdataescapedlessthanloop: for (;;) {
                         if (++pos == endPos) {
                             break stateloop;
@@ -5160,8 +5159,7 @@ public class Tokenizer implements Locator {
                                  * script data double escaped less-than sign
                                  * state.
                                  */
-                                flushChars(buf, pos);
-                                state = Tokenizer.SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN;
+                                state = Tokenizer.SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN_SIGN;
                                 continue stateloop;
                             case '\u0000':
                                 emitReplacementCharacter(buf, pos);
@@ -5202,12 +5200,12 @@ public class Tokenizer implements Locator {
                             // continue stateloop;
                             case '<':
                                 /*
-                                 * U+003C LESS-THAN SIGN (<) Switch to the
+                                 * U+003C LESS-THAN SIGN (<) Emit a U+003C
+                                 * LESS-THAN SIGN character token. Switch to the
                                  * script data double escaped less-than sign
                                  * state.
                                  */
-                                flushChars(buf, pos);
-                                state = Tokenizer.SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN;
+                                state = Tokenizer.SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN_SIGN;
                                 continue stateloop;
                             case '\u0000':
                                 emitReplacementCharacter(buf, pos);
@@ -5250,11 +5248,11 @@ public class Tokenizer implements Locator {
                             case '<':
                                 /*
                                  * U+003C LESS-THAN SIGN (<) Emit a U+003C
-                                 * LESS-THAN SIGN character token. Switch to the
-                                 * script data double escaped less-than sign
-                                 * state.
+                                 * LESS-THAN SIGN character token.
+                                 * Switch to the script data double escaped
+                                 * less-than sign state.
                                  */
-                                state = Tokenizer.SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN;
+                                state = Tokenizer.SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN_SIGN;
                                 break scriptdatadoubleescapeddashdashloop;
                             case '>':
                                 /*
@@ -5285,7 +5283,7 @@ public class Tokenizer implements Locator {
                         }
                     }
                     // WARNING FALLTHRU CASE TRANSITION: DON'T REORDER
-                case SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN:
+                case SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN_SIGN:
                     scriptdatadoubleescapedlessthanloop: for (;;) {
                         if (++pos == endPos) {
                             break stateloop;
@@ -5477,7 +5475,7 @@ public class Tokenizer implements Locator {
                                 flushChars(buf, pos);
 
                                 returnState = state;
-                                state = Tokenizer.RAWTEXT_RCDATA_LESS_THAN_SIGN_STATE;
+                                state = Tokenizer.RAWTEXT_RCDATA_LESS_THAN_SIGN;
                                 continue stateloop;
                             case '\u0000':
                                 emitReplacementCharacter(buf, pos);
@@ -5515,7 +5513,7 @@ public class Tokenizer implements Locator {
                                 flushChars(buf, pos);
 
                                 returnState = state;
-                                state = Tokenizer.RAWTEXT_RCDATA_LESS_THAN_SIGN_STATE;
+                                state = Tokenizer.RAWTEXT_RCDATA_LESS_THAN_SIGN;
                                 break rawtextloop;
                             // FALL THRU continue stateloop;
                             case '\u0000':
@@ -5535,7 +5533,7 @@ public class Tokenizer implements Locator {
                         }
                     }
                     // XXX fallthru don't reorder
-                case RAWTEXT_RCDATA_LESS_THAN_SIGN_STATE:
+                case RAWTEXT_RCDATA_LESS_THAN_SIGN:
                     rawtextrcdatalessthansignloop: for (;;) {
                         if (++pos == endPos) {
                             break stateloop;
@@ -5857,7 +5855,8 @@ public class Tokenizer implements Locator {
 
         eofloop: for (;;) {
             switch (state) {
-                case SCRIPT_DATA_LESS_THAN_SIGN_STATE:
+                case SCRIPT_DATA_LESS_THAN_SIGN:
+                case SCRIPT_DATA_ESCAPED_LESS_THAN_SIGN:
                     /*
                      * Otherwise, emit a U+003C LESS-THAN SIGN character token
                      */
@@ -5885,7 +5884,7 @@ public class Tokenizer implements Locator {
                      * state.
                      */
                     break eofloop;
-                case RAWTEXT_RCDATA_LESS_THAN_SIGN_STATE:
+                case RAWTEXT_RCDATA_LESS_THAN_SIGN:
                     /*
                      * Emit a U+003C LESS-THAN SIGN character token
                      */
@@ -6760,7 +6759,7 @@ public class Tokenizer implements Locator {
 
     protected void errAstralNonCharacter(int ch) throws SAXException {
     }
-    
+
     protected void errNcrSurrogate() throws SAXException {
     }
 
