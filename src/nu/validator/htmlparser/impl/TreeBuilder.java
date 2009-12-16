@@ -1679,13 +1679,15 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                         attributes = null; // CPP
                                         break starttagloop;
                                     case FORM:
-                                        err("Start tag \u201Cform\u201D seen in \u201Ctable\u201D.");
-                                        // XXX why isn't the form pointer used here?
-                                        appendVoidElementToCurrent(
-                                                "http://www.w3.org/1999/xhtml",
-                                                name, attributes);
-                                        attributes = null; // CPP
-                                        break starttagloop;
+                                        if (formPointer != null) {
+                                            err("Saw a \u201Cform\u201D start tag, but there was already an active \u201Cform\u201D element. Nested forms are not allowed. Ignoring the tag.");
+                                            break starttagloop;
+                                        } else {
+                                            err("Start tag \u201Cform\u201D seen in \u201Ctable\u201D.");
+                                            appendVoidFormToCurrent(attributes);
+                                            attributes = null; // CPP
+                                            break starttagloop;
+                                        }
                                     default:
                                         err("Start tag \u201C"
                                                 + name
@@ -5000,19 +5002,19 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         Portability.releaseElement(elt);
     }
 
-    private void appendVoidElementToCurrent(
-            @NsUri String ns, @Local String name, HtmlAttributes attributes) throws SAXException {
+    private void appendVoidFormToCurrent(HtmlAttributes attributes) throws SAXException {
         flushCharacters();
         // [NOCPP[
-        checkAttributes(attributes, ns);
+        checkAttributes(attributes, "http://www.w3.org/1999/xhtml");
         // ]NOCPP]
-        // Can't be called for custom elements
-        T elt = createElement(ns, name, attributes);
+        T elt = createElement("http://www.w3.org/1999/xhtml", "form",
+                attributes);
+        formPointer = elt;
+        // ownership transferred to form pointer
         StackNode<T> current = stack[currentPtr];
         appendElement(elt, current.node);
-        elementPushed(ns, name, elt);
-        elementPopped(ns, name, elt);
-        Portability.releaseElement(elt);
+        elementPushed("http://www.w3.org/1999/xhtml", "form", elt);
+        elementPopped("http://www.w3.org/1999/xhtml", "form", elt);
     }
 
     protected void accumulateCharacters(@NoLength char[] buf, int start,
