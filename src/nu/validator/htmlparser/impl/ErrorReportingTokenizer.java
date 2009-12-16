@@ -308,7 +308,7 @@ public class ErrorReportingTokenizer extends Tokenizer {
                                     + ".");
                     }
                 } else if ((c >= '\u007F') && (c <= '\u009F')
-                        || (c >= '\uFDD0') && (c <= '\uFDDF')) {
+                        || (c >= '\uFDD0') && (c <= '\uFDEF')) {
                     err("Forbidden code point " + toUPlusString(c) + ".");
                 } else if (isPrivateUse(c)) {
                     warnAboutPrivateUseChar();
@@ -318,7 +318,7 @@ public class ErrorReportingTokenizer extends Tokenizer {
         return c;
     }
 
-    private String toUPlusString(char c) {
+    private String toUPlusString(int c) {
         String hexString = Integer.toHexString(c);
         switch (hexString.length()) {
             case 1:
@@ -327,10 +327,8 @@ public class ErrorReportingTokenizer extends Tokenizer {
                 return "U+00" + hexString;
             case 3:
                 return "U+0" + hexString;
-            case 4:
-                return "U+" + hexString;
             default:
-                throw new RuntimeException("Unreachable.");
+                return "U+" + hexString;
         }
     }
 
@@ -626,6 +624,14 @@ public class ErrorReportingTokenizer extends Tokenizer {
                 + toUPlusString((char) value) + ").");
         }
         return ch;
+    }
+    
+    /**
+     * @see nu.validator.htmlparser.impl.Tokenizer#errAstralNonCharacter(int)
+     */
+    @Override protected void errAstralNonCharacter(int ch) throws SAXException {
+        err("Character reference expands to an astral non-character ("
+                + toUPlusString(value) + ").");
     }
 
     @Override protected void errNcrSurrogate() throws SAXException {
