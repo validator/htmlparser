@@ -6560,6 +6560,7 @@ public class Tokenizer implements Locator {
         System.arraycopy(other.longStrBuf, 0, longStrBuf, 0, longStrBufLen);
 
         stateSave = other.stateSave;
+        returnStateSave = other.returnStateSave;
         // line = 1; XXX line numbers
         lastCR = other.lastCR;
         index = other.index;
