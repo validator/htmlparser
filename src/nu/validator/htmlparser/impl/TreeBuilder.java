@@ -2110,8 +2110,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                         selfClosing = false;
                                         // Portability.delete(formAttrs);
                                         // Portability.delete(inputAttributes);
-                                        Portability.delete(attributes);
-                                        attributes = null; // CPP
+                                        // Don't delete attributes, they are deleted later
                                         break starttagloop;
                                     case TEXTAREA:
                                         appendToCurrentNodeAndPushElementMayFoster(
