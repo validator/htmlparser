@@ -68,6 +68,13 @@ public interface TreeBuilderState<T> {
     public int getOriginalMode();
 
     /**
+     * Returns the framesetOk.
+     * 
+     * @return the framesetOk
+     */
+    public boolean isFramesetOk();
+    
+    /**
      * Returns the foreignFlag.
      * 
      * @return the foreignFlag

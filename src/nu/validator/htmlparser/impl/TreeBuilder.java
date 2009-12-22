@@ -345,6 +345,11 @@ public abstract class TreeBuilder<T> implements TokenHandler,
     private int mode = INITIAL;
 
     private int originalMode = INITIAL;
+    
+    /**
+     * Used only when moving back to IN_BODY.
+     */
+    private boolean framesetOk = true;
 
     private int foreignFlag = TreeBuilder.NOT_IN_FOREIGN;
 
@@ -497,6 +502,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         start(fragment);
         charBufferLen = 0;
         charBuffer = new char[1024];
+        framesetOk = true;
         if (fragment) {
             T elt;
             if (contextNode != null) {
@@ -1087,6 +1093,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                     i--;
                                     continue;
                                 case FRAMESET_OK:
+                                    framesetOk = false;
                                     mode = IN_BODY;
                                     i--;
                                     continue;
@@ -1142,7 +1149,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                 case AFTER_BODY:
                                     err("Non-space character after body.");
                                     fatal();
-                                    mode = IN_BODY;
+                                    mode = framesetOk ? FRAMESET_OK : IN_BODY;
                                     i--;
                                     continue;
                                 case IN_FRAMESET:
@@ -1184,7 +1191,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                      * Switch back to the main mode and
                                      * reprocess the token.
                                      */
-                                    mode = IN_BODY;
+                                    mode = framesetOk ? FRAMESET_OK : IN_BODY;
                                     i--;
                                     continue;
                                 case AFTER_AFTER_FRAMESET:
@@ -1788,6 +1795,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                 case IFRAME:
                                 case SELECT:
                                     if (mode == FRAMESET_OK) {
+                                        framesetOk = false;
                                         mode = IN_BODY;
                                     }
                                     // fall through to IN_BODY
@@ -2582,7 +2590,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                 default:
                                     err("Stray \u201C" + name
                                             + "\u201D start tag.");
-                                    mode = IN_BODY;
+                                    mode = framesetOk ? FRAMESET_OK : IN_BODY;
                                     continue;
                             }
                         case IN_FRAMESET:
@@ -2762,6 +2770,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                     } else {
                                         appendToCurrentNodeAndPushBodyElement(attributes);
                                     }
+                                    framesetOk = false;
                                     mode = IN_BODY;
                                     attributes = null; // CPP
                                     break starttagloop;
@@ -2861,7 +2870,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                     err("Stray \u201C" + name
                                             + "\u201D start tag.");
                                     fatal();
-                                    mode = IN_BODY;
+                                    mode = framesetOk ? FRAMESET_OK : IN_BODY;
                                     continue;
                             }
                         case AFTER_AFTER_FRAMESET:
@@ -3670,7 +3679,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                             }
                         default:
                             err("Saw an end tag after \u201Cbody\u201D had been closed.");
-                            mode = IN_BODY;
+                            mode = framesetOk ? FRAMESET_OK : IN_BODY;
                             continue;
                     }
                 case IN_FRAMESET:
@@ -3814,7 +3823,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                     }
                 case AFTER_AFTER_BODY:
                     err("Stray \u201C" + name + "\u201D end tag.");
-                    mode = IN_BODY;
+                    mode = framesetOk ? FRAMESET_OK : IN_BODY;
                     continue;
                 case AFTER_AFTER_FRAMESET:
                     err("Stray \u201C" + name + "\u201D end tag.");
@@ -4085,7 +4094,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                     name = contextName;
                     ns = contextNamespace;
                 } else {
-                    mode = IN_BODY; // XXX from Hixie's email
+                    mode = framesetOk ? FRAMESET_OK : IN_BODY; // XXX from Hixie's email
                     return;
                 }
             }
@@ -4112,13 +4121,13 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                 return;
             } else if ("http://www.w3.org/1999/xhtml" != ns) {
                 foreignFlag = TreeBuilder.IN_FOREIGN;
-                mode = IN_BODY;
+                mode = framesetOk ? FRAMESET_OK : IN_BODY;
                 return;
             } else if ("head" == name) {
-                mode = IN_BODY; // really
+                mode = framesetOk ? FRAMESET_OK : IN_BODY; // really
                 return;
             } else if ("body" == name) {
-                mode = IN_BODY;
+                mode = framesetOk ? FRAMESET_OK : IN_BODY;
                 return;
             } else if ("frameset" == name) {
                 mode = IN_FRAMESET;
@@ -4131,7 +4140,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                 }
                 return;
             } else if (i == 0) {
-                mode = IN_BODY;
+                mode = framesetOk ? FRAMESET_OK : IN_BODY;
                 return;
             }
         }
@@ -5326,7 +5335,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
             }
         }
         Portability.retainElement(formPointer);
-        return new StateSnapshot<T>(stackCopy, listCopy, formPointer, headPointer, mode, originalMode, foreignFlag, needToDropLF, quirks);
+        return new StateSnapshot<T>(stackCopy, listCopy, formPointer, headPointer, mode, originalMode, framesetOk, foreignFlag, needToDropLF, quirks);
     }
 
     public boolean snapshotMatches(TreeBuilderState<T> snapshot) {
@@ -5341,6 +5350,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                 || headPointer != snapshot.getHeadPointer()
                 || mode != snapshot.getMode()
                 || originalMode != snapshot.getOriginalMode()
+                || framesetOk != snapshot.isFramesetOk()
                 || foreignFlag != snapshot.getForeignFlag()
                 || needToDropLF != snapshot.isNeedToDropLF()
                 || quirks != snapshot.isQuirks()) { // maybe just assert quirks
@@ -5431,6 +5441,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         Portability.retainElement(headPointer);
         mode = snapshot.getMode();
         originalMode = snapshot.getOriginalMode();
+        framesetOk = snapshot.isFramesetOk();
         foreignFlag = snapshot.getForeignFlag();
         needToDropLF = snapshot.isNeedToDropLF();
         quirks = snapshot.isQuirks();
@@ -5493,6 +5504,15 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         return originalMode;
     }
 
+    /**
+     * Returns the framesetOk.
+     * 
+     * @return the framesetOk
+     */
+    public boolean isFramesetOk() {
+        return framesetOk;
+    }
+    
     /**
      * Returns the foreignFlag.
      * 
