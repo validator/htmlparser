@@ -6561,6 +6561,8 @@ public class Tokenizer implements Locator {
 
         stateSave = other.stateSave;
         returnStateSave = other.returnStateSave;
+        contentModelElement = other.contentModelElement;
+        contentModelElementNameAsArray = other.contentModelElementNameAsArray;
         // line = 1; XXX line numbers
         lastCR = other.lastCR;
         index = other.index;
