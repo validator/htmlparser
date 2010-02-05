@@ -449,7 +449,7 @@ public final class HtmlAttributes implements Attributes {
     }
 
     public HtmlAttributes cloneAttributes(Interner interner) throws SAXException {
-        assert (length == 0 && xmlnsLength == 0) || mode == 0;
+        assert (length == 0 && xmlnsLength == 0) || mode == 0 || mode == 3;
         HtmlAttributes clone = new HtmlAttributes(0);
         for (int i = 0; i < length; i++) {
             clone.addAttribute(names[i].cloneAttributeName(interner), Portability.newStringFromString(values[i])
