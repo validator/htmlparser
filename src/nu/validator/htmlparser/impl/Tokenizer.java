@@ -1386,6 +1386,74 @@ public class Tokenizer implements Locator {
     @SuppressWarnings("unused") private int stateLoop(int state, char c,
             int pos, @NoLength char[] buf, boolean reconsume, int returnState,
             int endPos) throws SAXException {
+        /*
+         * Idioms used in this code:
+         * 
+         * 
+         * Consuming the next input character
+         * 
+         * To consume the next input character, the code does this: if (++pos ==
+         * endPos) { break stateloop; } c = checkChar(buf, pos);
+         * 
+         * 
+         * Staying in a state
+         * 
+         * When there's a state that the tokenizer may stay in over multiple
+         * input characters, the state has a wrapper |for(;;)| loop and staying
+         * in the state continues the loop.
+         * 
+         * 
+         * Switching to another state
+         * 
+         * To switch to another state, the code sets the state variable to the
+         * magic number of the new state. Then it either continues stateloop or
+         * breaks out of the state's own wrapper loop if the target state is
+         * right after the current state in source order. (This is a partial
+         * workaround for Java's lack of goto.)
+         * 
+         * 
+         * Reconsume support
+         * 
+         * The spec sometimes says that an input character is reconsumed in
+         * another state. If a state can ever be entered so that an input
+         * character can be reconsumed in it, the state's code starts with an
+         * |if (reconsume)| that sets reconsume to false and skips over the
+         * normal code for consuming a new character.
+         * 
+         * To reconsume the current character in another state, the code sets
+         * |reconsume| to true and then switches to the other state.
+         * 
+         * 
+         * Emitting character tokens
+         * 
+         * This method emits character tokens lazily. Whenever a new range of
+         * character tokens starts, the field cstart must be set to the start
+         * index of the range. The flushChars() method must be called at the 
+         * end of a range to flush it.
+         * 
+         * 
+         * U+0000 handling
+         * 
+         * The various states have to handle the replacement of U+0000 with
+         * U+FFFD. However, if U+0000 would be reconsumed in another state, the
+         * replacement doesn't need to happen, because it's handled by the
+         * reconsuming state.
+         * 
+         * 
+         * LF handling
+         * 
+         * Every state needs to increment the line number upon LF unless the LF
+         * gets reconsumed by another state which increments the line number.
+         * 
+         * 
+         * CR handling
+         * 
+         * Every state needs to handle CR unless the CR gets reconsumed and is
+         * handled by the reconsuming state. The CR needs to be handled as if it
+         * were and LF, the lastCR field must be set to true and then this
+         * method must return. The IO driver will then swallow the next
+         * character if it is an LF to coalesce CRLF.
+         */
         stateloop: for (;;) {
             switch (state) {
                 case DATA:
