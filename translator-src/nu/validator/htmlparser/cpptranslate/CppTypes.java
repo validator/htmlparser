@@ -87,7 +87,8 @@ public class CppTypes {
             "nsIContent", "nsIDocument", "nsTraceRefcnt", "jArray",
             "nsHtml5DocumentMode", "nsHtml5ArrayCopy",
             "nsHtml5NamedCharacters", "nsHtml5Atoms", "nsHtml5ByteReadable",
-            "nsIUnicodeDecoder", "nsAHtml5TreeBuilderState" };
+            "nsIUnicodeDecoder", "nsAHtml5TreeBuilderState",
+            "nsAHtml5EncodingDeclarationHandler" };
 
     private static final String[] OTHER_DECLATIONS = {};
 
@@ -96,7 +97,8 @@ public class CppTypes {
     private static final String[] NAMED_CHARACTERS_INCLUDES = { "prtypes",
             "jArray", "nscore" };
 
-    private static final String[] FORWARD_DECLARATIONS = { "nsHtml5StreamParser", "nsHtml5SpeculativeLoader", };
+    private static final String[] FORWARD_DECLARATIONS = {
+            "nsHtml5StreamParser", "nsHtml5SpeculativeLoader", };
 
     private static final String[] CLASSES_THAT_NEED_SUPPLEMENT = {
             "MetaScanner", "TreeBuilder", "UTF16Buffer", };
@@ -174,7 +176,7 @@ public class CppTypes {
     }
 
     public String encodingDeclarationHandlerType() {
-        return "nsHtml5StreamParser*";
+        return "nsAHtml5EncodingDeclarationHandler*";
     }
 
     public String nodeType() {
