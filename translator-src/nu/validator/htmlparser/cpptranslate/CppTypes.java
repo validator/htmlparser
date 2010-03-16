@@ -98,7 +98,7 @@ public class CppTypes {
             "jArray", "nscore" };
 
     private static final String[] FORWARD_DECLARATIONS = {
-            "nsHtml5StreamParser", "nsHtml5SpeculativeLoader", };
+            "nsHtml5StreamParser", };
 
     private static final String[] CLASSES_THAT_NEED_SUPPLEMENT = {
             "MetaScanner", "TreeBuilder", "UTF16Buffer", };
