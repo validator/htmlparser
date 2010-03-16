@@ -6698,6 +6698,7 @@ public class Tokenizer implements Locator {
         prevValue = -1;
         value = 0;
         seenDigits = false;
+        endTag = false;
         shouldSuspend = false;
         initDoctypeFields();
         if (tagName != null) {
@@ -6753,6 +6754,7 @@ public class Tokenizer implements Locator {
         prevValue = other.prevValue;
         value = other.value;
         seenDigits = other.seenDigits;
+        endTag = other.endTag;
         shouldSuspend = false;
 
         Portability.releaseLocal(doctypeName);

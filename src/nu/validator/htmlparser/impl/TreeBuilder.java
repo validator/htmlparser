@@ -2913,10 +2913,9 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                             + "\u201D start tag.");
                                     break starttagloop;
                             }
-                            // [NOCPP[
                         case TEXT:
                             assert false;
-                            // ]NOCPP]
+                            break starttagloop; // Avoid infinite loop if the assertion fails
                     }
             }
         }
