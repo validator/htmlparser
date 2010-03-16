@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
- * Copyright (c) 2008 Mozilla Foundation
+ * Copyright (c) 2008-2010 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -23,6 +23,7 @@
 
 package nu.validator.htmlparser.common;
 
+import nu.validator.htmlparser.annotation.Const;
 import nu.validator.htmlparser.annotation.NoLength;
 import nu.validator.htmlparser.impl.ElementName;
 import nu.validator.htmlparser.impl.HtmlAttributes;
@@ -132,7 +133,7 @@ public interface TokenHandler {
      *             if something went wrong
      * @see org.xml.sax.ContentHandler#characters(char[], int, int)
      */
-    public void characters(@NoLength char[] buf, int start, int length)
+    public void characters(@Const @NoLength char[] buf, int start, int length)
             throws SAXException;
 
     /**

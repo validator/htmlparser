@@ -512,7 +512,8 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
                 printer.print(cppTypes.booleanType());
                 break;
             case Byte:
-                throw new IllegalStateException("Unsupported primitive.");
+                printer.print(cppTypes.byteType());
+                break;
             case Char:
                 printer.print(cppTypes.charType());
                 break;
@@ -531,6 +532,9 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
     }
 
     public void visit(ReferenceType n, LocalSymbolTable arg) {
+        if (isConst()) {
+            printer.print("const ");
+        }
         if (noLength()) {
             n.getType().accept(this, arg);
             for (int i = 0; i < n.getArrayCount(); i++) {

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2005-2007 Henri Sivonen
- * Copyright (c) 2007-2009 Mozilla Foundation
+ * Copyright (c) 2007-2010 Mozilla Foundation
  * Portions of comments Copyright 2004-2008 Apple Computer, Inc., Mozilla 
  * Foundation, and Opera Software ASA.
  *
@@ -35,6 +35,7 @@
 
 package nu.validator.htmlparser.impl;
 
+import nu.validator.htmlparser.annotation.Const;
 import nu.validator.htmlparser.annotation.Inline;
 import nu.validator.htmlparser.annotation.Local;
 import nu.validator.htmlparser.annotation.NoLength;
@@ -153,7 +154,7 @@ public class Tokenizer implements Locator {
 
     private static final int CONSUME_NCR = 43;
 
-    private static final int CHARACTER_REFERENCE_LOOP = 44;
+    private static final int CHARACTER_REFERENCE_TAIL = 44;
 
     private static final int HEX_NCR_LOOP = 45;
 
@@ -208,6 +209,8 @@ public class Tokenizer implements Locator {
     private static final int SCRIPT_DATA_DOUBLE_ESCAPED_DASH_DASH = 70;
 
     private static final int SCRIPT_DATA_DOUBLE_ESCAPE_END = 71;
+
+    private static final int CHARACTER_REFERENCE_HILO_LOOKUP = 72;
 
     /**
      * Magic value for UTF-16 operations.
@@ -333,6 +336,8 @@ public class Tokenizer implements Locator {
     private char additional;
 
     private int entCol;
+
+    private int firstCharKey;
 
     private int lo;
 
@@ -1428,8 +1433,8 @@ public class Tokenizer implements Locator {
          * 
          * This method emits character tokens lazily. Whenever a new range of
          * character tokens starts, the field cstart must be set to the start
-         * index of the range. The flushChars() method must be called at the 
-         * end of a range to flush it.
+         * index of the range. The flushChars() method must be called at the end
+         * of a range to flush it.
          * 
          * 
          * U+0000 handling
@@ -4364,26 +4369,115 @@ public class Tokenizer implements Locator {
                                 reconsume = true;
                                 continue stateloop;
                             }
-                            entCol = -1;
-                            lo = 0;
-                            hi = (NamedCharacters.NAMES.length - 1);
-                            candidate = -1;
-                            strBufMark = 0;
-                            state = Tokenizer.CHARACTER_REFERENCE_LOOP;
-                            reconsume = true;
+                            if (c >= 'a' && c <= 'z') {
+                                firstCharKey = c - 'a' + 26;
+                            } else if (c >= 'A' && c <= 'Z') {
+                                firstCharKey = c - 'A';
+                            } else {
+                                // No match
+                                /*
+                                 * If no match can be made, then this is a parse
+                                 * error.
+                                 */
+                                errNoNamedCharacterMatch();
+                                emitOrAppendStrBuf(returnState);
+                                if ((returnState & (~1)) == 0) {
+                                    cstart = pos;
+                                }
+                                state = returnState;
+                                reconsume = true;
+                                continue stateloop;
+                            }
+                            // Didn't fail yet
+                            appendStrBuf(c);
+                            state = Tokenizer.CHARACTER_REFERENCE_HILO_LOOKUP;
                             // FALL THROUGH continue stateloop;
                     }
                     // WARNING FALLTHRU CASE TRANSITION: DON'T REORDER
-                case CHARACTER_REFERENCE_LOOP:
-                    outer: for (;;) {
-                        if (reconsume) {
-                            reconsume = false;
-                        } else {
-                            if (++pos == endPos) {
-                                break stateloop;
-                            }
-                            c = checkChar(buf, pos);
+                case CHARACTER_REFERENCE_HILO_LOOKUP:
+                    {
+                        if (++pos == endPos) {
+                            break stateloop;
                         }
+                        c = checkChar(buf, pos);
+                        if (c == '\u0000') {
+                            break stateloop;
+                        }
+                        /*
+                         * The data structure is as follows:
+                         * 
+                         * HILO_ACCEL is a two-dimensional int array whose major
+                         * index corresponds to the second character of the
+                         * character reference (code point as index) and the
+                         * minor index corresponds to the first character of the
+                         * character reference (packed so that A-Z runs from 0
+                         * to 25 and a-z runs from 26 to 51). This layout makes
+                         * it easier to use the sparseness of the data structure
+                         * to omit parts of it: The second dimension of the
+                         * table is null when no character reference starts with
+                         * the character corresponding to that row.
+                         * 
+                         * The int value HILO_ACCEL (by these indeces) is zero
+                         * if there exists no character reference starting with
+                         * that two-letter prefix. Otherwise, the value is an
+                         * int that packs two shorts so that the higher short is
+                         * the index of the highest character reference name
+                         * with that prefix in NAMES and the lower short
+                         * corresponds to the index of the lowest character
+                         * reference name with that prefix. (It happens that the
+                         * first two character reference names share their
+                         * prefix so the packed int cannot be 0 by packing the
+                         * two shorts.)
+                         * 
+                         * NAMES is an array of byte arrays where each byte
+                         * array encodes the name of a character references as
+                         * ASCII. The names omit the first two letters of the
+                         * name. (Since storing the first two letters would be
+                         * redundant with the data contained in HILO_ACCEL.) The
+                         * entries are lexically sorted.
+                         * 
+                         * For a given index in NAMES, the same index in VALUES
+                         * contains the corresponding expansion as an array of
+                         * two UTF-16 code units (either the character and
+                         * U+0000 or a suggogate pair).
+                         */
+                        int hilo = 0;
+                        if (c <= 'z') {
+                            @Const @NoLength int[] row = NamedCharacters.HILO_ACCEL[c];
+                            if (row != null) {
+                                hilo = row[firstCharKey];
+                            }
+                        }
+                        if (hilo == 0) {
+                            /*
+                             * If no match can be made, then this is a parse
+                             * error.
+                             */
+                            errNoNamedCharacterMatch();
+                            emitOrAppendStrBuf(returnState);
+                            if ((returnState & (~1)) == 0) {
+                                cstart = pos;
+                            }
+                            state = returnState;
+                            reconsume = true;
+                            continue stateloop;
+                        }
+                        // Didn't fail yet
+                        appendStrBuf(c);
+                        lo = hilo & 0xFFFF;
+                        hi = hilo >> 16;
+                        entCol = -1;
+                        candidate = -1;
+                        strBufMark = 0;
+                        state = Tokenizer.CHARACTER_REFERENCE_TAIL;
+                        // FALL THROUGH continue stateloop;
+                    }
+                case CHARACTER_REFERENCE_TAIL:
+                    outer: for (;;) {
+                        if (++pos == endPos) {
+                            break stateloop;
+                        }
+                        c = checkChar(buf, pos);
                         if (c == '\u0000') {
                             break stateloop;
                         }
@@ -4395,22 +4489,6 @@ public class Tokenizer implements Locator {
                          * character references table (in a case-sensitive
                          * manner).
                          */
-                        hiloop: for (;;) {
-                            if (hi == -1) {
-                                break hiloop;
-                            }
-                            if (entCol == NamedCharacters.NAMES[hi].length) {
-                                break hiloop;
-                            }
-                            if (entCol > NamedCharacters.NAMES[hi].length) {
-                                break outer;
-                            } else if (c < NamedCharacters.NAMES[hi][entCol]) {
-                                hi--;
-                            } else {
-                                break hiloop;
-                            }
-                        }
-
                         loloop: for (;;) {
                             if (hi < lo) {
                                 break outer;
@@ -4427,6 +4505,23 @@ public class Tokenizer implements Locator {
                                 break loloop;
                             }
                         }
+
+                        hiloop: for (;;) {
+                            if (hi < lo) {
+                                break outer;
+                            }
+                            if (entCol == NamedCharacters.NAMES[hi].length) {
+                                break hiloop;
+                            }
+                            if (entCol > NamedCharacters.NAMES[hi].length) {
+                                break outer;
+                            } else if (c < NamedCharacters.NAMES[hi][entCol]) {
+                                hi--;
+                            } else {
+                                break hiloop;
+                            }
+                        }
+
                         if (hi < lo) {
                             break outer;
                         }
@@ -4450,8 +4545,9 @@ public class Tokenizer implements Locator {
                         continue stateloop;
                     } else {
                         // c can't be CR, LF or nul if we got here
-                        char[] candidateArr = NamedCharacters.NAMES[candidate];
-                        if (candidateArr[candidateArr.length - 1] != ';') {
+                        byte[] candidateArr = NamedCharacters.NAMES[candidate];
+                        if (candidateArr.length == 0
+                                || candidateArr[candidateArr.length - 1] != ';') {
                             /*
                              * If the last character matched is not a U+003B
                              * SEMICOLON (;), there is a parse error.
@@ -4506,8 +4602,13 @@ public class Tokenizer implements Locator {
                          * second column of the named character references
                          * table).
                          */
-                        char[] val = NamedCharacters.VALUES[candidate];
-                        emitOrAppend(val, returnState);
+                        @Const @NoLength char[] val = NamedCharacters.VALUES[candidate];
+                        // See if the first slot holds a high surrogate
+                        if ((val[0] & 0xFC00) == 0xD800) {
+                            emitOrAppendTwo(val, returnState);
+                        } else {
+                            emitOrAppendOne(val, returnState);
+                        }
                         // this is so complicated!
                         if (strBufMark < strBufLen) {
                             // if (strBufOffset != -1) {
@@ -5316,9 +5417,9 @@ public class Tokenizer implements Locator {
                             case '<':
                                 /*
                                  * U+003C LESS-THAN SIGN (<) Emit a U+003C
-                                 * LESS-THAN SIGN character token.
-                                 * Switch to the script data double escaped
-                                 * less-than sign state.
+                                 * LESS-THAN SIGN character token. Switch to the
+                                 * script data double escaped less-than sign
+                                 * state.
                                  */
                                 state = Tokenizer.SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN_SIGN;
                                 break scriptdatadoubleescapeddashdashloop;
@@ -5910,7 +6011,7 @@ public class Tokenizer implements Locator {
             // ]NOCPP]
             astralChar[0] = (char) (Tokenizer.LEAD_OFFSET + (value >> 10));
             astralChar[1] = (char) (0xDC00 + (value & 0x3FF));
-            emitOrAppend(astralChar, returnState);
+            emitOrAppendTwo(astralChar, returnState);
         } else {
             errNcrOutOfRange();
             emitOrAppendOne(Tokenizer.REPLACEMENT_CHARACTER, returnState);
@@ -6268,7 +6369,12 @@ public class Tokenizer implements Locator {
                     emitOrAppendStrBuf(returnState);
                     state = returnState;
                     continue;
-                case CHARACTER_REFERENCE_LOOP:
+                case CHARACTER_REFERENCE_HILO_LOOKUP:
+                    errNoNamedCharacterMatch();
+                    emitOrAppendStrBuf(returnState);
+                    state = returnState;
+                    continue;
+                case CHARACTER_REFERENCE_TAIL:
                     outer: for (;;) {
                         char c = '\u0000';
                         entCol++;
@@ -6327,8 +6433,9 @@ public class Tokenizer implements Locator {
                         state = returnState;
                         continue eofloop;
                     } else {
-                        char[] candidateArr = NamedCharacters.NAMES[candidate];
-                        if (candidateArr[candidateArr.length - 1] != ';') {
+                        byte[] candidateArr = NamedCharacters.NAMES[candidate];
+                        if (candidateArr.length == 0
+                                || candidateArr[candidateArr.length - 1] != ';') {
                             /*
                              * If the last character matched is not a U+003B
                              * SEMICOLON (;), there is a parse error.
@@ -6378,8 +6485,13 @@ public class Tokenizer implements Locator {
                          * second column of the named character references
                          * table).
                          */
-                        char[] val = NamedCharacters.VALUES[candidate];
-                        emitOrAppend(val, returnState);
+                        @Const @NoLength char[] val = NamedCharacters.VALUES[candidate];
+                        // See if the first slot holds a high surrogate
+                        if ((val[0] & 0xFC00) == 0xD800) {
+                            emitOrAppendTwo(val, returnState);
+                        } else {
+                            emitOrAppendOne(val, returnState);
+                        }
                         // this is so complicated!
                         if (strBufMark < strBufLen) {
                             if ((returnState & (~1)) != 0) {
@@ -6482,15 +6594,17 @@ public class Tokenizer implements Locator {
      * @param val
      * @throws SAXException
      */
-    private void emitOrAppend(char[] val, int returnState) throws SAXException {
+    private void emitOrAppendTwo(@Const @NoLength char[] val, int returnState)
+            throws SAXException {
         if ((returnState & (~1)) != 0) {
-            appendLongStrBuf(val);
+            appendLongStrBuf(val[0]);
+            appendLongStrBuf(val[1]);
         } else {
-            tokenHandler.characters(val, 0, val.length);
+            tokenHandler.characters(val, 0, 2);
         }
     }
 
-    private void emitOrAppendOne(@NoLength char[] val, int returnState)
+    private void emitOrAppendOne(@Const @NoLength char[] val, int returnState)
             throws SAXException {
         if ((returnState & (~1)) != 0) {
             appendLongStrBuf(val[0]);
@@ -6583,6 +6697,7 @@ public class Tokenizer implements Locator {
         forceQuirks = false;
         additional = '\u0000';
         entCol = -1;
+        firstCharKey = -1;
         lo = 0;
         hi = (NamedCharacters.NAMES.length - 1);
         candidate = -1;
@@ -6637,6 +6752,7 @@ public class Tokenizer implements Locator {
         forceQuirks = other.forceQuirks;
         additional = other.additional;
         entCol = other.entCol;
+        firstCharKey = other.firstCharKey;
         lo = other.lo;
         hi = other.hi;
         candidate = other.candidate;

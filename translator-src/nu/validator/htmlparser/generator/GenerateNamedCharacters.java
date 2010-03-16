@@ -33,9 +33,9 @@ import java.util.regex.Pattern;
 public class GenerateNamedCharacters {
 
     private static final int LEAD_OFFSET = 0xD800 - (0x10000 >> 10);
-    
+
     private static final Pattern LINE_PATTERN = Pattern.compile("<td> <code title=\"\">([^<]*)</code> </td> <td> U\\+(\\S*) </td>");
-    
+
     private static String toUString(int c) {
         String hexString = Integer.toHexString(c);
         switch (hexString.length()) {
@@ -52,14 +52,33 @@ public class GenerateNamedCharacters {
         }
     }
 
-    
+    private static int charToIndex(char c) {
+        if (c >= 'a' && c <= 'z') {
+            return c - 'a' + 26;
+        } else if (c >= 'A' && c <= 'Z') {
+            return c - 'A';
+        }
+        throw new IllegalArgumentException("Bad char in named character name: "
+                + c);
+    }
+
+    private static boolean allZero(int[] arr) {
+        for (int i = 0; i < arr.length; i++) {
+            if (arr[i] != 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     /**
      * @param args
-     * @throws IOException 
+     * @throws IOException
      */
     public static void main(String[] args) throws IOException {
         TreeMap<String, String> entities = new TreeMap<String, String>();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in, "utf-8"));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(
+                System.in, "utf-8"));
         String line;
         while ((line = reader.readLine()) != null) {
             Matcher m = LINE_PATTERN.matcher(line);
@@ -67,43 +86,80 @@ public class GenerateNamedCharacters {
                 entities.put(m.group(1), m.group(2));
             }
         }
-        System.out.println("static final char[][] NAMES = {");
+
+        // Java initializes arrays to zero. Zero is our magic value for no hilo
+        // value.
+        int[][] hiLoTable = new int['z' + 1]['Z' - 'A' + 1 + 'z' - 'a' + 1];
+
+        String firstName = entities.entrySet().iterator().next().getKey();
+        int firstKey = charToIndex(firstName.charAt(0));
+        int secondKey = firstName.charAt(1);
+        int row = 0;
+        int lo = 0;
+
+        System.out.print("static final @NoLength byte[][] NAMES = {\n");
         for (Map.Entry<String, String> entity : entities.entrySet()) {
             String name = entity.getKey();
-            System.out.print("\"");
-            System.out.print(name);
-            System.out.println("\".toCharArray(),");
+            int newFirst = charToIndex(name.charAt(0));
+            int newSecond = name.charAt(1);
+            assert !(newFirst == 0 && newSecond == 0) : "Not prepared for name starting with AA";
+            if (firstKey != newFirst || secondKey != newSecond) {
+                hiLoTable[secondKey][firstKey] = ((row - 1) << 16) | lo;
+                lo = row;
+                firstKey = newFirst;
+                secondKey = newSecond;
+            }
+            System.out.print("toByteArray(\"");
+            System.out.print(name.substring(2));
+            System.out.print("\"),\n");
+            row++;
         }
-        System.out.println("};");
+        System.out.print("};\n");
 
-        System.out.println("static final @NoLength char[][] VALUES = {");
+        hiLoTable[secondKey][firstKey] = ((entities.size() - 1) << 16) | lo;
+
+        System.out.print("static final @NoLength char[][] VALUES = {\n");
         for (Map.Entry<String, String> entity : entities.entrySet()) {
             String value = entity.getValue();
             int intVal = Integer.parseInt(value, 16);
             System.out.print("{");
             if (intVal == '\'') {
-                System.out.print("\'\\\'\'");                
+                System.out.print("\'\\\'\'");
             } else if (intVal == '\n') {
-                System.out.print("\'\\n\'");                
+                System.out.print("\'\\n\'");
             } else if (intVal == '\\') {
-                System.out.print("\'\\\\\'");                
+                System.out.print("\'\\\\\'");
             } else if (intVal <= 0xFFFF) {
-                System.out.print("\'");                
-                System.out.print(toUString(intVal));                                
-                System.out.print("\'");                
+                System.out.print("\'");
+                System.out.print(toUString(intVal));
+                System.out.print("\'");
             } else {
-                int hi = (LEAD_OFFSET + (intVal >> 10));
-                int lo = (0xDC00 + (intVal & 0x3FF));
-                System.out.print("\'");                
-                System.out.print(toUString(hi));                                
-                System.out.print("\', \'");                
-                System.out.print(toUString(lo));                                
-                System.out.print("\'");                
+                int high = (LEAD_OFFSET + (intVal >> 10));
+                int low = (0xDC00 + (intVal & 0x3FF));
+                System.out.print("\'");
+                System.out.print(toUString(high));
+                System.out.print("\', \'");
+                System.out.print(toUString(low));
+                System.out.print("\'");
             }
-            System.out.println("},");
+            System.out.print("},\n");
         }
-        System.out.println("};");
+        System.out.print("};\n");
 
+        System.out.print("static final @NoLength int[][] HILO_ACCEL = {\n");
+        for (int i = 0; i < hiLoTable.length; i++) {
+            if (allZero(hiLoTable[i])) {
+                System.out.print("null,\n");
+            } else {
+                System.out.print("{");
+                for (int j = 0; j < hiLoTable[i].length; j++) {
+                    System.out.print(hiLoTable[i][j]);
+                    System.out.print(", ");
+                }
+                System.out.print("},\n");
+            }
+        }
+        System.out.print("};\n");
     }
 
 }
