@@ -654,7 +654,7 @@ public class ErrorReportingTokenizer extends Tokenizer {
         return ch;
     }
 
-    @Override protected void errRcnCr() throws SAXException {
+    @Override protected void errNcrCr() throws SAXException {
         err("A numeric character reference expanded to carriage return.");
     }
 

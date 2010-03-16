@@ -5955,9 +5955,6 @@ public class Tokenizer implements Locator {
                  */
                 @NoLength char[] val = NamedCharacters.WINDOWS_1252[value - 0x80];
                 emitOrAppendOne(val, returnState);
-            } else if (value == 0x0D) {
-                errRcnCr();
-                emitOrAppendOne(Tokenizer.LF, returnState);
                 // [NOCPP[
             } else if (value == 0xC
                     && contentSpacePolicy != XmlViolationPolicy.ALLOW) {
@@ -5980,7 +5977,9 @@ public class Tokenizer implements Locator {
                  */
                 char ch = (char) value;
                 // [NOCPP[
-                if ((value <= 0x0008) || (value == 0x000B)
+                if (value == 0x0D) {
+                    errNcrCr();
+                } else if ((value <= 0x0008) || (value == 0x000B)
                         || (value >= 0x000E && value <= 0x001F)) {
                     ch = errNcrControlChar(ch);
                 } else if (value >= 0xFDD0 && value <= 0xFDEF) {
@@ -6948,7 +6947,7 @@ public class Tokenizer implements Locator {
         return ch;
     }
 
-    protected void errRcnCr() throws SAXException {
+    protected void errNcrCr() throws SAXException {
     }
 
     protected void errNcrInC1Range() throws SAXException {
