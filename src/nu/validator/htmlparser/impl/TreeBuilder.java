@@ -889,6 +889,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                         case ' ':
                         case '\t':
                         case '\n':
+                        case '\r':
                         case '\u000C':
                             /*
                              * A character token that is one of one of U+0009
@@ -5308,6 +5309,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                 case ' ':
                 case '\t':
                 case '\n':
+                case '\r':
                 case '\u000C':
                     continue;
                 default:
