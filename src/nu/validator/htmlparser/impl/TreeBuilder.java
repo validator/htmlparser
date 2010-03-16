@@ -60,6 +60,10 @@ import org.xml.sax.SAXParseException;
 public abstract class TreeBuilder<T> implements TokenHandler,
         TreeBuilderState<T> {
 
+    public static final int BUFFER_FLUSH_THRESHOLD = 4096;
+
+    public static final int STACK_MAX_DEPTH = 200;
+    
     // Start dispatch groups
 
     final static int OTHER = 0;
@@ -833,6 +837,23 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         return;
     }
 
+    /**
+     * @see nu.validator.htmlparser.common.TokenHandler#ensureBufferSpace(int)
+     */
+    public final void ensureBufferSpace(int addedLength) throws SAXException {
+        int newCharBufferCapacity = charBufferLen + addedLength;
+        if (newCharBufferCapacity > TreeBuilder.BUFFER_FLUSH_THRESHOLD) {
+            flushCharacters();
+            newCharBufferCapacity = addedLength;
+        }
+        if (newCharBufferCapacity > charBuffer.length) {
+            char[] newBuf = new char[newCharBufferCapacity];
+            System.arraycopy(charBuffer, 0, newBuf, 0, charBufferLen);
+            Portability.releaseArray(charBuffer);
+            charBuffer = newBuf;
+        }
+    }
+    
     /**
      * @see nu.validator.htmlparser.common.TokenHandler#characters(char[], int,
      *      int)
@@ -4176,6 +4197,10 @@ public abstract class TreeBuilder<T> implements TokenHandler,
     }
 
     @SuppressWarnings("unchecked") private void push(StackNode<T> node) throws SAXException {
+        if (currentPtr == TreeBuilder.STACK_MAX_DEPTH) {
+            warn("Maximum depth for tree builder stack reached. Modifying document.");
+            pop();
+        }
         currentPtr++;
         if (currentPtr == stack.length) {
             StackNode<T>[] newStack = new StackNode[stack.length + 64];
@@ -4188,6 +4213,10 @@ public abstract class TreeBuilder<T> implements TokenHandler,
     }
 
     @SuppressWarnings("unchecked") private void silentPush(StackNode<T> node) throws SAXException {
+        if (currentPtr == TreeBuilder.STACK_MAX_DEPTH) {
+            warn("Maximum depth for tree builder stack reached. Modifying document.");
+            pop();
+        }
         currentPtr++;
         if (currentPtr == stack.length) {
             StackNode<T>[] newStack = new StackNode[stack.length + 64];
@@ -5031,16 +5060,8 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         appendCharacters(stack[currentPtr].node, buf, start, length);
     }
 
-    protected final void accumulateCharacter(char c) throws SAXException {
-        int newLen = charBufferLen + 1;
-        if (newLen > charBuffer.length) {
-            char[] newBuf = new char[newLen];
-            System.arraycopy(charBuffer, 0, newBuf, 0, charBufferLen);
-            Portability.releaseArray(charBuffer);
-            charBuffer = newBuf;
-        }
-        charBuffer[charBufferLen] = c;
-        charBufferLen = newLen;
+    @Inline protected final void accumulateCharacter(char c) throws SAXException {
+        charBuffer[charBufferLen++] = c;
     }
 
     // ------------------------------- //
