@@ -139,6 +139,10 @@ public class CppTypes {
         return "PRBool";
     }
 
+    public String byteType() {
+        return "PRInt8";
+    }
+
     public String charType() {
         return "PRUnichar";
     }
@@ -319,4 +323,5 @@ public class CppTypes {
     public String treeBuilderStateType() {
         return "nsAHtml5TreeBuilderState*";
     }
+
 }

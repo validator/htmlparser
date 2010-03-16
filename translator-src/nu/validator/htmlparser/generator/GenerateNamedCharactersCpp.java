@@ -120,12 +120,12 @@ public class GenerateNamedCharactersCpp {
         out.write("{\n");
         out.write("  public:\n");
         out.write("    static " + cppTypes.arrayTemplate() + "<"
-                + cppTypes.arrayTemplate() + "<" + cppTypes.charType() + ","
+                + cppTypes.arrayTemplate() + "<" + cppTypes.byteType() + ","
                 + cppTypes.intType() + ">," + cppTypes.intType() + "> NAMES;\n");
-        out.write("    static " + cppTypes.arrayTemplate() + "<"
-                + cppTypes.charType() + "," + cppTypes.intType()
-                + ">* VALUES;\n");
+        out.write("    static const " + cppTypes.charType() + " VALUES[][2];\n");
         out.write("    static " + cppTypes.charType() + "** WINDOWS_1252;\n");
+        out.write("    static const " + cppTypes.intType()
+                + "* const HILO_ACCEL[];\n");
         out.write("    static void initializeStatics();\n");
         out.write("    static void releaseStatics();\n");
         out.write("};\n");
@@ -136,10 +136,8 @@ public class GenerateNamedCharactersCpp {
         out.close();
     }
 
-    private static void generateInclude(File targetDirectory, CppTypes cppTypes,
-            Map<String, String> entities)
-        throws IOException
-    {
+    private static void generateInclude(File targetDirectory,
+            CppTypes cppTypes, Map<String, String> entities) throws IOException {
         File includeFile = new File(targetDirectory, cppTypes.classPrefix()
                 + "NamedCharactersInclude.h");
         Writer out = new OutputStreamWriter(new FileOutputStream(includeFile),
@@ -150,14 +148,14 @@ public class GenerateNamedCharactersCpp {
         out.write(" *   http://www.w3.org/TR/html5/named-character-references.html\n");
         out.write(" *\n");
         out.write(" * Files that #include this file must #define NAMED_CHARACTER_REFERENCE as a\n");
-        out.write(" * macro of five parameters:\n");
+        out.write(" * macro of four parameters:\n");
         out.write(" *\n");
         out.write(" *   1.  a unique integer N identifying the Nth [0,1,..] macro expansion in this file,\n");
         out.write(" *   2.  a comma-separated sequence of characters comprising the character name,\n");
+        out.write(" *       without the first two letters. See Tokenizer.java.\n");
         out.write(" *   3.  the length of this sequence of characters,\n");
         out.write(" *   4.  a comma-separated sequence of PRUnichar literals (high to low) corresponding\n");
-        out.write(" *       to the code-point of the named character, and\n");
-        out.write(" *   5.  the length of this sequence of literals (either 1 or 2).\n");
+        out.write(" *       to the code-point of the named character.\n");
         out.write(" *\n");
         out.write(" * The macro expansion doesn't have to refer to all or any of these parameters,\n");
         out.write(" * but common sense dictates that it should involve at least one of them.\n");
@@ -172,11 +170,11 @@ public class GenerateNamedCharactersCpp {
         int i = 0;
         for (Map.Entry<String, String> entity : entities.entrySet()) {
             out.write("NAMED_CHARACTER_REFERENCE(" + i++ + ", ");
-            writeNameInitializer(out, entity, " _ ");
-            out.write(", " + entity.getKey().length() + ", ");
-            writeValueInitializer(out, entity, " _ ");
-            int numBytes = (Integer.parseInt(entity.getValue(), 16) <= 0xFFFF) ? 1 : 2;
-            out.write(", " + numBytes + ")\n");
+            String name = entity.getKey();
+            writeNameInitializer(out, name, " _ ");
+            out.write(", " + (name.length() - 2) + ", ");
+            writeValueInitializer(out, Integer.parseInt(entity.getValue(), 16), " _ ");
+            out.write(")\n");
         }
 
         out.write("\n");
@@ -187,26 +185,27 @@ public class GenerateNamedCharactersCpp {
     }
 
     private static void writeNameInitializer(Writer out,
-            Map.Entry<String, String> entity,
-            String separator)
-        throws IOException
-    {
-        String name = entity.getKey();
-        for (int i = 0; i < name.length(); i++) {
-            out.write("'" + name.charAt(i) + "'");
-            if (i < name.length() - 1)
-                out.write(separator);
+            String name, String separator)
+            throws IOException {
+        out.write("/* " + name.charAt(0) + " " + name.charAt(1) + " */ ");
+        if (name.length() == 2) {
+            out.write("0");
+        } else {
+            for (int i = 2; i < name.length(); i++) {
+                out.write("'" + name.charAt(i) + "'");
+                if (i < name.length() - 1)
+                    out.write(separator);
+            }            
         }
     }
 
     private static void writeValueInitializer(Writer out,
-            Map.Entry<String, String> entity,
-            String separator)
-        throws IOException
-    {
-        int value = Integer.parseInt(entity.getValue(), 16);
+            int value, String separator)
+            throws IOException {
         if (value <= 0xFFFF) {
             out.write(toHexString(value));
+            out.write(separator);
+            out.write("0");
         } else {
             int hi = (LEAD_OFFSET + (value >> 10));
             int lo = (0xDC00 + (value & 0x3FF));
@@ -217,25 +216,42 @@ public class GenerateNamedCharactersCpp {
     }
 
     private static void defineMacroAndInclude(Writer out, String expansion,
-            String includeFile)
-        throws IOException
-    {
-        out.write("\n#define NAMED_CHARACTER_REFERENCE(N, CHARS, LEN, VALUE, SIZE) \\\n" +
-                  expansion + "\n");
+            String includeFile) throws IOException {
+        out.write("\n#define NAMED_CHARACTER_REFERENCE(N, CHARS, LEN, VALUE) \\\n"
+                + expansion + "\n");
         out.write("#include \"" + includeFile + "\"\n");
         out.write("#undef NAMED_CHARACTER_REFERENCE\n");
     }
 
     private static void writeStaticMemberDeclaration(Writer out,
-            CppTypes cppTypes, String type, String name)
-        throws IOException
-    {
+            CppTypes cppTypes, String type, String name) throws IOException {
         out.write(type + " " + cppTypes.classPrefix() + "NamedCharacters::"
                 + name + ";\n");
     }
 
+    private static int charToIndex(char c) {
+        if (c >= 'a' && c <= 'z') {
+            return c - 'a' + 26;
+        } else if (c >= 'A' && c <= 'Z') {
+            return c - 'A';
+        }
+        throw new IllegalArgumentException("Bad char in named character name: "
+                + c);
+    }
+
+    private static boolean allZero(int[] arr) {
+        for (int i = 0; i < arr.length; i++) {
+            if (arr[i] != 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private static void generateCpp(File targetDirectory, CppTypes cppTypes,
             Map<String, String> entities) throws IOException {
+        String includeFile = cppTypes.classPrefix()
+                + "NamedCharactersInclude.h";
         File hFile = new File(targetDirectory, cppTypes.classPrefix()
                 + "NamedCharacters.cpp");
         Writer out = new OutputStreamWriter(new FileOutputStream(hFile),
@@ -256,18 +272,22 @@ public class GenerateNamedCharactersCpp {
         out.write("\n");
 
         String staticMemberType = cppTypes.arrayTemplate() + "<"
-                + cppTypes.arrayTemplate() + "<" + cppTypes.charType() + ","
+                + cppTypes.arrayTemplate() + "<" + cppTypes.byteType() + ","
                 + cppTypes.intType() + ">," + cppTypes.intType() + ">";
         writeStaticMemberDeclaration(out, cppTypes, staticMemberType, "NAMES");
 
-        staticMemberType = cppTypes.arrayTemplate() + "<"
-                + cppTypes.charType() + "," + cppTypes.intType() + ">*";
-        writeStaticMemberDeclaration(out, cppTypes, staticMemberType, "VALUES");
+        out.write("\nconst PRUnichar nsHtml5NamedCharacters::VALUES[][2] = {\n");
+        defineMacroAndInclude(out, "{ VALUE },", includeFile);
+        // The useless terminator entry makes the above macro simpler with
+        // compilers that whine about a comma after the last item
+        out.write("{0, 0} };\n\n");
 
         staticMemberType = cppTypes.charType() + "**";
-        writeStaticMemberDeclaration(out, cppTypes, staticMemberType, "WINDOWS_1252");
+        writeStaticMemberDeclaration(out, cppTypes, staticMemberType,
+                "WINDOWS_1252");
 
-        out.write("static " + cppTypes.charType() + " const WINDOWS_1252_DATA[] = {\n");
+        out.write("static " + cppTypes.charType()
+                + " const WINDOWS_1252_DATA[] = {\n");
         out.write("  0x20AC,\n");
         out.write("  0x0081,\n");
         out.write("  0x201A,\n");
@@ -300,44 +320,93 @@ public class GenerateNamedCharactersCpp {
         out.write("  0x009D,\n");
         out.write("  0x017E,\n");
         out.write("  0x0178\n");
-        out.write("};\n");
+        out.write("};\n\n");
 
-        String includeFile = cppTypes.classPrefix() + "NamedCharactersInclude.h";
+        // start hilo
+
+        // Java initializes arrays to zero. Zero is our magic value for no hilo
+        // value.
+        int[][] hiLoTable = new int['z' + 1]['Z' - 'A' + 1 + 'z' - 'a' + 1];
+
+        String firstName = entities.entrySet().iterator().next().getKey();
+        int firstKey = charToIndex(firstName.charAt(0));
+        int secondKey = firstName.charAt(1);
+        int row = 0;
+        int lo = 0;
+
+        for (Map.Entry<String, String> entity : entities.entrySet()) {
+            String name = entity.getKey();
+            int newFirst = charToIndex(name.charAt(0));
+            int newSecond = name.charAt(1);
+            assert !(newFirst == 0 && newSecond == 0) : "Not prepared for name starting with AA";
+            if (firstKey != newFirst || secondKey != newSecond) {
+                hiLoTable[secondKey][firstKey] = ((row - 1) << 16) | lo;
+                lo = row;
+                firstKey = newFirst;
+                secondKey = newSecond;
+            }
+            row++;
+        }
+
+        hiLoTable[secondKey][firstKey] = ((entities.size() - 1) << 16) | lo;
+
+        for (int i = 0; i < hiLoTable.length; i++) {
+            if (!allZero(hiLoTable[i])) {
+                out.write("static " + cppTypes.intType() + " const HILO_ACCEL_"
+                        + i + "[] = {\n");
+                for (int j = 0; j < hiLoTable[i].length; j++) {
+                    if (j != 0) {
+                        out.write(", ");
+                    }
+                    out.write("" + hiLoTable[i][j]);
+                }
+                out.write("\n};\n\n");
+            }
+        }
+
+        out.write("const PRInt32* const " + cppTypes.classPrefix()
+                + "NamedCharacters::HILO_ACCEL[] = {\n");
+        for (int i = 0; i < hiLoTable.length; i++) {
+            if (i != 0) {
+                out.write(",\n");
+            }
+            if (allZero(hiLoTable[i])) {
+                out.write("  0");
+            } else {
+                out.write("  HILO_ACCEL_" + i);
+            }
+        }
+        out.write("\n};\n\n");
+
+        // end hilo
+
         defineMacroAndInclude(out,
-                "static PRUnichar const NAME_##N[] = { CHARS };",
-                includeFile);
+                "static PRInt8 const NAME_##N[] = { CHARS };", includeFile);
         defineMacroAndInclude(out,
-                "static PRUnichar const VALUE_##N[] = { VALUE };",
-                includeFile);
+                "static PRUnichar const VALUE_##N[] = { VALUE };", includeFile);
 
         out.write("\n// XXX bug 501082: for some reason, msvc takes forever to optimize this function\n");
         out.write("#ifdef _MSC_VER\n");
         out.write("#pragma optimize(\"\", off)\n");
         out.write("#endif\n\n");
-        
+
         out.write("void\n");
         out.write(cppTypes.classPrefix()
                 + "NamedCharacters::initializeStatics()\n");
         out.write("{\n");
         out.write("  NAMES = " + cppTypes.arrayTemplate() + "<"
-                + cppTypes.arrayTemplate() + "<" + cppTypes.charType() + ","
+                + cppTypes.arrayTemplate() + "<" + cppTypes.byteType() + ","
                 + cppTypes.intType() + ">," + cppTypes.intType() + ">("
                 + entities.size() + ");\n");
         defineMacroAndInclude(out,
-                "  NAMES[N] = jArray<PRUnichar,PRInt32>((PRUnichar*)NAME_##N, LEN);",
-                includeFile);
-
-        out.write("\n  VALUES = new " + cppTypes.arrayTemplate() + "<"
-                + cppTypes.charType() + "," + cppTypes.intType() + ">["
-                + entities.size() + "];\n");
-        defineMacroAndInclude(out,
-                "  VALUES[N] = jArray<PRUnichar,PRInt32>((PRUnichar*)VALUE_##N, SIZE);",
+                "  NAMES[N] = jArray<PRInt8,PRInt32>((PRInt8*)NAME_##N, LEN);",
                 includeFile);
 
         out.write("\n");
         out.write("  WINDOWS_1252 = new " + cppTypes.charType() + "*[32];\n");
         out.write("  for (" + cppTypes.intType() + " i = 0; i < 32; ++i) {\n");
-        out.write("    WINDOWS_1252[i] = (" + cppTypes.charType() + "*)&(WINDOWS_1252_DATA[i]);\n");
+        out.write("    WINDOWS_1252[i] = (" + cppTypes.charType()
+                + "*)&(WINDOWS_1252_DATA[i]);\n");
         out.write("  }\n");
         out.write("}\n");
         out.write("\n");
@@ -345,13 +414,12 @@ public class GenerateNamedCharactersCpp {
         out.write("#ifdef _MSC_VER\n");
         out.write("#pragma optimize(\"\", on)\n");
         out.write("#endif\n\n");
-        
+
         out.write("void\n");
         out.write(cppTypes.classPrefix()
                 + "NamedCharacters::releaseStatics()\n");
         out.write("{\n");
         out.write("  NAMES.release();\n");
-        out.write("  delete[] VALUES;\n");
         out.write("  delete[] WINDOWS_1252;\n");
         out.write("}\n");
         out.flush();

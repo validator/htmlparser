@@ -76,6 +76,10 @@ public class AnnotationHelperVisitor<T> extends VoidVisitorAdapter<T> {
         return hasAnnotation("Virtual");
     }
 
+    protected boolean isConst() {
+        return hasAnnotation("Const");
+    }
+
     private boolean hasAnnotation(String anno) {
         if (currentAnnotations == null) {
             return false;

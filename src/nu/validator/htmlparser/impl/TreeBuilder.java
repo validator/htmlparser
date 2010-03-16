@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
- * Copyright (c) 2007-2009 Mozilla Foundation
+ * Copyright (c) 2007-2010 Mozilla Foundation
  * Portions of comments Copyright 2004-2008 Apple Computer, Inc., Mozilla 
  * Foundation, and Opera Software ASA.
  *
@@ -39,6 +39,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import nu.validator.htmlparser.annotation.Const;
 import nu.validator.htmlparser.annotation.IdType;
 import nu.validator.htmlparser.annotation.Inline;
 import nu.validator.htmlparser.annotation.Literal;
@@ -836,7 +837,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
      * @see nu.validator.htmlparser.common.TokenHandler#characters(char[], int,
      *      int)
      */
-    public final void characters(@NoLength char[] buf, int start, int length)
+    public final void characters(@Const @NoLength char[] buf, int start, int length)
             throws SAXException {
         if (needToDropLF) {
             if (buf[start] == '\n') {
@@ -5025,7 +5026,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         elementPopped("http://www.w3.org/1999/xhtml", "form", elt);
     }
 
-    protected void accumulateCharacters(@NoLength char[] buf, int start,
+    protected void accumulateCharacters(@Const @NoLength char[] buf, int start,
             int length) throws SAXException {
         appendCharacters(stack[currentPtr].node, buf, start, length);
     }
