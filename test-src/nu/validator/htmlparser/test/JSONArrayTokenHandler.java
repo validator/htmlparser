@@ -174,5 +174,8 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
         // TODO Auto-generated method stub
         return false;
     }
+
+    public void ensureBufferSpace(int addedLength) throws SAXException {
+    }
     
 }

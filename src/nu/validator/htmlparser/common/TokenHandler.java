@@ -161,4 +161,14 @@ public interface TokenHandler {
      *             if something went wrong
      */
     public boolean inForeign() throws SAXException;
+
+    /**
+     * Worst case promise of how many characters subsequent calls to 
+     * <code>characters()</code> may add.
+     * 
+     * @param addedLength the added space that must fit in the buffer
+     * @throws SAXException
+     *             if something went wrong
+     */
+    public void ensureBufferSpace(int addedLength) throws SAXException;
 }
