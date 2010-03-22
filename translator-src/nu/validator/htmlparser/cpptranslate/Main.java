@@ -93,7 +93,7 @@ public class Main {
         
         for (int i = 0; i < H_LIST.length; i++) {
             parseFile(cppTypes, javaDirectory, cppDirectory, H_LIST[i], ".h", new HVisitor(cppTypes, symbolTable));
-//            copyFile(new File(javaDirectory, H_LIST[i] + ".java"), new File(javaCopyDirectory, H_LIST[i] + ".java"));
+            copyFile(new File(javaDirectory, H_LIST[i] + ".java"), new File(javaCopyDirectory, H_LIST[i] + ".java"));
         }
         for (int i = 0; i < CPP_LIST.length; i++) {
             parseFile(cppTypes, javaDirectory, cppDirectory, CPP_LIST[i], ".cpp", new CppVisitor(cppTypes, symbolTable));
