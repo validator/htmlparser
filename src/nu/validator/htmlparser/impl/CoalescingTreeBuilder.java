@@ -26,6 +26,12 @@ import nu.validator.htmlparser.annotation.NoLength;
 
 import org.xml.sax.SAXException;
 
+/**
+ * A common superclass for tree builders that coalesce their text nodes.
+ * 
+ * @version $Id$
+ * @author hsivonen
+ */
 public abstract class CoalescingTreeBuilder<T> extends TreeBuilder<T> {
 
     protected final void accumulateCharacters(@NoLength char[] buf, int start,
