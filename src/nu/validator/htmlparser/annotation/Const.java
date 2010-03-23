@@ -22,6 +22,13 @@
 
 package nu.validator.htmlparser.annotation;
 
+/**
+ * Marker for translating into the C++ const keyword on the declaration in 
+ * question.
+ * 
+ * @version $Id$
+ * @author hsivonen
+ */
 public @interface Const {
 
 }

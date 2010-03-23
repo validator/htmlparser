@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Mozilla Foundation
+ * Copyright (c) 2009-2010 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -22,6 +22,12 @@
 
 package nu.validator.htmlparser.annotation;
 
+/**
+ * Translates into the C++ inline keyword.
+ * 
+ * @version $Id$
+ * @author hsivonen
+ */
 public @interface Inline {
 
 }
