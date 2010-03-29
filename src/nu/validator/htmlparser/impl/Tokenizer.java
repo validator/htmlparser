@@ -66,8 +66,6 @@ import org.xml.sax.SAXParseException;
  */
 public class Tokenizer implements Locator {
 
-    private static final int BUFFER_CLIP_THRESHOLD = 8000;
-
     public static final int DATA = 0;
 
     public static final int RCDATA = 1;
@@ -800,14 +798,14 @@ public class Tokenizer implements Locator {
         // ]NOCPP]
     }
 
-    @Inline private void clearStrBufAndAppendCurrentC(char c) {
+    private void clearStrBufAndAppendCurrentC(char c) {
         strBuf[0] = c;
 
         strBufLen = 1;
         // strBufOffset = pos;
     }
 
-    @Inline private void clearStrBufAndAppendForceWrite(char c) {
+    private void clearStrBufAndAppendForceWrite(char c) {
         strBuf[0] = c; // test
 
         strBufLen = 1;
@@ -815,7 +813,7 @@ public class Tokenizer implements Locator {
         // buf[pos] = c;
     }
 
-    @Inline private void clearStrBufForNextState() {
+    private void clearStrBufForNextState() {
         strBufLen = 0;
         // strBufOffset = pos + 1;
     }
@@ -826,8 +824,18 @@ public class Tokenizer implements Locator {
      * @param c
      *            the UTF-16 code unit to append
      */
-    @Inline private void appendStrBuf(char c) {
+    private void appendStrBuf(char c) {
+        // if (strBufOffset != -1) {
+        // strBufLen++;
+        // } else {
+        if (strBufLen == strBuf.length) {
+            char[] newBuf = new char[strBuf.length + Tokenizer.BUFFER_GROW_BY];
+            System.arraycopy(strBuf, 0, newBuf, 0, strBuf.length);
+            Portability.releaseArray(strBuf);
+            strBuf = newBuf;
+        }
         strBuf[strBufLen++] = c;
+        // }
     }
 
     /**
@@ -873,23 +881,23 @@ public class Tokenizer implements Locator {
         }
     }
 
-    @Inline private void clearLongStrBufForNextState() {
+    private void clearLongStrBufForNextState() {
         // longStrBufOffset = pos + 1;
         longStrBufLen = 0;
     }
 
-    @Inline private void clearLongStrBuf() {
+    private void clearLongStrBuf() {
         // longStrBufOffset = pos;
         longStrBufLen = 0;
     }
 
-    @Inline private void clearLongStrBufAndAppendCurrentC(char c) {
+    private void clearLongStrBufAndAppendCurrentC(char c) {
         longStrBuf[0] = c;
         longStrBufLen = 1;
         // longStrBufOffset = pos;
     }
 
-    @Inline private void clearLongStrBufAndAppendToComment(char c) {
+    private void clearLongStrBufAndAppendToComment(char c) {
         longStrBuf[0] = c;
         // longStrBufOffset = pos;
         longStrBufLen = 1;
@@ -901,8 +909,18 @@ public class Tokenizer implements Locator {
      * @param c
      *            the UTF-16 code unit to append
      */
-    @Inline private void appendLongStrBuf(char c) {
+    private void appendLongStrBuf(char c) {
+        // if (longStrBufOffset != -1) {
+        // longStrBufLen++;
+        // } else {
+        if (longStrBufLen == longStrBuf.length) {
+            char[] newBuf = new char[longStrBufLen + (longStrBufLen >> 1)];
+            System.arraycopy(longStrBuf, 0, newBuf, 0, longStrBuf.length);
+            Portability.releaseArray(longStrBuf);
+            longStrBuf = newBuf;
+        }
         longStrBuf[longStrBufLen++] = c;
+        // }
     }
 
     private void appendSecondHyphenToBogusComment() throws SAXException {
@@ -967,16 +985,39 @@ public class Tokenizer implements Locator {
         // ]NOCPP]
     }
 
-    @Inline private void appendLongStrBuf(char[] buffer, int offset, int length) {
+    private void appendLongStrBuf(char[] buffer, int offset, int length) {
+        int reqLen = longStrBufLen + length;
+        if (longStrBuf.length < reqLen) {
+            char[] newBuf = new char[reqLen + (reqLen >> 1)];
+            System.arraycopy(longStrBuf, 0, newBuf, 0, longStrBuf.length);
+            Portability.releaseArray(longStrBuf);
+            longStrBuf = newBuf;
+        }
         System.arraycopy(buffer, offset, longStrBuf, longStrBufLen, length);
-        longStrBufLen += length;
+        longStrBufLen = reqLen;
+    }
+
+    /**
+     * Appends to the larger buffer.
+     * 
+     * @param arr
+     *            the UTF-16 code units to append
+     */
+    private void appendLongStrBuf(char[] arr) {
+        // assert longStrBufOffset == -1;
+        appendLongStrBuf(arr, 0, arr.length);
     }
 
     /**
      * Append the contents of the smaller buffer to the larger one.
      */
-    @Inline private void appendStrBufToLongStrBuf() {
+    private void appendStrBufToLongStrBuf() {
+        // assert longStrBufOffset == -1;
+        // if (strBufOffset != -1) {
+        // appendLongStrBuf(buf, strBufOffset, strBufLen);
+        // } else {
         appendLongStrBuf(strBuf, 0, strBufLen);
+        // }
     }
 
     /**
@@ -1106,7 +1147,7 @@ public class Tokenizer implements Locator {
     /**
      * 
      */
-    @Inline private void resetAttributes() {
+    private void resetAttributes() {
         // [NOCPP[
         if (newAttributesEachTime) {
             // ]NOCPP]
@@ -1293,7 +1334,6 @@ public class Tokenizer implements Locator {
         lastCR = false;
 
         int start = buffer.getStart();
-        int end = buffer.getEnd();
         /**
          * The index of the last <code>char</code> read from <code>buf</code>.
          */
@@ -1330,54 +1370,20 @@ public class Tokenizer implements Locator {
                 break;
         }
 
-        ensureBufferSpace(end - start);
-
         /**
          * The number of <code>char</code>s in <code>buf</code> that have
          * meaning. (The rest of the array is garbage and should not be
          * examined.)
          */
         pos = stateLoop(state, c, pos, buffer.getBuffer(), false, returnState,
-                end);
-        if (pos == end) {
+                buffer.getEnd());
+        if (pos == buffer.getEnd()) {
             // exiting due to end of buffer
             buffer.setStart(pos);
         } else {
             buffer.setStart(pos + 1);
         }
         return lastCR;
-    }
-
-    private void ensureBufferSpace(int addedLength) throws SAXException {
-        int newlongStrBufCapacity = longStrBufLen + addedLength;
-        if (newlongStrBufCapacity > Tokenizer.BUFFER_CLIP_THRESHOLD) {
-            longStrBuf[0] = '\u2026'; // HORIZONTAL ELLIPSIS
-            longStrBuf[1] = '\uFFFD'; // REPLACEMENT CHARACTER
-            longStrBufLen = 2;
-            newlongStrBufCapacity = 2 + addedLength;
-        }
-        if (newlongStrBufCapacity > longStrBuf.length) {
-            char[] newBuf = new char[newlongStrBufCapacity];
-            System.arraycopy(longStrBuf, 0, newBuf, 0, longStrBufLen);
-            Portability.releaseArray(longStrBuf);
-            longStrBuf = newBuf;
-        }
-        
-        int newStrBufCapacity = strBufLen + addedLength;
-        if (newStrBufCapacity > Tokenizer.BUFFER_CLIP_THRESHOLD) {
-            strBuf[0] = '\u2026'; // HORIZONTAL ELLIPSIS
-            strBuf[1] = '\uFFFD'; // REPLACEMENT CHARACTER
-            strBufLen = 2;
-            newStrBufCapacity = 2 + addedLength;
-        }
-        if (newStrBufCapacity > strBuf.length) {
-            char[] newBuf = new char[newStrBufCapacity];
-            System.arraycopy(strBuf, 0, newBuf, 0, strBufLen);
-            Portability.releaseArray(strBuf);
-            strBuf = newBuf;
-        }
-        
-        tokenHandler.ensureBufferSpace(addedLength);
     }
 
     // WARNING When editing this, makes sure the bytecode length shown by javap

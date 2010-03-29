@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010 Mozilla Foundation
+ * Copyright (c) 2008-2009 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -30,8 +30,15 @@ public abstract class CoalescingTreeBuilder<T> extends TreeBuilder<T> {
 
     protected final void accumulateCharacters(@NoLength char[] buf, int start,
             int length) throws SAXException {
+        int newLen = charBufferLen + length;
+        if (newLen > charBuffer.length) {
+            char[] newBuf = new char[newLen];
+            System.arraycopy(charBuffer, 0, newBuf, 0, charBufferLen);
+            Portability.releaseArray(charBuffer);
+            charBuffer = newBuf;
+        }
         System.arraycopy(buf, start, charBuffer, charBufferLen, length);
-        charBufferLen += length;
+        charBufferLen = newLen;
     }
 
     /**
