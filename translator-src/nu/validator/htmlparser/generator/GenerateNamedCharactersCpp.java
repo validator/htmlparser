@@ -152,9 +152,11 @@ public class GenerateNamedCharactersCpp {
         out.write(" *\n");
         out.write(" *   1.  a unique integer N identifying the Nth [0,1,..] macro expansion in this file,\n");
         out.write(" *   2.  a comma-separated sequence of characters comprising the character name,\n");
-        out.write(" *       without the first two letters. See Tokenizer.java.\n");
+        out.write(" *       without the first two letters or 0 if the sequence would be empty. \n");
+        out.write(" *       See Tokenizer.java.\n");
         out.write(" *   3.  the length of this sequence of characters,\n");
-        out.write(" *   4.  a comma-separated sequence of PRUnichar literals (high to low) corresponding\n");
+        out.write(" *   4.  placeholder flag (0 if argument #is not a placeholder and 1 if it is),\n");
+        out.write(" *   5.  a comma-separated sequence of PRUnichar literals (high to low) corresponding\n");
         out.write(" *       to the code-point of the named character.\n");
         out.write(" *\n");
         out.write(" * The macro expansion doesn't have to refer to all or any of these parameters,\n");
@@ -173,6 +175,7 @@ public class GenerateNamedCharactersCpp {
             String name = entity.getKey();
             writeNameInitializer(out, name, " _ ");
             out.write(", " + (name.length() - 2) + ", ");
+            out.write((name.length() == 2 ? "1" : "0") + ", ");
             writeValueInitializer(out, Integer.parseInt(entity.getValue(), 16), " _ ");
             out.write(")\n");
         }
@@ -217,8 +220,21 @@ public class GenerateNamedCharactersCpp {
 
     private static void defineMacroAndInclude(Writer out, String expansion,
             String includeFile) throws IOException {
-        out.write("\n#define NAMED_CHARACTER_REFERENCE(N, CHARS, LEN, VALUE) \\\n"
+        out.write("#define NAMED_CHARACTER_REFERENCE(N, CHARS, LEN, FLAG, VALUE) \\\n"
                 + expansion + "\n");
+        out.write("#include \"" + includeFile + "\"\n");
+        out.write("#undef NAMED_CHARACTER_REFERENCE\n");
+    }
+
+    private static void defineMacroAndInclude(Writer out, String expansion,
+            String debugExpansion, String includeFile) throws IOException {
+        out.write("#ifdef DEBUG\n");
+        out.write("  #define NAMED_CHARACTER_REFERENCE(N, CHARS, LEN, FLAG, VALUE) \\\n"
+                + debugExpansion + "\n");
+        out.write("#else\n");
+        out.write("  #define NAMED_CHARACTER_REFERENCE(N, CHARS, LEN, FLAG, VALUE) \\\n"
+                + expansion + "\n");
+        out.write("#endif\n");
         out.write("#include \"" + includeFile + "\"\n");
         out.write("#undef NAMED_CHARACTER_REFERENCE\n");
     }
@@ -380,15 +396,54 @@ public class GenerateNamedCharactersCpp {
 
         // end hilo
 
-        defineMacroAndInclude(out,
-                "static PRInt8 const NAME_##N[] = { CHARS };", includeFile);
-        defineMacroAndInclude(out,
-                "static PRUnichar const VALUE_##N[] = { VALUE };", includeFile);
+        out.write("/**\n");
+        out.write(" * To avoid having lots of pointers in the |charData| array, below,\n");
+        out.write(" * which would cause us to have to do lots of relocations at library\n");
+        out.write(" * load time, store all the string data for the names in one big array.\n");
+        out.write(" * Then use tricks with enums to help us build an array that contains\n");
+        out.write(" * the positions of each within the big arrays.\n");
+        out.write(" */\n\n");
 
-        out.write("\n// XXX bug 501082: for some reason, msvc takes forever to optimize this function\n");
-        out.write("#ifdef _MSC_VER\n");
-        out.write("#pragma optimize(\"\", off)\n");
-        out.write("#endif\n\n");
+        out.write("static const " + cppTypes.byteType() + " ALL_NAMES[] = {\n");
+
+        defineMacroAndInclude(out, "CHARS ,", includeFile);
+
+        out.write("};\n\n");        
+        
+        out.write("enum NamePositions {\n");
+        out.write("  DUMMY_INITIAL_NAME_POSITION = 0,\n");
+
+        out.write("/* enums don't take up space, so generate _START and _END */\n");
+        defineMacroAndInclude(out,
+                "NAME_##N##_DUMMY, /* automatically one higher than previous */ \\\n"
+                        + "NAME_##N##_START = NAME_##N##_DUMMY - 1, \\\n"
+                        + "NAME_##N##_END = NAME_##N##_START + LEN + FLAG,",
+                includeFile);
+
+        out.write("  DUMMY_FINAL_NAME_VALUE\n");
+        out.write("};\n\n");
+
+        out.write("#define NAMED_CHARACTERS_COUNT " + entities.size() + "\n\n");
+
+        String arrayLengthMacro = cppTypes.arrayLengthMacro();
+        String staticAssert = cppTypes.staticAssert();
+        if (staticAssert != null && arrayLengthMacro != null) {
+            out.write("/* check that the start positions will fit in 16 bits */\n");
+            out.write(staticAssert + "(" + arrayLengthMacro
+                    + "(ALL_NAMES) < 0x10000);\n\n");
+        }
+        
+        out.write("struct NamedCharacterData {\n");
+        out.write("  " + cppTypes.unsignedShortType() + " nameStart;\n");
+        out.write("  " + cppTypes.unsignedShortType() + " nameLen;\n");
+        out.write("#ifdef DEBUG\n");
+        out.write("  " + cppTypes.intType() + " n;\n");
+        out.write("#endif\n");
+        out.write("};\n\n");
+
+        out.write("static const NamedCharacterData charData[NAMED_CHARACTERS_COUNT] = {\n");
+        defineMacroAndInclude(out, "{ NAME_##N##_START, LEN, },", "{ NAME_##N##_START, LEN, N },", includeFile);
+        out.write("};\n\n");
 
         out.write("void\n");
         out.write(cppTypes.classPrefix()
@@ -396,11 +451,19 @@ public class GenerateNamedCharactersCpp {
         out.write("{\n");
         out.write("  NAMES = " + cppTypes.arrayTemplate() + "<"
                 + cppTypes.arrayTemplate() + "<" + cppTypes.byteType() + ","
-                + cppTypes.intType() + ">," + cppTypes.intType() + ">("
-                + entities.size() + ");\n");
-        defineMacroAndInclude(out,
-                "  NAMES[N] = jArray<PRInt8,PRInt32>((PRInt8*)NAME_##N, LEN);",
-                includeFile);
+                + cppTypes.intType() + ">," + cppTypes.intType()
+                + ">(NAMED_CHARACTERS_COUNT);\n");
+
+        out.write("  " + cppTypes.byteType() + "* allNames = const_cast<" + cppTypes.byteType() + "*>(ALL_NAMES);\n");
+        out.write("  for (" + cppTypes.intType() + " i = 0; i < NAMED_CHARACTERS_COUNT; ++i) {\n");
+        out.write("    const NamedCharacterData &data = charData[i];\n");
+        String abortIfFalse = cppTypes.abortIfFalse();
+        if (abortIfFalse != null) {
+            out.write("    " + abortIfFalse + "(data.n == i,\n");
+            out.write("                      \"index error in nsHtml5NamedCharactersInclude.h\");\n");
+        }
+        out.write("    NAMES[i] = jArray<" + cppTypes.byteType() + "," + cppTypes.intType() + ">(allNames + data.nameStart, data.nameLen);\n");
+        out.write("  }\n");
 
         out.write("\n");
         out.write("  WINDOWS_1252 = new " + cppTypes.charType() + "*[32];\n");
@@ -410,10 +473,6 @@ public class GenerateNamedCharactersCpp {
         out.write("  }\n");
         out.write("}\n");
         out.write("\n");
-
-        out.write("#ifdef _MSC_VER\n");
-        out.write("#pragma optimize(\"\", on)\n");
-        out.write("#endif\n\n");
 
         out.write("void\n");
         out.write(cppTypes.classPrefix()
