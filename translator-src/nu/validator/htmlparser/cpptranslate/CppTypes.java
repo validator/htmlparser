@@ -95,10 +95,9 @@ public class CppTypes {
     private static final String[] TREE_BUILDER_OTHER_DECLATIONS = {};
 
     private static final String[] NAMED_CHARACTERS_INCLUDES = { "prtypes",
-            "jArray", "nscore" };
+            "jArray", "nscore", "nsDebug", "prlog", "nsMemory" };
 
-    private static final String[] FORWARD_DECLARATIONS = {
-            "nsHtml5StreamParser", };
+    private static final String[] FORWARD_DECLARATIONS = { "nsHtml5StreamParser", };
 
     private static final String[] CLASSES_THAT_NEED_SUPPLEMENT = {
             "MetaScanner", "TreeBuilder", "UTF16Buffer", };
@@ -145,6 +144,14 @@ public class CppTypes {
 
     public String charType() {
         return "PRUnichar";
+    }
+
+    /**
+     * Only used for named characters.
+     * @return
+     */
+    public String unsignedShortType() {
+        return "PRUint16";
     }
 
     public String intType() {
@@ -324,4 +331,15 @@ public class CppTypes {
         return "nsAHtml5TreeBuilderState*";
     }
 
+    public String arrayLengthMacro() {
+        return "NS_ARRAY_LENGTH";
+    }
+
+    public String staticAssert() {
+        return "PR_STATIC_ASSERT";
+    }
+
+    public String abortIfFalse() {
+        return "NS_ABORT_IF_FALSE";
+    }
 }
