@@ -102,8 +102,8 @@ public interface TreeBuilderState<T> {
     public int getStackLength();
     
     /**
-     * Return the length of the list.
-     * @return the length of the list.
+     * Return the length of the list of active formatting elements.
+     * @return the length of the list of active formatting elements.
      */
-    public int getListLength();
+    public int getListOfActiveFormattingElementsLength();
 }
