@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Mozilla Foundation
+ * Copyright (c) 2009-2010 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -22,7 +22,13 @@
 
 package nu.validator.htmlparser.impl;
 
-
+/**
+ * Interface for exposing the state of the HTML5 tree builder so that the
+ * interface can be implemented by the tree builder itself and by snapshots.
+ * 
+ * @version $Id$
+ * @author hsivonen
+ */
 public interface TreeBuilderState<T> {
 
     /**
@@ -75,11 +81,11 @@ public interface TreeBuilderState<T> {
     public boolean isFramesetOk();
     
     /**
-     * Returns the foreignFlag.
+     * Returns the inForeign.
      * 
-     * @return the foreignFlag
+     * @return the inForeign
      */
-    public int getForeignFlag();
+    public boolean isInForeign();
 
     /**
      * Returns the needToDropLF.
