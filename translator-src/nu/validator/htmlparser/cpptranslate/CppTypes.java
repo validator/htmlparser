@@ -87,8 +87,7 @@ public class CppTypes {
             "nsIContent", "nsIDocument", "nsTraceRefcnt", "jArray",
             "nsHtml5DocumentMode", "nsHtml5ArrayCopy",
             "nsHtml5NamedCharacters", "nsHtml5Atoms", "nsHtml5ByteReadable",
-            "nsIUnicodeDecoder", "nsAHtml5TreeBuilderState",
-            "nsAHtml5EncodingDeclarationHandler" };
+            "nsIUnicodeDecoder", "nsAHtml5TreeBuilderState" };
 
     private static final String[] OTHER_DECLATIONS = {};
 
@@ -187,7 +186,7 @@ public class CppTypes {
     }
 
     public String encodingDeclarationHandlerType() {
-        return "nsAHtml5EncodingDeclarationHandler*";
+        return "nsHtml5StreamParser*";
     }
 
     public String nodeType() {
