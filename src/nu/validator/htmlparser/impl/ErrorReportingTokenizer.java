@@ -381,12 +381,12 @@ public class ErrorReportingTokenizer extends Tokenizer {
         if (html4) {
             err((stateSave == Tokenizer.DATA ? "CDATA" : "RCDATA")
                     + " element \u201C"
-                    + contentModelElement
+                    + endTagExpectation
                     + "\u201D contained the string \u201C</\u201D, but it was not the start of the end tag. (HTML4-only error)");
         } else {
             warn((stateSave == Tokenizer.DATA ? "CDATA" : "RCDATA")
                     + " element \u201C"
-                    + contentModelElement
+                    + endTagExpectation
                     + "\u201D contained the string \u201C</\u201D, but this did not close the element.");
         }
     }
@@ -394,10 +394,10 @@ public class ErrorReportingTokenizer extends Tokenizer {
     @Override protected void errHtml4LtSlashInRcdata(char folded)
             throws SAXException {
                 if (html4 && (index > 0 || (folded >= 'a' && folded <= 'z'))
-                        && ElementName.IFRAME != contentModelElement) {
+                        && ElementName.IFRAME != endTagExpectation) {
                     err((stateSave == Tokenizer.DATA ? "CDATA" : "RCDATA")
                             + " element \u201C"
-                            + contentModelElement.name
+                            + endTagExpectation.name
                             + "\u201D contained the string \u201C</\u201D, but it was not the start of the end tag. (HTML4-only error)");
                 }
             }
