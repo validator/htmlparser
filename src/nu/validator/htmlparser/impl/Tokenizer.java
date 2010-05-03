@@ -2443,7 +2443,7 @@ public class Tokenizer implements Locator {
                                 state = Tokenizer.MARKUP_DECLARATION_OCTYPE;
                                 continue stateloop;
                             case '[':
-                                if (tokenHandler.inForeign()) {
+                                if (tokenHandler.isInForeign()) {
                                     clearLongStrBufAndAppend(c);
                                     index = 0;
                                     state = Tokenizer.CDATA_START;

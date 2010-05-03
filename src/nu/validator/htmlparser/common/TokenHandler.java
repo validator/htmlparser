@@ -160,5 +160,5 @@ public interface TokenHandler {
      * @throws SAXException
      *             if something went wrong
      */
-    public boolean inForeign() throws SAXException;
+    public boolean isInForeign() throws SAXException;
 }

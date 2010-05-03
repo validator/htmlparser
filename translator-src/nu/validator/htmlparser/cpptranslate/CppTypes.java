@@ -87,7 +87,7 @@ public class CppTypes {
             "nsIContent", "nsIDocument", "nsTraceRefcnt", "jArray",
             "nsHtml5DocumentMode", "nsHtml5ArrayCopy",
             "nsHtml5NamedCharacters", "nsHtml5Atoms", "nsHtml5ByteReadable",
-            "nsIUnicodeDecoder", "nsAHtml5TreeBuilderState" };
+            "nsIUnicodeDecoder", "nsAHtml5TreeBuilderState", "nsHtml5Macros" };
 
     private static final String[] OTHER_DECLATIONS = {};
 
@@ -340,5 +340,13 @@ public class CppTypes {
 
     public String abortIfFalse() {
         return "NS_ABORT_IF_FALSE";
+    }
+
+    public String continueMacro() {
+        return "NS_HTML5_CONTINUE";
+    }
+
+    public String breakMacro() {
+        return "NS_HTML5_BREAK";
     }
 }

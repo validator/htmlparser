@@ -1753,9 +1753,10 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
 
     public void visit(BreakStmt n, LocalSymbolTable arg) {
         if (n.getId() != null) {
-            printer.print("goto ");
+            printer.print(cppTypes.breakMacro());
+            printer.print("(");
             printer.print(n.getId());
-            printer.print("_end");
+            printer.print(")");
         } else {
             printer.print("break");
         }
@@ -1879,23 +1880,95 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
 
     public void visit(IfStmt n, LocalSymbolTable arg) {
         if (!isErrorHandlerIf(n.getCondition())) {
-            printer.print("if (");
-            n.getCondition().accept(this, arg);
-            printer.print(") ");
-            n.getThenStmt().accept(this, arg);
-            if (n.getElseStmt() != null) {
-                printer.print(" else ");
-                n.getElseStmt().accept(this, arg);
+            if (isErrorOnlyBlock(n.getThenStmt())) {
+                if (n.getElseStmt() != null
+                        && !isErrorOnlyBlock(n.getElseStmt())) {
+                    printer.print("if (");
+                    if (n.getCondition() instanceof BinaryExpr) {
+                        BinaryExpr binExpr = (BinaryExpr) n.getCondition();
+                        switch (binExpr.getOperator()) {
+                            case equals:
+                                binExpr.getLeft().accept(this, arg);
+                                printer.print(" != ");
+                                binExpr.getRight().accept(this, arg);
+                                break;
+                            case notEquals:
+                                binExpr.getLeft().accept(this, arg);
+                                printer.print(" == ");
+                                binExpr.getRight().accept(this, arg);
+                                break;
+                            default:
+                                printer.print("!(");
+                                formatCondition(n.getCondition(), arg);
+                                printer.print(")");
+                                break;
+                        }
+                    } else {
+                        printer.print("!(");
+                        formatCondition(n.getCondition(), arg);
+                        printer.print(")");
+                    }
+                    printer.print(") ");
+                    n.getElseStmt().accept(this, arg);
+                }
+            } else {
+                printer.print("if (");
+                formatCondition(n.getCondition(), arg);
+                printer.print(") ");
+                n.getThenStmt().accept(this, arg);
+                if (n.getElseStmt() != null
+                        && !isErrorOnlyBlock(n.getElseStmt())) {
+                    printer.print(" else ");
+                    n.getElseStmt().accept(this, arg);
+                }
             }
         }
     }
+    
+    private void formatCondition(Expression expr, LocalSymbolTable arg) {
+        if (expr instanceof BinaryExpr) {
+            BinaryExpr binExpr = (BinaryExpr) expr;
+            switch (binExpr.getOperator()) {
+                case notEquals:
+                    if (binExpr.getRight() instanceof NullLiteralExpr) {
+                        binExpr.getLeft().accept(this, arg);
+                        return;
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+        expr.accept(this, arg);
+    }
 
-    private boolean isErrorHandlerIf(Expression condition) {
-        if (condition instanceof BinaryExpr) {
-            BinaryExpr be = (BinaryExpr) condition;
-            return be.getLeft().toString().equals("errorHandler");
+    private boolean isErrorOnlyBlock(Statement elseStmt) {
+        if (elseStmt instanceof BlockStmt) {
+            BlockStmt block = (BlockStmt) elseStmt;
+            List<Statement> statements = block.getStmts();
+            if (statements == null) {
+                return false;
+            }
+            if (statements.size() != 1) {
+                return false;
+            }
+            Statement statement = statements.get(0);
+            if (statement instanceof ExpressionStmt) {
+                ExpressionStmt exprStmt = (ExpressionStmt) statement;
+                Expression expr = exprStmt.getExpression();
+                if (expr instanceof MethodCallExpr) {
+                    MethodCallExpr call = (MethodCallExpr) expr;
+                    if (call.getName().startsWith("err")) {
+                        return true;
+                    }
+                }
+            }
         }
         return false;
+    }
+
+    private boolean isErrorHandlerIf(Expression condition) {
+        return condition.toString().indexOf("errorHandler") != -1;
     }
 
     public void visit(WhileStmt n, LocalSymbolTable arg) {
@@ -1910,8 +1983,10 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
         // Instead, making the generated code more readable for the
         // case at hand.
         if (n.getId() != null) {
-            printer.print("goto ");
+            printer.print(cppTypes.continueMacro());
+            printer.print("(");
             printer.print(n.getId());
+            printer.print(")");
             if (forLoopsWithCondition.contains(n.getId())) {
                 throw new IllegalStateException(
                         "Continue attempted with a loop that has a condition. "
