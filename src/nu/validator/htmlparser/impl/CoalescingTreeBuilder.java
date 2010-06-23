@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009 Mozilla Foundation
+ * Copyright (c) 2008-2010 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -53,6 +53,13 @@ public abstract class CoalescingTreeBuilder<T> extends TreeBuilder<T> {
     @Override protected final void appendCharacters(T parent, char[] buf, int start,
             int length) throws SAXException {
         appendCharacters(parent, new String(buf, start, length));
+    }
+
+    /**
+     * @see nu.validator.htmlparser.impl.TreeBuilder#appendIsindexPrompt(java.lang.Object)
+     */
+    @Override protected void appendIsindexPrompt(T parent) throws SAXException {
+        appendCharacters(parent, "This is a searchable index. Enter search keywords: ");
     }
 
     protected abstract void appendCharacters(T parent, String text) throws SAXException;
