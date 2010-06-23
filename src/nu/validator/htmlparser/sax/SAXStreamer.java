@@ -34,6 +34,8 @@ import org.xml.sax.ext.LexicalHandler;
 
 class SAXStreamer extends TreeBuilder<Attributes>{
 
+    private static final char[] ISINDEX_PROMPT = "This is a searchable index. Enter search keywords: ".toCharArray();
+
     private ContentHandler contentHandler = null;
     private LexicalHandler lexicalHandler = null;
     
@@ -55,6 +57,14 @@ class SAXStreamer extends TreeBuilder<Attributes>{
     @Override
     protected void appendCharacters(Attributes parent, char[] buf, int start, int length) throws SAXException {
         contentHandler.characters(buf, start, length);
+    }
+
+    /**
+     * @see nu.validator.htmlparser.impl.TreeBuilder#appendIsindexPrompt(java.lang.Object)
+     */
+    @Override protected void appendIsindexPrompt(Attributes parent)
+            throws SAXException {
+        contentHandler.characters(ISINDEX_PROMPT, 0, ISINDEX_PROMPT.length);
     }
 
     @Override

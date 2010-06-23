@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
- * Copyright (c) 2008-2009 Mozilla Foundation
+ * Copyright (c) 2008-2010 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -37,9 +37,11 @@ import nu.validator.saxtree.ParentNode;
 import org.xml.sax.SAXException;
 
 class SAXTreeBuilder extends TreeBuilder<Element> {
-    
+
+    private static final char[] ISINDEX_PROMPT = "This is a searchable index. Enter search keywords: ".toCharArray();
+
     private Document document;
-    
+
     private Node cachedTable = null;
     
     private Node cachedTablePreviousSibling = null;
@@ -61,6 +63,14 @@ class SAXTreeBuilder extends TreeBuilder<Element> {
     @Override
     protected void appendCharacters(Element parent, char[] buf, int start, int length) {
         parent.appendChild(new Characters(tokenizer, buf, start, length));
+    }
+
+    /**
+     * @see nu.validator.htmlparser.impl.TreeBuilder#appendIsindexPrompt(java.lang.Object)
+     */
+    @Override protected void appendIsindexPrompt(Element parent)
+            throws SAXException {
+        parent.appendChild(new Characters(tokenizer, ISINDEX_PROMPT, 0, ISINDEX_PROMPT.length));
     }
 
     @Override
