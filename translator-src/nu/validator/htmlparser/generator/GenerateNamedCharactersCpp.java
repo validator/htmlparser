@@ -40,10 +40,12 @@ package nu.validator.htmlparser.generator;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.util.Map;
 import java.util.TreeMap;
@@ -96,6 +98,111 @@ public class GenerateNamedCharactersCpp {
         generateH(targetDirectory, cppTypes, entities);
         generateInclude(targetDirectory, cppTypes, entities);
         generateCpp(targetDirectory, cppTypes, entities);
+        generateAccelH(targetDirectory, cppTypes, entities);
+        generateAccelCpp(targetDirectory, cppTypes, entities);
+    }
+
+    private static void generateAccelCpp(File targetDirectory,
+            CppTypes cppTypes, TreeMap<String, String> entities) throws IOException {
+        String includeFile = cppTypes.classPrefix()
+                + "NamedCharactersInclude.h";
+        File cppFile = new File(targetDirectory, cppTypes.classPrefix()
+                + "NamedCharactersAccel.cpp");
+        Writer out = new OutputStreamWriter(new FileOutputStream(cppFile),
+                "utf-8");
+
+        out.write('\n');
+        out.write("#include \"" + cppTypes.classPrefix()
+                + "NamedCharactersAccel.h\"\n");
+        out.write("\n");
+
+        // Java initializes arrays to zero. Zero is our magic value for no hilo
+        // value.
+        int[][] hiLoTable = new int['z' + 1]['Z' - 'A' + 1 + 'z' - 'a' + 1];
+
+        String firstName = entities.entrySet().iterator().next().getKey();
+        int firstKey = charToIndex(firstName.charAt(0));
+        int secondKey = firstName.charAt(1);
+        int row = 0;
+        int lo = 0;
+
+        for (Map.Entry<String, String> entity : entities.entrySet()) {
+            String name = entity.getKey();
+            int newFirst = charToIndex(name.charAt(0));
+            int newSecond = name.charAt(1);
+            assert !(newFirst == 0 && newSecond == 0) : "Not prepared for name starting with AA";
+            if (firstKey != newFirst || secondKey != newSecond) {
+                hiLoTable[secondKey][firstKey] = ((row - 1) << 16) | lo;
+                lo = row;
+                firstKey = newFirst;
+                secondKey = newSecond;
+            }
+            row++;
+        }
+
+        hiLoTable[secondKey][firstKey] = ((entities.size() - 1) << 16) | lo;
+
+        for (int i = 0; i < hiLoTable.length; i++) {
+            if (!allZero(hiLoTable[i])) {
+                out.write("static " + cppTypes.intType() + " const HILO_ACCEL_"
+                        + i + "[] = {\n");
+                for (int j = 0; j < hiLoTable[i].length; j++) {
+                    if (j != 0) {
+                        out.write(", ");
+                    }
+                    out.write("" + hiLoTable[i][j]);
+                }
+                out.write("\n};\n\n");
+            }
+        }
+
+        out.write("const PRInt32* const " + cppTypes.classPrefix()
+                + "NamedCharactersAccel::HILO_ACCEL[] = {\n");
+        for (int i = 0; i < hiLoTable.length; i++) {
+            if (i != 0) {
+                out.write(",\n");
+            }
+            if (allZero(hiLoTable[i])) {
+                out.write("  0");
+            } else {
+                out.write("  HILO_ACCEL_" + i);
+            }
+        }
+        out.write("\n};\n\n");
+
+        out.flush();
+        out.close();
+    }
+
+    private static void generateAccelH(File targetDirectory, CppTypes cppTypes,
+            TreeMap<String, String> entities) throws IOException {
+        File hFile = new File(targetDirectory, cppTypes.classPrefix()
+                + "NamedCharactersAccel.h");
+        Writer out = new OutputStreamWriter(new FileOutputStream(hFile),
+                "utf-8");
+        out.write("#ifndef " + cppTypes.classPrefix() + "NamedCharactersAccel_h_\n");
+        out.write("#define " + cppTypes.classPrefix() + "NamedCharactersAccel_h_\n");
+        out.write('\n');
+
+        String[] includes = cppTypes.namedCharactersIncludes();
+        for (int i = 0; i < includes.length; i++) {
+            String include = includes[i];
+            out.write("#include \"" + include + ".h\"\n");
+        }
+
+        out.write('\n');
+
+        out.write("class " + cppTypes.classPrefix() + "NamedCharactersAccel\n");
+        out.write("{\n");
+        out.write("  public:\n");
+        out.write("    static const " + cppTypes.intType()
+                + "* const HILO_ACCEL[];\n");
+        out.write("};\n");
+
+        out.write("\n#endif // " + cppTypes.classPrefix()
+                + "NamedCharactersAccel_h_\n");
+        out.flush();
+        out.close();
     }
 
     private static void generateH(File targetDirectory, CppTypes cppTypes,
@@ -104,8 +211,8 @@ public class GenerateNamedCharactersCpp {
                 + "NamedCharacters.h");
         Writer out = new OutputStreamWriter(new FileOutputStream(hFile),
                 "utf-8");
-        out.write("#ifndef " + cppTypes.classPrefix() + "NamedCharacters_h__\n");
-        out.write("#define " + cppTypes.classPrefix() + "NamedCharacters_h__\n");
+        out.write("#ifndef " + cppTypes.classPrefix() + "NamedCharacters_h_\n");
+        out.write("#define " + cppTypes.classPrefix() + "NamedCharacters_h_\n");
         out.write('\n');
 
         String[] includes = cppTypes.namedCharactersIncludes();
@@ -124,14 +231,12 @@ public class GenerateNamedCharactersCpp {
                 + cppTypes.intType() + ">," + cppTypes.intType() + "> NAMES;\n");
         out.write("    static const " + cppTypes.charType() + " VALUES[][2];\n");
         out.write("    static " + cppTypes.charType() + "** WINDOWS_1252;\n");
-        out.write("    static const " + cppTypes.intType()
-                + "* const HILO_ACCEL[];\n");
         out.write("    static void initializeStatics();\n");
         out.write("    static void releaseStatics();\n");
         out.write("};\n");
 
         out.write("\n#endif // " + cppTypes.classPrefix()
-                + "NamedCharacters_h__\n");
+                + "NamedCharacters_h_\n");
         out.flush();
         out.close();
     }
@@ -268,13 +373,13 @@ public class GenerateNamedCharactersCpp {
             Map<String, String> entities) throws IOException {
         String includeFile = cppTypes.classPrefix()
                 + "NamedCharactersInclude.h";
-        File hFile = new File(targetDirectory, cppTypes.classPrefix()
+        File cppFile = new File(targetDirectory, cppTypes.classPrefix()
                 + "NamedCharacters.cpp");
-        Writer out = new OutputStreamWriter(new FileOutputStream(hFile),
+        Writer out = new OutputStreamWriter(new FileOutputStream(cppFile),
                 "utf-8");
 
         out.write("#define " + cppTypes.classPrefix()
-                + "NamedCharacters_cpp__\n");
+                + "NamedCharacters_cpp_\n");
 
         String[] includes = cppTypes.namedCharactersIncludes();
         for (int i = 0; i < includes.length; i++) {
@@ -337,64 +442,6 @@ public class GenerateNamedCharactersCpp {
         out.write("  0x017E,\n");
         out.write("  0x0178\n");
         out.write("};\n\n");
-
-        // start hilo
-
-        // Java initializes arrays to zero. Zero is our magic value for no hilo
-        // value.
-        int[][] hiLoTable = new int['z' + 1]['Z' - 'A' + 1 + 'z' - 'a' + 1];
-
-        String firstName = entities.entrySet().iterator().next().getKey();
-        int firstKey = charToIndex(firstName.charAt(0));
-        int secondKey = firstName.charAt(1);
-        int row = 0;
-        int lo = 0;
-
-        for (Map.Entry<String, String> entity : entities.entrySet()) {
-            String name = entity.getKey();
-            int newFirst = charToIndex(name.charAt(0));
-            int newSecond = name.charAt(1);
-            assert !(newFirst == 0 && newSecond == 0) : "Not prepared for name starting with AA";
-            if (firstKey != newFirst || secondKey != newSecond) {
-                hiLoTable[secondKey][firstKey] = ((row - 1) << 16) | lo;
-                lo = row;
-                firstKey = newFirst;
-                secondKey = newSecond;
-            }
-            row++;
-        }
-
-        hiLoTable[secondKey][firstKey] = ((entities.size() - 1) << 16) | lo;
-
-        for (int i = 0; i < hiLoTable.length; i++) {
-            if (!allZero(hiLoTable[i])) {
-                out.write("static " + cppTypes.intType() + " const HILO_ACCEL_"
-                        + i + "[] = {\n");
-                for (int j = 0; j < hiLoTable[i].length; j++) {
-                    if (j != 0) {
-                        out.write(", ");
-                    }
-                    out.write("" + hiLoTable[i][j]);
-                }
-                out.write("\n};\n\n");
-            }
-        }
-
-        out.write("const PRInt32* const " + cppTypes.classPrefix()
-                + "NamedCharacters::HILO_ACCEL[] = {\n");
-        for (int i = 0; i < hiLoTable.length; i++) {
-            if (i != 0) {
-                out.write(",\n");
-            }
-            if (allZero(hiLoTable[i])) {
-                out.write("  0");
-            } else {
-                out.write("  HILO_ACCEL_" + i);
-            }
-        }
-        out.write("\n};\n\n");
-
-        // end hilo
 
         out.write("/**\n");
         out.write(" * To avoid having lots of pointers in the |charData| array, below,\n");
