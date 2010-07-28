@@ -198,4 +198,13 @@ public class TokenPrinter implements TokenHandler, ErrorHandler {
         // TODO Auto-generated method stub
         return false;
     }
+
+    @Override public void zeroOriginatingReplacementCharacter()
+            throws SAXException {
+        try {
+            writer.write("0\n");
+        } catch (IOException e) {
+            throw new SAXException(e);
+        }        
+    }
 }
