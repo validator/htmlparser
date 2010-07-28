@@ -76,8 +76,8 @@ public class CppTypes {
             "nsIAtom", "nsHtml5AtomTable", "nsITimer", "nsString",
             "nsINameSpaceManager", "nsIContent", "nsIDocument",
             "nsTraceRefcnt", "jArray", "nsHtml5DocumentMode",
-            "nsHtml5ArrayCopy", "nsHtml5NamedCharacters", "nsHtml5Parser",
-            "nsHtml5Atoms", "nsHtml5ByteReadable", "nsHtml5TreeOperation",
+            "nsHtml5ArrayCopy", "nsHtml5Parser", "nsHtml5Atoms",
+            "nsHtml5ByteReadable", "nsHtml5TreeOperation",
             "nsHtml5PendingNotification", "nsHtml5StateSnapshot",
             "nsHtml5StackNode", "nsHtml5TreeOpExecutor", "nsHtml5StreamParser",
             "nsAHtml5TreeBuilderState" };
@@ -86,8 +86,9 @@ public class CppTypes {
             "nsHtml5AtomTable", "nsString", "nsINameSpaceManager",
             "nsIContent", "nsIDocument", "nsTraceRefcnt", "jArray",
             "nsHtml5DocumentMode", "nsHtml5ArrayCopy",
-            "nsHtml5NamedCharacters", "nsHtml5Atoms", "nsHtml5ByteReadable",
-            "nsIUnicodeDecoder", "nsAHtml5TreeBuilderState", "nsHtml5Macros" };
+            "nsHtml5NamedCharacters", "nsHtml5NamedCharactersAccel",
+            "nsHtml5Atoms", "nsHtml5ByteReadable", "nsIUnicodeDecoder",
+            "nsAHtml5TreeBuilderState", "nsHtml5Macros" };
 
     private static final String[] OTHER_DECLATIONS = {};
 

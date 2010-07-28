@@ -126,8 +126,8 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
 
     private static final String[] CLASS_NAMES = { "AttributeName",
             "ElementName", "HtmlAttributes", "LocatorImpl", "MetaScanner",
-            "NamedCharacters", "Portability", "StackNode", "Tokenizer",
-            "TreeBuilder", "UTF16Buffer" };
+            "NamedCharacters", "NamedCharactersAccel", "Portability",
+            "StackNode", "Tokenizer", "TreeBuilder", "UTF16Buffer" };
 
     public class SourcePrinter {
 
