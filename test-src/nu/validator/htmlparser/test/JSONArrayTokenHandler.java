@@ -52,6 +52,8 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
 
     private static final JSONString PARSE_ERROR = new JSONString("ParseError");
 
+    private static final char[] REPLACEMENT_CHARACTER = { '\uFFFD' };
+
     private final StringBuilder builder = new StringBuilder();
 
     private JSONArray array = null;
@@ -173,6 +175,11 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
     public boolean isInForeign() throws SAXException {
         // TODO Auto-generated method stub
         return false;
+    }
+
+    @Override public void zeroOriginatingReplacementCharacter()
+            throws SAXException {
+        builder.append(REPLACEMENT_CHARACTER, 0, 1);
     }
     
 }
