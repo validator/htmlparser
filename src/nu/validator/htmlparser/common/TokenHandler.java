@@ -137,6 +137,14 @@ public interface TokenHandler {
             throws SAXException;
 
     /**
+     * Reports a U+0000 that's being turned into a U+FFFD.
+     * 
+     * @throws SAXException
+     *             if something went wrong
+     */
+    public void zeroOriginatingReplacementCharacter() throws SAXException;
+    
+    /**
      * The end-of-file token.
      * 
      * @throws SAXException
