@@ -25,6 +25,7 @@ package nu.validator.htmlparser.impl;
 import nu.validator.htmlparser.annotation.Inline;
 import nu.validator.htmlparser.annotation.NoLength;
 import nu.validator.htmlparser.common.TokenHandler;
+import nu.validator.htmlparser.common.TransitionHandler;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
 
 import java.util.HashMap;
@@ -75,6 +76,8 @@ public class ErrorReportingTokenizer extends Tokenizer {
     private char prev;
     
     private HashMap<String, String> errorProfileMap = null;
+
+    private TransitionHandler transitionHandler = null;
 
     /**
      * @param tokenHandler
@@ -316,6 +319,18 @@ public class ErrorReportingTokenizer extends Tokenizer {
         }
         prev = c;
         return c;
+    }
+
+    /**
+     * @throws SAXException 
+     * @see nu.validator.htmlparser.impl.Tokenizer#transition(int, int, boolean, int)
+     */
+    @Override protected int transition(int from, int to, boolean reconsume,
+            int pos) throws SAXException {
+        if (transitionHandler != null) {
+            transitionHandler.transition(from, to, reconsume, pos);
+        }
+        return to;
     }
 
     private String toUPlusString(int c) {
@@ -755,5 +770,14 @@ public class ErrorReportingTokenizer extends Tokenizer {
 
     @Override protected void noteUnquotedAttributeValue() throws SAXException {
         note("xhtml1", "Unquoted attribute value.");
+    }
+
+    /**
+     * Sets the transitionHandler.
+     * 
+     * @param transitionHandler the transitionHandler to set
+     */
+    public void setTransitionHandler(TransitionHandler transitionHandler) {
+        this.transitionHandler = transitionHandler;
     }
 }

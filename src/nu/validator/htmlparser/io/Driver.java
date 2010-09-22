@@ -32,8 +32,10 @@ import nu.validator.htmlparser.common.CharacterHandler;
 import nu.validator.htmlparser.common.EncodingDeclarationHandler;
 import nu.validator.htmlparser.common.Heuristics;
 import nu.validator.htmlparser.common.TokenHandler;
+import nu.validator.htmlparser.common.TransitionHandler;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
 import nu.validator.htmlparser.extra.NormalizationChecker;
+import nu.validator.htmlparser.impl.ErrorReportingTokenizer;
 import nu.validator.htmlparser.impl.Tokenizer;
 import nu.validator.htmlparser.impl.TreeBuilder;
 import nu.validator.htmlparser.impl.UTF16Buffer;
@@ -533,6 +535,15 @@ public class Driver implements EncodingDeclarationHandler {
                 NormalizationChecker nc = (NormalizationChecker) ch;
                 nc.setErrorHandler(eh);
             }
+        }
+    }
+    
+    public void setTransitionHandler(TransitionHandler transitionHandler) {
+        if (tokenizer instanceof ErrorReportingTokenizer) {
+            ErrorReportingTokenizer ert = (ErrorReportingTokenizer) tokenizer;
+            ert.setTransitionHandler(transitionHandler);
+        } else if (transitionHandler != null) {
+            throw new IllegalStateException("Attempt to set a transition handler on a plain tokenizer.");
         }
     }
 

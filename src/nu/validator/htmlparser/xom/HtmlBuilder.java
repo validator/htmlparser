@@ -39,6 +39,7 @@ import nu.validator.htmlparser.common.DoctypeExpectation;
 import nu.validator.htmlparser.common.DocumentModeHandler;
 import nu.validator.htmlparser.common.Heuristics;
 import nu.validator.htmlparser.common.TokenHandler;
+import nu.validator.htmlparser.common.TransitionHandler;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
 import nu.validator.htmlparser.impl.ErrorReportingTokenizer;
 import nu.validator.htmlparser.impl.Tokenizer;
@@ -124,6 +125,8 @@ public class HtmlBuilder extends Builder {
     private ErrorHandler treeBuilderErrorHandler = null;
 
     private Heuristics heuristics = Heuristics.NONE;
+
+    private TransitionHandler transitionHandler = null;
     
     /**
      * Constructor with default node factory and fatal XML violation policy.
@@ -163,14 +166,11 @@ public class HtmlBuilder extends Builder {
     }
 
     private Tokenizer newTokenizer(TokenHandler handler, boolean newAttributesEachTime) {
-        if (errorHandler != null) {
-            return new ErrorReportingTokenizer(handler, newAttributesEachTime);
+        if (errorHandler == null && transitionHandler == null
+                && contentNonXmlCharPolicy == XmlViolationPolicy.ALLOW) {
+            return new Tokenizer(handler, newAttributesEachTime);
         } else {
-            if (contentNonXmlCharPolicy == XmlViolationPolicy.ALLOW) {
-                return new Tokenizer(handler, newAttributesEachTime);
-            } else {
-                return new ErrorReportingTokenizer(handler, newAttributesEachTime);
-            }
+            return new ErrorReportingTokenizer(handler, newAttributesEachTime);
         }
    }
     
@@ -182,6 +182,7 @@ public class HtmlBuilder extends Builder {
         if (driver == null) {
             this.driver = new Driver(newTokenizer(treeBuilder, false));
             this.driver.setErrorHandler(errorHandler);
+            this.driver.setTransitionHandler(transitionHandler);
             this.treeBuilder.setErrorHandler(treeBuilderErrorHandler);
             this.driver.setCheckingNormalization(checkingNormalization);
             this.driver.setCommentPolicy(commentPolicy);
@@ -391,6 +392,11 @@ public class HtmlBuilder extends Builder {
     public void setErrorHandler(ErrorHandler handler) {
         errorHandler = handler;
         treeBuilderErrorHandler = handler;
+        driver = null;
+    }
+    
+    public void setTransitionHander(TransitionHandler handler) {
+        transitionHandler = handler;
         driver = null;
     }
 
