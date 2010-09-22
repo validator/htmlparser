@@ -38,6 +38,7 @@ import nu.validator.htmlparser.common.DoctypeExpectation;
 import nu.validator.htmlparser.common.DocumentModeHandler;
 import nu.validator.htmlparser.common.Heuristics;
 import nu.validator.htmlparser.common.TokenHandler;
+import nu.validator.htmlparser.common.TransitionHandler;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
 import nu.validator.htmlparser.impl.ErrorReportingTokenizer;
 import nu.validator.htmlparser.impl.Tokenizer;
@@ -150,7 +151,9 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
     private ErrorHandler treeBuilderErrorHandler = null;
 
     private Heuristics heuristics = Heuristics.NONE;
-    
+
+    private TransitionHandler transitionHandler = null;
+
     /**
      * Instantiates the document builder with a specific DOM 
      * implementation and XML violation policy.
@@ -196,17 +199,15 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
     }
 
 
-    private Tokenizer newTokenizer(TokenHandler handler, boolean newAttributesEachTime) {
-        if (errorHandler != null) {
-            return new ErrorReportingTokenizer(handler, newAttributesEachTime);
+    private Tokenizer newTokenizer(TokenHandler handler,
+            boolean newAttributesEachTime) {
+        if (errorHandler == null && transitionHandler == null
+                && contentNonXmlCharPolicy == XmlViolationPolicy.ALLOW) {
+            return new Tokenizer(handler, newAttributesEachTime);
         } else {
-            if (contentNonXmlCharPolicy == XmlViolationPolicy.ALLOW) {
-                return new Tokenizer(handler, newAttributesEachTime);
-            } else {
-                return new ErrorReportingTokenizer(handler, newAttributesEachTime);
-            }
+            return new ErrorReportingTokenizer(handler, newAttributesEachTime);
         }
-   }
+    }
     
     /**
      * This class wraps different tree builders depending on configuration. This 
@@ -216,6 +217,7 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
         if (driver == null) {
             this.driver = new Driver(newTokenizer(treeBuilder, false));
             this.driver.setErrorHandler(errorHandler);
+            this.driver.setTransitionHandler(transitionHandler);
             this.treeBuilder.setErrorHandler(treeBuilderErrorHandler);
             this.driver.setCheckingNormalization(checkingNormalization);
             this.driver.setCommentPolicy(commentPolicy);
@@ -352,6 +354,11 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
         driver.setErrorHandler(errorHandler);
     }
 
+    public void setTransitionHander(TransitionHandler handler) {
+        transitionHandler = handler;
+        driver = null;
+    }
+    
     /**
      * Indicates whether NFC normalization of source is being checked.
      * @return <code>true</code> if NFC normalization of source is being checked.

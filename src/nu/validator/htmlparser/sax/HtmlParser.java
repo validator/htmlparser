@@ -35,6 +35,7 @@ import nu.validator.htmlparser.common.DoctypeExpectation;
 import nu.validator.htmlparser.common.DocumentModeHandler;
 import nu.validator.htmlparser.common.Heuristics;
 import nu.validator.htmlparser.common.TokenHandler;
+import nu.validator.htmlparser.common.TransitionHandler;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
 import nu.validator.htmlparser.impl.ErrorReportingTokenizer;
 import nu.validator.htmlparser.impl.Tokenizer;
@@ -139,6 +140,8 @@ public class HtmlParser implements XMLReader {
 
     private HashMap<String, String> errorProfileMap = null;
 
+    private TransitionHandler transitionHandler = null;
+    
     /**
      * Instantiates the parser with a fatal XML violation policy.
      *
@@ -156,7 +159,7 @@ public class HtmlParser implements XMLReader {
     }    
 
     private Tokenizer newTokenizer(TokenHandler handler, boolean newAttributesEachTime) {
-        if (errorHandler == null && 
+        if (errorHandler == null && transitionHandler == null &&
             contentNonXmlCharPolicy == XmlViolationPolicy.ALLOW) {
             return new Tokenizer(handler, newAttributesEachTime);
         }
@@ -184,6 +187,7 @@ public class HtmlParser implements XMLReader {
                 this.driver = new Driver(newTokenizer(treeBuilder, false));
             }
             this.driver.setErrorHandler(errorHandler);
+            this.driver.setTransitionHandler(transitionHandler);
             this.treeBuilder.setErrorHandler(treeBuilderErrorHandler);
             this.driver.setCheckingNormalization(checkingNormalization);
             this.driver.setCommentPolicy(commentPolicy);
@@ -531,6 +535,11 @@ public class HtmlParser implements XMLReader {
         driver = null;
     }
 
+    public void setTransitionHander(TransitionHandler handler) {
+        transitionHandler = handler;
+        driver = null;
+    }
+    
     /**
      * @see org.xml.sax.XMLReader#setErrorHandler(org.xml.sax.ErrorHandler)
      * @deprecated For Validator.nu internal use

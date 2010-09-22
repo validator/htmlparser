@@ -178,6 +178,15 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
         }
     }
 
+    private boolean skipRestOfStatementsInBlock = false;
+    
+    private String currentTokenizerState = null;
+    
+    private boolean inTokenizerLoop() {
+        return "stateLoop".equals(currentMethod)
+                && "Tokenizer".equals(javaClassName);
+    }
+
     protected SourcePrinter printer = new SourcePrinter();
 
     private SourcePrinter staticInitializerPrinter = new SourcePrinter();
@@ -1185,6 +1194,9 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
         } else if (("retainElement".equals(n.getName()) || "releaseElement".equals(n.getName()))
                 && "Portability".equals(n.getScope().toString())) {
             // ignore for now
+        } else if ("transition".equals(n.getName())
+                && n.getScope() == null) {
+            visitTransition(n, arg);
         } else if ("arraycopy".equals(n.getName())
                 && "System".equals(n.getScope().toString())) {
             printer.print(cppTypes.arrayCopy());
@@ -1670,6 +1682,11 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
         if (!inConstructorBody) {
             printer.print(";");
         }
+    }
+
+    private void visitTransition(MethodCallExpr call, LocalSymbolTable arg) {
+        List<Expression> args = call.getArgs();
+        args.get(1).accept(this, arg);
     }
 
     private boolean isDroppedExpression(Expression e) {
