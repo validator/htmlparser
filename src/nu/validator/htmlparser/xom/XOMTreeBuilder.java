@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
- * Copyright (c) 2008-2009 Mozilla Foundation
+ * Copyright (c) 2008-2010 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -32,6 +32,7 @@ import nu.xom.Element;
 import nu.xom.Node;
 import nu.xom.Nodes;
 import nu.xom.ParentNode;
+import nu.xom.Text;
 import nu.xom.XMLException;
 
 import org.xml.sax.SAXException;
@@ -70,9 +71,17 @@ class XOMTreeBuilder extends CoalescingTreeBuilder<Element> {
         }
     }
 
-    @Override
-    protected void appendCharacters(Element parent, String text) throws SAXException {
+    @Override protected void appendCharacters(Element parent, String text)
+            throws SAXException {
         try {
+            int childCount = parent.getChildCount();
+            Node lastChild;
+            if (childCount != 0
+                    && ((lastChild = parent.getChild(childCount - 1)) instanceof Text)) {
+                Text lastAsText = (Text) lastChild;
+                lastAsText.setValue(lastAsText.getValue() + text);
+                return;
+            }
             parent.appendChild(nodeFactory.makeText(text));
         } catch (XMLException e) {
             fatal(e);
@@ -256,14 +265,30 @@ class XOMTreeBuilder extends CoalescingTreeBuilder<Element> {
     @Override protected void insertFosterParentedCharacters(String text,
             Element table, Element stackParent) throws SAXException {
         try {
-            Node child = nodeFactory.makeText(text);
             Node parent = table.getParent();
             if (parent != null) { // always an element if not null
-                ((ParentNode)parent).insertChild(child, indexOfTable(table, stackParent));
+                Element parentAsElt = (Element) parent;
+                int tableIndex = indexOfTable(table, parentAsElt);
+                Node prevSibling;
+                if (tableIndex != 0
+                        && ((prevSibling = parentAsElt.getChild(tableIndex - 1)) instanceof Text)) {
+                    Text prevAsText = (Text) prevSibling;
+                    prevAsText.setValue(prevAsText.getValue() + text);
+                    return;
+                }
+                parentAsElt.insertChild(nodeFactory.makeText(text), tableIndex);
                 cachedTableIndex++;
-            } else {
-                stackParent.appendChild(child);
-            }            
+                return;
+            }
+            int childCount = stackParent.getChildCount();
+            Node lastChild;
+            if (childCount != 0
+                    && ((lastChild = stackParent.getChild(childCount - 1)) instanceof Text)) {
+                Text lastAsText = (Text) lastChild;
+                lastAsText.setValue(lastAsText.getValue() + text);
+                return;
+            }
+            stackParent.appendChild(nodeFactory.makeText(text));
         } catch (XMLException e) {
             fatal(e);
         }

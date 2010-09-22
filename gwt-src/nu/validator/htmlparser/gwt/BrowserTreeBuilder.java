@@ -155,12 +155,25 @@ class BrowserTreeBuilder extends CoalescingTreeBuilder<JavaScriptObject> {
                         return doc.createTextNode(text); 
                     }-*/;
 
+    private static native JavaScriptObject getLastChild(JavaScriptObject node) /*-{
+                        return node.lastChild; 
+                    }-*/;
+
+    private static native void extendTextNode(JavaScriptObject node, String text) /*-{
+                        node.data += text;
+                    }-*/;
+    
     @Override protected void appendCharacters(JavaScriptObject parent,
             String text) throws SAXException {
         try {
             if (parent == placeholder) {
                 appendChild(script, createTextNode(document, text));
 
+            }
+            JavaScriptObject lastChild = getLastChild(parent);
+            if (lastChild != null && getNodeType(lastChild) == 3) {
+                extendTextNode(lastChild, text);
+                return;
             }
             appendChild(parent, createTextNode(document, text));
         } catch (JavaScriptException e) {
@@ -382,6 +395,10 @@ class BrowserTreeBuilder extends CoalescingTreeBuilder<JavaScriptObject> {
                         oldNode.parentNode.replaceChild(newNode, oldNode);
                     }-*/;
 
+    private static native JavaScriptObject getPreviousSibling(JavaScriptObject node) /*-{
+                        return node.previousSibling;
+                    }-*/;
+
     void maybeRunScript() {
         if (readyToRun) {
             readyToRun = false;
@@ -401,13 +418,23 @@ class BrowserTreeBuilder extends CoalescingTreeBuilder<JavaScriptObject> {
             JavaScriptObject table, JavaScriptObject stackParent)
             throws SAXException {
         try {
-            JavaScriptObject child = createTextNode(document, text);
             JavaScriptObject parent = getParentNode(table);
-            if (parent != null && getNodeType(parent) == 1) {
-                insertBeforeNative(parent, child, table);
-            } else {
-                appendChild(stackParent, child);
+            if (parent != null) { // always an element if not null
+                JavaScriptObject previousSibling = getPreviousSibling(table);
+                if (previousSibling != null
+                        && getNodeType(previousSibling) == 3) {
+                    extendTextNode(previousSibling, text);
+                    return;
+                }
+                insertBeforeNative(parent, createTextNode(document, text), table);
+                return;
             }
+            JavaScriptObject lastChild = getLastChild(stackParent);
+            if (lastChild != null && getNodeType(lastChild) == 3) {
+                extendTextNode(lastChild, text);
+                return;
+            }
+            appendChild(stackParent, createTextNode(document, text));
         } catch (JavaScriptException e) {
             fatal(e);
         }
