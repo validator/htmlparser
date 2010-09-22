@@ -158,9 +158,9 @@ public class TreeTester {
             StringBuilder expectedBuilder = new StringBuilder();
             br = new BufferedReader(new InputStreamReader(
                     new UntilHashInputStream(aggregateStream), "UTF-8"));
-            while ((line = br.readLine()) != null) {
-                expectedBuilder.append(line);
-                expectedBuilder.append('\n');
+            int ch;
+            while ((ch = br.read()) != -1) {
+                expectedBuilder.append((char)ch);
             }
             String expected = expectedBuilder.toString();
             String actual = sw.toString();
