@@ -191,14 +191,6 @@ public class TokenPrinter implements TokenHandler, ErrorHandler {
         }        
     }
 
-    /**
-     * @see nu.validator.htmlparser.common.TokenHandler#isInForeign()
-     */
-    public boolean isInForeign() throws SAXException {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
     @Override public void zeroOriginatingReplacementCharacter()
             throws SAXException {
         try {
@@ -206,5 +198,9 @@ public class TokenPrinter implements TokenHandler, ErrorHandler {
         } catch (IOException e) {
             throw new SAXException(e);
         }        
+    }
+
+    @Override public boolean cdataSectionAllowed() throws SAXException {
+        return false;
     }
 }
