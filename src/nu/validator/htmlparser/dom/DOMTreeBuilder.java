@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
- * Copyright (c) 2008-2009 Mozilla Foundation
+ * Copyright (c) 2008-2010 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -33,6 +33,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.DocumentFragment;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+import org.w3c.dom.Text;
 import org.xml.sax.SAXException;
 
 /**
@@ -93,6 +94,12 @@ class DOMTreeBuilder extends CoalescingTreeBuilder<Element> {
     @Override protected void appendCharacters(Element parent, String text)
             throws SAXException {
         try {
+            Node lastChild = parent.getLastChild();
+            if (lastChild != null && lastChild.getNodeType() == Node.TEXT_NODE) {
+                Text lastAsText = (Text) lastChild;
+                lastAsText.setData(lastAsText.getData() + text);
+                return;
+            }
             parent.appendChild(document.createTextNode(text));
         } catch (DOMException e) {
             fatal(e);
@@ -278,13 +285,25 @@ class DOMTreeBuilder extends CoalescingTreeBuilder<Element> {
     @Override protected void insertFosterParentedCharacters(String text,
             Element table, Element stackParent) throws SAXException {
         try {
-            Node child = document.createTextNode(text);
             Node parent = table.getParentNode();
             if (parent != null) { // always an element if not null
-                parent.insertBefore(child, table);
-            } else {
-                stackParent.appendChild(child);
+                Node previousSibling = table.getPreviousSibling();
+                if (previousSibling != null
+                        && previousSibling.getNodeType() == Node.TEXT_NODE) {
+                    Text lastAsText = (Text) previousSibling;
+                    lastAsText.setData(lastAsText.getData() + text);
+                    return;
+                }
+                parent.insertBefore(document.createTextNode(text), table);
+                return;
             }
+            Node lastChild = stackParent.getLastChild();
+            if (lastChild != null && lastChild.getNodeType() == Node.TEXT_NODE) {
+                Text lastAsText = (Text) lastChild;
+                lastAsText.setData(lastAsText.getData() + text);
+                return;
+            }
+            stackParent.appendChild(document.createTextNode(text));
         } catch (DOMException e) {
             fatal(e);
         }
