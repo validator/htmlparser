@@ -161,12 +161,11 @@ public interface TokenHandler {
     public void endTokenization() throws SAXException;
 
     /**
-     * Checks if the handler is in foreign content.
+     * Checks if the CDATA sections are allowed.
      * 
-     * @return <code>true</code> if in foreign content and <code>false</code>
-     *         otherwise.
+     * @return <code>true</code> if CDATA sections are allowed
      * @throws SAXException
      *             if something went wrong
      */
-    public boolean isInForeign() throws SAXException;
+    public boolean cdataSectionAllowed() throws SAXException;
 }

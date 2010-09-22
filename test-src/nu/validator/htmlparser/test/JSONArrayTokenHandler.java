@@ -168,18 +168,13 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
         
     }
 
-
-    /**
-     * @see nu.validator.htmlparser.common.TokenHandler#isInForeign()
-     */
-    public boolean isInForeign() throws SAXException {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
     @Override public void zeroOriginatingReplacementCharacter()
             throws SAXException {
         builder.append(REPLACEMENT_CHARACTER, 0, 1);
+    }
+
+    @Override public boolean cdataSectionAllowed() throws SAXException {
+        return false;
     }
     
 }
