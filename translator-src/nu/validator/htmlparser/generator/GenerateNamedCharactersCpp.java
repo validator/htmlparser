@@ -40,12 +40,10 @@ package nu.validator.htmlparser.generator;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.util.Map;
 import java.util.TreeMap;
@@ -55,6 +53,30 @@ import java.util.regex.Pattern;
 import nu.validator.htmlparser.cpptranslate.CppTypes;
 
 public class GenerateNamedCharactersCpp {
+
+    /**
+     * The license for the output of this program.
+     */
+    private static final String OUTPUT_LICENSE = "/*\n"
+            + " * Copyright (c) 2008-2010 Mozilla Foundation\n"
+            + " *\n"
+            + " * Permission is hereby granted, free of charge, to any person obtaining a \n"
+            + " * copy of this software and associated documentation files (the \"Software\"), \n"
+            + " * to deal in the Software without restriction, including without limitation \n"
+            + " * the rights to use, copy, modify, merge, publish, distribute, sublicense, \n"
+            + " * and/or sell copies of the Software, and to permit persons to whom the \n"
+            + " * Software is furnished to do so, subject to the following conditions:\n"
+            + " *\n"
+            + " * The above copyright notice and this permission notice shall be included in \n"
+            + " * all copies or substantial portions of the Software.\n"
+            + " *\n"
+            + " * THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR \n"
+            + " * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, \n"
+            + " * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL \n"
+            + " * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER \n"
+            + " * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING \n"
+            + " * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER \n"
+            + " * DEALINGS IN THE SOFTWARE.\n" + " */\n\n";
 
     private static final int LEAD_OFFSET = 0xD800 - (0x10000 >> 10);
 
@@ -111,6 +133,7 @@ public class GenerateNamedCharactersCpp {
         Writer out = new OutputStreamWriter(new FileOutputStream(cppFile),
                 "utf-8");
 
+        out.write(OUTPUT_LICENSE);
         out.write('\n');
         out.write("#include \"" + cppTypes.classPrefix()
                 + "NamedCharactersAccel.h\"\n");
@@ -180,6 +203,7 @@ public class GenerateNamedCharactersCpp {
                 + "NamedCharactersAccel.h");
         Writer out = new OutputStreamWriter(new FileOutputStream(hFile),
                 "utf-8");
+        out.write(OUTPUT_LICENSE);
         out.write("#ifndef " + cppTypes.classPrefix() + "NamedCharactersAccel_h_\n");
         out.write("#define " + cppTypes.classPrefix() + "NamedCharactersAccel_h_\n");
         out.write('\n');
@@ -211,6 +235,7 @@ public class GenerateNamedCharactersCpp {
                 + "NamedCharacters.h");
         Writer out = new OutputStreamWriter(new FileOutputStream(hFile),
                 "utf-8");
+        out.write(OUTPUT_LICENSE);
         out.write("#ifndef " + cppTypes.classPrefix() + "NamedCharacters_h_\n");
         out.write("#define " + cppTypes.classPrefix() + "NamedCharacters_h_\n");
         out.write('\n');
@@ -248,6 +273,7 @@ public class GenerateNamedCharactersCpp {
         Writer out = new OutputStreamWriter(new FileOutputStream(includeFile),
                 "utf-8");
 
+        out.write(OUTPUT_LICENSE);
         out.write("/* Data generated from the table of named character references found at\n");
         out.write(" *\n");
         out.write(" *   http://www.w3.org/TR/html5/named-character-references.html\n");
@@ -378,6 +404,7 @@ public class GenerateNamedCharactersCpp {
         Writer out = new OutputStreamWriter(new FileOutputStream(cppFile),
                 "utf-8");
 
+        out.write(OUTPUT_LICENSE);
         out.write("#define " + cppTypes.classPrefix()
                 + "NamedCharacters_cpp_\n");
 

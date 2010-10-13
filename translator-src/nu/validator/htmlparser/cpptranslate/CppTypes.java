@@ -50,6 +50,30 @@ import java.util.Set;
 
 public class CppTypes {
 
+    /**
+     * The license for the atom list written by this program.
+     */
+    private static final String ATOM_LICENSE = "/*\n"
+            + " * Copyright (c) 2008-2010 Mozilla Foundation\n"
+            + " *\n"
+            + " * Permission is hereby granted, free of charge, to any person obtaining a \n"
+            + " * copy of this software and associated documentation files (the \"Software\"), \n"
+            + " * to deal in the Software without restriction, including without limitation \n"
+            + " * the rights to use, copy, modify, merge, publish, distribute, sublicense, \n"
+            + " * and/or sell copies of the Software, and to permit persons to whom the \n"
+            + " * Software is furnished to do so, subject to the following conditions:\n"
+            + " *\n"
+            + " * The above copyright notice and this permission notice shall be included in \n"
+            + " * all copies or substantial portions of the Software.\n"
+            + " *\n"
+            + " * THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR \n"
+            + " * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, \n"
+            + " * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL \n"
+            + " * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER \n"
+            + " * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING \n"
+            + " * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER \n"
+            + " * DEALINGS IN THE SOFTWARE.\n" + " */\n\n";
+    
     private static Set<String> reservedWords = new HashSet<String>();
 
     static {
@@ -113,6 +137,7 @@ public class CppTypes {
             try {
                 atomWriter = new OutputStreamWriter(new FileOutputStream(
                         atomList), "utf-8");
+                atomWriter.write(ATOM_LICENSE);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
