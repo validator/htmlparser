@@ -27,7 +27,7 @@ import nu.validator.htmlparser.common.XmlViolationPolicy;
 /**
  * This subclass of <code>HtmlParser</code> simply provides a no-argument
  * constructor that calls the constructor of the superclass with the
- * <code>ALTER_INFOSET</code> policy. This is convenient then another Java
+ * <code>ALTER_INFOSET</code> policy. This is convenient when another Java
  * component wants an implementation of <code>XMLReader</code> with a 
  * no-argument constructor and infoset coercion is the wanted behavior.
  * 
