@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
- * Copyright (c) 2007-2008 Mozilla Foundation
+ * Copyright (c) 2007-2010 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -309,7 +309,7 @@ public class HtmlParser implements XMLReader {
         } else if ("http://xml.org/sax/features/resolve-dtd-uris".equals(name)) {
             return true; // default value--applicable scenario never happens
         } else if ("http://xml.org/sax/features/string-interning".equals(name)) {
-            return false; // XXX revisit
+            return true;
         } else if ("http://xml.org/sax/features/unicode-normalization-checking".equals(name)) {
             return isCheckingNormalization(); // the checks aren't really per
             // XML 1.1
@@ -574,35 +574,63 @@ public class HtmlParser implements XMLReader {
     public void setFeature(String name, boolean value)
             throws SAXNotRecognizedException, SAXNotSupportedException {
         if ("http://xml.org/sax/features/external-general-entities".equals(name)) {
-            throw new SAXNotSupportedException("Cannot set " + name + ".");
+            if (value) {
+                throw new SAXNotSupportedException("Cannot set " + name + ".");
+            }
         } else if ("http://xml.org/sax/features/external-parameter-entities".equals(name)) {
-            throw new SAXNotSupportedException("Cannot set " + name + ".");
+            if (value) {
+                throw new SAXNotSupportedException("Cannot set " + name + ".");
+            }
         } else if ("http://xml.org/sax/features/is-standalone".equals(name)) {
-            throw new SAXNotSupportedException("Cannot set " + name + ".");
+            if (!value) {
+                throw new SAXNotSupportedException("Cannot set " + name + ".");
+            }
         } else if ("http://xml.org/sax/features/lexical-handler/parameter-entities".equals(name)) {
-            throw new SAXNotSupportedException("Cannot set " + name + ".");
+            if (value) {
+                throw new SAXNotSupportedException("Cannot set " + name + ".");
+            }
         } else if ("http://xml.org/sax/features/namespaces".equals(name)) {
-            throw new SAXNotSupportedException("Cannot set " + name + ".");
+            if (!value) {
+                throw new SAXNotSupportedException("Cannot set " + name + ".");
+            }
         } else if ("http://xml.org/sax/features/namespace-prefixes".equals(name)) {
-            throw new SAXNotSupportedException("Cannot set " + name + ".");
+            if (value) {
+                throw new SAXNotSupportedException("Cannot set " + name + ".");
+            }
         } else if ("http://xml.org/sax/features/resolve-dtd-uris".equals(name)) {
-            throw new SAXNotSupportedException("Cannot set " + name + ".");
+            if (!value) {
+                throw new SAXNotSupportedException("Cannot set " + name + ".");
+            }
         } else if ("http://xml.org/sax/features/string-interning".equals(name)) {
-            throw new SAXNotSupportedException("Cannot set " + name + ".");
+            if (!value) {
+                throw new SAXNotSupportedException("Cannot set " + name + ".");
+            }
         } else if ("http://xml.org/sax/features/unicode-normalization-checking".equals(name)) {
             setCheckingNormalization(value);
         } else if ("http://xml.org/sax/features/use-attributes2".equals(name)) {
-            throw new SAXNotSupportedException("Cannot set " + name + ".");
+            if (value) {
+                throw new SAXNotSupportedException("Cannot set " + name + ".");
+            }
         } else if ("http://xml.org/sax/features/use-locator2".equals(name)) {
-            throw new SAXNotSupportedException("Cannot set " + name + ".");
+            if (value) {
+                throw new SAXNotSupportedException("Cannot set " + name + ".");
+            }
         } else if ("http://xml.org/sax/features/use-entity-resolver2".equals(name)) {
-            throw new SAXNotSupportedException("Cannot set " + name + ".");
+            if (value) {
+                throw new SAXNotSupportedException("Cannot set " + name + ".");
+            }
         } else if ("http://xml.org/sax/features/validation".equals(name)) {
-            throw new SAXNotSupportedException("Cannot set " + name + ".");
+            if (value) {
+                throw new SAXNotSupportedException("Cannot set " + name + ".");
+            }
         } else if ("http://xml.org/sax/features/xmlns-uris".equals(name)) {
-            throw new SAXNotSupportedException("Cannot set " + name + ".");
+            if (value) {
+                throw new SAXNotSupportedException("Cannot set " + name + ".");
+            }
         } else if ("http://xml.org/sax/features/xml-1.1".equals(name)) {
-            throw new SAXNotSupportedException("Cannot set " + name + ".");
+            if (value) {
+                throw new SAXNotSupportedException("Cannot set " + name + ".");
+            }
         } else if ("http://validator.nu/features/html4-mode-compatible-with-xhtml1-schemata".equals(name)) {
             setHtml4ModeCompatibleWithXhtml1Schemata(value);
         } else if ("http://validator.nu/features/mapping-lang-to-xml-lang".equals(name)) {
