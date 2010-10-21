@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009 Mozilla Foundation
+ * Copyright (c) 2009-2010 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -44,7 +44,7 @@ public class ErrorReportingTokenizer extends Tokenizer {
      * The policy for non-space non-XML characters.
      */
     private XmlViolationPolicy contentNonXmlCharPolicy = XmlViolationPolicy.ALTER_INFOSET;
-    
+
     /**
      * Used together with <code>nonAsciiProhibited</code>.
      */
@@ -54,7 +54,7 @@ public class ErrorReportingTokenizer extends Tokenizer {
      * Keeps track of PUA warnings.
      */
     private boolean alreadyWarnedAboutPrivateUseCharacters;
-    
+
     /**
      * The current line number in the current resource being parsed. (First line
      * is 1.) Passed on as locator data.
@@ -74,10 +74,12 @@ public class ErrorReportingTokenizer extends Tokenizer {
     private boolean nextCharOnNewLine;
 
     private char prev;
-    
+
     private HashMap<String, String> errorProfileMap = null;
 
     private TransitionHandler transitionHandler = null;
+
+    private int transitionBaseOffset = 0;
 
     /**
      * @param tokenHandler
@@ -116,7 +118,7 @@ public class ErrorReportingTokenizer extends Tokenizer {
             return -1;
         }
     }
-    
+
     /**
      * Sets the contentNonXmlCharPolicy.
      * 
@@ -127,7 +129,7 @@ public class ErrorReportingTokenizer extends Tokenizer {
             XmlViolationPolicy contentNonXmlCharPolicy) {
         this.contentNonXmlCharPolicy = contentNonXmlCharPolicy;
     }
-    
+
     /**
      * Sets the errorProfile.
      * 
@@ -136,7 +138,6 @@ public class ErrorReportingTokenizer extends Tokenizer {
     public void setErrorProfile(HashMap<String, String> errorProfileMap) {
         this.errorProfileMap = errorProfileMap;
     }
-
 
     /**
      * Reports on an event based on profile selected.
@@ -148,26 +149,28 @@ public class ErrorReportingTokenizer extends Tokenizer {
      * @throws SAXException
      */
     public void note(String profile, String message) throws SAXException {
-        if (errorProfileMap == null) return;
-        String level = errorProfileMap.get(profile); 
+        if (errorProfileMap == null)
+            return;
+        String level = errorProfileMap.get(profile);
         if ("warn".equals(level)) {
-           warn(message);
+            warn(message);
         } else if ("err".equals(level)) {
-           err(message);
-        // } else if ("info".equals(level)) {
-        //   info(message);
+            err(message);
+            // } else if ("info".equals(level)) {
+            // info(message);
         }
     }
 
     protected void startErrorReporting() throws SAXException {
-        alreadyComplainedAboutNonAscii = false;   
+        alreadyComplainedAboutNonAscii = false;
         line = linePrev = 0;
         col = colPrev = 1;
         nextCharOnNewLine = true;
         prev = '\u0000';
         alreadyWarnedAboutPrivateUseCharacters = false;
+        transitionBaseOffset = 0;
     }
-    
+
     @Inline protected void silentCarriageReturn() {
         nextCharOnNewLine = true;
         lastCR = true;
@@ -176,7 +179,7 @@ public class ErrorReportingTokenizer extends Tokenizer {
     @Inline protected void silentLineFeed() {
         nextCharOnNewLine = true;
     }
-    
+
     /**
      * Returns the line.
      * 
@@ -194,7 +197,7 @@ public class ErrorReportingTokenizer extends Tokenizer {
     public int getCol() {
         return col;
     }
-    
+
     /**
      * Returns the nextCharOnNewLine.
      * 
@@ -203,7 +206,7 @@ public class ErrorReportingTokenizer extends Tokenizer {
     public boolean isNextCharOnNewLine() {
         return nextCharOnNewLine;
     }
-    
+
     private void complainAboutNonAscii() throws SAXException {
         String encoding = null;
         if (encodingDeclarationHandler != null) {
@@ -225,15 +228,19 @@ public class ErrorReportingTokenizer extends Tokenizer {
     public boolean isAlreadyComplainedAboutNonAscii() {
         return alreadyComplainedAboutNonAscii;
     }
-    
+
     /**
      * Flushes coalesced character tokens.
-     * @param buf TODO
-     * @param pos TODO
+     * 
+     * @param buf
+     *            TODO
+     * @param pos
+     *            TODO
      * 
      * @throws SAXException
      */
-    @Override protected void flushChars(char[] buf, int pos) throws SAXException {
+    @Override protected void flushChars(char[] buf, int pos)
+            throws SAXException {
         if (pos > cstart) {
             int currLine = line;
             int currCol = col;
@@ -245,8 +252,9 @@ public class ErrorReportingTokenizer extends Tokenizer {
         }
         cstart = 0x7fffffff;
     }
-    
-    @Override protected char checkChar(@NoLength char[] buf, int pos) throws SAXException {
+
+    @Override protected char checkChar(@NoLength char[] buf, int pos)
+            throws SAXException {
         linePrev = line;
         colPrev = col;
         if (nextCharOnNewLine) {
@@ -288,8 +296,7 @@ public class ErrorReportingTokenizer extends Tokenizer {
                     // Got a low surrogate. See if prev was high
                     // surrogate
                     if ((prev & 0xFC00) == 0xD800) {
-                        int intVal = (prev << 10) + c
-                                + SURROGATE_OFFSET;
+                        int intVal = (prev << 10) + c + SURROGATE_OFFSET;
                         if ((intVal & 0xFFFE) == 0xFFFE) {
                             err("Astral non-character.");
                         }
@@ -322,13 +329,15 @@ public class ErrorReportingTokenizer extends Tokenizer {
     }
 
     /**
-     * @throws SAXException 
-     * @see nu.validator.htmlparser.impl.Tokenizer#transition(int, int, boolean, int)
+     * @throws SAXException
+     * @see nu.validator.htmlparser.impl.Tokenizer#transition(int, int, boolean,
+     *      int)
      */
     @Override protected int transition(int from, int to, boolean reconsume,
             int pos) throws SAXException {
         if (transitionHandler != null) {
-            transitionHandler.transition(from, to, reconsume, pos);
+            transitionHandler.transition(from, to, reconsume,
+                    transitionBaseOffset + pos);
         }
         return to;
     }
@@ -359,7 +368,7 @@ public class ErrorReportingTokenizer extends Tokenizer {
             alreadyWarnedAboutPrivateUseCharacters = true;
         }
     }
-    
+
     /**
      * Tells if the argument is a BMP PUA character.
      * 
@@ -383,7 +392,6 @@ public class ErrorReportingTokenizer extends Tokenizer {
                 || (c >= 0x100000 && c <= 0x10FFFD);
     }
 
-    
     @Override protected void errGarbageAfterLtSlash() throws SAXException {
         err("Garbage after \u201C</\u201D.");
     }
@@ -408,14 +416,14 @@ public class ErrorReportingTokenizer extends Tokenizer {
 
     @Override protected void errHtml4LtSlashInRcdata(char folded)
             throws SAXException {
-                if (html4 && (index > 0 || (folded >= 'a' && folded <= 'z'))
-                        && ElementName.IFRAME != endTagExpectation) {
-                    err((stateSave == Tokenizer.DATA ? "CDATA" : "RCDATA")
-                            + " element \u201C"
-                            + endTagExpectation.name
-                            + "\u201D contained the string \u201C</\u201D, but it was not the start of the end tag. (HTML4-only error)");
-                }
-            }
+        if (html4 && (index > 0 || (folded >= 'a' && folded <= 'z'))
+                && ElementName.IFRAME != endTagExpectation) {
+            err((stateSave == Tokenizer.DATA ? "CDATA" : "RCDATA")
+                    + " element \u201C"
+                    + endTagExpectation.name
+                    + "\u201D contained the string \u201C</\u201D, but it was not the start of the end tag. (HTML4-only error)");
+        }
+    }
 
     @Override protected void errCharRefLacksSemicolon() throws SAXException {
         err("Character reference was not terminated by a semicolon.");
@@ -478,23 +486,22 @@ public class ErrorReportingTokenizer extends Tokenizer {
         }
     }
 
-    @Override protected void errNoSpaceBetweenAttributes()
-            throws SAXException {
-                err("No space between attributes.");
-            }
+    @Override protected void errNoSpaceBetweenAttributes() throws SAXException {
+        err("No space between attributes.");
+    }
 
     @Override protected void errHtml4NonNameInUnquotedAttribute(char c)
             throws SAXException {
-                if (html4
-                        && !((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
-                                || (c >= '0' && c <= '9') || c == '.' || c == '-'
-                                || c == '_' || c == ':')) {
-                    err("Non-name character in an unquoted attribute value. (This is an HTML4-only error.)");
-                }
-            }
+        if (html4
+                && !((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+                        || (c >= '0' && c <= '9') || c == '.' || c == '-'
+                        || c == '_' || c == ':')) {
+            err("Non-name character in an unquoted attribute value. (This is an HTML4-only error.)");
+        }
+    }
 
-    @Override protected void errLtOrEqualsOrGraveInUnquotedAttributeOrNull(char c)
-            throws SAXException {
+    @Override protected void errLtOrEqualsOrGraveInUnquotedAttributeOrNull(
+            char c) throws SAXException {
         switch (c) {
             case '=':
                 err("\u201C=\u201D at the start of an unquoted attribute value. Probable cause: Stray duplicate equals sign.");
@@ -514,26 +521,25 @@ public class ErrorReportingTokenizer extends Tokenizer {
 
     @Override protected void errBadCharBeforeAttributeNameOrNull(char c)
             throws SAXException {
-                if (c == '<') {
-                    err("Saw \u201C<\u201D when expecting an attribute name. Probable cause: Missing \u201C>\u201D immediately before.");                    
-                } else if (c == '=') {
-                    errEqualsSignBeforeAttributeName();
-                } else if (c != '\uFFFD') {
-                    errQuoteBeforeAttributeName(c);
-                }
-            }
+        if (c == '<') {
+            err("Saw \u201C<\u201D when expecting an attribute name. Probable cause: Missing \u201C>\u201D immediately before.");
+        } else if (c == '=') {
+            errEqualsSignBeforeAttributeName();
+        } else if (c != '\uFFFD') {
+            errQuoteBeforeAttributeName(c);
+        }
+    }
 
     @Override protected void errEqualsSignBeforeAttributeName()
             throws SAXException {
-                err("Saw \u201C=\u201D when expecting an attribute name. Probable cause: Attribute name missing.");
-            }
+        err("Saw \u201C=\u201D when expecting an attribute name. Probable cause: Attribute name missing.");
+    }
 
-    @Override protected void errBadCharAfterLt(char c)
-            throws SAXException {
-                err("Bad character \u201C"
-                        + c
-                        + "\u201D after \u201C<\u201D. Probable cause: Unescaped \u201C<\u201D. Try escaping it as \u201C&lt;\u201D.");
-            }
+    @Override protected void errBadCharAfterLt(char c) throws SAXException {
+        err("Bad character \u201C"
+                + c
+                + "\u201D after \u201C<\u201D. Probable cause: Unescaped \u201C<\u201D. Try escaping it as \u201C&lt;\u201D.");
+    }
 
     @Override protected void errLtGt() throws SAXException {
         err("Saw \u201C<>\u201D. Probable causes: Unescaped \u201C<\u201D (escape as \u201C&lt;\u201D) or mistyped start tag.");
@@ -545,14 +551,14 @@ public class ErrorReportingTokenizer extends Tokenizer {
 
     @Override protected void errUnescapedAmpersandInterpretedAsCharacterReference()
             throws SAXException {
-                if (errorHandler == null) {
-                    return;
-                }
-                SAXParseException spe = new SAXParseException(
-                        "The string following \u201C&\u201D was interpreted as a character reference. (\u201C&\u201D probably should have been escaped as \u201C&amp;\u201D.)",
-                        ampersandLocation);
-                errorHandler.error(spe);
-            }
+        if (errorHandler == null) {
+            return;
+        }
+        SAXParseException spe = new SAXParseException(
+                "The string following \u201C&\u201D was interpreted as a character reference. (\u201C&\u201D probably should have been escaped as \u201C&amp;\u201D.)",
+                ampersandLocation);
+        errorHandler.error(spe);
+    }
 
     @Override protected void errNotSemicolonTerminated() throws SAXException {
         err("Named character reference was not terminated by a semicolon. (Or \u201C&\u201D should have been escaped as \u201C&amp;\u201D.)");
@@ -570,15 +576,15 @@ public class ErrorReportingTokenizer extends Tokenizer {
 
     @Override protected void errQuoteBeforeAttributeName(char c)
             throws SAXException {
-                err("Saw \u201C"
-                        + c
-                        + "\u201D when expecting an attribute name. Probable cause: \u201C=\u201D missing immediately before.");
+        err("Saw \u201C"
+                + c
+                + "\u201D when expecting an attribute name. Probable cause: \u201C=\u201D missing immediately before.");
     }
 
     @Override protected void errQuoteOrLtInAttributeNameOrNull(char c)
             throws SAXException {
         if (c == '<') {
-            err("\u201C<\u201D in attribute name. Probable cause: \u201C>\u201D missing immediately before.");            
+            err("\u201C<\u201D in attribute name. Probable cause: \u201C>\u201D missing immediately before.");
         } else if (c != '\uFFFD') {
             err("Quote \u201C"
                     + c
@@ -600,47 +606,46 @@ public class ErrorReportingTokenizer extends Tokenizer {
         }
     }
 
-    @Override protected void maybeWarnPrivateUse(char ch)
-            throws SAXException {
-                if (errorHandler != null && isPrivateUse(ch)) {
-                    warnAboutPrivateUseChar();
-                }
-            }
+    @Override protected void maybeWarnPrivateUse(char ch) throws SAXException {
+        if (errorHandler != null && isPrivateUse(ch)) {
+            warnAboutPrivateUseChar();
+        }
+    }
 
     @Override protected void maybeErrAttributesOnEndTag(HtmlAttributes attrs)
             throws SAXException {
-                if (attrs.getLength() != 0) {
-                    /*
-                     * When an end tag token is emitted with attributes, that is a parse
-                     * error.
-                     */
-                    err("End tag had attributes.");
-                }
-            }
+        if (attrs.getLength() != 0) {
+            /*
+             * When an end tag token is emitted with attributes, that is a parse
+             * error.
+             */
+            err("End tag had attributes.");
+        }
+    }
 
     @Override protected void maybeErrSlashInEndTag(boolean selfClosing)
             throws SAXException {
-                if (selfClosing && endTag) {
-                    err("Stray \u201C/\u201D at the end of an end tag.");
-                }
-            }
+        if (selfClosing && endTag) {
+            err("Stray \u201C/\u201D at the end of an end tag.");
+        }
+    }
 
     @Override protected char errNcrNonCharacter(char ch) throws SAXException {
         switch (contentNonXmlCharPolicy) {
             case FATAL:
                 fatal("Character reference expands to a non-character ("
-                + toUPlusString((char) value) + ").");
+                        + toUPlusString((char) value) + ").");
                 break;
             case ALTER_INFOSET:
                 ch = '\uFFFD';
                 // fall through
             case ALLOW:
                 err("Character reference expands to a non-character ("
-                + toUPlusString((char) value) + ").");
+                        + toUPlusString((char) value) + ").");
         }
         return ch;
     }
-    
+
     /**
      * @see nu.validator.htmlparser.impl.Tokenizer#errAstralNonCharacter(int)
      */
@@ -657,14 +662,14 @@ public class ErrorReportingTokenizer extends Tokenizer {
         switch (contentNonXmlCharPolicy) {
             case FATAL:
                 fatal("Character reference expands to a control character ("
-                + toUPlusString((char) value) + ").");
+                        + toUPlusString((char) value) + ").");
                 break;
             case ALTER_INFOSET:
                 ch = '\uFFFD';
                 // fall through
             case ALLOW:
                 err("Character reference expands to a control character ("
-                + toUPlusString((char) value) + ").");
+                        + toUPlusString((char) value) + ").");
         }
         return ch;
     }
@@ -752,18 +757,21 @@ public class ErrorReportingTokenizer extends Tokenizer {
         err("Character reference expands to zero.");
     }
 
-    @Override protected void errNoSpaceBetweenDoctypeSystemKeywordAndQuote() throws SAXException {
+    @Override protected void errNoSpaceBetweenDoctypeSystemKeywordAndQuote()
+            throws SAXException {
         err("No space between the doctype \u201CSYSTEM\u201D keyword and the quote.");
     }
 
-    @Override protected void errNoSpaceBetweenPublicAndSystemIds() throws SAXException {
+    @Override protected void errNoSpaceBetweenPublicAndSystemIds()
+            throws SAXException {
         err("No space between the doctype public and system identifiers.");
     }
 
-    @Override protected void errNoSpaceBetweenDoctypePublicKeywordAndQuote() throws SAXException {
+    @Override protected void errNoSpaceBetweenDoctypePublicKeywordAndQuote()
+            throws SAXException {
         err("No space between the doctype \u201CPUBLIC\u201D keyword and the quote.");
     }
-    
+
     @Override protected void noteAttributeWithoutValue() throws SAXException {
         note("xhtml2", "Attribute without value");
     }
@@ -775,9 +783,22 @@ public class ErrorReportingTokenizer extends Tokenizer {
     /**
      * Sets the transitionHandler.
      * 
-     * @param transitionHandler the transitionHandler to set
+     * @param transitionHandler
+     *            the transitionHandler to set
      */
     public void setTransitionHandler(TransitionHandler transitionHandler) {
         this.transitionHandler = transitionHandler;
     }
+
+    /**
+     * Sets an offset to be added to the position reported to
+     * <code>TransitionHandler</code>.
+     * 
+     * @param offset
+     *            the offset
+     */
+    public void setTransitionBaseOffset(int offset) {
+        this.transitionBaseOffset = offset;
+    }
+
 }

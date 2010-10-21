@@ -278,10 +278,12 @@ public class Driver implements EncodingDeclarationHandler {
         int len = -1;
         if ((len = reader.read(buffer)) != -1) {
             assert len > 0;
+            int streamOffset = 0;
             int offset = 0;
             int length = len;
             if (swallowBom) {
                 if (buffer[0] == '\uFEFF') {
+                    streamOffset = -1;
                     offset = 1;
                     length--;
                 }
@@ -291,6 +293,7 @@ public class Driver implements EncodingDeclarationHandler {
                     CharacterHandler ch = characterHandlers[i];
                     ch.characters(buffer, offset, length);
                 }
+                tokenizer.setTransitionBaseOffset(streamOffset);
                 bufr.setStart(offset);
                 bufr.setEnd(offset + length);
                 while (bufr.hasMore()) {
@@ -301,12 +304,14 @@ public class Driver implements EncodingDeclarationHandler {
                     }
                 }
             }
+            streamOffset = length;
             while ((len = reader.read(buffer)) != -1) {
                 assert len > 0;
                 for (int i = 0; i < characterHandlers.length; i++) {
                     CharacterHandler ch = characterHandlers[i];
                     ch.characters(buffer, 0, len);
                 }
+                tokenizer.setTransitionBaseOffset(streamOffset);
                 bufr.setStart(0);
                 bufr.setEnd(len);
                 while (bufr.hasMore()) {
@@ -316,6 +321,7 @@ public class Driver implements EncodingDeclarationHandler {
                         lastWasCR = tokenizer.tokenizeBuffer(bufr);                    
                     }
                 }
+                streamOffset += len;
             }
         }
         tokenizer.eof();
