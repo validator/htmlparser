@@ -44,7 +44,7 @@ public interface TransitionHandler {
      *            <code>true</code> if the current input character is going to
      *            be reconsumed in the new state
      * @param pos
-     *            the current index into the input buffer
+     *            the current index into the input stream
      * @throws SAXException
      *             if something went wrong
      */

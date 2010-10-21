@@ -6991,5 +6991,19 @@ public class Tokenizer implements Locator {
             EncodingDeclarationHandler encodingDeclarationHandler) {
         this.encodingDeclarationHandler = encodingDeclarationHandler;
     }
+    
+    // [NOCPP[
+    
+    /**
+     * Sets an offset to be added to the position reported to 
+     * <code>TransitionHandler</code>.
+     * 
+     * @param offset the offset
+     */
+    public void setTransitionBaseOffset(int offset) {
+        
+    }
+    
+    // ]NOCPP]
 
 }
