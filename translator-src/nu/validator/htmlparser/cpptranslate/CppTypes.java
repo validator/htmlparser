@@ -251,6 +251,10 @@ public class CppTypes {
         return "jArray";
     }
 
+    public String autoArrayTemplate() {
+        return "autoJArray";
+    }
+
     public String localForLiteral(String literal) {
         String atom = atomMap.get(literal);
         if (atom == null) {
@@ -284,8 +288,12 @@ public class CppTypes {
         return '"' + literal + '"';
     }
 
-    public String staticArrayMacro() {
-        return "J_ARRAY_STATIC";
+    public String staticArrayTemplate() {
+        return "staticJArray";
+    }
+    
+    public String newArrayCreator() {
+        return "newJArray";
     }
 
     public String[] boilerplateIncludes(String javaClass) {

@@ -72,6 +72,10 @@ public class AnnotationHelperVisitor<T> extends VoidVisitorAdapter<T> {
         return hasAnnotation("NoLength");
     }
 
+    protected boolean auto() {
+        return hasAnnotation("Auto");
+    }
+
     protected boolean virtual() {
         return hasAnnotation("Virtual");
     }
@@ -117,6 +121,9 @@ public class AnnotationHelperVisitor<T> extends VoidVisitorAdapter<T> {
             }
             if (literal()) {
                 return "@Literal";
+            }
+            if (auto()) {
+                return "@Auto";
             }
         }
         return name;
