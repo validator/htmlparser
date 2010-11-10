@@ -383,4 +383,12 @@ public class CppTypes {
     public String breakMacro() {
         return "NS_HTML5_BREAK";
     }
+
+    public String characterNameType() {
+        return "nsHtml5CharacterName&";
+    }
+
+    public String characterNameTypeDeclaration() {
+        return "nsHtml5CharacterName";
+    }
 }

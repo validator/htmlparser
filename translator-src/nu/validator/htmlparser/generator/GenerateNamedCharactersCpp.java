@@ -246,14 +246,26 @@ public class GenerateNamedCharactersCpp {
             out.write("#include \"" + include + ".h\"\n");
         }
 
-        out.write('\n');
+        out.write("\nstruct ");
+        out.write(cppTypes.characterNameTypeDeclaration());
+        out.write(" {\n  ");
+        out.write(cppTypes.unsignedShortType());
+        out.write(" nameStart;\n  ");
+        out.write(cppTypes.unsignedShortType());
+        out.write(" nameLen;\n  #ifdef DEBUG\n  ");
+        out.write(cppTypes.intType());
+        out.write(" n;\n  #endif\n  ");
+        out.write(cppTypes.intType());
+        out.write(" length() const;\n  ");
+        out.write(cppTypes.charType());
+        out.write(" charAt(");
+        out.write(cppTypes.intType());
+        out.write(" index) const;\n};\n\n");
 
         out.write("class " + cppTypes.classPrefix() + "NamedCharacters\n");
         out.write("{\n");
         out.write("  public:\n");
-        out.write("    static " + cppTypes.arrayTemplate() + "<"
-                + cppTypes.arrayTemplate() + "<" + cppTypes.byteType() + ","
-                + cppTypes.intType() + ">," + cppTypes.intType() + "> NAMES;\n");
+        out.write("    static const " + cppTypes.characterNameTypeDeclaration() + " NAMES[];\n");
         out.write("    static const " + cppTypes.charType() + " VALUES[][2];\n");
         out.write("    static " + cppTypes.charType() + "** WINDOWS_1252;\n");
         out.write("    static void initializeStatics();\n");
@@ -419,18 +431,14 @@ public class GenerateNamedCharactersCpp {
                 + "NamedCharacters.h\"\n");
         out.write("\n");
 
-        String staticMemberType = cppTypes.arrayTemplate() + "<"
-                + cppTypes.arrayTemplate() + "<" + cppTypes.byteType() + ","
-                + cppTypes.intType() + ">," + cppTypes.intType() + ">";
-        writeStaticMemberDeclaration(out, cppTypes, staticMemberType, "NAMES");
-
-        out.write("\nconst PRUnichar nsHtml5NamedCharacters::VALUES[][2] = {\n");
+        out.write("const " + cppTypes.charType() + " " + cppTypes.classPrefix()
+                + "NamedCharacters::VALUES[][2] = {\n");
         defineMacroAndInclude(out, "{ VALUE },", includeFile);
         // The useless terminator entry makes the above macro simpler with
         // compilers that whine about a comma after the last item
         out.write("{0, 0} };\n\n");
 
-        staticMemberType = cppTypes.charType() + "**";
+        String staticMemberType = cppTypes.charType() + "**";
         writeStaticMemberDeclaration(out, cppTypes, staticMemberType,
                 "WINDOWS_1252");
 
@@ -497,8 +505,6 @@ public class GenerateNamedCharactersCpp {
         out.write("  DUMMY_FINAL_NAME_VALUE\n");
         out.write("};\n\n");
 
-        out.write("#define NAMED_CHARACTERS_COUNT " + entities.size() + "\n\n");
-
         String arrayLengthMacro = cppTypes.arrayLengthMacro();
         String staticAssert = cppTypes.staticAssert();
         if (staticAssert != null && arrayLengthMacro != null) {
@@ -507,39 +513,28 @@ public class GenerateNamedCharactersCpp {
                     + "(ALL_NAMES) < 0x10000);\n\n");
         }
         
-        out.write("struct NamedCharacterData {\n");
-        out.write("  " + cppTypes.unsignedShortType() + " nameStart;\n");
-        out.write("  " + cppTypes.unsignedShortType() + " nameLen;\n");
-        out.write("#ifdef DEBUG\n");
-        out.write("  " + cppTypes.intType() + " n;\n");
-        out.write("#endif\n");
-        out.write("};\n\n");
-
-        out.write("static const NamedCharacterData charData[NAMED_CHARACTERS_COUNT] = {\n");
+        out.write("const " + cppTypes.characterNameTypeDeclaration() + " " + cppTypes.classPrefix()
+                + "NamedCharacters::NAMES[] = {\n");
         defineMacroAndInclude(out, "{ NAME_##N##_START, LEN, },", "{ NAME_##N##_START, LEN, N },", includeFile);
         out.write("};\n\n");
 
+        out.write(cppTypes.intType());
+        out.write("\n");
+        out.write(cppTypes.characterNameTypeDeclaration());
+        out.write("::length() const\n{\n  return nameLen;\n}\n\n");
+        out.write(cppTypes.charType());
+        out.write("\n");
+        out.write(cppTypes.characterNameTypeDeclaration());
+        out.write("::charAt(");
+        out.write("PRInt32");
+        out.write(" index) const\n{\n  return static_cast<");
+        out.write(cppTypes.charType());
+        out.write("> (ALL_NAMES[nameStart + index]);\n}\n\n");
+        
         out.write("void\n");
         out.write(cppTypes.classPrefix()
                 + "NamedCharacters::initializeStatics()\n");
         out.write("{\n");
-        out.write("  NAMES = " + cppTypes.arrayTemplate() + "<"
-                + cppTypes.arrayTemplate() + "<" + cppTypes.byteType() + ","
-                + cppTypes.intType() + ">," + cppTypes.intType()
-                + ">(NAMED_CHARACTERS_COUNT);\n");
-
-        out.write("  " + cppTypes.byteType() + "* allNames = const_cast<" + cppTypes.byteType() + "*>(ALL_NAMES);\n");
-        out.write("  for (" + cppTypes.intType() + " i = 0; i < NAMED_CHARACTERS_COUNT; ++i) {\n");
-        out.write("    const NamedCharacterData &data = charData[i];\n");
-        String abortIfFalse = cppTypes.abortIfFalse();
-        if (abortIfFalse != null) {
-            out.write("    " + abortIfFalse + "(data.n == i,\n");
-            out.write("                      \"index error in nsHtml5NamedCharactersInclude.h\");\n");
-        }
-        out.write("    NAMES[i] = jArray<" + cppTypes.byteType() + "," + cppTypes.intType() + ">(allNames + data.nameStart, data.nameLen);\n");
-        out.write("  }\n");
-
-        out.write("\n");
         out.write("  WINDOWS_1252 = new " + cppTypes.charType() + "*[32];\n");
         out.write("  for (" + cppTypes.intType() + " i = 0; i < 32; ++i) {\n");
         out.write("    WINDOWS_1252[i] = (" + cppTypes.charType()
@@ -552,7 +547,6 @@ public class GenerateNamedCharactersCpp {
         out.write(cppTypes.classPrefix()
                 + "NamedCharacters::releaseStatics()\n");
         out.write("{\n");
-        out.write("  NAMES.release();\n");
         out.write("  delete[] WINDOWS_1252;\n");
         out.write("}\n");
         out.flush();

@@ -475,6 +475,8 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
                 name = cppTypes.nsUriType();
             } else if (literal()) {
                 name = cppTypes.literalType();
+            } else if (characterName()) {
+                name = cppTypes.characterNameType();
             } else {
                 name = cppTypes.stringType();
             }
@@ -1315,7 +1317,12 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
                     String clazzName = classNameFromExpression(scope);
                     if (clazzName == null) {
                         scope.accept(this, arg);
-                        printer.print("->");
+                        if ("length".equals(n.getName())
+                                || "charAt".equals(n.getName())) {
+                            printer.print(".");
+                        } else {
+                            printer.print("->");
+                        }
                     } else {
                         printer.print(cppTypes.classPrefix());
                         printer.print(clazzName);
