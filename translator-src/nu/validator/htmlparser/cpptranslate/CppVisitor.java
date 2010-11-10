@@ -220,6 +220,8 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
     private Set<String> labels = null;
 
     private boolean destructor;
+    
+    protected boolean inStatic = false;
 
     /**
      * @param cppTypes
@@ -553,7 +555,15 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
             }
         } else {
             for (int i = 0; i < n.getArrayCount(); i++) {
-                printer.print(cppTypes.arrayTemplate());
+                if (inStatic) {
+                    printer.print(cppTypes.staticArrayTemplate());                    
+                } else {
+                    if (auto()) {
+                        printer.print(cppTypes.autoArrayTemplate());
+                    } else {
+                        printer.print(cppTypes.arrayTemplate());
+                    }
+                }
                 printer.print("<");
             }
             n.getType().accept(this, arg);
@@ -611,8 +621,31 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
                     }
                     if (noLength()) {
                         if (rt.getType() instanceof PrimitiveType) {
-                            // do nothing
+                            inPrimitiveNoLengthFieldDeclarator = true;
+                            printer = tempPrinterHolder;
+                            n.getType().accept(this, arg);
+                            printer.print(" ");
+                            printer.print(className);
+                            printer.print("::");
+                            declarator.getId().accept(this, arg);
+
+                            printer.print(" = ");                    
+                            
+                            declarator.getInit().accept(this, arg);
+                           
+                            printer.printLn(";");
+                            printer = staticInitializerPrinter;
                         } else {
+                            printer = tempPrinterHolder;
+                            n.getType().accept(this, arg);
+                            printer.print(" ");
+                            printer.print(className);
+                            printer.print("::");
+                            declarator.getId().accept(this, arg);
+
+                            printer.printLn(" = 0;");
+                            printer = staticInitializerPrinter;
+                            
                             staticReleases.add("delete[] "
                                     + declarator.getId().getName());
 
@@ -630,8 +663,35 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
                             printArrayInit(declarator.getId(), aie.getValues(),
                                     arg);
                         }
-                    } else if (isNonToCharArrayMethodCall(declarator.getInit())
-                            || !(rt.getType() instanceof PrimitiveType)) {
+                    } else if ((rt.getType() instanceof PrimitiveType) || "String".equals(rt.getType().toString())) {
+                        printer = tempPrinterHolder;
+                        printer.print("static ");
+                        rt.getType().accept(this, arg);
+                        printer.print(" const ");
+                        declarator.getId().accept(this, arg);
+                        printer.print("_DATA[] = ");
+                        declarator.getInit().accept(this, arg);
+                        printer.printLn(";");                        
+                        printer.print(cppTypes.staticArrayTemplate());
+                        printer.print("<");
+                        suppressPointer = true;
+                        rt.getType().accept(this, arg);
+                        suppressPointer = false;
+                        printer.print(",");
+                        printer.print(cppTypes.intType());
+                        printer.print("> ");
+                        printer.print(className);
+                        printer.print("::");
+                        declarator.getId().accept(this, arg);
+                        printer.print(" = { ");
+                        declarator.getId().accept(this, arg);
+                        printer.print("_DATA, ");
+                        printer.print(cppTypes.arrayLengthMacro());
+                        printer.print("(");
+                        declarator.getId().accept(this, arg);
+                        printer.printLn("_DATA) };");
+                        printer = staticInitializerPrinter;
+                    } else if (isNonToCharArrayMethodCall(declarator.getInit())) {
                         staticReleases.add(declarator.getId().getName()
                                 + ".release()");
                         declarator.getId().accept(this, arg);
@@ -646,7 +706,9 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
                             suppressPointer = false;
                             printer.print(",");
                             printer.print(cppTypes.intType());
-                            printer.print(">(");
+                            printer.print(">::");
+                            printer.print(cppTypes.newArrayCreator());
+                            printer.print("(");
                             printer.print("" + aie.getValues().size());
                             printer.printLn(");");
                             printArrayInit(declarator.getId(), aie.getValues(),
@@ -655,34 +717,26 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
                             declarator.getInit().accept(this, arg);
                             printer.printLn(";");
                         }
-                    } else if ((rt.getType() instanceof PrimitiveType)) {
-                        printer = tempPrinterHolder;
-                        printer.print("static ");
-                        rt.getType().accept(this, arg);
-                        printer.print(" const ");
-                        declarator.getId().accept(this, arg);
-                        printer.print("_DATA[] = ");
-                        declarator.getInit().accept(this, arg);
-                        printer.printLn(";");
-                        printer = staticInitializerPrinter;
-
-                        declarator.getId().accept(this, arg);
-                        printer.print(" = ");
-                        printer.print(cppTypes.arrayTemplate());
-                        printer.print("<");
-                        rt.getType().accept(this, arg);
-                        printer.print(",");
-                        printer.print(cppTypes.intType());
-                        printer.print(">((");
-                        rt.getType().accept(this, arg);
-                        printer.print("*)");
-                        declarator.getId().accept(this, arg);
-                        printer.print("_DATA, ");
-                        printer.print(Integer.toString(((ArrayInitializerExpr) declarator.getInit()).getValues().size()));
-                        printer.printLn(");");
                     }
                 } else {
-
+                    if (ModifierSet.isStatic(modifiers)) {
+                        printer = tempPrinterHolder;
+                        n.getType().accept(this, arg);
+                        printer.print(" ");
+                        printer.print(className);
+                        printer.print("::");
+                        if ("AttributeName".equals(n.getType().toString())) {
+                            printer.print("ATTR_");
+                        } else if ("ElementName".equals(n.getType().toString())) {
+                            printer.print("ELT_");
+                        }
+                        declarator.getId().accept(this, arg);
+                        printer.print(" = ");
+                        printer.print(cppTypes.nullLiteral());
+                        printer.printLn(";");
+                        printer = staticInitializerPrinter;
+                    }
+                    
                     if ("AttributeName".equals(n.getType().toString())) {
                         printer.print("ATTR_");
                         staticReleases.add("delete ATTR_"
@@ -705,6 +759,7 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
         }
         currentArrayCount = 0;
         printer = tempPrinterHolder;
+        inPrimitiveNoLengthFieldDeclarator = false;
     }
 
     private void printArrayInit(VariableDeclaratorId variableDeclaratorId,
@@ -798,7 +853,9 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
                     n.getType().accept(this, arg);
                     printer.print(",");
                     printer.print(cppTypes.intType());
-                    printer.print(">(");
+                    printer.print(">::");
+                    printer.print(cppTypes.newArrayCreator());
+                    printer.print("(");
                     dim.accept(this, arg);
                     printer.print(")");
                 }

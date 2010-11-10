@@ -40,7 +40,7 @@ public abstract class CoalescingTreeBuilder<T> extends TreeBuilder<T> {
         if (newLen > charBuffer.length) {
             char[] newBuf = new char[newLen];
             System.arraycopy(charBuffer, 0, newBuf, 0, charBufferLen);
-            Portability.releaseArray(charBuffer);
+            charBuffer = null; // release the old buffer in C++
             charBuffer = newBuf;
         }
         System.arraycopy(buf, start, charBuffer, charBufferLen, length);

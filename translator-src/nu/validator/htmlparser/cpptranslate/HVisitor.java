@@ -61,9 +61,6 @@ public class HVisitor extends CppVisitor {
 
     private List<String> defines = new LinkedList<String>();
 
-    private SourcePrinter arrayInitPrinter = new SourcePrinter();
-    private SourcePrinter mainPrinterHolder;
-
     /**
      * @see nu.validator.htmlparser.cpptranslate.CppVisitor#printMethodNamespace()
      */
@@ -164,14 +161,6 @@ public class HVisitor extends CppVisitor {
         printer.printLn("};");
         printer.printLn();
 
-        // This stuff should probably go into the .cpp anyway. sigh.
-        printer.print("#ifdef ");
-        printer.print(className);
-        printer.printLn("_cpp__");
-        printer.print(arrayInitPrinter.getSource());
-        printer.printLn("#endif");
-        printer.printLn();
-        
         for (String define : defines) {
             printer.printLn(define);
         }
@@ -260,62 +249,11 @@ public class HVisitor extends CppVisitor {
                     }
                     if (noLength()) {
                         inPrimitiveNoLengthFieldDeclarator = true;
-                        
-                        mainPrinterHolder = printer;
-                        printer = arrayInitPrinter;
-                        n.getType().accept(this, arg);
-                        printer.print(" ");
-                        printer.print(className);
-                        printer.print("::");
-                        declarator.getId().accept(this, arg);
-
-                        printer.print(" = ");                    
-                        
-                        declarator.getInit().accept(this, arg);
-                       
-                        printer.printLn(";");                    
-                        printer = mainPrinterHolder;                        
-                    } else if (!isNonToCharArrayMethodCall(declarator.getInit())) {
-                        mainPrinterHolder = printer;
-                        printer = arrayInitPrinter;
-                        
-                        printer.print(cppTypes.arrayTemplate());
-                        printer.print("<");
-                        suppressPointer = true;
-                        rt.getType().accept(this, arg);
-                        suppressPointer = false;
-                        printer.print(",");
-                        printer.print(cppTypes.intType());
-                        printer.print("> ");
-                        printer.print(className);
-                        printer.print("::");
-                        declarator.getId().accept(this, arg);
-                        printer.printLn(" = 0;");                    
-                        
-                        printer = mainPrinterHolder;    
-                                            }
-                } else if (ModifierSet.isStatic(modifiers)) {
-                    mainPrinterHolder = printer;
-                    printer = arrayInitPrinter;
-
-                    n.getType().accept(this, arg);
-                    printer.print(" ");
-                    printer.print(className);
-                    printer.print("::");
-                    if ("AttributeName".equals(n.getType().toString())) {
-                        printer.print("ATTR_");
-                    } else if ("ElementName".equals(n.getType().toString())) {
-                        printer.print("ELT_");
                     }
-                    declarator.getId().accept(this, arg);
-                    printer.print(" = ");
-                    printer.print(cppTypes.nullLiteral());
-                    printer.printLn(";");
-                    
-                    printer = mainPrinterHolder;    
                 }
             }
             printModifiers(modifiers);
+            inStatic = ModifierSet.isStatic(modifiers);
             n.getType().accept(this, arg);
             printer.print(" ");
             if (ModifierSet.isStatic(modifiers)) {
@@ -328,6 +266,7 @@ public class HVisitor extends CppVisitor {
             declarator.getId().accept(this, arg);
             printer.printLn(";");
             currentArrayCount = 0;
+            inStatic = false;
             inPrimitiveNoLengthFieldDeclarator = false;
         }
     }
