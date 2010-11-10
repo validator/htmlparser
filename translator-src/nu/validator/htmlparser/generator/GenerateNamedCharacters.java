@@ -30,6 +30,9 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import nu.validator.htmlparser.annotation.CharacterName;
+import nu.validator.htmlparser.annotation.NoLength;
+
 public class GenerateNamedCharacters {
 
     private static final int LEAD_OFFSET = 0xD800 - (0x10000 >> 10);
@@ -97,7 +100,7 @@ public class GenerateNamedCharacters {
         int row = 0;
         int lo = 0;
 
-        System.out.print("static final @NoLength byte[][] NAMES = {\n");
+        System.out.print("static final @NoLength @CharacterName String[] NAMES = {\n");
         for (Map.Entry<String, String> entity : entities.entrySet()) {
             String name = entity.getKey();
             int newFirst = charToIndex(name.charAt(0));
@@ -109,9 +112,9 @@ public class GenerateNamedCharacters {
                 firstKey = newFirst;
                 secondKey = newSecond;
             }
-            System.out.print("toByteArray(\"");
+            System.out.print("\"");
             System.out.print(name.substring(2));
-            System.out.print("\"),\n");
+            System.out.print("\",\n");
             row++;
         }
         System.out.print("};\n");

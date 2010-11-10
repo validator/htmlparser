@@ -84,6 +84,10 @@ public class AnnotationHelperVisitor<T> extends VoidVisitorAdapter<T> {
         return hasAnnotation("Const");
     }
 
+    protected boolean characterName() {
+        return hasAnnotation("CharacterName");
+    }
+
     private boolean hasAnnotation(String anno) {
         if (currentAnnotations == null) {
             return false;
@@ -124,6 +128,9 @@ public class AnnotationHelperVisitor<T> extends VoidVisitorAdapter<T> {
             }
             if (auto()) {
                 return "@Auto";
+            }
+            if (characterName()) {
+                return "@CharacterName";
             }
         }
         return name;
