@@ -80,7 +80,7 @@ public class GenerateNamedCharactersCpp {
 
     private static final int LEAD_OFFSET = 0xD800 - (0x10000 >> 10);
 
-    private static final Pattern LINE_PATTERN = Pattern.compile("<td> <code title=\"\">([^<]*)</code> </td> <td> U\\+(\\S*) </td>");
+    private static final Pattern LINE_PATTERN = Pattern.compile("<td> <code title=\"\">([^<]*)</code> </td> <td> U\\+(\\S*) (?:U\\+(\\S*) )?</td>");
 
     private static String toHexString(int c) {
         String hexString = Integer.toHexString(c);
@@ -110,7 +110,24 @@ public class GenerateNamedCharactersCpp {
         while ((line = reader.readLine()) != null) {
             Matcher m = LINE_PATTERN.matcher(line);
             while (m.find()) {
-                entities.put(m.group(1), m.group(2));
+                String value;
+                if (m.group(3) != null) {
+                    // two BMP chars
+                    int firstIntVal = Integer.parseInt(m.group(2), 16);
+                    int secondIntVal = Integer.parseInt(m.group(3), 16);
+                    value = ("" + (char)firstIntVal) + (char)secondIntVal;
+                } else {
+                    // one code point
+                    int intVal = Integer.parseInt(m.group(2), 16);
+                    if (intVal <= 0xFFFF) {
+                        value = "" + (char)intVal;
+                    } else {
+                        int high = (LEAD_OFFSET + (intVal >> 10));
+                        int low = (0xDC00 + (intVal & 0x3FF));
+                        value = ("" + (char)high) + (char)low;
+                    }
+                }
+                entities.put(m.group(1), value);
             }
         }
 
@@ -299,8 +316,8 @@ public class GenerateNamedCharactersCpp {
         out.write(" *       See Tokenizer.java.\n");
         out.write(" *   3.  the length of this sequence of characters,\n");
         out.write(" *   4.  placeholder flag (0 if argument #is not a placeholder and 1 if it is),\n");
-        out.write(" *   5.  a comma-separated sequence of PRUnichar literals (high to low) corresponding\n");
-        out.write(" *       to the code-point of the named character.\n");
+        out.write(" *   5.  a comma-separated sequence of PRUnichar literals corresponding\n");
+        out.write(" *       to the code-point(s) of the named character.\n");
         out.write(" *\n");
         out.write(" * The macro expansion doesn't have to refer to all or any of these parameters,\n");
         out.write(" * but common sense dictates that it should involve at least one of them.\n");
@@ -319,7 +336,7 @@ public class GenerateNamedCharactersCpp {
             writeNameInitializer(out, name, " _ ");
             out.write(", " + (name.length() - 2) + ", ");
             out.write((name.length() == 2 ? "1" : "0") + ", ");
-            writeValueInitializer(out, Integer.parseInt(entity.getValue(), 16), " _ ");
+            writeValueInitializer(out, entity.getValue(), " _ ");
             out.write(")\n");
         }
 
@@ -346,18 +363,16 @@ public class GenerateNamedCharactersCpp {
     }
 
     private static void writeValueInitializer(Writer out,
-            int value, String separator)
+            String value, String separator)
             throws IOException {
-        if (value <= 0xFFFF) {
-            out.write(toHexString(value));
+        if (value.length() == 1) {
+            out.write(toHexString(value.charAt(0)));
             out.write(separator);
             out.write("0");
         } else {
-            int hi = (LEAD_OFFSET + (value >> 10));
-            int lo = (0xDC00 + (value & 0x3FF));
-            out.write(toHexString(hi));
+            out.write(toHexString(value.charAt(0)));
             out.write(separator);
-            out.write(toHexString(lo));
+            out.write(toHexString(value.charAt(1)));
         }
     }
 

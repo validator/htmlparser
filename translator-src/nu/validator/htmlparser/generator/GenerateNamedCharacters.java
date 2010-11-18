@@ -34,10 +34,10 @@ import nu.validator.htmlparser.annotation.CharacterName;
 import nu.validator.htmlparser.annotation.NoLength;
 
 public class GenerateNamedCharacters {
-
+    
     private static final int LEAD_OFFSET = 0xD800 - (0x10000 >> 10);
 
-    private static final Pattern LINE_PATTERN = Pattern.compile("<td> <code title=\"\">([^<]*)</code> </td> <td> U\\+(\\S*) </td>");
+    private static final Pattern LINE_PATTERN = Pattern.compile("<td> <code title=\"\">([^<]*)</code> </td> <td> U\\+(\\S*) (?:U\\+(\\S*) )?</td>");
 
     private static String toUString(int c) {
         String hexString = Integer.toHexString(c);
@@ -86,7 +86,24 @@ public class GenerateNamedCharacters {
         while ((line = reader.readLine()) != null) {
             Matcher m = LINE_PATTERN.matcher(line);
             while (m.find()) {
-                entities.put(m.group(1), m.group(2));
+                String value;
+                if (m.group(3) != null) {
+                    // two BMP chars
+                    int firstIntVal = Integer.parseInt(m.group(2), 16);
+                    int secondIntVal = Integer.parseInt(m.group(3), 16);
+                    value = ("" + (char)firstIntVal) + (char)secondIntVal;
+                } else {
+                    // one code point
+                    int intVal = Integer.parseInt(m.group(2), 16);
+                    if (intVal <= 0xFFFF) {
+                        value = "" + (char)intVal;
+                    } else {
+                        int high = (LEAD_OFFSET + (intVal >> 10));
+                        int low = (0xDC00 + (intVal & 0x3FF));
+                        value = ("" + (char)high) + (char)low;
+                    }
+                }
+                entities.put(m.group(1), value);
             }
         }
 
@@ -124,26 +141,26 @@ public class GenerateNamedCharacters {
         System.out.print("static final @NoLength char[][] VALUES = {\n");
         for (Map.Entry<String, String> entity : entities.entrySet()) {
             String value = entity.getValue();
-            int intVal = Integer.parseInt(value, 16);
             System.out.print("{");
-            if (intVal == '\'') {
-                System.out.print("\'\\\'\'");
-            } else if (intVal == '\n') {
-                System.out.print("\'\\n\'");
-            } else if (intVal == '\\') {
-                System.out.print("\'\\\\\'");
-            } else if (intVal <= 0xFFFF) {
-                System.out.print("\'");
-                System.out.print(toUString(intVal));
-                System.out.print("\'");
+            if (value.length() == 1) {
+                char c = value.charAt(0);
+                if (c == '\'') {
+                    System.out.print("\'\\\'\'");
+                } else if (c == '\n') {
+                    System.out.print("\'\\n\'");
+                } else if (c == '\\') {
+                    System.out.print("\'\\\\\'");
+                } else if (c <= 0xFFFF) {
+                    System.out.print("\'");
+                    System.out.print(toUString(c));
+                    System.out.print("\'");
+                }
             } else {
-                int high = (LEAD_OFFSET + (intVal >> 10));
-                int low = (0xDC00 + (intVal & 0x3FF));
                 System.out.print("\'");
-                System.out.print(toUString(high));
+                System.out.print(toUString(value.charAt(0)));
                 System.out.print("\', \'");
-                System.out.print(toUString(low));
-                System.out.print("\'");
+                System.out.print(toUString(value.charAt(1)));
+                System.out.print("\'");                
             }
             System.out.print("},\n");
         }

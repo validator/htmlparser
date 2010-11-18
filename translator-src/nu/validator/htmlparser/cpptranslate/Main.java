@@ -126,7 +126,7 @@ public class Main {
             file = new File(javaDirectory, className + ".java");
             String license = new LicenseExtractor(file).extract();
             CompilationUnit cu = JavaParser.parse(new NoCppInputStream(
-                    new FileInputStream(file)), "utf-8");
+                    new CppOnlyInputStream(new FileInputStream(file))), "utf-8");
             LabelVisitor labelVisitor = new LabelVisitor();
             cu.accept(labelVisitor, null);
             visitor.setLabels(labelVisitor.getLabels());
