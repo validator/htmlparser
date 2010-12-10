@@ -88,13 +88,6 @@ public interface TreeBuilderState<T> {
     public boolean isFramesetOk();
     
     /**
-     * Returns the inForeign.
-     * 
-     * @return the inForeign
-     */
-    public boolean isInForeign();
-
-    /**
      * Returns the needToDropLF.
      * 
      * @return the needToDropLF
