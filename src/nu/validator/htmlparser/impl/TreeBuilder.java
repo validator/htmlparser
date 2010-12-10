@@ -1327,7 +1327,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                 case IN_BODY:
                     // [NOCPP[
                     openelementloop: for (int i = currentPtr; i >= 0; i--) {
-                        int group = stack[i].group;
+                        int group = stack[i].getGroup();
                         switch (group) {
                             case DD_OR_DT:
                             case LI:
@@ -1445,12 +1445,12 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         needToDropLF = false;
         boolean needsPostProcessing = false;
         starttagloop: for (;;) {
-            int group = elementName.group;
+            int group = elementName.getGroup();
             @Local String name = elementName.name;
             if (inForeign) {
                 StackNode<T> currentNode = stack[currentPtr];
                 @NsUri String currNs = currentNode.ns;
-                int currGroup = currentNode.group;
+                int currGroup = currentNode.getGroup();
                 if (("http://www.w3.org/1999/xhtml" == currNs)
                         || ("http://www.w3.org/1998/Math/MathML" == currNs && ((MGLYPH_OR_MALIGNMARK != group && MI_MO_MN_MS_MTEXT == currGroup) || (SVG == group && ANNOTATION_XML == currGroup)))
                         || ("http://www.w3.org/2000/svg" == currNs && (TITLE == currGroup || (FOREIGNOBJECT_OR_DESC == currGroup)))) {
@@ -1763,7 +1763,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                     switch (group) {
                         case FRAMESET:
                             if (mode == FRAMESET_OK) {
-                                if (currentPtr == 0 || stack[1].group != BODY) {
+                                if (currentPtr == 0 || stack[1].getGroup() != BODY) {
                                     assert fragment;
                                     err("Stray \u201Cframeset\u201D start tag.");
                                     break starttagloop;
@@ -1850,7 +1850,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                 break starttagloop;
                             case H1_OR_H2_OR_H3_OR_H4_OR_H5_OR_H6:
                                 implicitlyCloseP();
-                                if (stack[currentPtr].group == H1_OR_H2_OR_H3_OR_H4_OR_H5_OR_H6) {
+                                if (stack[currentPtr].getGroup() == H1_OR_H2_OR_H3_OR_H4_OR_H5_OR_H6) {
                                     err("Heading cannot be a child of another heading.");
                                     pop();
                                 }
@@ -1890,7 +1890,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                 for (;;) {
                                     StackNode<T> node = stack[eltPos]; // weak
                                     // ref
-                                    if (node.group == group) { // LI or
+                                    if (node.getGroup() == group) { // LI or
                                         // DD_OR_DT
                                         generateImpliedEndTagsExceptFor(node.name);
                                         if (errorHandler != null
@@ -1901,8 +1901,8 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                             pop();
                                         }
                                         break;
-                                    } else if (node.scoping
-                                            || (node.special
+                                    } else if (node.isScoping()
+                                            || (node.isSpecial()
                                                     && node.name != "p"
                                                     && node.name != "address" && node.name != "div")) {
                                         break;
@@ -2928,11 +2928,11 @@ public abstract class TreeBuilder<T> implements TokenHandler,
             return true;
         }
         if (ns == "http://www.w3.org/2000/svg") {
-            return stackNode.group == FOREIGNOBJECT_OR_DESC
-                    || stackNode.group == TITLE;
+            return stackNode.getGroup() == FOREIGNOBJECT_OR_DESC
+                    || stackNode.getGroup() == TITLE;
         }
         assert ns == "http://www.w3.org/1998/Math/MathML" : "Unexpected namespace.";
-        return stackNode.group == MI_MO_MN_MS_MTEXT;
+        return stackNode.getGroup() == MI_MO_MN_MS_MTEXT;
     }
 
     /**
@@ -3134,7 +3134,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         flushCharacters();
         needToDropLF = false;
         int eltPos;
-        int group = elementName.group;
+        int group = elementName.getGroup();
         @Local String name = elementName.name;
         endtagloop: for (;;) {
             assert !inForeign || currentPtr >= 0 : "In foreign without a root element?";
@@ -3367,7 +3367,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                             assert currentPtr >= 1;
                             if (errorHandler != null) {
                                 uncloseloop1: for (int i = 2; i <= currentPtr; i++) {
-                                    switch (stack[i].group) {
+                                    switch (stack[i].getGroup()) {
                                         case DD_OR_DT:
                                         case LI:
                                         case OPTGROUP:
@@ -3393,7 +3393,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                             }
                             if (errorHandler != null) {
                                 uncloseloop2: for (int i = 0; i <= currentPtr; i++) {
-                                    switch (stack[i].group) {
+                                    switch (stack[i].getGroup()) {
                                         case DD_OR_DT:
                                         case LI:
                                         case P:
@@ -3618,7 +3618,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                         pop();
                                     }
                                     break endtagloop;
-                                } else if (node.scoping || node.special) {
+                                } else if (node.isScopingOrSpecial()) {
                                     err("Stray end tag \u201C" + name
                                             + "\u201D.");
                                     break endtagloop;
@@ -3900,7 +3900,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
 
     private int findLastInTableScopeOrRootTbodyTheadTfoot() {
         for (int i = currentPtr; i > 0; i--) {
-            if (stack[i].group == TreeBuilder.TBODY_OR_THEAD_OR_TFOOT) {
+            if (stack[i].getGroup() == TreeBuilder.TBODY_OR_THEAD_OR_TFOOT) {
                 return i;
             }
         }
@@ -3931,7 +3931,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         for (int i = currentPtr; i > 0; i--) {
             if (stack[i].name == name) {
                 return i;
-            } else if (stack[i].scoping || stack[i].name == "button") {
+            } else if (stack[i].isScoping() || stack[i].name == "button") {
                 return TreeBuilder.NOT_FOUND_ON_STACK;
             }
         }
@@ -3942,7 +3942,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         for (int i = currentPtr; i > 0; i--) {
             if (stack[i].name == name) {
                 return i;
-            } else if (stack[i].scoping) {
+            } else if (stack[i].isScoping()) {
                 return TreeBuilder.NOT_FOUND_ON_STACK;
             }
         }
@@ -3953,7 +3953,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         for (int i = currentPtr; i > 0; i--) {
             if (stack[i].name == name) {
                 return i;
-            } else if (stack[i].scoping || stack[i].name == "ul" || stack[i].name == "ol") {
+            } else if (stack[i].isScoping() || stack[i].name == "ul" || stack[i].name == "ol") {
                 return TreeBuilder.NOT_FOUND_ON_STACK;
             }
         }
@@ -3962,9 +3962,9 @@ public abstract class TreeBuilder<T> implements TokenHandler,
     
     private int findLastInScopeHn() {
         for (int i = currentPtr; i > 0; i--) {
-            if (stack[i].group == TreeBuilder.H1_OR_H2_OR_H3_OR_H4_OR_H5_OR_H6) {
+            if (stack[i].getGroup() == TreeBuilder.H1_OR_H2_OR_H3_OR_H4_OR_H5_OR_H6) {
                 return i;
-            } else if (stack[i].scoping) {
+            } else if (stack[i].isScoping()) {
                 return TreeBuilder.NOT_FOUND_ON_STACK;
             }
         }
@@ -3975,7 +3975,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         for (int i = currentPtr; i > 0; i--) {
             if (stack[i].ns != "http://www.w3.org/1999/xhtml") {
                 return true;
-            } else if (stack[i].scoping) {
+            } else if (stack[i].isScoping()) {
                 return false;
             }
         }
@@ -3986,7 +3986,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
             throws SAXException {
         for (;;) {
             StackNode<T> node = stack[currentPtr];
-            switch (node.group) {
+            switch (node.getGroup()) {
                 case P:
                 case LI:
                 case DD_OR_DT:
@@ -4006,7 +4006,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
 
     private void generateImpliedEndTags() throws SAXException {
         for (;;) {
-            switch (stack[currentPtr].group) {
+            switch (stack[currentPtr].getGroup()) {
                 case P:
                 case LI:
                 case DD_OR_DT:
@@ -4022,7 +4022,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
     }
 
     private boolean isSecondOnStackBody() {
-        return currentPtr >= 1 && stack[1].group == TreeBuilder.BODY;
+        return currentPtr >= 1 && stack[1].getGroup() == TreeBuilder.BODY;
     }
 
     private void documentModeInternal(DocumentMode m, String publicIdentifier,
@@ -4367,7 +4367,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                 StackNode<T> node = stack[formattingEltStackPos]; // weak ref
                 if (node == formattingElt) {
                     break;
-                } else if (node.scoping) {
+                } else if (node.isScoping()) {
                     inScope = false;
                 }
                 formattingEltStackPos--;
@@ -4388,7 +4388,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
             int furthestBlockPos = formattingEltStackPos + 1;
             while (furthestBlockPos <= currentPtr) {
                 StackNode<T> node = stack[furthestBlockPos]; // weak ref
-                if (node.scoping || node.special) {
+                if (node.isScopingOrSpecial()) {
                     break;
                 }
                 furthestBlockPos++;
@@ -4433,9 +4433,8 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                 assert node == stack[nodePos];
                 T clone = createElement("http://www.w3.org/1999/xhtml",
                         node.name, node.attributes.cloneAttributes(null));
-                StackNode<T> newNode = new StackNode<T>(node.group, node.ns,
-                        node.name, clone, node.scoping, node.special,
-                        node.fosterParenting, node.popName, node.attributes); // creation
+                StackNode<T> newNode = new StackNode<T>(node.getFlags(), node.ns,
+                        node.name, clone, node.popName, node.attributes); // creation
                 // ownership
                 // goes
                 // to
@@ -4453,7 +4452,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                 appendElement(lastNode.node, node.node);
                 lastNode = node;
             }
-            if (commonAncestor.fosterParenting) {
+            if (commonAncestor.isFosterParenting()) {
                 fatal();
                 detachFromParent(lastNode.node);
                 insertIntoFosterParent(lastNode.node);
@@ -4465,9 +4464,8 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                     formattingElt.name,
                     formattingElt.attributes.cloneAttributes(null));
             StackNode<T> formattingClone = new StackNode<T>(
-                    formattingElt.group, formattingElt.ns, formattingElt.name,
-                    clone, formattingElt.scoping, formattingElt.special,
-                    formattingElt.fosterParenting, formattingElt.popName,
+                    formattingElt.getFlags(), formattingElt.ns, formattingElt.name,
+                    clone, formattingElt.popName,
                     formattingElt.attributes); // Ownership
             // transfers
             // to
@@ -4569,7 +4567,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
 
     private int findLastOrRoot(int group) {
         for (int i = currentPtr; i > 0; i--) {
-            if (stack[i].group == group) {
+            if (stack[i].getGroup() == group) {
                 return i;
             }
         }
@@ -4589,7 +4587,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         // ]NOCPP]
         if (currentPtr >= 1) {
             StackNode<T> body = stack[1];
-            if (body.group == TreeBuilder.BODY) {
+            if (body.getGroup() == TreeBuilder.BODY) {
                 addAttributesToElement(body.node, attributes);
                 return true;
             }
@@ -4644,12 +4642,11 @@ public abstract class TreeBuilder<T> implements TokenHandler,
             StackNode<T> entry = listOfActiveFormattingElements[entryPos];
             T clone = createElement("http://www.w3.org/1999/xhtml", entry.name,
                     entry.attributes.cloneAttributes(null));
-            StackNode<T> entryClone = new StackNode<T>(entry.group, entry.ns,
-                    entry.name, clone, entry.scoping, entry.special,
-                    entry.fosterParenting, entry.popName, entry.attributes);
+            StackNode<T> entryClone = new StackNode<T>(entry.getFlags(), entry.ns,
+                    entry.name, clone, entry.popName, entry.attributes);
             entry.dropAttributes(); // transfer ownership to entryClone
             StackNode<T> currentNode = stack[currentPtr];
-            if (currentNode.fosterParenting) {
+            if (currentNode.isFosterParenting()) {
                 insertIntoFosterParent(clone);
             } else {
                 appendElement(clone, currentNode.node);
@@ -4852,7 +4849,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         formPointer = elt;
         Portability.retainElement(formPointer);
         StackNode<T> current = stack[currentPtr];
-        if (current.fosterParenting) {
+        if (current.isFosterParenting()) {
             fatal();
             insertIntoFosterParent(elt);
         } else {
@@ -4873,7 +4870,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         // This method can't be called for custom elements
         T elt = createElement(ns, elementName.name, attributes);
         StackNode<T> current = stack[currentPtr];
-        if (current.fosterParenting) {
+        if (current.isFosterParenting()) {
             fatal();
             insertIntoFosterParent(elt);
         } else {
@@ -4907,13 +4904,13 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         @Local String popName = elementName.name;
         // [NOCPP[
         checkAttributes(attributes, ns);
-        if (elementName.custom) {
+        if (elementName.isCustom()) {
             popName = checkPopName(popName);
         }
         // ]NOCPP]
         T elt = createElement(ns, popName, attributes);
         StackNode<T> current = stack[currentPtr];
-        if (current.fosterParenting) {
+        if (current.isFosterParenting()) {
             fatal();
             insertIntoFosterParent(elt);
         } else {
@@ -4930,13 +4927,13 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         @Local String popName = elementName.name;
         // [NOCPP[
         checkAttributes(attributes, ns);
-        if (elementName.custom) {
+        if (elementName.isCustom()) {
             popName = checkPopName(popName);
         }
         // ]NOCPP]
         T elt = createElement(ns, popName, attributes);
         StackNode<T> current = stack[currentPtr];
-        if (current.fosterParenting) {
+        if (current.isFosterParenting()) {
             fatal();
             insertIntoFosterParent(elt);
         } else {
@@ -4954,13 +4951,13 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         @Local String popName = elementName.camelCaseName;
         // [NOCPP[
         checkAttributes(attributes, ns);
-        if (elementName.custom) {
+        if (elementName.isCustom()) {
             popName = checkPopName(popName);
         }
         // ]NOCPP]
         T elt = createElement(ns, popName, attributes);
         StackNode<T> current = stack[currentPtr];
-        if (current.fosterParenting) {
+        if (current.isFosterParenting()) {
             fatal();
             insertIntoFosterParent(elt);
         } else {
@@ -4982,7 +4979,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         T elt = createElement(ns, elementName.name, attributes, fragment ? null
                 : form);
         StackNode<T> current = stack[currentPtr];
-        if (current.fosterParenting) {
+        if (current.isFosterParenting()) {
             fatal();
             insertIntoFosterParent(elt);
         } else {
@@ -5002,7 +4999,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         // Can't be called for custom elements
         T elt = createElement(ns, name, attributes, fragment ? null : form);
         StackNode<T> current = stack[currentPtr];
-        if (current.fosterParenting) {
+        if (current.isFosterParenting()) {
             fatal();
             insertIntoFosterParent(elt);
         } else {
@@ -5019,13 +5016,13 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         @Local String popName = elementName.name;
         // [NOCPP[
         checkAttributes(attributes, ns);
-        if (elementName.custom) {
+        if (elementName.isCustom()) {
             popName = checkPopName(popName);
         }
         // ]NOCPP]
         T elt = createElement(ns, popName, attributes);
         StackNode<T> current = stack[currentPtr];
-        if (current.fosterParenting) {
+        if (current.isFosterParenting()) {
             fatal();
             insertIntoFosterParent(elt);
         } else {
@@ -5042,13 +5039,13 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         @Local String popName = elementName.camelCaseName;
         // [NOCPP[
         checkAttributes(attributes, ns);
-        if (elementName.custom) {
+        if (elementName.isCustom()) {
             popName = checkPopName(popName);
         }
         // ]NOCPP]
         T elt = createElement(ns, popName, attributes);
         StackNode<T> current = stack[currentPtr];
-        if (current.fosterParenting) {
+        if (current.isFosterParenting()) {
             fatal();
             insertIntoFosterParent(elt);
         } else {
@@ -5333,7 +5330,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                     && charBufferContainsNonWhitespace()) {
                 err("Misplaced non-space characters insided a table.");
                 reconstructTheActiveFormattingElements();
-                if (!stack[currentPtr].fosterParenting) {
+                if (!stack[currentPtr].isFosterParenting()) {
                     // reconstructing gave us a new current node
                     appendCharacters(currentNode(), charBuffer, 0,
                             charBufferLen);
@@ -5389,9 +5386,8 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         for (int i = 0; i < listCopy.length; i++) {
             StackNode<T> node = listOfActiveFormattingElements[i];
             if (node != null) {
-                StackNode<T> newNode = new StackNode<T>(node.group, node.ns,
-                        node.name, node.node, node.scoping, node.special,
-                        node.fosterParenting, node.popName,
+                StackNode<T> newNode = new StackNode<T>(node.getFlags(), node.ns,
+                        node.name, node.node, node.popName,
                         node.attributes.cloneAttributes(null));
                 listCopy[i] = newNode;
             } else {
@@ -5403,9 +5399,8 @@ public abstract class TreeBuilder<T> implements TokenHandler,
             StackNode<T> node = stack[i];
             int listIndex = findInListOfActiveFormattingElements(node);
             if (listIndex == -1) {
-                StackNode<T> newNode = new StackNode<T>(node.group, node.ns,
-                        node.name, node.node, node.scoping, node.special,
-                        node.fosterParenting, node.popName,
+                StackNode<T> newNode = new StackNode<T>(node.getFlags(), node.ns,
+                        node.name, node.node, node.popName,
                         null);
                 stackCopy[i] = newNode;
             } else {
@@ -5486,9 +5481,8 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         for (int i = 0; i < listLen; i++) {
             StackNode<T> node = listCopy[i];
             if (node != null) {
-                StackNode<T> newNode = new StackNode<T>(node.group, node.ns,
+                StackNode<T> newNode = new StackNode<T>(node.getFlags(), node.ns,
                         Portability.newLocalFromLocal(node.name, interner), node.node,
-                        node.scoping, node.special, node.fosterParenting,
                         Portability.newLocalFromLocal(node.popName, interner),
                         node.attributes.cloneAttributes(null));
                 listOfActiveFormattingElements[i] = newNode;
@@ -5500,9 +5494,8 @@ public abstract class TreeBuilder<T> implements TokenHandler,
             StackNode<T> node = stackCopy[i];
             int listIndex = findInArray(node, listCopy);
             if (listIndex == -1) {
-                StackNode<T> newNode = new StackNode<T>(node.group, node.ns,
+                StackNode<T> newNode = new StackNode<T>(node.getFlags(), node.ns,
                         Portability.newLocalFromLocal(node.name, interner), node.node,
-                        node.scoping, node.special, node.fosterParenting,
                         Portability.newLocalFromLocal(node.popName, interner),
                         null);
                 stack[i] = newNode;
