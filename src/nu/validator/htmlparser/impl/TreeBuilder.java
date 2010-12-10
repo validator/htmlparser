@@ -2252,13 +2252,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                     generateImpliedEndTags();
                                 }
                                 if (eltPos != currentPtr) {
-                                    if (eltPos != NOT_FOUND_ON_STACK) {
-                                        err("Start tag \u201C"
-                                                + name
-                                                + "\u201D seen without a \u201Cruby\u201D element being open.");
-                                    } else {
-                                        err("Unclosed children in \u201Cruby\u201D.");
-                                    }
+                                    err("Unclosed children in \u201Cruby\u201D.");
                                     while (currentPtr > eltPos) {
                                         pop();
                                     }
