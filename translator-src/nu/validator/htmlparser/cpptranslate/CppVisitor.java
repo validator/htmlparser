@@ -1200,7 +1200,8 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
                 || val.startsWith("http://") || val.startsWith("XSLT")) {
             printer.print(cppTypes.stringForLiteral(val));
         } else if (("hidden".equals(val) || "isindex".equals(val)
-                || "text/html".equals(val) || "application/xhtml+xml".equals(val))
+                || "text/html".equals(val)
+                || "application/xhtml+xml".equals(val) || "content-type".equals(val))
                 && "TreeBuilder".equals(javaClassName)) {
             printer.print(cppTypes.stringForLiteral(val));
         } else if ("isQuirky".equals(currentMethod) && "html".equals(val)) {
@@ -1430,8 +1431,7 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
     }
 
     public void visit(ConstructorDeclaration n, LocalSymbolTable arg) {
-        if ("TreeBuilder".equals(javaClassName)
-                || "MetaScanner".equals(javaClassName)) {
+        if ("TreeBuilder".equals(javaClassName)) {
             return;
         }
 

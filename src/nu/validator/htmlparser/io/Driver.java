@@ -334,7 +334,7 @@ public class Driver implements EncodingDeclarationHandler {
         }
     }
 
-    public void internalEncodingDeclaration(String internalCharset)
+    public boolean internalEncodingDeclaration(String internalCharset)
             throws SAXException {
         try {
             internalCharset = Encoding.toAsciiLowerCase(internalCharset);
@@ -358,15 +358,15 @@ public class Driver implements EncodingDeclarationHandler {
                 tokenizer.errTreeBuilder("Internal encoding declaration specified \u201C"
                         + internalCharset
                         + "\u201D which is not an ASCII superset. Not changing the encoding.");
-                return;
+                return false;
             }
             if (characterEncoding == null) {
                 // Reader case
-                return;
+                return true;
             }
             if (characterEncoding == actual) {
                 becomeConfident();
-                return;
+                return true;
             }
             if (confidence == Confidence.CERTAIN && actual != characterEncoding) {
                 tokenizer.errTreeBuilder("Internal encoding declaration \u201C"
@@ -381,9 +381,11 @@ public class Driver implements EncodingDeclarationHandler {
                 characterEncoding = newEnc;
                 throw new ReparseException();
             }
+            return true;
         } catch (UnsupportedCharsetException e) {
             tokenizer.errTreeBuilder("Internal encoding declaration named an unsupported chararacter encoding \u201C"
                     + internalCharset + "\u201D.");
+            return false;
         }
     }
 

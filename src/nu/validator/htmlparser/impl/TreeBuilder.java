@@ -1818,7 +1818,17 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                 // Fall through to IN_HEAD
                                 break inbodyloop;
                             case BODY:
+                                if (currentPtr == 0
+                                        || stack[1].getGroup() != BODY) {
+                                    assert fragment;
+                                    err("Stray \u201Cbody\u201D start tag.");
+                                    break starttagloop;
+                                }
                                 err("\u201Cbody\u201D start tag found but the \u201Cbody\u201D element is already open.");
+                                framesetOk = false;
+                                if (mode == FRAMESET_OK) {
+                                    mode = IN_BODY;
+                                }
                                 if (addAttributesToBody(attributes)) {
                                     attributes = null; // CPP
                                 }
@@ -3038,30 +3048,29 @@ public abstract class TreeBuilder<T> implements TokenHandler,
 
     private void checkMetaCharset(HtmlAttributes attributes)
             throws SAXException {
-        String content = attributes.getValue(AttributeName.CONTENT);
-        String internalCharsetLegacy = null;
-        if (content != null) {
-            internalCharsetLegacy = TreeBuilder.extractCharsetFromContent(content);
-            // [NOCPP[
-            if (errorHandler != null
-                    && internalCharsetLegacy != null
-                    && !Portability.lowerCaseLiteralEqualsIgnoreAsciiCaseString(
-                            "content-type",
-                            attributes.getValue(AttributeName.HTTP_EQUIV))) {
-                warn("Attribute \u201Ccontent\u201D would be sniffed as an internal character encoding declaration but there was no matching \u201Chttp-equiv='Content-Type'\u201D attribute.");
-            }
-            // ]NOCPP]
-        }
-        if (internalCharsetLegacy == null) {
-            String internalCharsetHtml5 = attributes.getValue(AttributeName.CHARSET);
-            if (internalCharsetHtml5 != null) {
-                tokenizer.internalEncodingDeclaration(internalCharsetHtml5);
+        String charset = attributes.getValue(AttributeName.CHARSET);
+        if (charset != null) {
+            if (tokenizer.internalEncodingDeclaration(charset)) {
                 requestSuspension();
+                return;
+            }            
+            return;
+        }
+        if (!Portability.lowerCaseLiteralEqualsIgnoreAsciiCaseString(
+                "content-type",
+                attributes.getValue(AttributeName.HTTP_EQUIV))) {
+            return;
+        }
+        String content = attributes.getValue(AttributeName.CONTENT);
+        if (content != null) {
+            String extract = TreeBuilder.extractCharsetFromContent(content);
+            // remember not to return early without releasing the string
+            if (extract != null) {
+                if (tokenizer.internalEncodingDeclaration(extract)) {
+                    requestSuspension();
+                }                
             }
-        } else {
-            tokenizer.internalEncodingDeclaration(internalCharsetLegacy);
-            Portability.releaseString(internalCharsetLegacy);
-            requestSuspension();
+            Portability.releaseString(extract);
         }
     }
 

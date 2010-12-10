@@ -39,10 +39,12 @@ public interface EncodingDeclarationHandler {
      * 
      * @param charset
      *            the charset name found.
+     * @return <code>true</code> if the value of <code>charset</code> was an 
+     * encoding name for a supported ASCII-superset encoding.
      * @throws SAXException
      *             if something went wrong
      */
-    public void internalEncodingDeclaration(String charset) throws SAXException;
+    public boolean internalEncodingDeclaration(String charset) throws SAXException;
 
     /**
      * Queries the environment for the encoding in use (for error reporting).
