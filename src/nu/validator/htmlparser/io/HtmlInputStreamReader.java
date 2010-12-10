@@ -59,7 +59,7 @@ import org.xml.sax.SAXParseException;
 public final class HtmlInputStreamReader extends Reader implements
         ByteReadable, Locator {
 
-    private static final int SNIFFING_LIMIT = 512;
+    private static final int SNIFFING_LIMIT = 1024;
 
     private final InputStream inputStream;
 
