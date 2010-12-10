@@ -1199,7 +1199,8 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
         } else if (val.startsWith("-/") || val.startsWith("+//")
                 || val.startsWith("http://") || val.startsWith("XSLT")) {
             printer.print(cppTypes.stringForLiteral(val));
-        } else if (("hidden".equals(val) || "isindex".equals(val))
+        } else if (("hidden".equals(val) || "isindex".equals(val)
+                || "text/html".equals(val) || "application/xhtml+xml".equals(val))
                 && "TreeBuilder".equals(javaClassName)) {
             printer.print(cppTypes.stringForLiteral(val));
         } else if ("isQuirky".equals(currentMethod) && "html".equals(val)) {
