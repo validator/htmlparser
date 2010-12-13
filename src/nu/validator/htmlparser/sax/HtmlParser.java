@@ -535,7 +535,7 @@ public class HtmlParser implements XMLReader {
         driver = null;
     }
 
-    public void setTransitionHander(TransitionHandler handler) {
+    public void setTransitionHandler(TransitionHandler handler) {
         transitionHandler = handler;
         driver = null;
     }
