@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
- * Copyright (c) 2008-2009 Mozilla Foundation
+ * Copyright (c) 2008-2010 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -39,9 +39,9 @@ import org.xml.sax.ext.LexicalHandler;
 public class HtmlSerializer implements ContentHandler, LexicalHandler {
 
     private static final String[] VOID_ELEMENTS = { "area", "base", "basefont",
-            "bgsound", "br", "col", "command", "embed", "event-source",
-            "frame", "hr", "img", "input", "keygen", "link", "meta", "param",
-            "source", "spacer", "track", "wbr" };
+            "bgsound", "br", "col", "command", "embed", "frame", "hr", "img",
+            "input", "keygen", "link", "meta", "param", "source", "track",
+            "wbr" };
 
     private static final String[] NON_ESCAPING = { "iframe", "noembed",
             "noframes", "noscript", "plaintext", "script", "style", "xmp" };
