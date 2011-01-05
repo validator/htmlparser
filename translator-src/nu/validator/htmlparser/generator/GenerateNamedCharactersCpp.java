@@ -55,7 +55,7 @@ import nu.validator.htmlparser.cpptranslate.CppTypes;
 public class GenerateNamedCharactersCpp {
 
     /**
-     * The license for the output of this program.
+     * The license for the output of this program except for data files.
      */
     private static final String OUTPUT_LICENSE = "/*\n"
             + " * Copyright (c) 2008-2010 Mozilla Foundation\n"
@@ -77,6 +77,16 @@ public class GenerateNamedCharactersCpp {
             + " * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING \n"
             + " * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER \n"
             + " * DEALINGS IN THE SOFTWARE.\n" + " */\n\n";
+    
+    /**
+     * The license for the generated data files.
+     */
+    private static final String DATA_LICENSE = "/*\n"
+            + " * Copyright 2004-2010 Apple Computer, Inc., Mozilla Foundation, and Opera \n"
+            + " * Software ASA.\n"
+            + " * \n"
+            + " * You are granted a license to use, reproduce and create derivative works of \n"
+            + " * this document.\n" + " */\n\n";
 
     private static final int LEAD_OFFSET = 0xD800 - (0x10000 >> 10);
 
@@ -150,7 +160,7 @@ public class GenerateNamedCharactersCpp {
         Writer out = new OutputStreamWriter(new FileOutputStream(cppFile),
                 "utf-8");
 
-        out.write(OUTPUT_LICENSE);
+        out.write(DATA_LICENSE);
         out.write('\n');
         out.write("#include \"" + cppTypes.classPrefix()
                 + "NamedCharactersAccel.h\"\n");
@@ -220,7 +230,7 @@ public class GenerateNamedCharactersCpp {
                 + "NamedCharactersAccel.h");
         Writer out = new OutputStreamWriter(new FileOutputStream(hFile),
                 "utf-8");
-        out.write(OUTPUT_LICENSE);
+        out.write(DATA_LICENSE);
         out.write("#ifndef " + cppTypes.classPrefix() + "NamedCharactersAccel_h_\n");
         out.write("#define " + cppTypes.classPrefix() + "NamedCharactersAccel_h_\n");
         out.write('\n');
@@ -302,10 +312,10 @@ public class GenerateNamedCharactersCpp {
         Writer out = new OutputStreamWriter(new FileOutputStream(includeFile),
                 "utf-8");
 
-        out.write(OUTPUT_LICENSE);
+        out.write(DATA_LICENSE);
         out.write("/* Data generated from the table of named character references found at\n");
         out.write(" *\n");
-        out.write(" *   http://www.w3.org/TR/html5/named-character-references.html\n");
+        out.write(" *   http://www.whatwg.org/specs/web-apps/current-work/multipage/named-character-references.html#named-character-references\n");
         out.write(" *\n");
         out.write(" * Files that #include this file must #define NAMED_CHARACTER_REFERENCE as a\n");
         out.write(" * macro of four parameters:\n");
