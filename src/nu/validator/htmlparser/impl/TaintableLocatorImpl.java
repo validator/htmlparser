@@ -1,5 +1,4 @@
 /*
- * Copyright (c) 2007 Henri Sivonen
  * Copyright (c) 2011 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
@@ -25,36 +24,20 @@ package nu.validator.htmlparser.impl;
 
 import org.xml.sax.Locator;
 
-public class LocatorImpl implements Locator {
+public class TaintableLocatorImpl extends LocatorImpl {
 
-    private final String systemId;
-
-    private final String publicId;
-
-    private final int column;
-
-    private final int line;
-
-    public LocatorImpl(Locator locator) {
-        this.systemId = locator.getSystemId();
-        this.publicId = locator.getPublicId();
-        this.column = locator.getColumnNumber();
-        this.line = locator.getLineNumber();
+    private boolean tainted;
+    
+    public TaintableLocatorImpl(Locator locator) {
+        super(locator);
+        this.tainted = false;
+    }
+    
+    public void markTainted() {
+        tainted = true;
     }
 
-    public final int getColumnNumber() {
-        return column;
-    }
-
-    public final int getLineNumber() {
-        return line;
-    }
-
-    public final String getPublicId() {
-        return publicId;
-    }
-
-    public final String getSystemId() {
-        return systemId;
+    public boolean isTainted() {
+        return tainted;
     }
 }

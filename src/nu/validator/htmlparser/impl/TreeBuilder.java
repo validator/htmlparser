@@ -572,8 +572,13 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         if (node.isOptionalEndTag()) {
             return;
         }
+        TaintableLocatorImpl locator = node.getLocator();
+        if (locator.isTainted()) {
+            return;
+        }
+        locator.markTainted();
         SAXParseException spe = new SAXParseException(
-                "Unclosed element \u201C" + node.popName + "\u201D.", node.getLocator());
+                "Unclosed element \u201C" + node.popName + "\u201D.", locator);
         errorHandler.error(spe);
     }
 
@@ -623,7 +628,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
             }
             StackNode<T> node = new StackNode<T>(ElementName.HTML, elt
             // [NOCPP[
-                    , errorHandler == null ? null : tokenizer
+                    , errorHandler == null ? null : new TaintableLocatorImpl(tokenizer)
             // ]NOCPP]
             );
             currentPtr++;
@@ -4470,7 +4475,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                     formattingElt.name, clone, formattingElt.popName,
                     formattingElt.attributes
                     // [NOCPP[
-                    , errorHandler == null ? null : tokenizer
+                    , errorHandler == null ? null : new TaintableLocatorImpl(tokenizer)
             // ]NOCPP]
             ); // Ownership
             // transfers
@@ -4615,7 +4620,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         fatal();
         silentPush(new StackNode<T>(ElementName.HEAD, headPointer
         // [NOCPP[
-                , errorHandler == null ? null : tokenizer
+                , errorHandler == null ? null : new TaintableLocatorImpl(tokenizer)
         // ]NOCPP]
         ));
     }
@@ -4819,7 +4824,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         StackNode<T> node = new StackNode<T>(ElementName.HTML,
                 elt
                 // [NOCPP[
-                , errorHandler == null ? null : tokenizer
+                , errorHandler == null ? null : new TaintableLocatorImpl(tokenizer)
         // ]NOCPP]
         );
         push(node);
@@ -4841,7 +4846,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         StackNode<T> node = new StackNode<T>(ElementName.HEAD,
                 elt
                 // [NOCPP[
-                , errorHandler == null ? null : tokenizer
+                , errorHandler == null ? null : new TaintableLocatorImpl(tokenizer)
         // ]NOCPP]
         );
         push(node);
@@ -4875,7 +4880,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         StackNode<T> node = new StackNode<T>(ElementName.FORM,
                 elt
                 // [NOCPP[
-                , errorHandler == null ? null : tokenizer
+                , errorHandler == null ? null : new TaintableLocatorImpl(tokenizer)
         // ]NOCPP]
         );
         push(node);
@@ -4898,7 +4903,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         }
         StackNode<T> node = new StackNode<T>(elementName, elt, attributes.cloneAttributes(null)
                 // [NOCPP[
-                , errorHandler == null ? null : tokenizer
+                , errorHandler == null ? null : new TaintableLocatorImpl(tokenizer)
         // ]NOCPP]
         );
         push(node);
@@ -4917,7 +4922,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         appendElement(elt, stack[currentPtr].node);
         StackNode<T> node = new StackNode<T>(elementName, elt
                 // [NOCPP[
-                , errorHandler == null ? null : tokenizer
+                , errorHandler == null ? null : new TaintableLocatorImpl(tokenizer)
         // ]NOCPP]
         );
         push(node);
@@ -4943,7 +4948,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         }
         StackNode<T> node = new StackNode<T>(elementName, elt, popName
                 // [NOCPP[
-                , errorHandler == null ? null : tokenizer
+                , errorHandler == null ? null : new TaintableLocatorImpl(tokenizer)
         // ]NOCPP]
         );
         push(node);
@@ -4976,7 +4981,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         StackNode<T> node = new StackNode<T>(elementName, elt, popName,
                 markAsHtmlIntegrationPoint
                 // [NOCPP[
-                , errorHandler == null ? null : tokenizer
+                , errorHandler == null ? null : new TaintableLocatorImpl(tokenizer)
         // ]NOCPP]
         );
         push(node);
@@ -5013,7 +5018,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         }
         StackNode<T> node = new StackNode<T>(elementName, popName, elt
                 // [NOCPP[
-                , errorHandler == null ? null : tokenizer
+                , errorHandler == null ? null : new TaintableLocatorImpl(tokenizer)
         // ]NOCPP]
         );
         push(node);
@@ -5037,7 +5042,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         }
         StackNode<T> node = new StackNode<T>(elementName, elt
                 // [NOCPP[
-                , errorHandler == null ? null : tokenizer
+                , errorHandler == null ? null : new TaintableLocatorImpl(tokenizer)
         // ]NOCPP]
         );
         push(node);

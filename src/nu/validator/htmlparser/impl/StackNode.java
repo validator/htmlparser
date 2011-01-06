@@ -23,8 +23,6 @@
 
 package nu.validator.htmlparser.impl;
 
-import org.xml.sax.Locator;
-
 import nu.validator.htmlparser.annotation.Inline;
 import nu.validator.htmlparser.annotation.Local;
 import nu.validator.htmlparser.annotation.NsUri;
@@ -47,9 +45,9 @@ final class StackNode<T> {
 
     // [NOCPP[
 
-    private final Locator locator;
+    private final TaintableLocatorImpl locator;
     
-    public Locator getLocator() {
+    public TaintableLocatorImpl getLocator() {
         return locator;
     }
 
@@ -98,7 +96,7 @@ final class StackNode<T> {
     StackNode(int flags, @NsUri String ns, @Local String name, T node,
             @Local String popName, HtmlAttributes attributes
             // [NOCPP[
-            , Locator locator
+            , TaintableLocatorImpl locator
     // ]NOCPP]
     ) {
         this.flags = flags;
@@ -109,7 +107,7 @@ final class StackNode<T> {
         this.attributes = attributes;
         this.refcount = 1;
         // [NOCPP[
-        this.locator = locator == null ? null : new LocatorImpl(locator);
+        this.locator = locator;
         // ]NOCPP]
     }
 
@@ -121,7 +119,7 @@ final class StackNode<T> {
      */
     StackNode(ElementName elementName, T node
     // [NOCPP[
-            , Locator locator
+            , TaintableLocatorImpl locator
     // ]NOCPP]
     ) {
         this.flags = elementName.getFlags();
@@ -133,7 +131,7 @@ final class StackNode<T> {
         this.refcount = 1;
         assert !elementName.isCustom() : "Don't use this constructor for custom elements.";
         // [NOCPP[
-        this.locator = locator == null ? null : new LocatorImpl(locator);
+        this.locator = locator;
         // ]NOCPP]
     }
 
@@ -146,7 +144,7 @@ final class StackNode<T> {
      */
     StackNode(ElementName elementName, T node, HtmlAttributes attributes
     // [NOCPP[
-            , Locator locator
+            , TaintableLocatorImpl locator
     // ]NOCPP]
     ) {
         this.flags = elementName.getFlags();
@@ -158,7 +156,7 @@ final class StackNode<T> {
         this.refcount = 1;
         assert !elementName.isCustom() : "Don't use this constructor for custom elements.";
         // [NOCPP[
-        this.locator = locator == null ? null : new LocatorImpl(locator);
+        this.locator = locator;
         // ]NOCPP]
     }
 
@@ -171,7 +169,7 @@ final class StackNode<T> {
      */
     StackNode(ElementName elementName, T node, @Local String popName
     // [NOCPP[
-            , Locator locator
+            , TaintableLocatorImpl locator
     // ]NOCPP]
     ) {
         this.flags = elementName.getFlags();
@@ -182,7 +180,7 @@ final class StackNode<T> {
         this.attributes = null;
         this.refcount = 1;
         // [NOCPP[
-        this.locator = locator == null ? null : new LocatorImpl(locator);
+        this.locator = locator;
         // ]NOCPP]
     }
 
@@ -198,7 +196,7 @@ final class StackNode<T> {
      */
     StackNode(ElementName elementName, @Local String popName, T node
     // [NOCPP[
-            , Locator locator
+            , TaintableLocatorImpl locator
     // ]NOCPP]
     ) {
         this.flags = prepareSvgFlags(elementName.getFlags());
@@ -209,7 +207,7 @@ final class StackNode<T> {
         this.attributes = null;
         this.refcount = 1;
         // [NOCPP[
-        this.locator = locator == null ? null : new LocatorImpl(locator);
+        this.locator = locator;
         // ]NOCPP]
     }
 
@@ -224,7 +222,7 @@ final class StackNode<T> {
     StackNode(ElementName elementName, T node, @Local String popName,
             boolean markAsIntegrationPoint
             // [NOCPP[
-            , Locator locator
+            , TaintableLocatorImpl locator
     // ]NOCPP]
     ) {
         this.flags = prepareMathFlags(elementName.getFlags(),
@@ -236,7 +234,7 @@ final class StackNode<T> {
         this.attributes = null;
         this.refcount = 1;
         // [NOCPP[
-        this.locator = locator == null ? null : new LocatorImpl(locator);
+        this.locator = locator;
         // ]NOCPP]
     }
 
