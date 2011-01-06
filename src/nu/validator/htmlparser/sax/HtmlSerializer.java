@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
- * Copyright (c) 2008-2010 Mozilla Foundation
+ * Copyright (c) 2008-2011 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -225,7 +225,7 @@ public class HtmlSerializer implements ContentHandler, LexicalHandler {
     }
 
     public void comment(char[] ch, int start, int length) throws SAXException {
-        if (ignoreLevel > 0) {
+        if (ignoreLevel > 0 || escapeLevel > 0) {
             return;
         }
         try {
