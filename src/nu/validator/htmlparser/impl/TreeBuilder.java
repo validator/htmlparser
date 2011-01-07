@@ -1452,8 +1452,10 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                     // ]NOCPP]
                     break eofloop;
                 case TEXT:
-                    err("End of file seen when expecting text or an end tag.");
-                    errListUnclosedStartTags(0);
+                    if (errorHandler != null) {
+                        errNoCheck("End of file seen when expecting text or an end tag.");
+                        errListUnclosedStartTags(0);
+                    }
                     // XXX mark script as already executed
                     if (originalMode == AFTER_HEAD) {
                         popOnEof();
