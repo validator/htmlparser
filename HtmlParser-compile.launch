@@ -16,7 +16,7 @@
 </listAttribute>
 <booleanAttribute key="org.eclipse.jdt.launching.DEFAULT_CLASSPATH" value="false"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.google.gwt.dev.GWTCompiler"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-out /Users/hsivonen/Projects/whattf/htmlparser/www nu.validator.htmlparser.HtmlParser"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-out /home/hsivonen/Projects/whattf/htmlparser/www nu.validator.htmlparser.HtmlParser"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="htmlparser"/>
 <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xmx256M"/>
 </launchConfiguration>
