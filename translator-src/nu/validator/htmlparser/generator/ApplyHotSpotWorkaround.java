@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 Mozilla Foundation
+ * Copyright (c) 2010-2011 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -23,14 +23,16 @@
 package nu.validator.htmlparser.generator;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
-import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import nu.validator.htmlparser.impl.Tokenizer;
 
 /**
  * Applies a workaround that splits the <code>stateLoop</code> method in the
@@ -72,9 +74,17 @@ public class ApplyHotSpotWorkaround {
         String newWorkaround = workaroundHead + tokenizerMiddle
                 + workaroundTail;
 
-        newTokenizer.replace("// HOTSPOT WORKAROUND INSERTION POINT",
-                newWorkaround);
-
+        int insertionPoint = newTokenizer.indexOf("// HOTSPOT WORKAROUND INSERTION POINT");
+        
+        tokenizerHead = newTokenizer.substring(0, insertionPoint);
+        tokenizerTail = newTokenizer.substring(insertionPoint);
+        
+        newTokenizer = tokenizerHead + newWorkaround + tokenizerTail;
+        
+        Pattern pat = Pattern.compile("state = transition\\(state, ([^,]*), reconsume, pos\\)");
+        Matcher m = pat.matcher(newTokenizer);
+        newTokenizer = m.replaceAll("state = $1");
+        
         Writer out = new OutputStreamWriter(new FileOutputStream(args[0]),
                 "utf-8");
         out.write(newTokenizer);
