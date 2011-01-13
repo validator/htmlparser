@@ -62,8 +62,13 @@ public class Dom2Sax {
             switch (current.getNodeType()) {
                 case Node.ELEMENT_NODE:
                     attributes.setNamedNodeMap(current.getAttributes());
-                    contentHandler.startElement(emptyIfNull(current.getNamespaceURI()),
-                            current.getLocalName(), null, attributes);
+                    // To work around severe bogosity in the default DOM
+                    // impl, use the node name if local name is null.
+                    String localName = current.getLocalName();
+                    contentHandler.startElement(
+                            emptyIfNull(current.getNamespaceURI()),
+                            localName == null ? current.getNodeName()
+                                    : localName, null, attributes);
                     attributes.clear();
                     break;
                 case Node.TEXT_NODE:
@@ -111,7 +116,13 @@ public class Dom2Sax {
             for (;;) {
                 switch (current.getNodeType()) {
                     case Node.ELEMENT_NODE:
-                        contentHandler.endElement(emptyIfNull(current.getNamespaceURI()), current.getLocalName(), null);
+                        // To work around severe bogosity in the default DOM
+                        // impl, use the node name if local name is null.
+                        String localName = current.getLocalName();
+                        contentHandler.endElement(
+                                emptyIfNull(current.getNamespaceURI()),
+                                localName == null ? current.getNodeName()
+                                        : localName, null);
                         break;
                     case Node.DOCUMENT_NODE:
                         contentHandler.endDocument();
