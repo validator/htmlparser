@@ -1995,7 +1995,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                         generateImpliedEndTagsExceptFor(node.name);
                                         if (errorHandler != null
                                                 && eltPos != currentPtr) {
-                                            errNoCheck("Unclosed elements inside a list.");
+                                            errUnclosedElementsImplied(eltPos, name);
                                         }
                                         while (currentPtr >= eltPos) {
                                             pop();
