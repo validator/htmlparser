@@ -2058,6 +2058,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                 if (TreeBuilder.NOT_FOUND_ON_STACK != findLastInScope("nobr")) {
                                     err("\u201Cnobr\u201D start tag seen when there was an open \u201Cnobr\u201D element in scope.");
                                     adoptionAgencyEndTag("nobr");
+                                    reconstructTheActiveFormattingElements();
                                 }
                                 appendToCurrentNodeAndPushFormattingElementMayFoster(
                                         elementName,
