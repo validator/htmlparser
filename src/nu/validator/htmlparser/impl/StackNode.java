@@ -77,9 +77,13 @@ final class StackNode<T> {
         return (flags & ElementName.HTML_INTEGRATION_POINT) != 0;
     }
 
+    // [NOCPP[
+    
     public boolean isOptionalEndTag() {
         return (flags & ElementName.OPTIONAL_END_TAG) != 0;
     }
+    
+    // ]NOCPP]
 
     /**
      * Constructor for copying. This doesn't take another <code>StackNode</code>
