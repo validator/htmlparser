@@ -351,7 +351,9 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
      */
     @Override public void setErrorHandler(ErrorHandler errorHandler) {
         treeBuilder.setErrorHandler(errorHandler);
-        driver.setErrorHandler(errorHandler);
+        if (driver != null) {
+            driver.setErrorHandler(errorHandler);
+        }
     }
 
     public void setTransitionHander(TransitionHandler handler) {
