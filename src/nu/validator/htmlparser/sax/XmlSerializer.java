@@ -155,7 +155,7 @@ public class XmlSerializer implements ContentHandler, LexicalHandler {
                 "xlink");
         WELL_KNOWN_ATTRIBUTE_PREFIXES.put(
                 "http://www.w3.org/2001/XMLSchema-instance", "xsi");
-        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://www.w3org/1999/xlink",
+        WELL_KNOWN_ATTRIBUTE_PREFIXES.put("http://www.w3.org/1999/xlink",
                 "xlink");
     }
 
