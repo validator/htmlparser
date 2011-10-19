@@ -1185,8 +1185,10 @@ public class Tokenizer implements Locator {
                         attributes.addAttribute(attributeName, "", xmlnsPolicy);
                     }
                 } else {
-                    err("Attribute value omitted for a non-boolean attribute. (HTML4-only error.)");
-                    attributes.addAttribute(attributeName, "", xmlnsPolicy);
+                    if (AttributeName.BORDER != attributeName) {
+                        err("Attribute value omitted for a non-boolean attribute. (HTML4-only error.)");
+                        attributes.addAttribute(attributeName, "", xmlnsPolicy);
+                    }
                 }
             } else {
                 if (AttributeName.SRC == attributeName
