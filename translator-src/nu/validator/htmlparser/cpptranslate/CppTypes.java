@@ -160,7 +160,7 @@ public class CppTypes {
     }
 
     public String booleanType() {
-        return "PRBool";
+        return "bool";
     }
 
     public String byteType() {
@@ -200,11 +200,11 @@ public class CppTypes {
     }
 
     public String falseLiteral() {
-        return "PR_FALSE";
+        return "false";
     }
 
     public String trueLiteral() {
-        return "PR_TRUE";
+        return "true";
     }
 
     public String nullLiteral() {
