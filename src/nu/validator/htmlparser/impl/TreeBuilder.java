@@ -199,6 +199,8 @@ public abstract class TreeBuilder<T> implements TokenHandler,
 
     final static int KEYGEN = 65;
 
+    final static int MENUITEM = 66;
+
     // start insertion modes
 
     private static final int INITIAL = 0;
@@ -2105,6 +2107,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                             case AREA_OR_WBR:
                                 reconstructTheActiveFormattingElements();
                                 // FALL THROUGH to PARAM_OR_SOURCE_OR_TRACK
+                            // CPPONLY: case MENUITEM:
                             case PARAM_OR_SOURCE_OR_TRACK:
                                 appendVoidElementToCurrentMayFoster(
                                         elementName,
@@ -3565,6 +3568,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                     HtmlAttributes.EMPTY_ATTRIBUTES);
                             break endtagloop;
                         case AREA_OR_WBR:
+                        // CPPONLY: case MENUITEM:
                         case PARAM_OR_SOURCE_OR_TRACK:
                         case EMBED_OR_IMG:
                         case IMAGE:
