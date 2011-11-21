@@ -101,18 +101,23 @@ public class CppTypes {
             "nsINameSpaceManager", "nsIContent", "nsIDocument",
             "nsTraceRefcnt", "jArray", "nsHtml5DocumentMode",
             "nsHtml5ArrayCopy", "nsHtml5Parser", "nsHtml5Atoms",
-            "nsHtml5ByteReadable", "nsHtml5TreeOperation",
-            "nsHtml5PendingNotification", "nsHtml5StateSnapshot",
-            "nsHtml5StackNode", "nsHtml5TreeOpExecutor", "nsHtml5StreamParser",
+            "nsHtml5TreeOperation", "nsHtml5PendingNotification",
+            "nsHtml5StateSnapshot", "nsHtml5StackNode",
+            "nsHtml5TreeOpExecutor", "nsHtml5StreamParser",
             "nsAHtml5TreeBuilderState" };
+
+    private static final String[] TOKENIZER_INCLUDES = { "prtypes", "nsIAtom",
+            "nsHtml5AtomTable", "nsString", "nsIContent", "nsTraceRefcnt",
+            "jArray", "nsHtml5DocumentMode", "nsHtml5ArrayCopy",
+            "nsHtml5NamedCharacters", "nsHtml5NamedCharactersAccel",
+            "nsHtml5Atoms", "nsAHtml5TreeBuilderState", "nsHtml5Macros",
+            "nsHtml5Highlighter" };
 
     private static final String[] INCLUDES = { "prtypes", "nsIAtom",
             "nsHtml5AtomTable", "nsString", "nsINameSpaceManager",
-            "nsIContent", "nsIDocument", "nsTraceRefcnt", "jArray",
-            "nsHtml5DocumentMode", "nsHtml5ArrayCopy",
-            "nsHtml5NamedCharacters", "nsHtml5NamedCharactersAccel",
-            "nsHtml5Atoms", "nsHtml5ByteReadable", "nsIUnicodeDecoder",
-            "nsAHtml5TreeBuilderState", "nsHtml5Macros" };
+            "nsIContent", "nsTraceRefcnt", "jArray", "nsHtml5ArrayCopy",
+            "nsAHtml5TreeBuilderState", "nsHtml5Atoms", "nsHtml5ByteReadable",
+            "nsIUnicodeDecoder", "nsHtml5Macros" };
 
     private static final String[] OTHER_DECLATIONS = {};
 
@@ -121,10 +126,11 @@ public class CppTypes {
     private static final String[] NAMED_CHARACTERS_INCLUDES = { "prtypes",
             "jArray", "nscore", "nsDebug", "prlog", "nsMemory" };
 
-    private static final String[] FORWARD_DECLARATIONS = { "nsHtml5StreamParser", };
+    private static final String[] FORWARD_DECLARATIONS = {
+            "nsHtml5StreamParser" };
 
     private static final String[] CLASSES_THAT_NEED_SUPPLEMENT = {
-            "MetaScanner", "TreeBuilder", "UTF16Buffer", };
+            "MetaScanner", "Tokenizer", "TreeBuilder", "UTF16Buffer", };
 
     private final Map<String, String> atomMap = new HashMap<String, String>();
 
@@ -299,6 +305,8 @@ public class CppTypes {
     public String[] boilerplateIncludes(String javaClass) {
         if ("TreeBuilder".equals(javaClass)) {
             return TREE_BUILDER_INCLUDES;
+        } else if ("Tokenizer".equals(javaClass)) {
+            return TOKENIZER_INCLUDES;
         } else {
             return INCLUDES;
         }
@@ -390,5 +398,9 @@ public class CppTypes {
 
     public String characterNameTypeDeclaration() {
         return "nsHtml5CharacterName";
+    }
+
+    public String transition() {
+        return "mViewSource->Transition";
     }
 }

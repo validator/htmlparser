@@ -223,6 +223,8 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
     
     protected boolean inStatic = false;
 
+    private boolean reportTransitions = false;
+
     /**
      * @param cppTypes
      */
@@ -254,6 +256,13 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
             LocalSymbolTable arg) {
         for (BodyDeclaration member : members) {
             member.accept(this, arg);
+            if ("Tokenizer".equals(javaClassName)
+                    && member instanceof MethodDeclaration
+                    && "stateLoop".equals(((MethodDeclaration) member).getName())) {
+                reportTransitions = true;
+                member.accept(this, arg);                
+                reportTransitions = false;
+            }
         }
     }
 
@@ -1566,7 +1575,11 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
             printer.print("~");
             printer.print(className);
         } else {
-            printer.print(n.getName());
+            if (reportTransitions && "stateLoop".equals(currentMethod)) {
+                printer.print("stateLoopReportTransitions");
+            } else {
+                printer.print(n.getName());
+            }
         }
 
         currentAnnotations = null;
@@ -1751,7 +1764,18 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
 
     private void visitTransition(MethodCallExpr call, LocalSymbolTable arg) {
         List<Expression> args = call.getArgs();
-        args.get(1).accept(this, arg);
+        if (reportTransitions) {
+            printer.print(cppTypes.transition());
+            printer.print("(");
+            args.get(1).accept(this, arg);
+            printer.print(", ");
+            args.get(2).accept(this, arg);
+            printer.print(", ");
+            args.get(3).accept(this, arg);
+            printer.print(")");
+        } else {
+            args.get(1).accept(this, arg);
+        }
     }
 
     private boolean isDroppedExpression(Expression e) {
@@ -1761,6 +1785,10 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
             if (name.startsWith("fatal") || name.startsWith("err")
                     || name.startsWith("warn") || name.startsWith("maybeErr")
                     || name.startsWith("maybeWarn") || name.startsWith("note")) {
+                return true;
+            }
+            if (name.equals("CompletedNamedCharacterReference") && 
+                    !reportTransitions) {
                 return true;
             }
         }
