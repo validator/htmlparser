@@ -916,6 +916,8 @@ public abstract class TreeBuilder<T> implements TokenHandler,
      */
     public final void characters(@Const @NoLength char[] buf, int start, int length)
             throws SAXException {
+        // Note: Can't attach error messages to EOF in C++ yet
+
         // CPPONLY: if (tokenizer.isViewingXmlSource()) {
         // CPPONLY: return;
         // CPPONLY: }
@@ -1319,6 +1321,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
 
     public final void eof() throws SAXException {
         flushCharacters();
+        // Note: Can't attach error messages to EOF in C++ yet
         eofloop: for (;;) {
             if (isInForeign()) {
                 // [NOCPP[
