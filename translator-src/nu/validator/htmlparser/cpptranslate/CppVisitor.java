@@ -217,6 +217,8 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
     protected boolean inStatic = false;
 
     private boolean reportTransitions = false;
+    
+    private int stateLoopCallCount = 0;
 
     /**
      * @param cppTypes
@@ -248,14 +250,13 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
     private void printMembers(List<BodyDeclaration> members,
             LocalSymbolTable arg) {
         for (BodyDeclaration member : members) {
-            member.accept(this, arg);
             if ("Tokenizer".equals(javaClassName)
                     && member instanceof MethodDeclaration
                     && "stateLoop".equals(((MethodDeclaration) member).getName())) {
                 reportTransitions = true;
-                member.accept(this, arg);                
-                reportTransitions = false;
             }
+            member.accept(this, arg);
+            reportTransitions = false;
         }
     }
 
@@ -1338,6 +1339,14 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
             }
             printTypeArgs(n.getTypeArgs(), arg);
             printer.print(n.getName());
+            if ("stateLoop".equals(n.getName())
+                    && "Tokenizer".equals(javaClassName)
+                    && cppTypes.stateLoopPolicies().length > 0) {
+                printer.print("<");
+                printer.print(cppTypes.stateLoopPolicies()[stateLoopCallCount]);
+                printer.print(">");
+                stateLoopCallCount++;
+            }
             printer.print("(");
             if (n.getArgs() != null) {
                 for (Iterator<Expression> i = n.getArgs().iterator(); i.hasNext();) {
@@ -1540,7 +1549,7 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
 
         currentMethod = n.getName();
 
-        destructor = "destructor".equals(n.getName());
+        destructor = "destructor".equals(currentMethod);
 
         // if (n.getJavaDoc() != null) {
         // n.getJavaDoc().accept(this, arg);
@@ -1557,6 +1566,17 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
             printModifiers(n.getModifiers());
         }
 
+        if ("stateLoop".equals(currentMethod)
+                && "Tokenizer".equals(javaClassName)
+                && cppTypes.stateLoopPolicies().length > 0) {
+            printer.print("template<class P>");
+            if (inHeader()) {
+                printer.print(" ");
+            } else {
+                printer.printLn();
+            }
+        }
+        
         printTypeParameters(n.getTypeParameters(), arg);
         if (n.getTypeParameters() != null) {
             printer.print(" ");
@@ -1570,11 +1590,7 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
             printer.print("~");
             printer.print(className);
         } else {
-            if (reportTransitions && "stateLoop".equals(currentMethod)) {
-                printer.print("stateLoopReportTransitions");
-            } else {
-                printer.print(n.getName());
-            }
+            printer.print(n.getName());
         }
 
         currentAnnotations = null;
@@ -1748,12 +1764,29 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
 
     public void visit(ExpressionStmt n, LocalSymbolTable arg) {
         Expression e = n.getExpression();
-        if (isDroppedExpression(e)) {
+        if (isCompletedCharacterReference(e)) {
+            printer.print(cppTypes.completedCharacterReference());
+            printer.print(";");
             return;
+        }
+        boolean needsCondition = isTokenizerErrorReportingExpression(e);
+        if (!needsCondition && isDroppedExpression(e)) {
+            return;
+        }
+        if (needsCondition) {
+            printer.print("if (");
+            printer.print(cppTypes.tokenizerErrorCondition());
+            printer.printLn(") {");
+            printer.indent();
         }
         e.accept(this, arg);
         if (!inConstructorBody) {
             printer.print(";");
+        }
+        if (needsCondition) {
+            printer.printLn();
+            printer.unindent();
+            printer.print("}");
         }
     }
 
@@ -1762,6 +1795,8 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
         if (reportTransitions) {
             printer.print(cppTypes.transition());
             printer.print("(");
+            printer.print(cppTypes.firstTransitionArg());
+            printer.print(", ");            
             args.get(1).accept(this, arg);
             printer.print(", ");
             args.get(2).accept(this, arg);
@@ -1773,6 +1808,36 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
         }
     }
 
+    private boolean isTokenizerErrorReportingExpression(Expression e) {
+        if (!reportTransitions) {
+            return false;
+        }
+        if (e instanceof MethodCallExpr) {
+            MethodCallExpr methodCallExpr = (MethodCallExpr) e;
+            String name = methodCallExpr.getName();
+            if (supportErrorReporting && !name.startsWith("errHtml4")
+                    && ("stateLoop".equals(currentMethod))
+                    && (name.startsWith("err") || name.startsWith("maybeErr"))) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    private boolean isCompletedCharacterReference(Expression e) {
+        if (!reportTransitions) {
+            return false;
+        }
+        if (e instanceof MethodCallExpr) {
+            MethodCallExpr methodCallExpr = (MethodCallExpr) e;
+            String name = methodCallExpr.getName();
+            if (name.equals("completedNamedCharacterReference")) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
     private boolean isDroppedExpression(Expression e) {
         if (e instanceof MethodCallExpr) {
             MethodCallExpr methodCallExpr = (MethodCallExpr) e;
@@ -1787,7 +1852,7 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
                     && (name.startsWith("err") || name.startsWith("maybeErr"))) {
                 return true;
             }
-            if (name.equals("CompletedNamedCharacterReference")
+            if (name.equals("completedNamedCharacterReference")
                     && !reportTransitions) {
                 return true;
             }

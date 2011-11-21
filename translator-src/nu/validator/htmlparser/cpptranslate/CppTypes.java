@@ -111,7 +111,7 @@ public class CppTypes {
             "jArray", "nsHtml5DocumentMode", "nsHtml5ArrayCopy",
             "nsHtml5NamedCharacters", "nsHtml5NamedCharactersAccel",
             "nsHtml5Atoms", "nsAHtml5TreeBuilderState", "nsHtml5Macros",
-            "nsHtml5Highlighter" };
+            "nsHtml5Highlighter", "nsHtml5TokenizerLoopPolicies" };
 
     private static final String[] INCLUDES = { "prtypes", "nsIAtom",
             "nsHtml5AtomTable", "nsString", "nsINameSpaceManager",
@@ -131,6 +131,9 @@ public class CppTypes {
 
     private static final String[] CLASSES_THAT_NEED_SUPPLEMENT = {
             "MetaScanner", "Tokenizer", "TreeBuilder", "UTF16Buffer", };
+
+    private static final String[] STATE_LOOP_POLICIES = {
+            "nsHtml5ViewSourcePolicy", "nsHtml5SilentPolicy" };
 
     private final Map<String, String> atomMap = new HashMap<String, String>();
 
@@ -401,10 +404,26 @@ public class CppTypes {
     }
 
     public String transition() {
-        return "mViewSource->Transition";
+        return "P::transition";
+    }
+    
+    public String tokenizerErrorCondition() {
+        return "P::reportErrors";
+    }
+
+    public String firstTransitionArg() {
+        return "mViewSource";
     }
     
     public String errorHandler() {
         return "NS_UNLIKELY(mViewSource)";
+    }
+
+    public String completedCharacterReference() {
+        return "P::completedNamedCharacterReference(mViewSource)";
+    }
+
+    public String[] stateLoopPolicies() {
+        return STATE_LOOP_POLICIES;
     }
 }
