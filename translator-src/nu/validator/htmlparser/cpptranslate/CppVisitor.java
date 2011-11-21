@@ -1782,13 +1782,17 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
         if (e instanceof MethodCallExpr) {
             MethodCallExpr methodCallExpr = (MethodCallExpr) e;
             String name = methodCallExpr.getName();
-            if (name.startsWith("fatal") || name.startsWith("err")
-                    || name.startsWith("warn") || name.startsWith("maybeErr")
-                    || name.startsWith("maybeWarn") || name.startsWith("note")) {
+            if (name.startsWith("note") || name.startsWith("errHtml4")) {
                 return true;
             }
-            if (name.equals("CompletedNamedCharacterReference") && 
-                    !reportTransitions) {
+            if ((!"Tokenizer".equals(javaClassName) || ("stateLoop".equals(currentMethod) && !reportTransitions))
+                    && (name.startsWith("fatal") || name.startsWith("err")
+                            || name.startsWith("warn")
+                            || name.startsWith("maybeErr") || name.startsWith("maybeWarn"))) {
+                return true;
+            }
+            if (name.equals("CompletedNamedCharacterReference")
+                    && !reportTransitions) {
                 return true;
             }
         }
