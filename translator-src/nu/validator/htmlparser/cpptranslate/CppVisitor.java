@@ -178,15 +178,8 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
         }
     }
 
-    private boolean skipRestOfStatementsInBlock = false;
+    private boolean supportErrorReporting = true;
     
-    private String currentTokenizerState = null;
-    
-    private boolean inTokenizerLoop() {
-        return "stateLoop".equals(currentMethod)
-                && "Tokenizer".equals(javaClassName);
-    }
-
     protected SourcePrinter printer = new SourcePrinter();
 
     private SourcePrinter staticInitializerPrinter = new SourcePrinter();
@@ -326,6 +319,8 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
             printer.print(cppTypes.localForLiteral("html"));
         } else if ("documentModeHandler".equals(n.getName())) {
             printer.print("this");
+        } else if ("errorHandler".equals(n.getName())) {
+            printer.print(cppTypes.errorHandler());
         } else {
             String prefixedName = javaClassName + "." + n.getName();
             String constant = symbolTable.cppDefinesByJavaNames.get(prefixedName);
@@ -1782,13 +1777,14 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
         if (e instanceof MethodCallExpr) {
             MethodCallExpr methodCallExpr = (MethodCallExpr) e;
             String name = methodCallExpr.getName();
-            if (name.startsWith("note") || name.startsWith("errHtml4")) {
+            if (name.startsWith("fatal") || name.startsWith("note")
+                    || name.startsWith("errHtml4") || name.startsWith("warn")
+                    || name.startsWith("maybeWarn")) {
                 return true;
             }
-            if ((!"Tokenizer".equals(javaClassName) || ("stateLoop".equals(currentMethod) && !reportTransitions))
-                    && (name.startsWith("fatal") || name.startsWith("err")
-                            || name.startsWith("warn")
-                            || name.startsWith("maybeErr") || name.startsWith("maybeWarn"))) {
+            if (supportErrorReporting
+                    && ("stateLoop".equals(currentMethod) && !reportTransitions)
+                    && (name.startsWith("err") || name.startsWith("maybeErr"))) {
                 return true;
             }
             if (name.equals("CompletedNamedCharacterReference")
@@ -2057,6 +2053,9 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
     }
 
     private boolean isErrorOnlyBlock(Statement elseStmt) {
+        if (supportErrorReporting) {
+            return false;
+        }
         if (elseStmt instanceof BlockStmt) {
             BlockStmt block = (BlockStmt) elseStmt;
             List<Statement> statements = block.getStmts();
@@ -2082,6 +2081,9 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
     }
 
     private boolean isErrorHandlerIf(Expression condition) {
+        if (supportErrorReporting) {
+            return false;
+        }
         return condition.toString().indexOf("errorHandler") != -1;
     }
 
