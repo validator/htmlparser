@@ -282,9 +282,12 @@ public final class HtmlInputStreamReader extends Reader implements
                     } else {
                         // The usual stuff. Want more bytes next time.
                         shouldReadBytes = true;
-                        // return -1 if zero
                         int cPos = charBuffer.position();
-                        return cPos == 0 ? -1 : cPos;
+                        if (cPos == 0) {
+                            // No output. Read more bytes right away
+                            break;
+                        }
+                        return cPos;
                     }
                 } else {
                     // The result is in error. No need to test.
