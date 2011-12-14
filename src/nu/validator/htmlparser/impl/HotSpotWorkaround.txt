@@ -20,6 +20,12 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+   /**
+    * compressed returnValue:
+    *   int     returnState     = returnValue >> 33
+    *   boolean breakOuterState = ((returnValue >> 32) & 0x1) != 0)
+    *   int     pos             = returnValue & 0xFFFFFFFF // same as (int)returnValue
+    */  
     @SuppressWarnings("unused") private long workAroundHotSpotHugeMethodLimit(
             int state, char c, int pos, @NoLength char[] buf,
             boolean reconsume, int returnState, int endPos) throws SAXException {
@@ -30,18 +36,20 @@
                     long returnStateAndPos = workAroundHotSpotHugeMethodLimit(
                             state, c, pos, buf, reconsume, returnState, endPos);
                     pos = (int)returnStateAndPos; // 5.1.3 in the Java spec
-                    returnState = (int)(returnStateAndPos >> 32);
+                    returnState = (int)(returnStateAndPos >> 33);
                     state = stateSave;
-                    if (pos == endPos) {
+                    if ( (pos == endPos) || ( (((int)(returnStateAndPos >> 32)) & 0x1) != 0) ) {
                         break stateloop;
                     }
                     continue stateloop;
                 // END HOTSPOT WORKAROUND
                 default:
-                    break stateloop;
+                    assert !reconsume : "Must not reconsume when returning from HotSpot workaround.";
+                    stateSave = state;
+                    return (((long)returnState) << 33) | pos;
             }
         }
         assert !reconsume : "Must not reconsume when returning from HotSpot workaround.";
         stateSave = state;
-        return (((long)returnState) << 32) | pos;
+        return (((long)returnState) << 33) | (1L << 32) | pos ;
     }
