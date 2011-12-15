@@ -477,7 +477,7 @@ public class ErrorReportingTokenizer extends Tokenizer {
     }
 
     @Override protected void errSlashNotFollowedByGt() throws SAXException {
-        err("A slash was not immediate followed by \u201C>\u201D.");
+        err("A slash was not immediately followed by \u201C>\u201D.");
     }
 
     @Override protected void errHtml4XmlVoidSyntax() throws SAXException {
