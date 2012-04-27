@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>nu.validator.htmlparser</groupId>
   <artifactId>htmlparser</artifactId>
-  <packaging>jar</packaging>
+  <packaging>bundle</packaging>
   <version>1.3.1</version>
   <name>htmlparser</name>
   <url>http://about.validator.nu/htmlparser/</url>
@@ -48,6 +48,24 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <skip>true</skip>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <version>2.3.7</version>
+        <extensions>true</extensions>
+        <configuration>
+          <archive>
+            <addMavenDescriptor>false</addMavenDescriptor>
+          </archive>
+          <instructions>
+            <Bundle-Name>${project.name}</Bundle-Name>
+            <Bundle-SymbolicName>nu.validator.htmlparser</Bundle-SymbolicName>
+            <Bundle-Version>${project.version}</Bundle-Version>
+            <Bundle-RequiredExecutionEnvironment>J2SE-1.5</Bundle-RequiredExecutionEnvironment>
+            <_removeheaders>Built-By,Bnd-LastModified</_removeheaders>
+          </instructions>
         </configuration>
       </plugin>
       <plugin>
@@ -123,5 +141,6 @@
   <properties>
     <rpm.java.dir>/usr/share/java</rpm.java.dir>
     <rpm.javadoc.dir>/usr/share/javadoc</rpm.javadoc.dir>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 </project>
