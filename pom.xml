@@ -30,6 +30,7 @@
   </licenses>
   <scm>
     <connection>scm:hg:http://hg.mozilla.org/projects/htmlparser/</connection>
+    <url>http://hg.mozilla.org/projects/htmlparser/</url>
   </scm>
   <build>
     <sourceDirectory>${project.build.directory}/src</sourceDirectory>
@@ -64,6 +65,7 @@
             </goals>
             <configuration>
               <target>
+                <delete dir="${project.build.sourceDirectory}"/>
                 <mkdir dir="${project.build.sourceDirectory}"/>
                 <copy todir="${project.build.sourceDirectory}">
                   <fileset dir="${basedir}/src"/>
@@ -82,7 +84,7 @@
                 <property name="translator.sources" value="${basedir}/translator-src"/>
                 <property name="translator.classes" value="${project.build.directory}/translator-classes"/>
                 <mkdir dir="${translator.classes}"/>
-                <javac srcdir="${translator.sources}" includes="nu/validator/htmlparser/generator/ApplyHotSpotWorkaround.java" destdir="${translator.classes}"/>
+                <javac srcdir="${translator.sources}" includes="nu/validator/htmlparser/generator/ApplyHotSpotWorkaround.java" destdir="${translator.classes}" includeantruntime="false"/>
                 <java classname="nu.validator.htmlparser.generator.ApplyHotSpotWorkaround">
                   <classpath>
                     <pathelement location="${translator.classes}"/>
