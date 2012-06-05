@@ -32,8 +32,6 @@ import java.io.Writer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import nu.validator.htmlparser.impl.Tokenizer;
-
 /**
  * Applies a workaround that splits the <code>stateLoop</code> method in the
  * tokenizer into two methods. This way, each method stays under 8000 bytes in
