@@ -161,7 +161,6 @@ public class HtmlBuilder extends Builder {
         this.simpleNodeFactory = nodeFactory;
         this.treeBuilder = new XOMTreeBuilder(nodeFactory);
         this.driver = null;
-        this.driver.setXmlnsPolicy(XmlViolationPolicy.ALTER_INFOSET);
         setXmlPolicy(xmlPolicy);
     }
 
