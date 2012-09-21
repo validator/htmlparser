@@ -173,7 +173,7 @@ public class CppTypes {
     }
 
     public String byteType() {
-        return "PRInt8";
+        return "int8_t";
     }
 
     public String charType() {
@@ -185,11 +185,11 @@ public class CppTypes {
      * @return
      */
     public String unsignedShortType() {
-        return "PRUint16";
+        return "uint16_t";
     }
 
     public String intType() {
-        return "PRInt32";
+        return "int32_t";
     }
 
     public String stringType() {
@@ -205,7 +205,7 @@ public class CppTypes {
     }
 
     public String nsUriType() {
-        return "PRInt32";
+        return "int32_t";
     }
 
     public String falseLiteral() {
