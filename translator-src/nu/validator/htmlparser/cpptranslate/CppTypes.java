@@ -98,12 +98,11 @@ public class CppTypes {
 
     private static final String[] TREE_BUILDER_INCLUDES = { "prtypes",
             "nsIAtom", "nsHtml5AtomTable", "nsITimer", "nsString",
-            "nsINameSpaceManager", "nsIContent", "nsIDocument",
-            "nsTraceRefcnt", "jArray", "nsHtml5DocumentMode",
-            "nsHtml5ArrayCopy", "nsHtml5Parser", "nsHtml5Atoms",
-            "nsHtml5TreeOperation", "nsHtml5PendingNotification",
-            "nsHtml5StateSnapshot", "nsHtml5StackNode",
-            "nsHtml5TreeOpExecutor", "nsHtml5StreamParser",
+            "nsINameSpaceManager", "nsIContent", "nsTraceRefcnt", "jArray",
+            "nsHtml5DocumentMode", "nsHtml5ArrayCopy", "nsHtml5Parser",
+            "nsHtml5Atoms", "nsHtml5TreeOperation",
+            "nsHtml5PendingNotification", "nsHtml5StateSnapshot",
+            "nsHtml5StackNode", "nsHtml5TreeOpExecutor", "nsHtml5StreamParser",
             "nsAHtml5TreeBuilderState", "nsHtml5Highlighter",
             "nsHtml5ViewSourceUtils" };
 
