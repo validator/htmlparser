@@ -121,9 +121,9 @@ public class TokenPrinter implements TokenHandler, ErrorHandler {
             writer.write('\n');
             for (int i = 0; i < attributes.getLength(); i++) {
                 writer.write('A');
-                writer.write(attributes.getQName(i));
+                writer.write(attributes.getQNameNoBoundsCheck(i));
                 writer.write(' ');
-                writer.write(attributes.getValue(i));
+                writer.write(attributes.getValueNoBoundsCheck(i));
                 writer.write('\n');                
             }
         } catch (IOException e) {

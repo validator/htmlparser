@@ -74,11 +74,11 @@ class DOMTreeBuilder extends CoalescingTreeBuilder<Element> {
             HtmlAttributes attributes) throws SAXException {
         try {
             for (int i = 0; i < attributes.getLength(); i++) {
-                String localName = attributes.getLocalName(i);
-                String uri = attributes.getURI(i);
+                String localName = attributes.getLocalNameNoBoundsCheck(i);
+                String uri = attributes.getURINoBoundsCheck(i);
                 if (!element.hasAttributeNS(uri, localName)) {
                     element.setAttributeNS(uri, localName,
-                            attributes.getValue(i));
+                            attributes.getValueNoBoundsCheck(i));
                 }
             }
         } catch (DOMException e) {
@@ -159,11 +159,11 @@ class DOMTreeBuilder extends CoalescingTreeBuilder<Element> {
         try {
             Element rv = document.createElementNS(ns, name);
             for (int i = 0; i < attributes.getLength(); i++) {
-                rv.setAttributeNS(attributes.getURI(i),
-                        attributes.getLocalName(i), attributes.getValue(i));
-                if (attributes.getType(i) == "ID") {
-                    rv.setIdAttributeNS(null,
-                            attributes.getLocalName(i), true);
+                rv.setAttributeNS(attributes.getURINoBoundsCheck(i),
+                        attributes.getLocalNameNoBoundsCheck(i),
+                        attributes.getValueNoBoundsCheck(i));
+                if (attributes.getTypeNoBoundsCheck(i) == "ID") {
+                    rv.setIdAttributeNS(null, attributes.getLocalName(i), true);
                 }
             }
             return rv;
@@ -183,8 +183,9 @@ class DOMTreeBuilder extends CoalescingTreeBuilder<Element> {
             Element rv = document.createElementNS(
                     "http://www.w3.org/1999/xhtml", "html");
             for (int i = 0; i < attributes.getLength(); i++) {
-                rv.setAttributeNS(attributes.getURI(i),
-                        attributes.getLocalName(i), attributes.getValue(i));
+                rv.setAttributeNS(attributes.getURINoBoundsCheck(i),
+                        attributes.getLocalNameNoBoundsCheck(i),
+                        attributes.getValueNoBoundsCheck(i));
             }
             document.appendChild(rv);
             return rv;

@@ -121,8 +121,8 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
         }
     }
 
-    public void startTag(ElementName eltName, HtmlAttributes attributes, boolean selfClosing)
-            throws SAXException {
+    public void startTag(ElementName eltName, HtmlAttributes attributes,
+            boolean selfClosing) throws SAXException {
         String name = eltName.name;
         flushCharacters();
         JSONArray token = new JSONArray();
@@ -130,11 +130,12 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
         token.getValue().add(new JSONString(name));
         JSONObject attrs = new JSONObject();
         for (int i = 0; i < attributes.getLength(); i++) {
-            attrs.getValue().put(attributes.getQName(i), new JSONString(attributes.getValue(i)));
+            attrs.getValue().put(attributes.getQNameNoBoundsCheck(i),
+                    new JSONString(attributes.getValueNoBoundsCheck(i)));
         }
         token.getValue().add(attrs);
         if (selfClosing) {
-            token.getValue().add(JSONBoolean.TRUE);            
+            token.getValue().add(JSONBoolean.TRUE);
         }
         array.getValue().add(token);
     }

@@ -133,11 +133,11 @@ class BrowserTreeBuilder extends CoalescingTreeBuilder<JavaScriptObject> {
             HtmlAttributes attributes) throws SAXException {
         try {
             for (int i = 0; i < attributes.getLength(); i++) {
-                String localName = attributes.getLocalName(i);
-                String uri = attributes.getURI(i);
+                String localName = attributes.getLocalNameNoBoundsCheck(i);
+                String uri = attributes.getURINoBoundsCheck(i);
                 if (!hasAttributeNS(element, uri, localName)) {
                     setAttributeNS(element, uri, localName,
-                            attributes.getValue(i));
+                            attributes.getValueNoBoundsCheck(i));
                 }
             }
         } catch (JavaScriptException e) {
@@ -238,8 +238,9 @@ class BrowserTreeBuilder extends CoalescingTreeBuilder<JavaScriptObject> {
         try {
             JavaScriptObject rv = createElementNS(document, ns, name);
             for (int i = 0; i < attributes.getLength(); i++) {
-                setAttributeNS(rv, attributes.getURI(i),
-                        attributes.getLocalName(i), attributes.getValue(i));
+                setAttributeNS(rv, attributes.getURINoBoundsCheck(i),
+                        attributes.getLocalNameNoBoundsCheck(i),
+                        attributes.getValueNoBoundsCheck(i));
             }
 
             if ("script" == name) {
@@ -251,8 +252,9 @@ class BrowserTreeBuilder extends CoalescingTreeBuilder<JavaScriptObject> {
                         "http://n.validator.nu/placeholder/", "script");
                 rv = placeholder;
                 for (int i = 0; i < attributes.getLength(); i++) {
-                    setAttributeNS(rv, attributes.getURI(i),
-                            attributes.getLocalName(i), attributes.getValue(i));
+                    setAttributeNS(rv, attributes.getURINoBoundsCheck(i),
+                            attributes.getLocalNameNoBoundsCheck(i),
+                            attributes.getValueNoBoundsCheck(i));
                 }
             }
 
@@ -269,8 +271,9 @@ class BrowserTreeBuilder extends CoalescingTreeBuilder<JavaScriptObject> {
             JavaScriptObject rv = createElementNS(document,
                     "http://www.w3.org/1999/xhtml", "html");
             for (int i = 0; i < attributes.getLength(); i++) {
-                setAttributeNS(rv, attributes.getURI(i),
-                        attributes.getLocalName(i), attributes.getValue(i));
+                setAttributeNS(rv, attributes.getURINoBoundsCheck(i),
+                        attributes.getLocalNameNoBoundsCheck(i),
+                        attributes.getValueNoBoundsCheck(i));
             }
             appendChild(document, rv);
             return rv;

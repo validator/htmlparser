@@ -57,12 +57,14 @@ class XOMTreeBuilder extends CoalescingTreeBuilder<Element> {
             throws SAXException {
         try {
             for (int i = 0; i < attributes.getLength(); i++) {
-                String localName = attributes.getLocalName(i);
-                String uri = attributes.getURI(i);
+                String localName = attributes.getLocalNameNoBoundsCheck(i);
+                String uri = attributes.getURINoBoundsCheck(i);
                 if (element.getAttribute(localName, uri) == null) {
-                    element.addAttribute(nodeFactory.makeAttribute(localName,
-                            uri, attributes.getValue(i),
-                            attributes.getType(i) == "ID" ? Attribute.Type.ID
+                    element.addAttribute(nodeFactory.makeAttribute(
+                            localName,
+                            uri,
+                            attributes.getValueNoBoundsCheck(i),
+                            attributes.getTypeNoBoundsCheck(i) == "ID" ? Attribute.Type.ID
                                     : Attribute.Type.CDATA));
                 }
             }
@@ -126,16 +128,16 @@ class XOMTreeBuilder extends CoalescingTreeBuilder<Element> {
     }
 
     @Override
-    protected Element createElement(String ns, String name, HtmlAttributes attributes)
-            throws SAXException {
+ protected Element createElement(String ns, String name,
+            HtmlAttributes attributes) throws SAXException {
         try {
-            Element rv = nodeFactory.makeElement(name,
-                    ns);
+            Element rv = nodeFactory.makeElement(name, ns);
             for (int i = 0; i < attributes.getLength(); i++) {
                 rv.addAttribute(nodeFactory.makeAttribute(
-                        attributes.getLocalName(i), attributes.getURI(i),
-                        attributes.getValue(i),
-                        attributes.getType(i) == "ID" ? Attribute.Type.ID
+                        attributes.getLocalNameNoBoundsCheck(i),
+                        attributes.getURINoBoundsCheck(i),
+                        attributes.getValueNoBoundsCheck(i),
+                        attributes.getTypeNoBoundsCheck(i) == "ID" ? Attribute.Type.ID
                                 : Attribute.Type.CDATA));
             }
             return rv;
@@ -146,16 +148,17 @@ class XOMTreeBuilder extends CoalescingTreeBuilder<Element> {
     }
 
     @Override
-    protected Element createHtmlElementSetAsRoot(HtmlAttributes attributes)
-            throws SAXException {
+ protected Element createHtmlElementSetAsRoot(
+            HtmlAttributes attributes) throws SAXException {
         try {
             Element rv = nodeFactory.makeElement("html",
                     "http://www.w3.org/1999/xhtml");
             for (int i = 0; i < attributes.getLength(); i++) {
                 rv.addAttribute(nodeFactory.makeAttribute(
-                        attributes.getLocalName(i), attributes.getURI(i),
-                        attributes.getValue(i),
-                        attributes.getType(i) == "ID" ? Attribute.Type.ID
+                        attributes.getLocalNameNoBoundsCheck(i),
+                        attributes.getURINoBoundsCheck(i),
+                        attributes.getValueNoBoundsCheck(i),
+                        attributes.getTypeNoBoundsCheck(i) == "ID" ? Attribute.Type.ID
                                 : Attribute.Type.CDATA));
             }
             document.setRootElement(rv);
@@ -223,12 +226,13 @@ class XOMTreeBuilder extends CoalescingTreeBuilder<Element> {
             HtmlAttributes attributes, Element form) throws SAXException {
         try {
             Element rv = nodeFactory.makeElement(name,
-                    ns, form);
+ ns, form);
             for (int i = 0; i < attributes.getLength(); i++) {
                 rv.addAttribute(nodeFactory.makeAttribute(
-                        attributes.getLocalName(i), attributes.getURI(i),
-                        attributes.getValue(i),
-                        attributes.getType(i) == "ID" ? Attribute.Type.ID
+                        attributes.getLocalName(i),
+                        attributes.getURINoBoundsCheck(i),
+                        attributes.getValueNoBoundsCheck(i),
+                        attributes.getTypeNoBoundsCheck(i) == "ID" ? Attribute.Type.ID
                                 : Attribute.Type.CDATA));
             }
             return rv;

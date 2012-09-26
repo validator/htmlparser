@@ -217,7 +217,7 @@ public class CppTypes {
     }
 
     public String nullLiteral() {
-        return "nsnull";
+        return "nullptr";
     }
 
     public String encodingDeclarationHandlerType() {

@@ -47,7 +47,7 @@ class SAXStreamer extends TreeBuilder<Attributes>{
     protected void addAttributesToElement(Attributes element, HtmlAttributes attributes) throws SAXException {
         Attributes existingAttrs = element;
         for (int i = 0; i < attributes.getLength(); i++) {
-            String qName = attributes.getQName(i);
+            String qName = attributes.getQNameNoBoundsCheck(i);
             if (existingAttrs.getIndex(qName) < 0) {
                 fatal();
             }
