@@ -344,7 +344,7 @@ public class CppTypes {
     }
 
     public String maxInteger() {
-        return "PR_INT32_MAX";
+        return "INT32_MAX";
     }
 
     public String constructorBoilerplate(String className) {
