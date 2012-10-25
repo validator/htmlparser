@@ -426,4 +426,8 @@ public class CppTypes {
     public String[] stateLoopPolicies() {
         return STATE_LOOP_POLICIES;
     }
+    
+    public String assertionMacro() {
+        return "MOZ_ASSERT";
+    }
 }

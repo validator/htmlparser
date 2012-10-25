@@ -1718,6 +1718,34 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
     }
 
     public void visit(AssertStmt n, LocalSymbolTable arg) {
+        String macro = cppTypes.assertionMacro();
+        if (macro != null) {
+            printer.print(macro);
+            printer.print("(");
+            n.getCheck().accept(this, arg);
+            Expression msg = n.getMessage();
+            if (msg != null) {
+                printer.print(", \"");
+                if (msg instanceof StringLiteralExpr) {
+                    StringLiteralExpr sle = (StringLiteralExpr) msg;
+                    String str = sle.getValue();
+                    for (int i = 0; i < str.length(); i++) {
+                        char c = str.charAt(i);
+                        if (c == '"') {
+                            printer.print("\"");
+                        } else if (c >= ' ' && c <= '~') {
+                            printer.print("" + c);
+                        } else {
+                            throw new RuntimeException("Bad assertion message string.");
+                        }
+                    }
+                } else {
+                    throw new RuntimeException("Bad assertion message.");
+                }
+                printer.print("\"");
+            }
+            printer.print(");");
+        }
     }
 
     public void visit(BlockStmt n, LocalSymbolTable arg) {

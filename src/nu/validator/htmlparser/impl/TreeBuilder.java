@@ -4181,12 +4181,12 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         }
     }
 
-    private boolean clearLastStackSlot() {
+    private boolean debugOnlyClearLastStackSlot() {
         stack[currentPtr] = null;
         return true;
     }
 
-    private boolean clearLastListSlot() {
+    private boolean debugOnlyClearLastListSlot() {
         listOfActiveFormattingElements[listPtr] = null;
         return true;
     }
@@ -4249,7 +4249,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
             fatal();
             stack[pos].release();
             System.arraycopy(stack, pos + 1, stack, pos, currentPtr - pos);
-            assert clearLastStackSlot();
+            assert debugOnlyClearLastStackSlot();
             currentPtr--;
         }
     }
@@ -4277,14 +4277,14 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         assert listOfActiveFormattingElements[pos] != null;
         listOfActiveFormattingElements[pos].release();
         if (pos == listPtr) {
-            assert clearLastListSlot();
+            assert debugOnlyClearLastListSlot();
             listPtr--;
             return;
         }
         assert pos < listPtr;
         System.arraycopy(listOfActiveFormattingElements, pos + 1,
                 listOfActiveFormattingElements, pos, listPtr - pos);
-        assert clearLastListSlot();
+        assert debugOnlyClearLastListSlot();
         listPtr--;
     }
 
@@ -4654,7 +4654,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
 
     private void pop() throws SAXException {
         StackNode<T> node = stack[currentPtr];
-        assert clearLastStackSlot();
+        assert debugOnlyClearLastStackSlot();
         currentPtr--;
         elementPopped(node.ns, node.popName, node.node);
         node.release();
@@ -4662,14 +4662,14 @@ public abstract class TreeBuilder<T> implements TokenHandler,
 
     private void silentPop() throws SAXException {
         StackNode<T> node = stack[currentPtr];
-        assert clearLastStackSlot();
+        assert debugOnlyClearLastStackSlot();
         currentPtr--;
         node.release();
     }
 
     private void popOnEof() throws SAXException {
         StackNode<T> node = stack[currentPtr];
-        assert clearLastStackSlot();
+        assert debugOnlyClearLastStackSlot();
         currentPtr--;
         markMalformedIfScript(node.node);
         elementPopped(node.ns, node.popName, node.node);
