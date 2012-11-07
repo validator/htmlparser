@@ -96,28 +96,28 @@ public class CppTypes {
         reservedWords.add("unicode");
     }
 
-    private static final String[] TREE_BUILDER_INCLUDES = { "prtypes",
-            "nsIAtom", "nsHtml5AtomTable", "nsITimer", "nsString",
-            "nsINameSpaceManager", "nsIContent", "nsTraceRefcnt", "jArray",
-            "nsHtml5DocumentMode", "nsHtml5ArrayCopy", "nsHtml5Parser",
-            "nsHtml5Atoms", "nsHtml5TreeOperation",
-            "nsHtml5PendingNotification", "nsHtml5StateSnapshot",
-            "nsHtml5StackNode", "nsHtml5TreeOpExecutor", "nsHtml5StreamParser",
+    private static final String[] TREE_BUILDER_INCLUDES = { "nsIAtom",
+            "nsHtml5AtomTable", "nsITimer", "nsString", "nsINameSpaceManager",
+            "nsIContent", "nsTraceRefcnt", "jArray", "nsHtml5DocumentMode",
+            "nsHtml5ArrayCopy", "nsHtml5Parser", "nsHtml5Atoms",
+            "nsHtml5TreeOperation", "nsHtml5PendingNotification",
+            "nsHtml5StateSnapshot", "nsHtml5StackNode",
+            "nsHtml5TreeOpExecutor", "nsHtml5StreamParser",
             "nsAHtml5TreeBuilderState", "nsHtml5Highlighter",
-            "nsHtml5ViewSourceUtils" };
+            "nsHtml5ViewSourceUtils", "mozilla/Likely" };
 
-    private static final String[] TOKENIZER_INCLUDES = { "prtypes", "nsIAtom",
+    private static final String[] TOKENIZER_INCLUDES = { "nsIAtom",
             "nsHtml5AtomTable", "nsString", "nsIContent", "nsTraceRefcnt",
             "jArray", "nsHtml5DocumentMode", "nsHtml5ArrayCopy",
             "nsHtml5NamedCharacters", "nsHtml5NamedCharactersAccel",
             "nsHtml5Atoms", "nsAHtml5TreeBuilderState", "nsHtml5Macros",
             "nsHtml5Highlighter", "nsHtml5TokenizerLoopPolicies" };
 
-    private static final String[] INCLUDES = { "prtypes", "nsIAtom",
-            "nsHtml5AtomTable", "nsString", "nsINameSpaceManager",
-            "nsIContent", "nsTraceRefcnt", "jArray", "nsHtml5ArrayCopy",
-            "nsAHtml5TreeBuilderState", "nsHtml5Atoms", "nsHtml5ByteReadable",
-            "nsIUnicodeDecoder", "nsHtml5Macros" };
+    private static final String[] INCLUDES = { "nsIAtom", "nsHtml5AtomTable",
+            "nsString", "nsINameSpaceManager", "nsIContent", "nsTraceRefcnt",
+            "jArray", "nsHtml5ArrayCopy", "nsAHtml5TreeBuilderState",
+            "nsHtml5Atoms", "nsHtml5ByteReadable", "nsIUnicodeDecoder",
+            "nsHtml5Macros" };
 
     private static final String[] OTHER_DECLATIONS = {};
 
@@ -416,7 +416,7 @@ public class CppTypes {
     }
     
     public String errorHandler() {
-        return "NS_UNLIKELY(mViewSource)";
+        return "MOZ_UNLIKELY(mViewSource)";
     }
 
     public String completedCharacterReference() {
