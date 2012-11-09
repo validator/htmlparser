@@ -2094,10 +2094,10 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
     }
 
     public void visit(IfStmt n, LocalSymbolTable arg) {
-        if (!isErrorHandlerIf(n.getCondition())) {
-            if (isErrorOnlyBlock(n.getThenStmt())) {
+        if (!TranslatorUtils.isErrorHandlerIf(n.getCondition(), supportErrorReporting)) {
+            if (TranslatorUtils.isErrorOnlyBlock(n.getThenStmt(), supportErrorReporting)) {
                 if (n.getElseStmt() != null
-                        && !isErrorOnlyBlock(n.getElseStmt())) {
+                        && !TranslatorUtils.isErrorOnlyBlock(n.getElseStmt(), supportErrorReporting)) {
                     printer.print("if (");
                     if (n.getCondition() instanceof BinaryExpr) {
                         BinaryExpr binExpr = (BinaryExpr) n.getCondition();
@@ -2132,7 +2132,7 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
                 printer.print(") ");
                 n.getThenStmt().accept(this, arg);
                 if (n.getElseStmt() != null
-                        && !isErrorOnlyBlock(n.getElseStmt())) {
+                        && !TranslatorUtils.isErrorOnlyBlock(n.getElseStmt(), supportErrorReporting)) {
                     printer.print(" else ");
                     n.getElseStmt().accept(this, arg);
                 }
@@ -2157,40 +2157,6 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
         expr.accept(this, arg);
     }
 
-    private boolean isErrorOnlyBlock(Statement elseStmt) {
-        if (supportErrorReporting) {
-            return false;
-        }
-        if (elseStmt instanceof BlockStmt) {
-            BlockStmt block = (BlockStmt) elseStmt;
-            List<Statement> statements = block.getStmts();
-            if (statements == null) {
-                return false;
-            }
-            if (statements.size() != 1) {
-                return false;
-            }
-            Statement statement = statements.get(0);
-            if (statement instanceof ExpressionStmt) {
-                ExpressionStmt exprStmt = (ExpressionStmt) statement;
-                Expression expr = exprStmt.getExpression();
-                if (expr instanceof MethodCallExpr) {
-                    MethodCallExpr call = (MethodCallExpr) expr;
-                    if (call.getName().startsWith("err")) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean isErrorHandlerIf(Expression condition) {
-        if (supportErrorReporting) {
-            return false;
-        }
-        return condition.toString().indexOf("errorHandler") != -1;
-    }
 
     public void visit(WhileStmt n, LocalSymbolTable arg) {
         printer.print("while (");
