@@ -376,7 +376,7 @@ public class CppTypes {
     }
 
     public String arrayLengthMacro() {
-        return "NS_ARRAY_LENGTH";
+        return "MOZ_ARRAY_LENGTH";
     }
 
     public String staticAssert() {
