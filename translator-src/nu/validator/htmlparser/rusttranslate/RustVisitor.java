@@ -119,6 +119,18 @@ import nu.validator.htmlparser.cpptranslate.TranslatorUtils;
 
 public final class RustVisitor extends VoidVisitorAdapter<Object> {
     
+    private static final String[] MODS = {
+        "Tokenizer",
+        "TreeBuilder",
+        "MetaScanner",
+        "AttributeName",
+        "ElementName",
+        "HtmlAttributes",
+        "StackNode",
+        "UTF16Buffer",
+        "StateSnapshot",
+    };
+    
     private boolean inMethodSignature = false;
     
     private Set<String> fields = new HashSet<String>();
@@ -327,6 +339,15 @@ public final class RustVisitor extends VoidVisitorAdapter<Object> {
     }
 
     public void visit(ClassOrInterfaceDeclaration n, Object arg) {
+        for (int i = 0; i < MODS.length; i++) {
+            String mod = MODS[i];
+            if (!mod.equals(n.getName())) {
+                printer.print("mod ");
+                printer.print(mod);
+                printer.printLn(";");
+            }
+        }
+        
         printJavadoc(n.getJavaDoc(), arg);
 
 
@@ -462,6 +483,9 @@ public final class RustVisitor extends VoidVisitorAdapter<Object> {
         boolean field = true;
         int mods = n.getModifiers();
         if (ModifierSet.isStatic(mods) && ModifierSet.isFinal(mods)) {
+            if (!ModifierSet.isPrivate(mods)) {
+                printer.print("pub ");
+            }
             printer.print("const ");
             field = false;
         } else if (!ModifierSet.isFinal(mods)) {
@@ -694,8 +718,16 @@ public final class RustVisitor extends VoidVisitorAdapter<Object> {
     }
 
     public void visit(FieldAccessExpr n, Object arg) {
-        n.getScope().accept(this, arg);
-        printer.print(".");
+        String scope = n.getScope().toString();
+        printer.print(scope);
+        boolean mod = false;
+        for (int i = 0; i < MODS.length; i++) {
+            if (MODS[i].equals(scope)) {
+                mod = true;
+                break;
+            }
+        }
+        printer.print(mod ? "::" : ".");
         if ("length".equals(n.getField())) {
             printer.print("len() as i32");
         } else {
@@ -1079,11 +1111,8 @@ public final class RustVisitor extends VoidVisitorAdapter<Object> {
     }
 
     public void visit(LabeledStmt n, Object arg) {
-        /* XXX
-        printer.print(n.getLabel());
-        printer.print(": ");
-        */
-        n.getStmt().accept(this, arg);
+        assert arg == null;
+        n.getStmt().accept(this, n.getLabel());
     }
 
     public void visit(EmptyStmt n, Object arg) {
@@ -1146,7 +1175,10 @@ public final class RustVisitor extends VoidVisitorAdapter<Object> {
                 List<Statement> stmts = e.getStmts();
                 if (stmts != null) {
                     if (stmts.get(stmts.size() - 1) instanceof BreakStmt) {
-                        stmts.remove(stmts.size() - 1);
+                        BreakStmt brk = (BreakStmt)stmts.get(stmts.size() - 1);
+                        if (brk.getId() == null) {
+                            stmts.remove(stmts.size() - 1);
+                        }
                     }
                     if (!stmts.isEmpty()) {
                         boolean first = true;
@@ -1185,12 +1217,10 @@ public final class RustVisitor extends VoidVisitorAdapter<Object> {
 
     public void visit(BreakStmt n, Object arg) {
         printer.print("break");
-        /* XXX
-        if (n.getId() != null) {
+        if (n.getId() != null && !"charsetloop".equals(n.getId()) && !"charactersloop".equals(n.getId())) {
             printer.print(" ");
             printer.print(n.getId());
         }
-        */
         printer.print(";");
     }
 
@@ -1356,12 +1386,10 @@ public final class RustVisitor extends VoidVisitorAdapter<Object> {
             printer.printLn(";");
         }
         printer.print("loop");
-        /* XXX
         if (n.getId() != null) {
             printer.print(" ");
             printer.print(n.getId());
         }
-        */
         printer.print(";");
     }
 
@@ -1385,11 +1413,22 @@ public final class RustVisitor extends VoidVisitorAdapter<Object> {
     }
 
     public void visit(ForStmt n, Object arg) {
+        String label = null;
+        if (arg instanceof String) {
+            label = (String) arg;
+            arg = null;
+        }
         if (n.getInit() == null && n.getCompare() == null && n.getUpdate() == null) {
             printer.print("loop ");
+            if (label != null) {
+                printer.print(label);
+                printer.print(": ");
+            }
             n.getBody().accept(this, arg);
             return;
         }
+        
+        assert label == null || "charsetloop".equals(label) || "charactersloop".equals(label);
         
         Expression oldLoopUpdate = loopUpdate;
         loopUpdate = n.getUpdate().get(0);
