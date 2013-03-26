@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2010 Mozilla Foundation
+ * Copyright (c) 2009-2013 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -44,11 +44,6 @@ public class ErrorReportingTokenizer extends Tokenizer {
      * The policy for non-space non-XML characters.
      */
     private XmlViolationPolicy contentNonXmlCharPolicy = XmlViolationPolicy.ALTER_INFOSET;
-
-    /**
-     * Used together with <code>nonAsciiProhibited</code>.
-     */
-    private boolean alreadyComplainedAboutNonAscii;
 
     /**
      * Keeps track of PUA warnings.
@@ -162,7 +157,6 @@ public class ErrorReportingTokenizer extends Tokenizer {
     }
 
     protected void startErrorReporting() throws SAXException {
-        alreadyComplainedAboutNonAscii = false;
         line = linePrev = 0;
         col = colPrev = 1;
         nextCharOnNewLine = true;
@@ -207,28 +201,6 @@ public class ErrorReportingTokenizer extends Tokenizer {
         return nextCharOnNewLine;
     }
 
-    private void complainAboutNonAscii() throws SAXException {
-        String encoding = null;
-        if (encodingDeclarationHandler != null) {
-            encoding = encodingDeclarationHandler.getCharacterEncoding();
-        }
-        if (encoding == null) {
-            err("The character encoding of the document was not explicit but the document contains non-ASCII.");
-        } else {
-            err("No explicit character encoding declaration has been seen yet (assumed \u201C"
-                    + encoding + "\u201D) but the document contains non-ASCII.");
-        }
-    }
-
-    /**
-     * Returns the alreadyComplainedAboutNonAscii.
-     * 
-     * @return the alreadyComplainedAboutNonAscii
-     */
-    public boolean isAlreadyComplainedAboutNonAscii() {
-        return alreadyComplainedAboutNonAscii;
-    }
-
     /**
      * Flushes coalesced character tokens.
      * 
@@ -266,10 +238,6 @@ public class ErrorReportingTokenizer extends Tokenizer {
         }
 
         char c = buf[pos];
-        if (!confident && !alreadyComplainedAboutNonAscii && c > '\u007F') {
-            complainAboutNonAscii();
-            alreadyComplainedAboutNonAscii = true;
-        }
         switch (c) {
             case '\u0000':
                 err("Saw U+0000 in stream.");

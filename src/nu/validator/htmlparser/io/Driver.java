@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2005, 2006, 2007 Henri Sivonen
- * Copyright (c) 2007-2008 Mozilla Foundation
+ * Copyright (c) 2007-2013 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -31,13 +31,11 @@ import java.nio.charset.UnsupportedCharsetException;
 import nu.validator.htmlparser.common.CharacterHandler;
 import nu.validator.htmlparser.common.EncodingDeclarationHandler;
 import nu.validator.htmlparser.common.Heuristics;
-import nu.validator.htmlparser.common.TokenHandler;
 import nu.validator.htmlparser.common.TransitionHandler;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
 import nu.validator.htmlparser.extra.NormalizationChecker;
 import nu.validator.htmlparser.impl.ErrorReportingTokenizer;
 import nu.validator.htmlparser.impl.Tokenizer;
-import nu.validator.htmlparser.impl.TreeBuilder;
 import nu.validator.htmlparser.impl.UTF16Buffer;
 import nu.validator.htmlparser.rewindable.RewindableInputStream;
 
@@ -56,8 +54,8 @@ public class Driver implements EncodingDeclarationHandler {
     private Reader reader;
 
     /**
-     * The reference to the rewindable byte stream. <code>null</code> if p
-     * rohibited or no longer needed.
+     * The reference to the rewindable byte stream. <code>null</code> if 
+     * prohibited or no longer needed.
      */
     private RewindableInputStream rewindableInputStream;
 
@@ -198,6 +196,11 @@ public class Driver implements EncodingDeclarationHandler {
                 this.reader = new HtmlInputStreamReader(inputStream,
                         tokenizer.getErrorHandler(), tokenizer, this, heuristics);
             } else {
+                if (this.characterEncoding != Encoding.UTF8) {
+                    warnWithoutLocation("Legacy encoding \u201C"
+                            + this.characterEncoding.getCanonName()
+                            + "\u201D used. Documents should use UTF-8.");
+                }
                 becomeConfident();
                 this.reader = new HtmlInputStreamReader(inputStream,
                         tokenizer.getErrorHandler(), tokenizer, this, this.characterEncoding);
@@ -214,10 +217,6 @@ public class Driver implements EncodingDeclarationHandler {
                         ch.start();
                     }
                     runStates();
-                    if (confidence == Confidence.TENTATIVE
-                            && !tokenizer.isAlreadyComplainedAboutNonAscii()) {
-                        warnWithoutLocation("The character encoding of the document was not declared.");
-                    }
                     break;
                 } catch (ReparseException e) {
                     if (rewindableInputStream == null) {

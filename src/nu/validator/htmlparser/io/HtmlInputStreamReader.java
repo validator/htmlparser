@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
+ * Copyright (c) 2013 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -126,6 +127,14 @@ public final class HtmlInputStreamReader extends Reader implements
         if (encoding == null) {
             position = 0;
             encoding = (new MetaSniffer(errorHandler, this)).sniff(this);
+            boolean declared = true;
+            if (encoding == null) {
+                declared = false;
+            } else if (encoding != Encoding.UTF8) {
+                warn("Legacy encoding \u201C"
+                        + encoding.getCanonName()
+                        + "\u201D used. Documents should use UTF-8.");
+            }
             if (encoding == null
                     && (heuristics == Heuristics.CHARDET || heuristics == Heuristics.ALL)) {
                 encoding = (new ChardetSniffer(byteArray, limit)).sniff();
@@ -139,6 +148,9 @@ public final class HtmlInputStreamReader extends Reader implements
             if (encoding == null) {
                 encoding = Encoding.WINDOWS1252;
             }
+            if (!declared) {
+                err("The character encoding was not declared. Proceeding using \u201C" + encoding.getCanonName() + "\u201D.");
+            }
             if (driver != null) {
                 driver.setEncoding(encoding, Confidence.TENTATIVE);
             }
@@ -148,6 +160,9 @@ public final class HtmlInputStreamReader extends Reader implements
                     driver.setEncoding(Encoding.UTF8, Confidence.CERTAIN);
                 }
             } else {
+                warn("Legacy encoding \u201C"
+                        + encoding.getCanonName()
+                        + "\u201D used. Documents should use UTF-8.");
                 if (driver != null) {
                     driver.setEncoding(Encoding.UTF16, Confidence.CERTAIN);
                 }
@@ -447,6 +462,18 @@ public final class HtmlInputStreamReader extends Reader implements
             if (errorHandler != null) {
                 SAXParseException spe = new SAXParseException(message, this);
                 errorHandler.error(spe);
+            }
+        } catch (SAXException e) {
+            throw (IOException) new IOException(e.getMessage()).initCause(e);
+        }
+    }
+
+    private void warn(String message) throws IOException {
+        // TODO remove wrapping when changing read() to take a CharBuffer
+        try {
+            if (errorHandler != null) {
+                SAXParseException spe = new SAXParseException(message, this);
+                errorHandler.warning(spe);
             }
         } catch (SAXException e) {
             throw (IOException) new IOException(e.getMessage()).initCause(e);
