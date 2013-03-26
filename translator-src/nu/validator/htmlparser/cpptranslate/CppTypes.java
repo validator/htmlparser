@@ -104,7 +104,8 @@ public class CppTypes {
             "nsHtml5StateSnapshot", "nsHtml5StackNode",
             "nsHtml5TreeOpExecutor", "nsHtml5StreamParser",
             "nsAHtml5TreeBuilderState", "nsHtml5Highlighter",
-            "nsHtml5ViewSourceUtils", "mozilla/Likely" };
+            "nsHtml5PlainTextUtils", "nsHtml5ViewSourceUtils",
+            "mozilla/Likely" };
 
     private static final String[] TOKENIZER_INCLUDES = { "nsIAtom",
             "nsHtml5AtomTable", "nsString", "nsIContent", "nsTraceRefcnt",
