@@ -114,12 +114,6 @@ public class TreeDumpContentHandler implements ContentHandler, LexicalHandler {
             writer.write(localName);
             writer.write(">\n");
             level++;
-            if ("http://www.w3.org/1999/xhtml" == uri &&
-                    "template" == localName) {
-                printLead();
-                level++;
-                writer.write("content\n");
-            }
             TreeMap<String, String> map = new TreeMap<String, String>();
             for (int i = 0; i < atts.getLength(); i++) {
                 String ns = atts.getURI(i);
@@ -143,6 +137,12 @@ public class TreeDumpContentHandler implements ContentHandler, LexicalHandler {
                 writer.write("=\"");
                 writer.write(entry.getValue());
                 writer.write("\"\n");
+            }
+            if ("http://www.w3.org/1999/xhtml" == uri &&
+                    "template" == localName) {
+                printLead();
+                level++;
+                writer.write("content\n");
             }
         } catch (IOException e) {
             throw new SAXException(e);
