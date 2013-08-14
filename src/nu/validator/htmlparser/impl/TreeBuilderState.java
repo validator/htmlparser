@@ -40,10 +40,17 @@ public interface TreeBuilderState<T> {
 
     /**
      * Returns the listOfActiveFormattingElements.
-     * 
+     *
      * @return the listOfActiveFormattingElements
      */
     public StackNode<T>[] getListOfActiveFormattingElements();
+
+    /**
+     * Returns the stack of template insertion modes.
+     *
+     * @return the stack of template insertion modes
+     */
+    public int[] getTemplateModeStack();
 
     /**
      * Returns the formPointer.
@@ -100,16 +107,23 @@ public interface TreeBuilderState<T> {
      * @return the quirks
      */
     public boolean isQuirks();
-    
+
     /**
      * Return the length of the stack.
      * @return the length of the stack.
      */
     public int getStackLength();
-    
+
     /**
      * Return the length of the list of active formatting elements.
      * @return the length of the list of active formatting elements.
      */
     public int getListOfActiveFormattingElementsLength();
+
+    /**
+     * Return the length of the stack of template insertion modes.
+     *
+     * @return the length of the stack of template insertion modes.
+     */
+    int getTemplateModeStackLength();
 }
