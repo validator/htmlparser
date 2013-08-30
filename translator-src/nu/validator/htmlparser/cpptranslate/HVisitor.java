@@ -77,10 +77,10 @@ public class HVisitor extends CppVisitor {
     @Override protected void startClassDeclaration() {
         printer.print("#ifndef ");        
         printer.print(className);
-        printer.printLn("_h__");
+        printer.printLn("_h");
         printer.print("#define ");        
         printer.print(className);
-        printer.printLn("_h__");
+        printer.printLn("_h");
         
         printer.printLn();
         
