@@ -834,9 +834,17 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                             if (!"http://www.w3.org/TR/html4/strict.dtd".equals(systemIdentifier)) {
                                 warn("The doctype did not contain the system identifier prescribed by the HTML 4.01 specification. Expected \u201C<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\u201D.");
                             }
+                        } else if ("-//W3C//DTD XHTML 1.0 Strict//EN".equals(publicIdentifier)) {
+                            if (!"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd".equals(systemIdentifier)) {
+                                warn("The doctype did not contain the system identifier prescribed by the XHTML 1.0 specification. Expected \u201C<!DOCTYPE HTML PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\u201D.");
+                            }
+                        } else if ("//W3C//DTD XHTML 1.1//EN".equals(publicIdentifier)) {
+                            if (!"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd".equals(systemIdentifier)) {
+                                warn("The doctype did not contain the system identifier prescribed by the XHTML 1.1 specification. Expected \u201C<!DOCTYPE HTML PUBLIC \"//W3C//DTD XHTML 1.1//EN\" \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\u201D.");
+                            }
                         } else if (!((systemIdentifier == null || Portability.literalEqualsString(
                                 "about:legacy-compat", systemIdentifier)) && publicIdentifier == null)) {
-                            err("Legacy doctype. Expected e.g. \u201C<!DOCTYPE html>\u201D.");
+                            err("Unexpected doctype. Expected, e.g., \u201C<!DOCTYPE html>\u201D.");
                         }
                         documentModeInternal(DocumentMode.STANDARDS_MODE,
                                 publicIdentifier, systemIdentifier, html4);
