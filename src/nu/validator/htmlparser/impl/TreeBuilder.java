@@ -2909,16 +2909,15 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                             mode = IN_FRAMESET;
                             attributes = null; // CPP
                             break starttagloop;
-                        case BASE:
+                        case TEMPLATE:
                             errFooBetweenHeadAndBody(name);
                             pushHeadPointerOntoStack();
-                            appendVoidElementToCurrentMayFoster(
-                                    elementName,
-                                    attributes);
-                            selfClosing = false;
-                            pop(); // head
+                            StackNode<T> headOnStack = stack[currentPtr];
+                            startTagTemplateInHead(elementName, attributes);
+                            removeFromStack(headOnStack);
                             attributes = null; // CPP
                             break starttagloop;
+                        case BASE:
                         case LINK_OR_BASEFONT_OR_BGSOUND:
                             errFooBetweenHeadAndBody(name);
                             pushHeadPointerOntoStack();
@@ -3999,6 +3998,9 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                     }
                 case AFTER_HEAD:
                     switch (group) {
+                        case TEMPLATE:
+                            endTagTemplateInHead();
+                            break endtagloop;
                         case HTML:
                         case BODY:
                         case BR:
@@ -4325,8 +4327,11 @@ public abstract class TreeBuilder<T> implements TokenHandler,
             ns = node.ns;
             if (i == 0) {
                 if (!(contextNamespace == "http://www.w3.org/1999/xhtml" && (contextName == "td" || contextName == "th"))) {
-                    name = contextName;
-                    ns = contextNamespace;
+                    if (fragment) {
+                        // Make sure we are parsing a fragment otherwise the context element doesn't make sense.
+                        name = contextName;
+                        ns = contextNamespace;
+                    }
                 } else {
                     mode = framesetOk ? FRAMESET_OK : IN_BODY; // XXX from Hixie's email
                     return;
@@ -4361,7 +4366,6 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                 mode = IN_CAPTION;
                 return;
             } else if ("colgroup" == name) {
-                // TODO: Fragment case. Add error reporting.
                 mode = IN_COLUMN_GROUP;
                 return;
             } else if ("table" == name) {
@@ -4376,7 +4380,6 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                 return;
             }  else if ("head" == name) {
                 if (name == contextName) {
-                    // TODO: Fragment case. Add error reporting.
                     mode = framesetOk ? FRAMESET_OK : IN_BODY; // really
                 } else {
                     mode = IN_HEAD;
