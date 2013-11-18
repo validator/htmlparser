@@ -30,9 +30,6 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import nu.validator.htmlparser.annotation.CharacterName;
-import nu.validator.htmlparser.annotation.NoLength;
-
 public class GenerateNamedCharacters {
     
     private static final int LEAD_OFFSET = 0xD800 - (0x10000 >> 10);
