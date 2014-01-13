@@ -179,7 +179,7 @@ public class CppTypes {
     }
 
     public String charType() {
-        return "PRUnichar";
+        return "char16_t";
     }
 
     /**
