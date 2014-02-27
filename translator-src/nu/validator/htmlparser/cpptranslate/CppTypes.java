@@ -97,7 +97,7 @@ public class CppTypes {
     }
 
     private static final String[] TREE_BUILDER_INCLUDES = { "nsIAtom",
-            "nsHtml5AtomTable", "nsITimer", "nsString", "nsINameSpaceManager",
+            "nsHtml5AtomTable", "nsITimer", "nsString", "nsNameSpaceManager",
             "nsIContent", "nsTraceRefcnt", "jArray", "nsHtml5DocumentMode",
             "nsHtml5ArrayCopy", "nsHtml5Parser", "nsHtml5Atoms",
             "nsHtml5TreeOperation", "nsHtml5PendingNotification",
@@ -115,7 +115,7 @@ public class CppTypes {
             "nsHtml5Highlighter", "nsHtml5TokenizerLoopPolicies" };
 
     private static final String[] INCLUDES = { "nsIAtom", "nsHtml5AtomTable",
-            "nsString", "nsINameSpaceManager", "nsIContent", "nsTraceRefcnt",
+            "nsString", "nsNameSpaceManager", "nsIContent", "nsTraceRefcnt",
             "jArray", "nsHtml5ArrayCopy", "nsAHtml5TreeBuilderState",
             "nsHtml5Atoms", "nsHtml5ByteReadable", "nsIUnicodeDecoder",
             "nsHtml5Macros" };
