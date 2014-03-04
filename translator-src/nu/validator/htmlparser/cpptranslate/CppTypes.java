@@ -98,7 +98,7 @@ public class CppTypes {
 
     private static final String[] TREE_BUILDER_INCLUDES = { "nsIAtom",
             "nsHtml5AtomTable", "nsITimer", "nsString", "nsNameSpaceManager",
-            "nsIContent", "nsTraceRefcnt", "jArray", "nsHtml5DocumentMode",
+            "nsIContent", "nsISupportsImpl", "jArray", "nsHtml5DocumentMode",
             "nsHtml5ArrayCopy", "nsHtml5Parser", "nsHtml5Atoms",
             "nsHtml5TreeOperation", "nsHtml5PendingNotification",
             "nsHtml5StateSnapshot", "nsHtml5StackNode",
@@ -108,14 +108,14 @@ public class CppTypes {
             "mozilla/Likely" };
 
     private static final String[] TOKENIZER_INCLUDES = { "nsIAtom",
-            "nsHtml5AtomTable", "nsString", "nsIContent", "nsTraceRefcnt",
+            "nsHtml5AtomTable", "nsString", "nsIContent", "nsISupportsImpl",
             "jArray", "nsHtml5DocumentMode", "nsHtml5ArrayCopy",
             "nsHtml5NamedCharacters", "nsHtml5NamedCharactersAccel",
             "nsHtml5Atoms", "nsAHtml5TreeBuilderState", "nsHtml5Macros",
             "nsHtml5Highlighter", "nsHtml5TokenizerLoopPolicies" };
 
     private static final String[] INCLUDES = { "nsIAtom", "nsHtml5AtomTable",
-            "nsString", "nsNameSpaceManager", "nsIContent", "nsTraceRefcnt",
+            "nsString", "nsNameSpaceManager", "nsIContent", "nsISupportsImpl",
             "jArray", "nsHtml5ArrayCopy", "nsAHtml5TreeBuilderState",
             "nsHtml5Atoms", "nsHtml5ByteReadable", "nsIUnicodeDecoder",
             "nsHtml5Macros" };
