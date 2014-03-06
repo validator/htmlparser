@@ -73,7 +73,7 @@ public class CppTypes {
             + " * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING \n"
             + " * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER \n"
             + " * DEALINGS IN THE SOFTWARE.\n" + " */\n\n";
-    
+
     private static Set<String> reservedWords = new HashSet<String>();
 
     static {
@@ -96,40 +96,38 @@ public class CppTypes {
         reservedWords.add("unicode");
     }
 
-    private static final String[] TREE_BUILDER_INCLUDES = { "nsIAtom",
-            "nsHtml5AtomTable", "nsITimer", "nsString", "nsNameSpaceManager",
-            "nsIContent", "nsISupportsImpl", "jArray", "nsHtml5DocumentMode",
-            "nsHtml5ArrayCopy", "nsHtml5Parser", "nsHtml5Atoms",
-            "nsHtml5TreeOperation", "nsHtml5PendingNotification",
-            "nsHtml5StateSnapshot", "nsHtml5StackNode",
-            "nsHtml5TreeOpExecutor", "nsHtml5StreamParser",
+    private static final String[] TREE_BUILDER_INCLUDES = { "nsContentUtils",
+            "nsIAtom", "nsHtml5AtomTable", "nsITimer", "nsString",
+            "nsNameSpaceManager", "nsIContent", "nsTraceRefcnt", "jArray",
+            "nsHtml5DocumentMode", "nsHtml5ArrayCopy", "nsHtml5Parser",
+            "nsHtml5Atoms", "nsHtml5TreeOperation",
+            "nsHtml5PendingNotification", "nsHtml5StateSnapshot",
+            "nsHtml5StackNode", "nsHtml5TreeOpExecutor", "nsHtml5StreamParser",
             "nsAHtml5TreeBuilderState", "nsHtml5Highlighter",
             "nsHtml5PlainTextUtils", "nsHtml5ViewSourceUtils",
-            "mozilla/Likely" };
+            "mozilla/Likely", "nsIContentHandle", "nsHtml5OplessBuilder" };
 
     private static final String[] TOKENIZER_INCLUDES = { "nsIAtom",
-            "nsHtml5AtomTable", "nsString", "nsIContent", "nsISupportsImpl",
+            "nsHtml5AtomTable", "nsString", "nsIContent", "nsTraceRefcnt",
             "jArray", "nsHtml5DocumentMode", "nsHtml5ArrayCopy",
             "nsHtml5NamedCharacters", "nsHtml5NamedCharactersAccel",
             "nsHtml5Atoms", "nsAHtml5TreeBuilderState", "nsHtml5Macros",
             "nsHtml5Highlighter", "nsHtml5TokenizerLoopPolicies" };
 
     private static final String[] INCLUDES = { "nsIAtom", "nsHtml5AtomTable",
-            "nsString", "nsNameSpaceManager", "nsIContent", "nsISupportsImpl",
+            "nsString", "nsNameSpaceManager", "nsIContent", "nsTraceRefcnt",
             "jArray", "nsHtml5ArrayCopy", "nsAHtml5TreeBuilderState",
             "nsHtml5Atoms", "nsHtml5ByteReadable", "nsIUnicodeDecoder",
-            "nsHtml5Macros" };
+            "nsHtml5Macros", "nsIContentHandle" };
 
     private static final String[] OTHER_DECLATIONS = {};
 
     private static final String[] TREE_BUILDER_OTHER_DECLATIONS = {};
 
-    private static final String[] NAMED_CHARACTERS_INCLUDES = { "prtypes",
-            "jArray", "nscore", "nsDebug", "prlog", "nsMemory",
-            "mozilla/Util" };
+    private static final String[] NAMED_CHARACTERS_INCLUDES = { "jArray",
+            "nscore", "nsDebug", "prlog", "nsMemory", "mozilla/Util" };
 
-    private static final String[] FORWARD_DECLARATIONS = {
-            "nsHtml5StreamParser" };
+    private static final String[] FORWARD_DECLARATIONS = { "nsHtml5StreamParser" };
 
     private static final String[] CLASSES_THAT_NEED_SUPPLEMENT = {
             "MetaScanner", "Tokenizer", "TreeBuilder", "UTF16Buffer", };
@@ -184,6 +182,7 @@ public class CppTypes {
 
     /**
      * Only used for named characters.
+     * 
      * @return
      */
     public String unsignedShortType() {
@@ -227,7 +226,7 @@ public class CppTypes {
     }
 
     public String nodeType() {
-        return "nsIContent**";
+        return "nsIContentHandle*";
     }
 
     public String xhtmlNamespaceLiteral() {
@@ -302,7 +301,7 @@ public class CppTypes {
     public String staticArrayTemplate() {
         return "staticJArray";
     }
-    
+
     public String newArrayCreator() {
         return "newJArray";
     }
@@ -408,7 +407,7 @@ public class CppTypes {
     public String transition() {
         return "P::transition";
     }
-    
+
     public String tokenizerErrorCondition() {
         return "P::reportErrors";
     }
@@ -416,7 +415,7 @@ public class CppTypes {
     public String firstTransitionArg() {
         return "mViewSource";
     }
-    
+
     public String errorHandler() {
         return "MOZ_UNLIKELY(mViewSource)";
     }
@@ -428,7 +427,7 @@ public class CppTypes {
     public String[] stateLoopPolicies() {
         return STATE_LOOP_POLICIES;
     }
-    
+
     public String assertionMacro() {
         return "MOZ_ASSERT";
     }
