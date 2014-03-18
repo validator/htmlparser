@@ -4661,6 +4661,16 @@ public abstract class TreeBuilder<T> implements TokenHandler,
 
                 if (j > 3 && nodeListPos != -1) {
                     removeFromListOfActiveFormattingElements(nodeListPos);
+
+                    // Adjust the indices into the list to account
+                    // for the removal of nodeListPos.
+                    if (nodeListPos <= formattingEltListPos) {
+                        formattingEltListPos--;
+                    }
+                    if (nodeListPos <= bookmark) {
+                        bookmark--;
+                    }
+
                     // Update position to reflect removal from list.
                     nodeListPos = -1;
                 }
