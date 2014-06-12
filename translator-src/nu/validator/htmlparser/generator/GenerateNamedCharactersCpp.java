@@ -231,8 +231,8 @@ public class GenerateNamedCharactersCpp {
         Writer out = new OutputStreamWriter(new FileOutputStream(hFile),
                 "utf-8");
         out.write(DATA_LICENSE);
-        out.write("#ifndef " + cppTypes.classPrefix() + "NamedCharactersAccel_h_\n");
-        out.write("#define " + cppTypes.classPrefix() + "NamedCharactersAccel_h_\n");
+        out.write("#ifndef " + cppTypes.classPrefix() + "NamedCharactersAccel_h\n");
+        out.write("#define " + cppTypes.classPrefix() + "NamedCharactersAccel_h\n");
         out.write('\n');
 
         String[] includes = cppTypes.namedCharactersIncludes();
@@ -251,7 +251,7 @@ public class GenerateNamedCharactersCpp {
         out.write("};\n");
 
         out.write("\n#endif // " + cppTypes.classPrefix()
-                + "NamedCharactersAccel_h_\n");
+                + "NamedCharactersAccel_h\n");
         out.flush();
         out.close();
     }
@@ -263,8 +263,8 @@ public class GenerateNamedCharactersCpp {
         Writer out = new OutputStreamWriter(new FileOutputStream(hFile),
                 "utf-8");
         out.write(OUTPUT_LICENSE);
-        out.write("#ifndef " + cppTypes.classPrefix() + "NamedCharacters_h_\n");
-        out.write("#define " + cppTypes.classPrefix() + "NamedCharacters_h_\n");
+        out.write("#ifndef " + cppTypes.classPrefix() + "NamedCharacters_h\n");
+        out.write("#define " + cppTypes.classPrefix() + "NamedCharacters_h\n");
         out.write('\n');
 
         String[] includes = cppTypes.namedCharactersIncludes();
@@ -300,7 +300,7 @@ public class GenerateNamedCharactersCpp {
         out.write("};\n");
 
         out.write("\n#endif // " + cppTypes.classPrefix()
-                + "NamedCharacters_h_\n");
+                + "NamedCharacters_h\n");
         out.flush();
         out.close();
     }
