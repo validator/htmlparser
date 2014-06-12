@@ -125,7 +125,7 @@ public class CppTypes {
     private static final String[] TREE_BUILDER_OTHER_DECLATIONS = {};
 
     private static final String[] NAMED_CHARACTERS_INCLUDES = { "jArray",
-            "nscore", "nsDebug", "prlog", "nsMemory", "mozilla/Util" };
+            "nscore", "nsDebug", "prlog", "mozilla/ArrayUtils" };
 
     private static final String[] FORWARD_DECLARATIONS = { "nsHtml5StreamParser" };
 
