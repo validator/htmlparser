@@ -206,7 +206,7 @@ public class GenerateNamedCharactersCpp {
             }
         }
 
-        out.write("const PRInt32* const " + cppTypes.classPrefix()
+        out.write("const int32_t* const " + cppTypes.classPrefix()
                 + "NamedCharactersAccel::HILO_ACCEL[] = {\n");
         for (int i = 0; i < hiLoTable.length; i++) {
             if (i != 0) {
@@ -326,7 +326,7 @@ public class GenerateNamedCharactersCpp {
         out.write(" *       See Tokenizer.java.\n");
         out.write(" *   3.  the length of this sequence of characters,\n");
         out.write(" *   4.  placeholder flag (0 if argument #is not a placeholder and 1 if it is),\n");
-        out.write(" *   5.  a comma-separated sequence of PRUnichar literals corresponding\n");
+        out.write(" *   5.  a comma-separated sequence of char16_t literals corresponding\n");
         out.write(" *       to the code-point(s) of the named character.\n");
         out.write(" *\n");
         out.write(" * The macro expansion doesn't have to refer to all or any of these parameters,\n");
@@ -551,7 +551,7 @@ public class GenerateNamedCharactersCpp {
         out.write("\n");
         out.write(cppTypes.characterNameTypeDeclaration());
         out.write("::charAt(");
-        out.write("PRInt32");
+        out.write("int32_t");
         out.write(" index) const\n{\n  return static_cast<");
         out.write(cppTypes.charType());
         out.write("> (ALL_NAMES[nameStart + index]);\n}\n\n");
