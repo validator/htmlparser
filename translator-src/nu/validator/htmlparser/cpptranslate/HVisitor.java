@@ -43,6 +43,7 @@ import java.util.List;
 import japa.parser.ast.body.FieldDeclaration;
 import japa.parser.ast.body.MethodDeclaration;
 import japa.parser.ast.body.ModifierSet;
+import japa.parser.ast.body.Parameter;
 import japa.parser.ast.body.VariableDeclarator;
 import japa.parser.ast.expr.IntegerLiteralExpr;
 import japa.parser.ast.expr.MethodCallExpr;
@@ -268,6 +269,15 @@ public class HVisitor extends CppVisitor {
             currentArrayCount = 0;
             inStatic = false;
             inPrimitiveNoLengthFieldDeclarator = false;
+        }
+    }
+
+    /**
+     * @see nu.validator.htmlparser.cpptranslate.CppVisitor#printConstructorExplicit(java.util.List<japa.parser.ast.body.Parameter>)
+     */
+    @Override protected void printConstructorExplicit(List<Parameter> params) {
+        if (params != null && params.size() == 1) {
+            printer.print("explicit ");
         }
     }
 

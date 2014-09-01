@@ -1463,6 +1463,7 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
         printModifiers(n.getModifiers());
 
         printMethodNamespace();
+        printConstructorExplicit(n.getParameters());
         printer.print(className);
         currentAnnotations = null;
 
@@ -1479,6 +1480,9 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
         printer.print(")");
 
         printConstructorBody(n.getBlock(), arg);
+    }
+
+    protected void printConstructorExplicit(List<Parameter> params) {
     }
 
     protected void printConstructorBody(BlockStmt block, LocalSymbolTable arg) {
