@@ -321,16 +321,34 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
     }
 
     /**
-     * Parses a document fragment from a SAX <code>InputSource</code>.
+     * Parses a document fragment from a SAX <code>InputSource</code> with 
+     * an HTML element as the fragment context.
      * @param is the source
-     * @param context the context element name
-     * @return the doc
+     * @param context the context element name (HTML namespace assumed)
+     * @return the document fragment
      * @throws SAXException if stuff goes wrong
      * @throws IOException if IO goes wrong
      */
     public DocumentFragment parseFragment(InputSource is, String context)
             throws IOException, SAXException {
         treeBuilder.setFragmentContext(context.intern());
+        tokenize(is);
+        return treeBuilder.getDocumentFragment();
+    }
+
+    /**
+     * Parses a document fragment from a SAX <code>InputSource</code>.
+     * @param is the source
+     * @param contextLocal the local name of the context element
+     * @param contextNamespace the namespace of the context element
+     * @return the document fragment
+     * @throws SAXException if stuff goes wrong
+     * @throws IOException if IO goes wrong
+     */
+    public DocumentFragment parseFragment(InputSource is, String contextLocal,
+            String contextNamespace) throws IOException, SAXException {
+        treeBuilder.setFragmentContext(contextLocal.intern(),
+                contextNamespace.intern(), null, false);
         tokenize(is);
         return treeBuilder.getDocumentFragment();
     }

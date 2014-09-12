@@ -432,10 +432,10 @@ public class HtmlParser implements XMLReader {
     }
 
     /**
-     * Parses a fragment.
+     * Parses a fragment with HTML context.
      * 
      * @param input the input to parse
-     * @param context the name of the context element
+     * @param context the name of the context element (HTML namespace assumed)
      * @throws IOException
      * @throws SAXException
      */
@@ -444,6 +444,29 @@ public class HtmlParser implements XMLReader {
         lazyInit();
         try {
             treeBuilder.setFragmentContext(context.intern());
+            tokenize(input);
+        } finally {
+            if (saxTreeBuilder != null) {
+                DocumentFragment fragment = saxTreeBuilder.getDocumentFragment();
+                new TreeParser(contentHandler, lexicalHandler).parse(fragment);
+            }
+        }
+    }
+    
+    /**
+     * Parses a fragment.
+     * 
+     * @param input the input to parse
+     * @param contextLocal the local name of the context element
+     * @param contextNamespace the namespace of the context element
+     * @throws IOException
+     * @throws SAXException
+     */
+    public void parseFragment(InputSource input, String contextLocal, String contextNamespace)
+            throws IOException, SAXException {
+        lazyInit();
+        try {
+            treeBuilder.setFragmentContext(contextLocal.intern(), contextNamespace.intern(), null, false);
             tokenize(input);
         } finally {
             if (saxTreeBuilder != null) {

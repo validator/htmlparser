@@ -250,9 +250,10 @@ public class HtmlBuilder extends Builder {
     }
 
     /**
-     * Parse a fragment from SAX <code>InputSource</code>.
+     * Parse a fragment from SAX <code>InputSource</code> assuming an HTML
+     * context.
      * @param is the <code>InputSource</code>
-     * @param context the name of the context element
+     * @param context the name of the context element (HTML namespace assumed)
      * @return the fragment
      * @throws ParsingException in case of an XML violation
      * @throws IOException if IO goes wrang
@@ -265,6 +266,22 @@ public class HtmlBuilder extends Builder {
         return treeBuilder.getDocumentFragment();
     }
 
+    /**
+     * Parse a fragment from SAX <code>InputSource</code>.
+     * @param is the <code>InputSource</code>
+     * @param contextLocal the local name of the context element
+     * @parem contextNamespace the namespace of the context element
+     * @return the fragment
+     * @throws ParsingException in case of an XML violation
+     * @throws IOException if IO goes wrang
+     */
+    public Nodes buildFragment(InputSource is, String contextLocal, String contextNamespace)
+            throws IOException, ParsingException {
+        lazyInit();
+        treeBuilder.setFragmentContext(contextLocal.intern(), contextNamespace.intern(), null, false);
+        tokenize(is);
+        return treeBuilder.getDocumentFragment();
+    }
     
     /**
      * Parse from <code>File</code>.

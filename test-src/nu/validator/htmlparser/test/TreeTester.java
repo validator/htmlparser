@@ -132,7 +132,15 @@ public class TreeTester {
                 if (context == null) {
                     htmlParser.parse(is);
                 } else {
-                    htmlParser.parseFragment(is, context);
+                    String ns = "http://www.w3.org/1999/xhtml";
+                    if (context.startsWith("svg ")) {
+                        ns = "http://www.w3.org/2000/svg";
+                        context = context.substring(4);
+                    } else if (context.startsWith("math ")) {
+                        ns = "http://www.w3.org/1998/Math/MathML";
+                        context = context.substring(5);
+                    }
+                    htmlParser.parseFragment(is, context, ns);
                     treeDumpContentHandler.endDocument();
                 }
             } catch (SAXParseException e) {
