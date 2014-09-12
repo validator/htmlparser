@@ -64,6 +64,8 @@ public class TreeTester {
         UntilHashInputStream stream = null;
         try {
             String context = null;
+            boolean scriptingEnabled = true;
+            boolean hadScriptingDirective = false;
             aggregateStream.mark(12288);
             if (skipLabel()) { // #data
                 return false;
@@ -93,6 +95,18 @@ public class TreeTester {
                     sb.append((char) c);
                 }
                 context = sb.toString();
+                // Now potentially gather #script-on/off
+                sb.setLength(0);
+                while ((c = aggregateStream.read()) != '\n') {
+                    sb.append((char) c);
+                }
+                label = sb.toString();
+            }
+            if ("script-on".equals(label)) {
+                hadScriptingDirective = true;
+            } else if ("script-off".equals(label)) {
+                hadScriptingDirective = true;
+                scriptingEnabled = false;
             }
             aggregateStream.reset();
             if (skipLabel()) { // #data
@@ -113,7 +127,7 @@ public class TreeTester {
             htmlParser.setContentHandler(treeDumpContentHandler);
             htmlParser.setLexicalHandler(treeDumpContentHandler);
             htmlParser.setErrorHandler(leh);
-            htmlParser.setScriptingEnabled(true);
+            htmlParser.setScriptingEnabled(scriptingEnabled);
             try {
                 if (context == null) {
                     htmlParser.parse(is);
@@ -148,7 +162,10 @@ public class TreeTester {
                     // spin
                 }
             }
-
+            if (hadScriptingDirective && skipLabel()) { // #script-on/off
+                System.err.println("Premature end of test data.");
+                return false;                
+            }
 
             if (skipLabel()) { // #document
                 System.err.println("Premature end of test data.");
