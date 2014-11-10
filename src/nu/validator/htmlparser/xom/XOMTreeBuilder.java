@@ -129,7 +129,7 @@ class XOMTreeBuilder extends CoalescingTreeBuilder<Element> {
 
     @Override
  protected Element createElement(String ns, String name,
-            HtmlAttributes attributes) throws SAXException {
+            HtmlAttributes attributes, Element intendedParent) throws SAXException {
         try {
             Element rv = nodeFactory.makeElement(name, ns);
             for (int i = 0; i < attributes.getLength(); i++) {
@@ -223,7 +223,7 @@ class XOMTreeBuilder extends CoalescingTreeBuilder<Element> {
      */
     @Override
     protected Element createElement(String ns, String name,
-            HtmlAttributes attributes, Element form) throws SAXException {
+            HtmlAttributes attributes, Element form, Element intendedParent) throws SAXException {
         try {
             Element rv = nodeFactory.makeElement(name,
  ns, form);
@@ -263,6 +263,25 @@ class XOMTreeBuilder extends CoalescingTreeBuilder<Element> {
         if (document instanceof Mode) {
             Mode modal = (Mode) document;
             modal.setMode(mode);
+        }
+    }
+
+    @Override
+    protected Element createAndInsertFosterParentedElement(String ns, String name,
+            HtmlAttributes attributes, Element table, Element stackParent) throws SAXException {
+        try {
+            Node parent = table.getParent();
+            Element child = createElement(ns, name, attributes, parent != null ? (Element) parent : stackParent);
+            if (parent != null) { // always an element if not null
+                ((ParentNode) parent).insertChild(child, indexOfTable(table, stackParent));
+                cachedTableIndex++;
+            } else {
+                stackParent.appendChild(child);
+            }
+            return child;
+        } catch (XMLException e) {
+            fatal(e);
+            throw new RuntimeException("Unreachable");
         }
     }
 

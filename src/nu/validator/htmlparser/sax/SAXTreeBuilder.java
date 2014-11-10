@@ -151,8 +151,24 @@ class SAXTreeBuilder extends TreeBuilder<Element> {
     }
 
     @Override
-    protected Element createElement(String ns, String name, HtmlAttributes attributes) throws SAXException {
+    protected Element createElement(String ns, String name, HtmlAttributes attributes,
+            Element intendedParent) throws SAXException {
         return new Element(tokenizer, ns, name, name, attributes, true, null);
+    }
+
+    @Override
+    protected Element createAndInsertFosterParentedElement(String ns, String name,
+            HtmlAttributes attributes, Element table, Element stackParent) throws SAXException {
+        ParentNode parent = table.getParentNode();
+        Element child = createElement(ns, name, attributes, parent != null ? (Element) parent : stackParent);
+        if (parent != null) { // always an element if not null
+            parent.insertBetween(child, previousSibling(table), table);
+            cachedTablePreviousSibling = child;
+        } else {
+            stackParent.appendChild(child);
+        }
+
+        return child;
     }
 
     @Override protected void insertFosterParentedCharacters(char[] buf,

@@ -88,7 +88,7 @@ class SAXStreamer extends TreeBuilder<Attributes>{
     }
 
     @Override
-    protected Attributes createElement(String ns, String name, HtmlAttributes attributes) throws SAXException {
+    protected Attributes createElement(String ns, String name, HtmlAttributes attributes, Attributes intendedParent) throws SAXException {
         return attributes;
     }
 
@@ -173,6 +173,13 @@ class SAXStreamer extends TreeBuilder<Attributes>{
             errorHandler.fatalError(spe);
         }
         throw spe;
+    }
+
+    @Override
+    protected Attributes createAndInsertFosterParentedElement(String ns, String name,
+            HtmlAttributes attributes, Attributes table, Attributes stackParent) throws SAXException {
+        fatal();
+        throw new RuntimeException("Unreachable");
     }
 
     @Override protected void insertFosterParentedCharacters(char[] buf,

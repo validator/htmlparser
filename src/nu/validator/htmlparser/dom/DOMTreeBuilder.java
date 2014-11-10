@@ -151,11 +151,10 @@ class DOMTreeBuilder extends CoalescingTreeBuilder<Element> {
 
     /**
      * 
-     * @see nu.validator.htmlparser.impl.TreeBuilder#createElement(java.lang.String,
-     *      java.lang.String, nu.validator.htmlparser.impl.HtmlAttributes)
+     * @see nu.validator.htmlparser.impl.TreeBuilder#createElement(String, String, nu.validator.htmlparser.impl.HtmlAttributes, Object)
      */
     @Override protected Element createElement(String ns, String name,
-            HtmlAttributes attributes) throws SAXException {
+            HtmlAttributes attributes, Element intendedParent) throws SAXException {
         try {
             Element rv = document.createElementNS(ns, name);
             for (int i = 0; i < attributes.getLength(); i++) {
@@ -228,9 +227,9 @@ class DOMTreeBuilder extends CoalescingTreeBuilder<Element> {
      *      java.lang.String, org.xml.sax.Attributes, java.lang.Object)
      */
     @Override protected Element createElement(String ns, String name,
-            HtmlAttributes attributes, Element form) throws SAXException {
+            HtmlAttributes attributes, Element form, Element intendedParent) throws SAXException {
         try {
-            Element rv = createElement(ns, name, attributes);
+            Element rv = createElement(ns, name, attributes, intendedParent);
             rv.setUserData("nu.validator.form-pointer", form, null);
             return rv;
         } catch (DOMException e) {
@@ -281,6 +280,26 @@ class DOMTreeBuilder extends CoalescingTreeBuilder<Element> {
         }
         document = null;
         return rv;
+    }
+
+    @Override
+    protected Element createAndInsertFosterParentedElement(String ns, String name,
+            HtmlAttributes attributes, Element table, Element stackParent) throws SAXException {
+        try {
+            Node parent = table.getParentNode();
+            Element child = createElement(ns, name, attributes, parent != null ? (Element) parent : stackParent);
+
+            if (parent != null) { // always an element if not null
+                parent.insertBefore(child, table);
+            } else {
+                stackParent.appendChild(child);
+            }
+
+            return child;
+        } catch (DOMException e) {
+            fatal(e);
+            throw new RuntimeException("Unreachable");
+        }
     }
 
     @Override protected void insertFosterParentedCharacters(String text,
