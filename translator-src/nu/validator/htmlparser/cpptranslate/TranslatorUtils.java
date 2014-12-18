@@ -1,9 +1,11 @@
 package nu.validator.htmlparser.cpptranslate;
 
 import japa.parser.ast.expr.BinaryExpr;
+import japa.parser.ast.expr.BinaryExpr.Operator;
 import japa.parser.ast.expr.Expression;
 import japa.parser.ast.expr.MethodCallExpr;
 import japa.parser.ast.expr.NameExpr;
+import japa.parser.ast.expr.NullLiteralExpr;
 import japa.parser.ast.stmt.BlockStmt;
 import japa.parser.ast.stmt.ExpressionStmt;
 import japa.parser.ast.stmt.Statement;
@@ -49,6 +51,26 @@ public class TranslatorUtils {
             if (condition instanceof NameExpr) {
                 NameExpr name = (NameExpr) condition;
                 if ("errorHandler".equals(name.getName())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public static boolean isDocumentModeHandlerNullCheck(Expression condition) {
+        if (condition instanceof BinaryExpr) {
+            BinaryExpr binex = (BinaryExpr) condition;
+            if (binex.getOperator() != Operator.notEquals) {
+                return false;
+            }
+            if (!(binex.getRight() instanceof NullLiteralExpr)) {
+                return false;
+            }
+            Expression left = binex.getLeft();
+            if (left instanceof NameExpr) {
+                NameExpr name = (NameExpr) left;
+                if ("documentModeHandler".equals(name.getName())) {
                     return true;
                 }
             }

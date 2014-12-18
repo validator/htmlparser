@@ -2098,7 +2098,20 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
     }
 
     public void visit(IfStmt n, LocalSymbolTable arg) {
-        if (!TranslatorUtils.isErrorHandlerIf(n.getCondition(), supportErrorReporting)) {
+        if (TranslatorUtils.isDocumentModeHandlerNullCheck(n.getCondition())) {
+            Statement then = n.getThenStmt();
+            if (then instanceof BlockStmt) {
+                BlockStmt block = (BlockStmt) then;
+                List<Statement> statements = block.getStmts();
+                if (statements != null && statements.size() == 1) {
+                    statements.get(0).accept(this, arg);
+                } else {
+                    then.accept(this, arg);                    
+                }
+            } else {
+                then.accept(this, arg);
+            }
+        } else if (!TranslatorUtils.isErrorHandlerIf(n.getCondition(), supportErrorReporting)) {
             if (TranslatorUtils.isErrorOnlyBlock(n.getThenStmt(), supportErrorReporting)) {
                 if (n.getElseStmt() != null
                         && !TranslatorUtils.isErrorOnlyBlock(n.getElseStmt(), supportErrorReporting)) {
