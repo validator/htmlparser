@@ -35,6 +35,7 @@ class Label:
 MULTIBYTE_DECODER_IMPLEMENTED = [
   u"x-user-defined",
   u"replacement",
+  u"big5",
 ]
 
 preferred = []
@@ -498,3 +499,135 @@ class ''')
 ''')
   classFile.close()
 
+# Big5
+
+def toUtf16(codePoint):
+  if not codePoint:
+    codePoint = 0xFFFD
+  if codePoint <= 0xFFFF:
+    return (codePoint, 0)
+  return (((0xD800 - (0x10000 >> 10)) + (codePoint >> 10)), (0xDC00 + (codePoint & 0x3FF)))
+
+index = []
+
+for codePoint in indexes["big5"]:
+  index.append(toUtf16(codePoint))  
+
+# Plug in the exceptions
+index[1133] = (0x00CA, 0x0304) #LATIN CAPITAL LETTER E WITH CIRCUMFLEX AND MACRON
+index[1135] = (0x00CA, 0x030C) #LATIN CAPITAL LETTER E WITH CIRCUMFLEX AND CARON
+index[1164] = (0x00EA, 0x0304) #LATIN SMALL LETTER E WITH CIRCUMFLEX AND MACRON
+index[1166] = (0x00EA, 0x030C) #LATIN SMALL LETTER E WITH CIRCUMFLEX AND CARON
+
+# There are four major gaps consisting of more than 4 consecutive invalid pointers
+gaps = []
+consecutive = 0
+consecutiveStart = 0
+offset = 0
+for (lead, trail) in index:
+  if (lead == 0xFFFD and trail == 0):
+    if consecutive == 0:
+      consecutiveStart = offset
+    consecutive +=1
+  else:
+    if consecutive > 4:
+      gaps.append((consecutiveStart, consecutiveStart + consecutive))
+    consecutive = 0
+  offset += 1
+
+# Let's find a reasonable number (7) of BMP-only ranges
+bmps = []
+consecutive = 0
+consecutiveStart = 0
+offset = 0
+for (lead, trail) in index:
+  if trail == 0:
+    if consecutive == 0:
+      consecutiveStart = offset
+    consecutive +=1
+  else:
+    if consecutive > 50:
+      bmps.append((consecutiveStart, consecutiveStart + consecutive))
+    consecutive = 0
+  offset += 1
+
+def invertRanges(ranges, cap):
+  inverted = []
+  invertStart = 0
+  for (start, end) in ranges:
+    if start != 0:
+      inverted.append((invertStart, start))
+    invertStart = end
+  inverted.append((invertStart, cap))
+  return inverted
+
+cap = len(index)
+leads = invertRanges(gaps, cap)
+while index[cap - 1][1] == 0:
+  cap -= 1
+trails = invertRanges(bmps, cap)
+
+classFile = open("src/nu/validator/encoding/Big5Data.java", "w")
+classFile.write('''/*
+ * Copyright (c) 2015 Mozilla Foundation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a 
+ * copy of this software and associated documentation files (the "Software"), 
+ * to deal in the Software without restriction, including without limitation 
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense, 
+ * and/or sell copies of the Software, and to permit persons to whom the 
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in 
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL 
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * DEALINGS IN THE SOFTWARE.
+ */
+
+/*
+ * THIS IS A GENERATED FILE. PLEASE DO NOT EDIT.
+ * Instead, please regenerate using generate-encoding-data.py
+ */
+
+package nu.validator.encoding;
+
+final class Big5Data {
+    
+    static char lead(int pointer) {
+''')
+
+def printDataAccess(low, high, default, unit):
+  classFile.write('''        if (pointer < %d) {
+            return '\\u%s';
+        }
+        if (pointer < %d) {
+            return "''' % (low, default, high))
+  for i in xrange(low, high):
+    classFile.write('\\u%04X' % index[i][unit])
+  classFile.write('''".charAt(pointer - %d);
+        }
+''' % low)
+
+for (low, high) in leads:
+  printDataAccess(low, high, "FFFD", 0)
+
+classFile.write('''        return '\\uFFFD';
+    }
+    
+    static char trail(int pointer) {
+''')
+
+for (low, high) in trails:
+  printDataAccess(low, high, "0000", 1)
+
+classFile.write('''        return '\\u0000';
+    }
+}
+''')
+classFile.close()

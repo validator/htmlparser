@@ -25,7 +25,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
 
-abstract class Decoder extends CharsetDecoder {
+public abstract class Decoder extends CharsetDecoder {
 
     protected boolean report = true;
     
@@ -42,9 +42,11 @@ abstract class Decoder extends CharsetDecoder {
         }
         if (newAction == CodingErrorAction.REPLACE) {
             this.report = false;
+            return;
         }
         if (newAction == CodingErrorAction.REPORT) {
             this.report = true;
+            return;
         }
         assert false: "Unreachable.";
         throw new IllegalArgumentException("Unknown CodingErrorAction.");

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 Mozilla Foundation
+ * Copyright (c) 2015 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -20,36 +20,35 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-/*
- * THIS IS A GENERATED FILE. PLEASE DO NOT EDIT.
- * Instead, please regenerate using generate-encoding-data.py
- */
+package nu.validator.encoding.test;
 
-package nu.validator.encoding;
+import nu.validator.encoding.Encoding;
 
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
-
-class Big5 extends Encoding {
-
-    private static final String[] LABELS = {
-        "big5",
-        "big5-hkscs",
-        "cn-big5",
-        "csbig5",
-        "x-x-big5"
-    };
+public class Big5Tester extends EncodingTester {
     
-    private static final String NAME = "big5";
-    
-    static final Big5 INSTANCE = new Big5();
-    
-    private Big5() {
-        super(NAME, LABELS);
+    public static void main(String[] args) {
+        new Big5Tester().test();
     }
 
-    @Override public CharsetDecoder newDecoder() {
-        return new Big5Decoder(this);
+    private void test() {
+        // ASCII
+        decodeBig5("\u6162", "\u0061\u0062");
+        // Edge cases
+        decodeBig5("\u8740", "\u43F0");
+        decodeBig5("\uFEFE", "\u79D4");
+        decodeBig5("\uFEFD", "\uD864\uDD0D");
+        decodeBig5("\u8862", "\u00CA\u0304");
+        // Edge cases surrounded with ASCII
+        decodeBig5("\u6187\u4062", "\u0061\u43F0\u0062");
+        decodeBig5("\u61FE\uFE62", "\u0061\u79D4\u0062");
+        decodeBig5("\u61FE\uFD62", "\u0061\uD864\uDD0D\u0062");
+        decodeBig5("\u6188\u6262", "\u0061\u00CA\u0304\u0062");
+        // Bad sequences
+        decodeBig5("\uFE39", "\uFFFD\u0039");
+    }
+
+    private void decodeBig5(String input, String expectation) {
+        decode(input, expectation, Encoding.BIG5);
     }
 
 }
