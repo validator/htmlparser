@@ -105,10 +105,9 @@ public class Big5Decoder extends Decoder {
                         in.position(in.position() - 1);
                     }
                     if (this.report) {
-                        // if pos == 0 and the caller does not treat errors
-                        // as fatal, the caller is not using the undocumented
-                        // part of the API right and the line below will 
-                        // throw!
+                        // if position() == 0, the caller is not using the
+                        // undocumented part of the API right and the line
+                        // below will throw!
                         in.position(in.position() - 1);
                         return CoderResult.malformedForLength(1);
                     } else {
@@ -128,10 +127,7 @@ public class Big5Decoder extends Decoder {
             pendingTrail = '\u0000';
         }
         if (big5Lead != 0) {
-            if (this.report) {
-                big5Lead = 0;
-                return CoderResult.malformedForLength(0);                
-            }
+            assert !this.report: "How come big5Lead got to be non-zero when decodeLoop() returned in the reporting mode?";
             if (!out.hasRemaining()) {
                 return CoderResult.OVERFLOW;
             }
