@@ -501,6 +501,73 @@ class ''')
 
 # Big5
 
+# Dead-code function for exploring packing code points (including astral)
+# into 16 bits per code point by compressing out unused runs of code point
+# space.
+def deltas(indx):
+
+  points = []
+
+  for codePoint in indx:
+    if not codePoint:
+      codePoint = 0xFFFD
+    points.append(codePoint)
+
+  points.sort()
+
+
+  spread = points[-1] - points[0]
+
+  deltas = []
+
+  for x in xrange(len(points) - 1):
+    deltas.append(points[x+1] - points[x])
+
+  deltas.sort(reverse=True)
+
+  numDeltas = 0
+  for delta in deltas:
+    numDeltas += 1
+    spread -= (delta - 1)
+    if spread <= 0xFFFF:
+      break
+
+  return numDeltas
+
+#print deltas(indexes["big5"])
+
+###
+
+# The format is as follows:
+#
+# The data is pre-processed into UTF-16. Each pointer, therefore, points to
+# either one or two UTF-16 code units.
+#
+# The lead code units are indexed by the pointer, except longer ranges
+# of consecutive U+FFFD are compressed out by making comparisons and
+# subtractionon the pointer first.
+#
+# The trails code units are stored with a table of pointers
+# and a table of trail code units in the corresponding order.
+# Even with having to store the pointers, this is more space-efficient
+# than storing the trails in a way analogous to the leads except
+# segmenting on runs of absent trails instead of segmenting on
+# runs of U+FFFD.
+#
+# Overall, the most space-efficient way to pack this data would be
+# to omit the trail tables and to instead pack all code points,
+# even astral ones, in 16 bits (leaving only the analog of the
+# current lead table), by packing the code point range by omitting
+# parts of the range that have no big5 code points. However, using
+# one packing rule for everything would result in 58 comparisons
+# per unpack operation. Having a different packing rule for each
+# run of non-U+FFFD code points would still result in 40 compares
+# to unpack data in the middle one of the 5 subtables. The solution
+# would be to split the middle subtable into more subtables based
+# on criteria other than runs of U+FFFD, but I'm not doing that
+# today, since I need to land code some time instead of taking
+# forever doing premature optimization.
+
 def toUtf16(codePoint):
   if not codePoint:
     codePoint = 0xFFFD
@@ -536,20 +603,20 @@ for (lead, trail) in index:
   offset += 1
 
 # Let's find a reasonable number (7) of BMP-only ranges
-bmps = []
-consecutive = 0
-consecutiveStart = 0
-offset = 0
-for (lead, trail) in index:
-  if trail == 0:
-    if consecutive == 0:
-      consecutiveStart = offset
-    consecutive +=1
-  else:
-    if consecutive > 50:
-      bmps.append((consecutiveStart, consecutiveStart + consecutive))
-    consecutive = 0
-  offset += 1
+#bmps = []
+#consecutive = 0
+#consecutiveStart = 0
+#offset = 0
+#for (lead, trail) in index:
+#  if trail == 0:
+#    if consecutive == 0:
+#      consecutiveStart = offset
+#    consecutive +=1
+#  else:
+#    if consecutive > 50:
+#      bmps.append((consecutiveStart, consecutiveStart + consecutive))
+#    consecutive = 0
+#  offset += 1
 
 def invertRanges(ranges, cap):
   inverted = []
@@ -563,9 +630,32 @@ def invertRanges(ranges, cap):
 
 cap = len(index)
 leads = invertRanges(gaps, cap)
-while index[cap - 1][1] == 0:
-  cap -= 1
-trails = invertRanges(bmps, cap)
+#while index[cap - 1][1] == 0:
+#  cap -= 1
+#trails = invertRanges(bmps, cap)
+
+# Dead code for exploring packing code points into 16 bits
+
+#for (low, high) in leads:
+#  print deltas(indexes["big5"][low:high])
+#
+#total = 0
+#for (low, high) in trails:
+#  total += (high - low)
+#print total
+#
+#count = 0
+#for (lead, trail) in index:
+#  if trail != 0:
+#    count += 2
+#print count
+
+pointerTrails = []
+
+for pointer in xrange(len(index)):
+  (lead, trail) = index[pointer]
+  if trail != 0:
+    pointerTrails.append((pointer, trail))
 
 classFile = open("src/nu/validator/encoding/Big5Data.java", "w")
 classFile.write('''/*
@@ -621,12 +711,32 @@ classFile.write('''        return '\\uFFFD';
     }
     
     static char trail(int pointer) {
-''')
+        final String POINTERS = "''')
 
-for (low, high) in trails:
-  printDataAccess(low, high, "0000", 1)
+for (pointer, trail) in pointerTrails:
+  classFile.write('\\u%04X' % pointer)
 
-classFile.write('''        return '\\u0000';
+classFile.write('''";
+        final String TRAILS = "''')
+
+for (pointer, trail) in pointerTrails:
+  classFile.write('\\u%04X' % trail)
+
+classFile.write('''";
+        int lo = 0;
+        int hi = POINTERS.length() - 1;
+        while (lo <= hi) {
+            final int mid = (lo + hi) / 2;
+            final int candidate = POINTERS.charAt(mid);
+            if (candidate > pointer) {
+                hi = mid - 1;
+            } else if (candidate < pointer) {
+                lo = mid + 1;
+            } else {
+                return TRAILS.charAt(mid);
+            }
+        }
+        return '\u0000';
     }
 }
 ''')
