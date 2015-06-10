@@ -43,6 +43,8 @@ public class EncodingTester {
     }
 
     protected void decode(String input, String expectation, Encoding encoding) {
+        // Use the convenience method from Charset
+        
         byte[] bytes = stringToBytes(input);
         ByteBuffer byteBuf = ByteBuffer.wrap(bytes);
         CharBuffer charBuf = encoding.decode(byteBuf);
@@ -68,6 +70,8 @@ public class EncodingTester {
             }
         }
 
+        // Decode with a 1-byte input buffer
+        
         byteBuf = ByteBuffer.allocate(1);
         charBuf = CharBuffer.allocate(expectation.length() + 2);
         CharsetDecoder decoder = encoding.newDecoder();
@@ -95,7 +99,21 @@ public class EncodingTester {
             }
         }
         CoderResult result = decoder.flush(charBuf);
-
+        if (result.isMalformed()) {
+            err("Decoder reported a malformed sequence when asked to replace when flushing.", bytes, expectation);
+            return;
+        } else if (result.isUnmappable()) {
+            err("Decoder claimed unmappable sequence when flushing, which none of these decoders should do.",
+                    bytes, expectation);
+            return;
+        } else if (result.isOverflow()) {
+            err("Decoder claimed overflow when flushing when the output buffer is know to be large enough.",
+                    bytes, expectation);
+        } else if (!result.isUnderflow()) {
+            err("Bogus coder result when flushing, expected underflow.", bytes,
+                    expectation);
+        }
+        
         charBuf.limit(charBuf.position());
         charBuf.position(0);
 
@@ -112,6 +130,96 @@ public class EncodingTester {
                 return;
             }
         }
+        
+        // Decode with 1-char output buffer
+        
+        byteBuf = ByteBuffer.wrap(bytes);
+        charBuf = CharBuffer.allocate(1);
+        
+        decoder.reset(); // Let's test this while at it
+        decoder.onMalformedInput(CodingErrorAction.REPLACE);
+        int codeUnitPos = 0;
+        while (byteBuf.hasRemaining()) {
+            charBuf.position(0);
+            charBuf.put('\u0000');
+            charBuf.position(0);
+            result = decoder.decode(byteBuf, charBuf,
+                    false);
+            if (result.isMalformed()) {
+                err("Decoder reported a malformed sequence when asked to replace at index (decoding one output code unit at a time): "
+                        + byteBuf.position(), bytes, expectation);
+                return;
+            } else if (result.isUnmappable()) {
+                err("Decoder claimed unmappable sequence (decoding one output code unit at a time), which none of these decoders should do.",
+                        bytes, expectation);
+                return;
+            } else if (result.isUnderflow()) {
+                if (byteBuf.hasRemaining()) {
+                    err("When decoding one output code unit at a time, decoder claimed underflow when there was input remaining.", bytes, expectation);
+                    return;
+                }
+            } else if (!result.isOverflow()) {
+                err("Bogus coder result, expected overflow.", bytes,
+                        expectation);
+            }
+            charBuf.position(0);
+            char actual = charBuf.get();
+            char expect = expectation.charAt(codeUnitPos);
+            if (actual != expect) {
+                err("When decoding one output code unit at a time in REPORT mode, failed at position "
+                        + byteBuf.position()
+                        + ", expected: "
+                        + charToHex(expect)
+                        + ", got: "
+                        + charToHex(actual), bytes, expectation);
+                return;                
+            }
+            codeUnitPos++;
+        }
+
+        charBuf.position(0);
+        charBuf.put('\u0000');
+        charBuf.position(0);
+        result = decoder.decode(byteBuf, charBuf,
+                true);
+        
+        // XXX check result
+        if (charBuf.position() == 1) {
+            codeUnitPos++;
+        }
+        
+        charBuf.position(0);
+        charBuf.put('\u0000');
+        charBuf.position(0);
+        result = decoder.flush(charBuf);
+        if (result.isMalformed()) {
+            err("Decoder reported a malformed sequence when asked to replace when flushing (one output at a time).", bytes, expectation);
+            return;
+        } else if (result.isUnmappable()) {
+            err("Decoder claimed unmappable sequence when flushing, which none of these decoders should do (one output at a time).",
+                    bytes, expectation);
+            return;
+        } else if (result.isOverflow()) {
+            err("Decoder claimed overflow when flushing when the output buffer is know to be large enough (one output at a time).",
+                    bytes, expectation);
+        } else if (!result.isUnderflow()) {
+            err("Bogus coder result when flushing, expected underflow (one output at a time).", bytes,
+                    expectation);
+        }
+        
+        if (charBuf.position() == 1) {
+            codeUnitPos++;
+            charBuf.position(0);
+            char actual = charBuf.get();
+            char expect = expectation.charAt(codeUnitPos);
+            if (actual != expect) {
+                err("When decoding one output code unit at a time in REPORT mode, failed when flushing, expected: "
+                        + charToHex(expect) + ", got: " + charToHex(actual),
+                        bytes, expectation);
+                return;
+            }
+        }
+        
         // TODO: 2 bytes at a time starting at 0 and 2 bytes at a time starting
         // at 1
     }
