@@ -87,13 +87,20 @@ public class Big5Decoder extends Decoder {
                         return CoderResult.malformedForLength(1);
                     }
                     out.put(outLead);
-                    char outTrail = Big5Data.trail(pointer);
-                    if (outTrail != '\u0000') {
-                        if (out.hasRemaining()) {
-                            out.put(outTrail);
-                        } else {
-                            pendingTrail = outTrail;
-                            return CoderResult.OVERFLOW;
+                    // There will be a trail code unit for sure if the lead
+                    // code unit is a lead surrogate. Also, there may be a
+                    // trail code unit if the lead code unit is U+00CA or
+                    // U+00EA. Otherwise, there for sure will not be one.
+                    if ((outLead & 0xFC00) == 0xD800
+                            || (outLead & 0xFFDF) == 0x00CA) {
+                        char outTrail = Big5Data.trail(pointer);
+                        if (outTrail != '\u0000') {
+                            if (out.hasRemaining()) {
+                                out.put(outTrail);
+                            } else {
+                                pendingTrail = outTrail;
+                                return CoderResult.OVERFLOW;
+                            }
                         }
                     }
                 } else {

@@ -38,11 +38,21 @@ public class Big5Tester extends EncodingTester {
         decodeBig5("\uFEFE", "\u79D4");
         decodeBig5("\uFEFD", "\uD864\uDD0D");
         decodeBig5("\u8862", "\u00CA\u0304");
+        decodeBig5("\u8864", "\u00CA\u030C");
+        decodeBig5("\u8866", "\u00CA");
+        decodeBig5("\u88A3", "\u00EA\u0304");
+        decodeBig5("\u88A5", "\u00EA\u030C");
+        decodeBig5("\u88A7", "\u00EA");
         // Edge cases surrounded with ASCII
         decodeBig5("\u6187\u4062", "\u0061\u43F0\u0062");
         decodeBig5("\u61FE\uFE62", "\u0061\u79D4\u0062");
         decodeBig5("\u61FE\uFD62", "\u0061\uD864\uDD0D\u0062");
         decodeBig5("\u6188\u6262", "\u0061\u00CA\u0304\u0062");
+        decodeBig5("\u6188\u6462", "\u0061\u00CA\u030C\u0062");
+        decodeBig5("\u6188\u6662", "\u0061\u00CA\u0062");
+        decodeBig5("\u6188\uA362", "\u0061\u00EA\u0304\u0062");
+        decodeBig5("\u6188\uA562", "\u0061\u00EA\u030C\u0062");
+        decodeBig5("\u6188\uA762", "\u0061\u00EA\u0062");
         // Bad sequences
         decodeBig5("\uFE39", "\uFFFD\u0039");
     }
