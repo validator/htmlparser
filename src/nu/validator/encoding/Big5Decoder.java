@@ -95,12 +95,11 @@ public class Big5Decoder extends Decoder {
                             || (outLead & 0xFFDF) == 0x00CA) {
                         char outTrail = Big5Data.trail(pointer);
                         if (outTrail != '\u0000') {
-                            if (out.hasRemaining()) {
-                                out.put(outTrail);
-                            } else {
+                            if (!out.hasRemaining()) {
                                 pendingTrail = outTrail;
                                 return CoderResult.OVERFLOW;
                             }
+                            out.put(outTrail);
                         }
                     }
                 } else {
@@ -117,9 +116,8 @@ public class Big5Decoder extends Decoder {
                         // below will throw!
                         in.position(in.position() - 1);
                         return CoderResult.malformedForLength(1);
-                    } else {
-                        out.put('\uFFFD');
                     }
+                    out.put('\uFFFD');
                 }
             }
         }
