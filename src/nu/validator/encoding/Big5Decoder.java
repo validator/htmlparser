@@ -28,7 +28,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.CoderResult;
 
 public class Big5Decoder extends Decoder {
-
+   
     private int big5Lead = 0;
     
     private char pendingTrail = '\u0000';
@@ -55,8 +55,10 @@ public class Big5Decoder extends Decoder {
             int b = ((int) in.get() & 0xFF);
             if (big5Lead == 0) {
                 if (b <= 0x7F) {
-                    out.put((char)b);
-                } else if (b >= 0x81 && b <= 0xFE) {
+                    out.put((char) b);
+                    continue;
+                }
+                if (b >= 0x81 && b <= 0xFE) {
                     if (this.report && !in.hasRemaining()) {
                         // The Java API is badly designed. Need to do this
                         // crazy thing and hope the caller knows about the
@@ -65,61 +67,83 @@ public class Big5Decoder extends Decoder {
                         return CoderResult.UNDERFLOW;
                     }
                     big5Lead = b;
-                } else {
-                    if (this.report) {
-                        in.position(in.position() - 1);                        
-                        return CoderResult.malformedForLength(1);
-                    }
-                    out.put('\uFFFD');                    
+                    continue;
                 }
-            } else {
-                int lead = big5Lead;
-                big5Lead = 0;
-                int offset = 0x62;
-                if (b < 0x7F) {
-                    offset = 0x40;
+                if (this.report) {
+                    in.position(in.position() - 1);
+                    return CoderResult.malformedForLength(1);
                 }
-                if ((b >= 0x40 && b <= 0x7E) || (b >= 0xA1 && b <= 0xFE)) {
-                    int pointer = (lead - 0x81) * 157 + (b - offset);
-                    char outLead = Big5Data.lead(pointer);
-                    if (this.report && outLead == '\uFFFD') {
-                        in.position(in.position() - 1);                        
-                        return CoderResult.malformedForLength(1);
-                    }
-                    out.put(outLead);
-                    // There will be a trail code unit for sure if the lead
-                    // code unit is a lead surrogate. Also, there may be a
-                    // trail code unit if the lead code unit is U+00CA or
-                    // U+00EA. Otherwise, there for sure will not be one.
-                    if ((outLead & 0xFC00) == 0xD800
-                            || (outLead & 0xFFDF) == 0x00CA) {
-                        char outTrail = Big5Data.trail(pointer);
-                        if (outTrail != '\u0000') {
-                            if (!out.hasRemaining()) {
-                                pendingTrail = outTrail;
-                                return CoderResult.OVERFLOW;
-                            }
-                            out.put(outTrail);
-                        }
-                    }
-                } else {
-                    // pointer is null
-                    if (b <= 0x7F) {
-                        // prepend byte to stream
-                        // Always legal, since we've always just read a byte
-                        // if we come here.
-                        in.position(in.position() - 1);
-                    }
-                    if (this.report) {
-                        // if position() == 0, the caller is not using the
-                        // undocumented part of the API right and the line
-                        // below will throw!
-                        in.position(in.position() - 1);
-                        return CoderResult.malformedForLength(1);
-                    }
-                    out.put('\uFFFD');
-                }
+                out.put('\uFFFD');
+                continue;
             }
+            int lead = big5Lead;
+            big5Lead = 0;
+            int offset = 0x62;
+            if (b < 0x7F) {
+                offset = 0x40;
+            }
+            if ((b >= 0x40 && b <= 0x7E) || (b >= 0xA1 && b <= 0xFE)) {
+                int pointer = (lead - 0x81) * 157 + (b - offset);
+                char outTrail;
+                switch (pointer) {
+                    case 1133:
+                        out.put('\u00CA');
+                        outTrail = '\u0304';
+                        break;
+                    case 1135:
+                        out.put('\u00CA');
+                        outTrail = '\u030C';
+                        break;
+                    case 1164:
+                        out.put('\u00EA');
+                        outTrail = '\u0304';
+                        break;
+                    case 1166:
+                        out.put('\u00EA');
+                        outTrail = '\u030C';
+                        break;
+                    default:
+                        char lowBits = Big5Data.lowBits(pointer);
+                        if (lowBits == '\u0000') {
+                            if (this.report) {
+                                in.position(in.position() - 1);
+                                return CoderResult.malformedForLength(1);
+                            }
+                            out.put('\uFFFD');
+                            continue;
+                        }
+                        if (Big5Data.isAstral(pointer)) {
+                            int codePoint = lowBits | 0x20000;
+                            out.put((char) (0xD7C0 + (codePoint >> 10)));
+                            outTrail = (char) (0xDC00 + (codePoint & 0x3FF));
+                            break;
+                        }
+                        out.put(lowBits);
+                        continue;
+                }
+                if (!out.hasRemaining()) {
+                    pendingTrail = outTrail;
+                    return CoderResult.OVERFLOW;
+                }
+                out.put(outTrail);
+                continue;
+            }
+            // pointer is null
+            if (b <= 0x7F) {
+                // prepend byte to stream
+                // Always legal, since we've always just read a byte
+                // if we come here.
+                in.position(in.position() - 1);
+            }
+            if (this.report) {
+                // if position() == 0, the caller is not using the
+                // undocumented part of the API right and the line
+                // below will throw!
+                in.position(in.position() - 1);
+                return CoderResult.malformedForLength(1);
+            }
+            out.put('\uFFFD');
+            continue;
         }
     }
 

@@ -568,31 +568,23 @@ def deltas(indx):
 # today, since I need to land code some time instead of taking
 # forever doing premature optimization.
 
-def toUtf16(codePoint):
+def nullToZero(codePoint):
   if not codePoint:
-    codePoint = 0xFFFD
-  if codePoint <= 0xFFFF:
-    return (codePoint, 0)
-  return (((0xD800 - (0x10000 >> 10)) + (codePoint >> 10)), (0xDC00 + (codePoint & 0x3FF)))
+    codePoint = 0
+  return codePoint
 
 index = []
 
 for codePoint in indexes["big5"]:
-  index.append(toUtf16(codePoint))  
-
-# Plug in the exceptions
-index[1133] = (0x00CA, 0x0304) #LATIN CAPITAL LETTER E WITH CIRCUMFLEX AND MACRON
-index[1135] = (0x00CA, 0x030C) #LATIN CAPITAL LETTER E WITH CIRCUMFLEX AND CARON
-index[1164] = (0x00EA, 0x0304) #LATIN SMALL LETTER E WITH CIRCUMFLEX AND MACRON
-index[1166] = (0x00EA, 0x030C) #LATIN SMALL LETTER E WITH CIRCUMFLEX AND CARON
+  index.append(nullToZero(codePoint))  
 
 # There are four major gaps consisting of more than 4 consecutive invalid pointers
 gaps = []
 consecutive = 0
 consecutiveStart = 0
 offset = 0
-for (lead, trail) in index:
-  if (lead == 0xFFFD and trail == 0):
+for codePoint in index:
+  if codePoint == 0:
     if consecutive == 0:
       consecutiveStart = offset
     consecutive +=1
@@ -601,22 +593,6 @@ for (lead, trail) in index:
       gaps.append((consecutiveStart, consecutiveStart + consecutive))
     consecutive = 0
   offset += 1
-
-# Let's find a reasonable number (7) of BMP-only ranges
-#bmps = []
-#consecutive = 0
-#consecutiveStart = 0
-#offset = 0
-#for (lead, trail) in index:
-#  if trail == 0:
-#    if consecutive == 0:
-#      consecutiveStart = offset
-#    consecutive +=1
-#  else:
-#    if consecutive > 50:
-#      bmps.append((consecutiveStart, consecutiveStart + consecutive))
-#    consecutive = 0
-#  offset += 1
 
 def invertRanges(ranges, cap):
   inverted = []
@@ -629,33 +605,26 @@ def invertRanges(ranges, cap):
   return inverted
 
 cap = len(index)
-leads = invertRanges(gaps, cap)
-#while index[cap - 1][1] == 0:
-#  cap -= 1
-#trails = invertRanges(bmps, cap)
+ranges = invertRanges(gaps, cap)
 
-# Dead code for exploring packing code points into 16 bits
+# Now compute a compressed lookup table for astralness
 
-#for (low, high) in leads:
-#  print deltas(indexes["big5"][low:high])
-#
-#total = 0
-#for (low, high) in trails:
-#  total += (high - low)
-#print total
-#
-#count = 0
-#for (lead, trail) in index:
-#  if trail != 0:
-#    count += 2
-#print count
+gaps = []
+consecutive = 0
+consecutiveStart = 0
+offset = 0
+for codePoint in index:
+  if codePoint <= 0xFFFF:
+    if consecutive == 0:
+      consecutiveStart = offset
+    consecutive +=1
+  else:
+    if consecutive > 40:
+      gaps.append((consecutiveStart, consecutiveStart + consecutive))
+    consecutive = 0
+  offset += 1
 
-pointerTrails = []
-
-for pointer in xrange(len(index)):
-  (lead, trail) = index[pointer]
-  if trail != 0:
-    pointerTrails.append((pointer, trail))
+astralRanges = invertRanges(gaps, cap)
 
 classFile = open("src/nu/validator/encoding/Big5Data.java", "w")
 classFile.write('''/*
@@ -689,55 +658,69 @@ package nu.validator.encoding;
 
 final class Big5Data {
     
-    static char lead(int pointer) {
+    private static boolean readBit(String str, int i) {
+        return (str.charAt(i >> 4) & (1 << (i & 0xF))) != 0;
+    }
+
+    static char lowBits(int pointer) {
 ''')
 
-def printDataAccess(low, high, default, unit):
+for (low, high) in ranges:
   classFile.write('''        if (pointer < %d) {
-            return '\\u%s';
+            return '\\u0000';
         }
         if (pointer < %d) {
-            return "''' % (low, default, high))
+            return "''' % (low, high))
   for i in xrange(low, high):
-    classFile.write('\\u%04X' % index[i][unit])
+    classFile.write('\\u%04X' % (index[i] & 0xFFFF))
   classFile.write('''".charAt(pointer - %d);
         }
 ''' % low)
 
-for (low, high) in leads:
-  printDataAccess(low, high, "FFFD", 0)
-
-classFile.write('''        return '\\uFFFD';
+classFile.write('''        return '\\u0000';
     }
-    
-    static char trail(int pointer) {
-        final String POINTERS = "''')
 
-for (pointer, trail) in pointerTrails:
-  classFile.write('\\u%04X' % pointer)
+    static boolean isAstral(int pointer) {
+''')
 
-classFile.write('''";
-        final String TRAILS = "''')
-
-for (pointer, trail) in pointerTrails:
-  classFile.write('\\u%04X' % trail)
-
-classFile.write('''";
-        int lo = 0;
-        int hi = POINTERS.length() - 1;
-        while (lo <= hi) {
-            final int mid = (lo + hi) / 2;
-            final int candidate = POINTERS.charAt(mid);
-            if (candidate > pointer) {
-                hi = mid - 1;
-            } else if (candidate < pointer) {
-                lo = mid + 1;
-            } else {
-                return TRAILS.charAt(mid);
-            }
+for (low, high) in astralRanges:
+  if high - low == 1:
+    classFile.write('''        if (pointer < %d) {
+            return false;
         }
-        return '\u0000';
+        if (pointer == %d) {
+            return true;
+        }
+''' % (low, low))
+  else:
+    classFile.write('''        if (pointer < %d) {
+            return false;
+        }
+        if (pointer < %d) {
+            return readBit("''' % (low, high))
+    bits = []
+    for i in xrange(low, high):
+      bits.append(1 if index[i] > 0xFFFF else 0)
+    # pad length to multiple of 16
+    for i in xrange(16 - (len(bits) % 16)):
+      bits.append(0)
+    i = 0
+    while i < len(bits):
+      accu = 0
+      for j in xrange(16):
+        accu |= bits[i + j] << j
+      if accu == 0x22:
+        classFile.write('\\"')
+      else:
+        classFile.write('\\u%04X' % accu)
+      i += 16
+    classFile.write('''", pointer - %d);
+        }
+''' % low)
+
+classFile.write('''        return false;
     }
+
 }
 ''')
 classFile.close()
