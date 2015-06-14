@@ -80,10 +80,7 @@ public class Big5Decoder extends Decoder {
             }
             int lead = big5Lead;
             big5Lead = 0;
-            int offset = 0x62;
-            if (b < 0x7F) {
-                offset = 0x40;
-            }
+            int offset = (b < 0x7F) ? 0x40 : 0x62;
             if ((b >= 0x40 && b <= 0x7E) || (b >= 0xA1 && b <= 0xFE)) {
                 int pointer = (lead - 0x81) * 157 + (b - offset);
                 char outTrail;
