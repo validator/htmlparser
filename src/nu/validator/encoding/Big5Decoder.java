@@ -38,6 +38,8 @@ public class Big5Decoder extends Decoder {
     }
 
     @Override protected CoderResult decodeLoop(ByteBuffer in, CharBuffer out) {
+        assert !(this.report && (big5Lead != 0)):
+            "When reporting, this method should never return with big5Lead set.";
         if (pendingTrail != '\u0000') {
             if (!out.hasRemaining()) {
                 return CoderResult.OVERFLOW;
@@ -60,7 +62,7 @@ public class Big5Decoder extends Decoder {
                 }
                 if (b >= 0x81 && b <= 0xFE) {
                     if (this.report && !in.hasRemaining()) {
-                        // The Java API is badly designed. Need to do this
+                        // The Java API is badly documented. Need to do this
                         // crazy thing and hope the caller knows about the
                         // undocumented aspects of the API!
                         in.position(in.position() - 1);
@@ -106,8 +108,11 @@ public class Big5Decoder extends Decoder {
                         char lowBits = Big5Data.lowBits(pointer);
                         if (lowBits == '\u0000') {
                             if (this.report) {
-                                in.position(in.position() - 1);
-                                return CoderResult.malformedForLength(1);
+                                // This can go past the start of the buffer
+                                // if the caller does not conform to the
+                                // undocumented aspects of the API.
+                                in.position(in.position() - 2);
+                                return CoderResult.malformedForLength(2);
                             }
                             out.put('\uFFFD');
                             continue;
