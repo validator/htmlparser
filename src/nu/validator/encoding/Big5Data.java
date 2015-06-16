@@ -28,9 +28,11 @@
 package nu.validator.encoding;
 
 final class Big5Data {
+
+    private static final String ASTRALNESS = "\uF829\u7A22\u1290\uC5C4\u0007\u0200\u7549\"\u0000\uA000\u3859\u0300\u002C\u573E\uF72B\u6EFC\u90F2\u3B7B\u83E9\uF049\u9DA6\uBBFC\uBEF7\uFDFE\u0C83\uABD1\u7BFF\u7FBF\u1804\u002C\u4840\u2046\u0408\u2A22\u4858\u091A\u5100\u3122\uC000\u5000\uC00D\u6110\uD44C\u9A24\u0180\u0004\u92B2\u0209\u8631\u1242\u8140\u0351\uAB48\u7460\uD5A2\u3E5C\uE361\u1083\u720B\u08A0\u51D6\uE00A\u8100\u1686\uC443\u1135\u6037\u7AE6\u056D\u7D0C\u0E66\u81E0\u7F88\u2420\u2406\u1D03\u340C\u4268\u454A\uF13F\u080D\u8084\uBB00\u0C4D\u6ED6\u97D7\u41DF\u5D3E\uDA68\u305C\uB800\u26E9\u80BC\u0151\uE078\u89A1\u59C0\u9679\u3BCC\u5EDE\uBC2C\uDF9B\u6C5D\u046D\u6043\u4A36\uD860\u073E\uC8C4\u6C69\uD8B1\u8302\u0F88\u0973\u806E\u3B6B\u5A17\uA503\u2D52\u3F40\u1120\u4101\u5024\uB903\u90EE\u1079\u5CAD\u1820\uDA0A\u8060\u9E26\u6E73\u1021\u080E\u4368\u6FB2\u161F\u8AFE\u76B6\u763A\u8262\u1894\u1801\uFE7D\u578D\u1327\u5BD2\u1937\uDB8C\u4862\u0024\u0000\u0010\u8000\u0000\u0000\u0038\u3800\uB9E2\uFD7D\u75F8\uDCF7\u6FF3\uBBF2\uFF4A\uAE3F\u9FC5\uEAFF\uBABA\uBC5D\u9F73\uD8FA\uDED6\u4B25\u975E\u2ADA\u6DB9\u06E6\u9D36\u53F9\u6FC5\uF98A\u49BF\uDB5D\uFFF8\u14A6\uE605\u96F7\u0A99\u00E5\u0800\u3D81\u5002\u0102\uBF49\u475E\u036F\u6280\uEECA\u4819\u6081\u205A\u24F7\u0000\u0004\u0000\u2804\u22C8\u0200\u0000\u2010\u5082\u3040\u0001\u0010\u1284\u0041\u0504\u2000\uC100\u3F7F\uB059\u8AC1\uAFAF\uAC05\u033F\u0204\u7280\u420A\u0426\u02D0\u0EC3\u0958\u0A80\u20B5\u9206\u8B77\u0560\u21C9\u4606\u6038\uC048\u24B4\u84DE\uC0E0\u3364\u3154\u300D\u688A\u5F2B\u0626\u8496\uB108\uE890\uA394\u734F\u50B8\u0D11\uDFA4\u4003\u5D20\u8480\u6160\u51CE\u800A\u58B7\u0050\uE862\u6750\u7220\u1228";
     
-    private static boolean readBit(String str, int i) {
-        return (str.charAt(i >> 4) & (1 << (i & 0xF))) != 0;
+    private static boolean readBit(int i) {
+        return (ASTRALNESS.charAt(i >> 4) & (1 << (i & 0xF))) != 0;
     }
 
     static char lowBits(int pointer) {
@@ -72,31 +74,31 @@ final class Big5Data {
             return false;
         }
         if (pointer < 1119) {
-            return readBit("\uF829\u7A22\u1290\uC5C4\u0007\u0200\u7549\"\u0000\uA000\u0859", pointer - 947);
+            return readBit(0 + (pointer - 947));
         }
         if (pointer < 1256) {
             return false;
         }
         if (pointer < 1269) {
-            return readBit("\u1003", pointer - 1256);
+            return readBit(172 + (pointer - 1256));
         }
         if (pointer < 1336) {
             return false;
         }
         if (pointer < 1364) {
-            return readBit("\u1601\u0F00", pointer - 1336);
+            return readBit(185 + (pointer - 1336));
         }
         if (pointer < 1413) {
             return false;
         }
         if (pointer < 1912) {
-            return readBit("\u5AB9\uE7B9\u9377\uDC87\u49DB\u4C1F\u3782\uE4ED\uBDDF\uF5F7\u1FEF\u8864\uFD5E\uFBDF\u23FD\u60C0\u0001\u3242\u4102\u1020\uC151\uD242\u0048\u1288\u0189\u0600\u6A80\u8600\u6308\u26A2\u04D1\u0004", pointer - 1413);
+            return readBit(213 + (pointer - 1413));
         }
         if (pointer < 2012) {
             return false;
         }
         if (pointer < 3800) {
-            return readBit("\u0401\uB200\u0992\u3102\u4286\u4012\u5181\u4803\u60AB\uA274\u5CD5\u613E\u83E3\u0B10\uA072\uD608\u0A51\u00E0\u8681\u4316\u35C4\u3711\uE660\u6D7A\u0C05\u667D\uE00E\u8881\u207F\u0624\u0324\u0C1D\u6834\u4A42\u3F45\u0DF1\u8408\u0080\u4DBB\uD60C\uD76E\uDF97\u3E41\u685D\u5CDA\u0030\uE9B8\uBC26\u5180\u7801\uA1E0\uC089\u7959\uCC96\uDE3B\u2C5E\u9BBC\u5DDF\u6D6C\u4304\u3660\u604A\u3ED8\uC407\u69C8\uB16C\u02D8\u8883\u730F\u6E09\u6B80\u173B\u035A\u52A5\u402D\u203F\u0111\u2441\u0350\uEEB9\u7990\uAD10\u205C\u0A18\u60DA\u2680\u739E\u216E\u0E10\u6808\uB243\u1F6F\uFE16\uB68A\u3A76\u6276\u9482\u0118\u7D18\u8DFE\u2757\uD213\u375B\u8C19\u62DB\u2448\u0000\u1000\u0000\u0080\u0000\u0800", pointer - 2012);
+            return readBit(712 + (pointer - 2012));
         }
         if (pointer < 3883) {
             return false;
@@ -108,19 +110,19 @@ final class Big5Data {
             return false;
         }
         if (pointer < 5024) {
-            return readBit("\u0001\u11C0\uEDCF\uC7EB\uBBAF\u9EE7\u937F\u55DF\uFFFA\u2D71\uFCFE\uD757\uEDD5\u9DE2\uD4FB\uB6C7\u2EF6\uF259\uD4BA\uC956\u336D\uB037\uCCE9\u2A9F\u537E\uFFCC\uEA4D\uC6DA\u37FF\u28A5\uBF30\uCCB7\u2854\u0007\u0840\u11EC\u1280\u4808\uF5FA\u7A3A\u001B\u5314\uCF76\u0A40\uD304\uB902\u0127\u2000\u0000\u2000\u4140\u0116\u0010\u8000\u1100\u0284\u0982\u8000\u2000\u0894\u2002\u0028\u0100\uFE08\u49FB", pointer - 3985);
+            return readBit(2501 + (pointer - 3985));
         }
         if (pointer < 11205) {
             return false;
         }
         if (pointer < 11214) {
-            return readBit("\u0105", pointer - 11205);
+            return readBit(3540 + (pointer - 11205));
         }
         if (pointer < 18997) {
             return false;
         }
         if (pointer < 19782) {
-            return readBit("\u560D\u7D7C\u602D\u19FD\u1020\u9400\u1053\u2132\u1680\u7618\u4AC0\u5400\u05A8\u9031\u5BBC\u2B04\u0E48\u3031\u01C2\u0243\u25A6\u26F1\u0704\u9B26\u8AA1\u8069\u4451\uF95B\u3132\u24B0\u8844\u4485\u1CA7\u9A7D\u85C3\u688A\uFD20\u001E\uE902\u2402\u0B04\u8E73\u0052\uC5BC\u0282\u4310\u3A87\u9103\u9143\u0000", pointer - 18997);
+            return readBit(3549 + (pointer - 18997));
         }
         return false;
     }

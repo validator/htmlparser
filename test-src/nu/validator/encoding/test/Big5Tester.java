@@ -43,6 +43,9 @@ public class Big5Tester extends EncodingTester {
         decodeBig5("\u88A3", "\u00EA\u0304");
         decodeBig5("\u88A5", "\u00EA\u030C");
         decodeBig5("\u88A7", "\u00EA");
+        decodeBig5("\u99D4", "\u8991");
+        decodeBig5("\u99D5", "\uD85E\uDD67");
+        decodeBig5("\u99D6", "\u8A29");
         // Edge cases surrounded with ASCII
         decodeBig5("\u6187\u4062", "\u0061\u43F0\u0062");
         decodeBig5("\u61FE\uFE62", "\u0061\u79D4\u0062");
@@ -53,8 +56,14 @@ public class Big5Tester extends EncodingTester {
         decodeBig5("\u6188\uA362", "\u0061\u00EA\u0304\u0062");
         decodeBig5("\u6188\uA562", "\u0061\u00EA\u030C\u0062");
         decodeBig5("\u6188\uA762", "\u0061\u00EA\u0062");
+        decodeBig5("\u6199\uD462", "\u0061\u8991\u0062");
+        decodeBig5("\u6199\uD562", "\u0061\uD85E\uDD67\u0062");
+        decodeBig5("\u6199\uD662", "\u0061\u8A29\u0062");
         // Bad sequences
+        decodeBig5("\u8061", "\uFFFD\u0061");
+        decodeBig5("\uFF61", "\uFFFD\u0061");
         decodeBig5("\uFE39", "\uFFFD\u0039");
+        decodeBig5("\u8766", "\uFFFD");
     }
 
     private void decodeBig5(String input, String expectation) {

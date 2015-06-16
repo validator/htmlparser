@@ -590,9 +590,32 @@ classFile.write('''/*
 package nu.validator.encoding;
 
 final class Big5Data {
+
+    private static final String ASTRALNESS = "''')
+
+bits = []
+for (low, high) in astralRanges:
+  for i in xrange(low, high):
+    bits.append(1 if index[i] > 0xFFFF else 0)
+# pad length to multiple of 16
+for j in xrange(16 - (len(bits) % 16)):
+  bits.append(0)
+
+i = 0
+while i < len(bits):
+  accu = 0
+  for j in xrange(16):
+    accu |= bits[i + j] << j
+  if accu == 0x22:
+    classFile.write('\\"')
+  else:
+    classFile.write('\\u%04X' % accu)
+  i += 16
+
+classFile.write('''";
     
-    private static boolean readBit(String str, int i) {
-        return (str.charAt(i >> 4) & (1 << (i & 0xF))) != 0;
+    private static boolean readBit(int i) {
+        return (ASTRALNESS.charAt(i >> 4) & (1 << (i & 0xF))) != 0;
     }
 
     static char lowBits(int pointer) {
@@ -616,6 +639,7 @@ classFile.write('''        return '\\u0000';
     static boolean isAstral(int pointer) {
 ''')
 
+base = 0
 for (low, high) in astralRanges:
   if high - low == 1:
     classFile.write('''        if (pointer < %d) {
@@ -630,26 +654,10 @@ for (low, high) in astralRanges:
             return false;
         }
         if (pointer < %d) {
-            return readBit("''' % (low, high))
-    bits = []
-    for i in xrange(low, high):
-      bits.append(1 if index[i] > 0xFFFF else 0)
-    # pad length to multiple of 16
-    for i in xrange(16 - (len(bits) % 16)):
-      bits.append(0)
-    i = 0
-    while i < len(bits):
-      accu = 0
-      for j in xrange(16):
-        accu |= bits[i + j] << j
-      if accu == 0x22:
-        classFile.write('\\"')
-      else:
-        classFile.write('\\u%04X' % accu)
-      i += 16
-    classFile.write('''", pointer - %d);
+            return readBit(%d + (pointer - %d));
         }
-''' % low)
+''' % (low, high, base, low))
+  base += (high - low)
 
 classFile.write('''        return false;
     }
