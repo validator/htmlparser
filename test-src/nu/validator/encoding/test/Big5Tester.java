@@ -65,6 +65,7 @@ public class Big5Tester extends EncodingTester {
         decodeBig5("\uFE39", "\uFFFD\u0039");
         decodeBig5("\u8766", "\uFFFD\u0066");
         decodeBig5("\u8140", "\uFFFD\u0040");
+        decodeBig5("\u6181", "\u0061\uFFFD");
     }
 
     private void decodeBig5(String input, String expectation) {

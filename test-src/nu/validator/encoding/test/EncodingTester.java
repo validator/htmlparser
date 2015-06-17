@@ -162,19 +162,20 @@ public class EncodingTester {
                 err("Bogus coder result, expected overflow.", bytes,
                         expectation);
             }
-            charBuf.position(0);
-            char actual = charBuf.get();
-            char expect = expectation.charAt(codeUnitPos);
-            if (actual != expect) {
-                err("When decoding one output code unit at a time in REPORT mode, failed at position "
-                        + byteBuf.position()
-                        + ", expected: "
-                        + charToHex(expect)
-                        + ", got: "
-                        + charToHex(actual), bytes, expectation);
-                return;                
+            if (charBuf.position() == 1) {
+                charBuf.position(0);
+                char actual = charBuf.get();
+                char expect = expectation.charAt(codeUnitPos);
+                if (actual != expect) {
+                    err("When decoding one output code unit at a time in REPLACE mode, failed at position "
+                            + byteBuf.position()
+                            + ", expected: "
+                            + charToHex(expect) + ", got: " + charToHex(actual),
+                            bytes, expectation);
+                    return;
+                }
+                codeUnitPos++;
             }
-            codeUnitPos++;
         }
 
         charBuf.position(0);
@@ -183,8 +184,18 @@ public class EncodingTester {
         result = decoder.decode(byteBuf, charBuf,
                 true);
         
-        // XXX check result
         if (charBuf.position() == 1) {
+            charBuf.position(0);
+            char actual = charBuf.get();
+            char expect = expectation.charAt(codeUnitPos);
+            if (actual != expect) {
+                err("When decoding one output code unit at a time in REPLACE mode, failed at position "
+                        + byteBuf.position()
+                        + ", expected: "
+                        + charToHex(expect) + ", got: " + charToHex(actual),
+                        bytes, expectation);
+                return;
+            }
             codeUnitPos++;
         }
         
@@ -208,12 +219,11 @@ public class EncodingTester {
         }
         
         if (charBuf.position() == 1) {
-            codeUnitPos++;
             charBuf.position(0);
             char actual = charBuf.get();
             char expect = expectation.charAt(codeUnitPos);
             if (actual != expect) {
-                err("When decoding one output code unit at a time in REPORT mode, failed when flushing, expected: "
+                err("When decoding one output code unit at a time in REPLACE mode, failed when flushing, expected: "
                         + charToHex(expect) + ", got: " + charToHex(actual),
                         bytes, expectation);
                 return;
