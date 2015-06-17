@@ -104,12 +104,20 @@ public class Big5Decoder extends Decoder {
                     default:
                         char lowBits = Big5Data.lowBits(pointer);
                         if (lowBits == '\u0000') {
+                            // The following |if| block fixes
+                            // https://github.com/whatwg/encoding/issues/5
+                            if (b <= 0x7F) {
+                                // prepend byte to stream
+                                // Always legal, since we've always just read a byte
+                                // if we come here.
+                                in.position(in.position() - 1);
+                            }
                             if (this.report) {
                                 // This can go past the start of the buffer
                                 // if the caller does not conform to the
                                 // undocumented aspects of the API.
-                                in.position(in.position() - 2);
-                                return CoderResult.malformedForLength(2);
+                                in.position(in.position() - 1);
+                                return CoderResult.malformedForLength(b <= 0x7F ? 1 : 2);
                             }
                             out.put('\uFFFD');
                             continue;
@@ -142,7 +150,7 @@ public class Big5Decoder extends Decoder {
                 // undocumented part of the API right and the line
                 // below will throw!
                 in.position(in.position() - 1);
-                return CoderResult.malformedForLength(1);
+                return CoderResult.malformedForLength(b <= 0x7F ? 1 : 2);
             }
             out.put('\uFFFD');
             continue;
