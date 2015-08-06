@@ -168,4 +168,16 @@ public interface TokenHandler {
      *             if something went wrong
      */
     public boolean cdataSectionAllowed() throws SAXException;
+
+    /**
+     * Notifies the token handler of the worst case amount of data to be
+     * reported via <code>characters()</code> and
+     * <code>zeroOriginatingReplacementCharacter()</code>.
+     *
+     * @param inputLength the maximum number of chars that can be reported
+     * via <code>characters()</code> and
+     * <code>zeroOriginatingReplacementCharacter()</code> before a new call to
+     * this method.
+     */
+    public void ensureBufferSpace(int inputLength) throws SAXException;
 }
