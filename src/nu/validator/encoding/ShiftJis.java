@@ -34,6 +34,7 @@ class ShiftJis extends Encoding {
 
     private static final String[] LABELS = {
         "csshiftjis",
+        "ms932",
         "ms_kanji",
         "shift-jis",
         "shift_jis",

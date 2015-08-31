@@ -78,7 +78,7 @@ class Koi8U extends Encoding {
         '\u255a',
         '\u255b',
         '\u0491',
-        '\u255d',
+        '\u045e',
         '\u255e',
         '\u255f',
         '\u2560',
@@ -94,7 +94,7 @@ class Koi8U extends Encoding {
         '\u2569',
         '\u256a',
         '\u0490',
-        '\u256c',
+        '\u040e',
         '\u00a9',
         '\u044e',
         '\u0430',
@@ -163,6 +163,7 @@ class Koi8U extends Encoding {
     };
     
     private static final String[] LABELS = {
+        "koi8-ru",
         "koi8-u"
     };
     
