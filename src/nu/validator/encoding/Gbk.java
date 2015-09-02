@@ -29,6 +29,7 @@ package nu.validator.encoding;
 
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
 
 class Gbk extends Encoding {
 
@@ -56,4 +57,7 @@ class Gbk extends Encoding {
         return Charset.forName("gb18030").newDecoder();
     }
 
+    @Override public CharsetEncoder newEncoder() {
+        return Charset.forName(NAME).newEncoder();
+    }
 }

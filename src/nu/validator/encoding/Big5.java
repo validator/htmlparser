@@ -29,6 +29,7 @@ package nu.validator.encoding;
 
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
 
 class Big5 extends Encoding {
 
@@ -52,4 +53,7 @@ class Big5 extends Encoding {
         return new Big5Decoder(this);
     }
 
+    @Override public CharsetEncoder newEncoder() {
+        return new Big5Encoder(this);
+    }
 }

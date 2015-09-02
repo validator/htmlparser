@@ -29,6 +29,7 @@ package nu.validator.encoding;
 
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
 
 class UserDefined extends Encoding {
 
@@ -48,4 +49,7 @@ class UserDefined extends Encoding {
         return new UserDefinedDecoder(this);
     }
 
+    @Override public CharsetEncoder newEncoder() {
+        return Charset.forName(NAME).newEncoder();
+    }
 }

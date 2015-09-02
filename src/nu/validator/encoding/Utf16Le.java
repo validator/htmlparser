@@ -29,6 +29,7 @@ package nu.validator.encoding;
 
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
 
 class Utf16Le extends Encoding {
 
@@ -49,4 +50,7 @@ class Utf16Le extends Encoding {
         return Charset.forName(NAME).newDecoder();
     }
 
+    @Override public CharsetEncoder newEncoder() {
+        return Charset.forName(NAME).newEncoder();
+    }
 }

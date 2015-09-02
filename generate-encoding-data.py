@@ -38,6 +38,10 @@ MULTIBYTE_DECODER_IMPLEMENTED = [
   u"big5",
 ]
 
+MULTIBYTE_ENCODER_IMPLEMENTED = [
+  u"big5",
+]
+
 preferred = []
 
 labels = []
@@ -452,6 +456,7 @@ package nu.validator.encoding;
 
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
 
 class ''')
   classFile.write(className)
@@ -495,6 +500,14 @@ class ''')
   classFile.write('''
     }
 
+    @Override public CharsetEncoder newEncoder() {
+        ''')
+  if name in MULTIBYTE_ENCODER_IMPLEMENTED:
+    classFile.write("return new %sEncoder(this);" % className)
+  else:
+    classFile.write('''return Charset.forName(NAME).newEncoder();''')
+  classFile.write('''
+    }
 }
 ''')
   classFile.close()
@@ -613,25 +626,36 @@ while i < len(bits):
   i += 16
 
 classFile.write('''";
-    
-    private static boolean readBit(int i) {
+
+''')
+
+j = 0
+for (low, high) in ranges:
+  classFile.write('''    private static final String TABLE%d = "''' % j)
+  for i in xrange(low, high):
+    classFile.write('\\u%04X' % (index[i] & 0xFFFF))
+  classFile.write('''";
+
+''')
+  j += 1
+
+classFile.write('''    private static boolean readBit(int i) {
         return (ASTRALNESS.charAt(i >> 4) & (1 << (i & 0xF))) != 0;
     }
 
     static char lowBits(int pointer) {
 ''')
 
+j = 0
 for (low, high) in ranges:
   classFile.write('''        if (pointer < %d) {
             return '\\u0000';
         }
         if (pointer < %d) {
-            return "''' % (low, high))
-  for i in xrange(low, high):
-    classFile.write('\\u%04X' % (index[i] & 0xFFFF))
-  classFile.write('''".charAt(pointer - %d);
+            return TABLE%d.charAt(pointer - %d);
         }
-''' % low)
+''' % (low, high, j, low))
+  j += 1
 
 classFile.write('''        return '\\u0000';
     }
@@ -662,6 +686,60 @@ for (low, high) in astralRanges:
 classFile.write('''        return false;
     }
 
+    public static int findPointer(char lowBits, boolean isAstral) {
+        if (!isAstral) {
+            switch (lowBits) {
+''')
+
+hkscsBound = (0xA1 - 0x81) * 157
+
+preferLast = [
+  0x2550,
+  0x255E,
+  0x2561,
+  0x256A,
+  0x5341,
+  0x5345,
+]
+
+for codePoint in preferLast:
+  # Python lists don't have .rindex() :-(
+  for i in xrange(len(index) - 1, -1, -1):
+    candidate = index[i]
+    if candidate == codePoint:
+       classFile.write('''                case 0x%04X:
+                    return %d;
+''' % (codePoint, i))
+       break
+
+classFile.write('''                default:
+                    break;
+            }
+        }''')
+
+j = 0
+for (low, high) in ranges:
+  if high > hkscsBound:
+    start = 0
+    if low <= hkscsBound and hkscsBound < high:
+      # This is the first range we don't ignore and the
+      # range that contains the first non-HKSCS pointer.
+      # Avoid searching HKSCS.
+      start = hkscsBound - low
+    classFile.write('''
+        for (int i = %d; i < TABLE%d.length(); i++) {
+            if (TABLE%d.charAt(i) == lowBits) {
+                int pointer = i + %d;
+                if (isAstral == isAstral(pointer)) {
+                    return pointer;
+                }
+            }
+        }''' % (start, j, j, low))
+  j += 1
+
+classFile.write('''
+        return 0;
+    }
 }
 ''')
 classFile.close()

@@ -29,6 +29,7 @@ package nu.validator.encoding;
 
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
 
 class ShiftJis extends Encoding {
 
@@ -55,4 +56,7 @@ class ShiftJis extends Encoding {
         return Charset.forName(NAME).newDecoder();
     }
 
+    @Override public CharsetEncoder newEncoder() {
+        return Charset.forName(NAME).newEncoder();
+    }
 }

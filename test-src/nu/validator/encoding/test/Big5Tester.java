@@ -1,22 +1,22 @@
 /*
  * Copyright (c) 2015 Mozilla Foundation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a 
- * copy of this software and associated documentation files (the "Software"), 
- * to deal in the Software without restriction, including without limitation 
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, 
- * and/or sell copies of the Software, and to permit persons to whom the 
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL 
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
 
@@ -25,7 +25,7 @@ package nu.validator.encoding.test;
 import nu.validator.encoding.Encoding;
 
 public class Big5Tester extends EncodingTester {
-    
+
     public static void main(String[] args) {
         new Big5Tester().test();
     }
@@ -66,10 +66,31 @@ public class Big5Tester extends EncodingTester {
         decodeBig5("\u8766", "\uFFFD\u0066");
         decodeBig5("\u8140", "\uFFFD\u0040");
         decodeBig5("\u6181", "\u0061\uFFFD");
+
+        // ASCII
+        encodeBig5("\u0061\u0062", "\u6162");
+        // Edge cases
+        encodeBig5("\u9EA6\u0061", "\u3F61");
+        encodeBig5("\uD858\uDE6B\u0061", "\u3F61");
+        encodeBig5("\u3000", "\uA140");
+        encodeBig5("\u20AC", "\uA3E1");
+        encodeBig5("\u4E00", "\uA440");
+        encodeBig5("\uD85D\uDE07", "\uC8A4");
+        encodeBig5("\uFFE2", "\uC8CD");
+        encodeBig5("\u79D4", "\uFEFE");
+        // Not in index
+        encodeBig5("\u20AD\u0061", "\u3F61");
+        // duplicate low bits
+        encodeBig5("\uD840\uDFB5", "\uFD6A");
+        // prefer last
+        encodeBig5("\u2550", "\uF9F9");
     }
 
     private void decodeBig5(String input, String expectation) {
         decode(input, expectation, Encoding.BIG5);
     }
 
+    private void encodeBig5(String input, String expectation) {
+        encode(input, expectation, Encoding.BIG5);
+    }
 }
