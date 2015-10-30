@@ -79,7 +79,7 @@ public class Big5Tester extends EncodingTester {
         encodeBig5("\uFFE2", "\uC8CD");
         encodeBig5("\u79D4", "\uFEFE");
         // Not in index
-        encodeBig5("\u20AD\u0061", "\u3F61");
+        encodeBig5("\u2603\u0061", "\u3F61");
         // duplicate low bits
         encodeBig5("\uD840\uDFB5", "\uFD6A");
         // prefer last

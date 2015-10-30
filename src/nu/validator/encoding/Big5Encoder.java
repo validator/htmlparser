@@ -71,12 +71,11 @@ public class Big5Encoder extends Encoder {
                         return CoderResult.malformedForLength(1);
                     }
                     out.put((byte) '?');
-                    utf16Lead = codeUnit;
-                    continue;
                 }
                 utf16Lead = codeUnit;
                 continue;
-            } else if (highBits == 0xDC00) {
+            }
+            if (highBits == 0xDC00) {
                 // low surrogate
                 if (utf16Lead == '\u0000') {
                     // Got low surrogate without a previous high surrogate
@@ -106,15 +105,14 @@ public class Big5Encoder extends Encoder {
                 if (utf16Lead != '\u0000') {
                     // Non-surrogate follows a high surrogate. The *previous*
                     // code unit is in error.
+                    utf16Lead = '\u0000';
                     if (this.reportMalformed) {
                         // The caller had better adhere to the API contract.
                         // Otherwise, this may throw.
                         in.position(in.position() - 2);
-                        utf16Lead = '\u0000';
                         return CoderResult.malformedForLength(1);
                     }
                     out.put((byte) '?');
-                    utf16Lead = '\u0000';
                     // Let's unconsume this code unit and reloop in order to
                     // re-check if the output buffer still has space.
                     in.position(in.position() - 1);
