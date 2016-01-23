@@ -32,13 +32,13 @@ class Label:
 # If a multi-byte encoding is on this list, it is assumed to have a
 # non-generated decoder implementation class. Otherwise, the JDK default
 # decoder is used as a placeholder.
-MULTIBYTE_DECODER_IMPLEMENTED = [
+MULTI_BYTE_DECODER_IMPLEMENTED = [
   u"x-user-defined",
   u"replacement",
   u"big5",
 ]
 
-MULTIBYTE_ENCODER_IMPLEMENTED = [
+MULTI_BYTE_ENCODER_IMPLEMENTED = [
   u"big5",
 ]
 
@@ -50,27 +50,27 @@ data = json.load(open("../encoding/encodings.json", "r"))
 
 indexes = json.load(open("../encoding/indexes.json", "r"))
 
-singleByte = []
+single_byte = []
 
-multiByte = []
+multi_byte = []
 
-def toJavaClassName(name):
+def to_camel_name(name):
   if name == u"iso-8859-8-i":
     return u"Iso8I"
   if name.startswith(u"iso-8859-"):
     return name.replace(u"iso-8859-", u"Iso")
   return name.title().replace(u"X-", u"").replace(u"-", u"").replace(u"_", u"")
 
-def toConstantName(name):
+def to_constant_name(name):
   return name.replace(u"-", u"_").upper()
 
 # Encoding.java
 
 for group in data:
   if group["heading"] == "Legacy single-byte encodings":
-    singleByte = group["encodings"]
+    single_byte = group["encodings"]
   else:
-    multiByte.extend(group["encodings"])
+    multi_byte.extend(group["encodings"])
   for encoding in group["encodings"]:
     preferred.append(encoding["name"])
     for label in encoding["labels"]:
@@ -79,9 +79,9 @@ for group in data:
 preferred.sort()
 labels.sort()
 
-labelFile = open("src/nu/validator/encoding/Encoding.java", "w")
+label_file = open("src/nu/validator/encoding/Encoding.java", "w")
 
-labelFile.write("""/*
+label_file.write("""/*
  * Copyright (c) 2015 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
@@ -153,37 +153,37 @@ public abstract class Encoding extends Charset {
 """)
 
 for label in labels:
-  labelFile.write("        \"%s\",\n" % label.label)
+  label_file.write("        \"%s\",\n" % label.label)
 
-labelFile.write("""    };
+label_file.write("""    };
     
     private static final Encoding[] ENCODINGS_FOR_LABELS = {
 """)
 
 for label in labels:
-  labelFile.write("        %s.INSTANCE,\n" % toJavaClassName(label.preferred))
+  label_file.write("        %s.INSTANCE,\n" % to_camel_name(label.preferred))
 
-labelFile.write("""    };
+label_file.write("""    };
 
     private static final Encoding[] ENCODINGS = {
 """)
 
 for label in preferred:
-  labelFile.write("        %s.INSTANCE,\n" % toJavaClassName(label))
+  label_file.write("        %s.INSTANCE,\n" % to_camel_name(label))
         
-labelFile.write("""    };
+label_file.write("""    };
 
 """)
 
 for label in preferred:
-  labelFile.write("""    /**
+  label_file.write("""    /**
      * The %s encoding.
      */
     public static final Encoding %s = %s.INSTANCE;
 
-""" % (label, toConstantName(label), toJavaClassName(label)))
+""" % (label, to_constant_name(label), to_camel_name(label)))
         
-labelFile.write("""
+label_file.write("""
 private static SortedMap<String, Charset> encodings = null;
 
     protected Encoding(String canonicalName, String[] aliases) {
@@ -318,21 +318,21 @@ private static SortedMap<String, Charset> encodings = null;
 }
 """)
 
-labelFile.close()
+label_file.close()
 
 # Single-byte encodings
 
-for encoding in singleByte:
+for encoding in single_byte:
   name = encoding["name"]
   labels = encoding["labels"]
   labels.sort()
-  className = toJavaClassName(name)
+  class_name = to_camel_name(name)
   mappingName = name
   if mappingName == u"iso-8859-8-i":
     mappingName = u"iso-8859-8"
   mapping = indexes[mappingName]
-  classFile = open("src/nu/validator/encoding/%s.java" % className, "w")
-  classFile.write('''/*
+  class_file = open("src/nu/validator/encoding/%s.java" % class_name, "w")
+  class_file.write('''/*
  * Copyright (c) 2013-2015 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
@@ -364,22 +364,22 @@ package nu.validator.encoding;
 import java.nio.charset.CharsetDecoder;
 
 class ''')
-  classFile.write(className)
-  classFile.write(''' extends Encoding {
+  class_file.write(class_name)
+  class_file.write(''' extends Encoding {
 
     private static final char[] TABLE = {''')
   fallible = False
   comma = False
-  for codePoint in mapping:
+  for code_point in mapping:
     # XXX should we have error reporting?
-    if not codePoint:
-      codePoint = 0xFFFD
+    if not code_point:
+      code_point = 0xFFFD
       fallible = True
     if comma:
-      classFile.write(",")
-    classFile.write("\n        '\u%04x'" % codePoint);
+      class_file.write(",")
+    class_file.write("\n        '\u%04x'" % code_point);
     comma = True    
-  classFile.write('''
+  class_file.write('''
     };
     
     private static final String[] LABELS = {''')
@@ -387,45 +387,45 @@ class ''')
   comma = False
   for label in labels:
     if comma:
-      classFile.write(",")
-    classFile.write("\n        \"%s\"" % label);
+      class_file.write(",")
+    class_file.write("\n        \"%s\"" % label);
     comma = True    
-  classFile.write('''
+  class_file.write('''
     };
     
     private static final String NAME = "''')
-  classFile.write(name)
-  classFile.write('''";
+  class_file.write(name)
+  class_file.write('''";
     
     static final Encoding INSTANCE = new ''')
-  classFile.write(className)
-  classFile.write('''();
+  class_file.write(class_name)
+  class_file.write('''();
     
     private ''')
-  classFile.write(className)
-  classFile.write('''() {
+  class_file.write(class_name)
+  class_file.write('''() {
         super(NAME, LABELS);
     }
 
     @Override public CharsetDecoder newDecoder() {
         return new ''')
-  classFile.write("Fallible" if fallible else "Infallible")
-  classFile.write('''SingleByteDecoder(this, TABLE);
+  class_file.write("Fallible" if fallible else "Infallible")
+  class_file.write('''SingleByteDecoder(this, TABLE);
     }
 
 }
 ''')
-  classFile.close()
+  class_file.close()
 
 # Multi-byte encodings
 
-for encoding in multiByte:
+for encoding in multi_byte:
   name = encoding["name"]
   labels = encoding["labels"]
   labels.sort()
-  className = toJavaClassName(name)
-  classFile = open("src/nu/validator/encoding/%s.java" % className, "w")
-  classFile.write('''/*
+  class_name = to_camel_name(name)
+  class_file = open("src/nu/validator/encoding/%s.java" % class_name, "w")
+  class_file.write('''/*
  * Copyright (c) 2013-2015 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
@@ -459,121 +459,121 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
 
 class ''')
-  classFile.write(className)
-  classFile.write(''' extends Encoding {
+  class_file.write(class_name)
+  class_file.write(''' extends Encoding {
 
     private static final String[] LABELS = {''')
 
   comma = False
   for label in labels:
     if comma:
-      classFile.write(",")
-    classFile.write("\n        \"%s\"" % label);
+      class_file.write(",")
+    class_file.write("\n        \"%s\"" % label);
     comma = True    
-  classFile.write('''
+  class_file.write('''
     };
     
     private static final String NAME = "''')
-  classFile.write(name)
-  classFile.write('''";
+  class_file.write(name)
+  class_file.write('''";
     
     static final ''')
-  classFile.write(className)
-  classFile.write(''' INSTANCE = new ''')
-  classFile.write(className)
-  classFile.write('''();
+  class_file.write(class_name)
+  class_file.write(''' INSTANCE = new ''')
+  class_file.write(class_name)
+  class_file.write('''();
     
     private ''')
-  classFile.write(className)
-  classFile.write('''() {
+  class_file.write(class_name)
+  class_file.write('''() {
         super(NAME, LABELS);
     }
 
     @Override public CharsetDecoder newDecoder() {
         ''')
   if name == "gbk":
-    classFile.write('''return Charset.forName("gb18030").newDecoder();''')    
-  elif name in MULTIBYTE_DECODER_IMPLEMENTED:
-    classFile.write("return new %sDecoder(this);" % className)
+    class_file.write('''return Charset.forName("gb18030").newDecoder();''')    
+  elif name in MULTI_BYTE_DECODER_IMPLEMENTED:
+    class_file.write("return new %sDecoder(this);" % class_name)
   else:
-    classFile.write('''return Charset.forName(NAME).newDecoder();''')
-  classFile.write('''
+    class_file.write('''return Charset.forName(NAME).newDecoder();''')
+  class_file.write('''
     }
 
     @Override public CharsetEncoder newEncoder() {
         ''')
-  if name in MULTIBYTE_ENCODER_IMPLEMENTED:
-    classFile.write("return new %sEncoder(this);" % className)
+  if name in MULTI_BYTE_ENCODER_IMPLEMENTED:
+    class_file.write("return new %sEncoder(this);" % class_name)
   else:
-    classFile.write('''return Charset.forName(NAME).newEncoder();''')
-  classFile.write('''
+    class_file.write('''return Charset.forName(NAME).newEncoder();''')
+  class_file.write('''
     }
 }
 ''')
-  classFile.close()
+  class_file.close()
 
 # Big5
 
-def nullToZero(codePoint):
-  if not codePoint:
-    codePoint = 0
-  return codePoint
+def null_to_zero(code_point):
+  if not code_point:
+    code_point = 0
+  return code_point
 
 index = []
 
-for codePoint in indexes["big5"]:
-  index.append(nullToZero(codePoint))  
+for code_point in indexes["big5"]:
+  index.append(null_to_zero(code_point))  
 
 # There are four major gaps consisting of more than 4 consecutive invalid pointers
 gaps = []
 consecutive = 0
-consecutiveStart = 0
+consecutive_start = 0
 offset = 0
-for codePoint in index:
-  if codePoint == 0:
+for code_point in index:
+  if code_point == 0:
     if consecutive == 0:
-      consecutiveStart = offset
+      consecutive_start = offset
     consecutive +=1
   else:
     if consecutive > 4:
-      gaps.append((consecutiveStart, consecutiveStart + consecutive))
+      gaps.append((consecutive_start, consecutive_start + consecutive))
     consecutive = 0
   offset += 1
 
-def invertRanges(ranges, cap):
+def invert_ranges(ranges, cap):
   inverted = []
-  invertStart = 0
+  invert_start = 0
   for (start, end) in ranges:
     if start != 0:
-      inverted.append((invertStart, start))
-    invertStart = end
-  inverted.append((invertStart, cap))
+      inverted.append((invert_start, start))
+    invert_start = end
+  inverted.append((invert_start, cap))
   return inverted
 
 cap = len(index)
-ranges = invertRanges(gaps, cap)
+ranges = invert_ranges(gaps, cap)
 
 # Now compute a compressed lookup table for astralness
 
 gaps = []
 consecutive = 0
-consecutiveStart = 0
+consecutive_start = 0
 offset = 0
-for codePoint in index:
-  if codePoint <= 0xFFFF:
+for code_point in index:
+  if code_point <= 0xFFFF:
     if consecutive == 0:
-      consecutiveStart = offset
+      consecutive_start = offset
     consecutive +=1
   else:
     if consecutive > 40:
-      gaps.append((consecutiveStart, consecutiveStart + consecutive))
+      gaps.append((consecutive_start, consecutive_start + consecutive))
     consecutive = 0
   offset += 1
 
-astralRanges = invertRanges(gaps, cap)
+astral_ranges = invert_ranges(gaps, cap)
 
-classFile = open("src/nu/validator/encoding/Big5Data.java", "w")
-classFile.write('''/*
+class_file = open("src/nu/validator/encoding/Big5Data.java", "w")
+class_file.write('''/*
  * Copyright (c) 2015 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
@@ -607,7 +607,7 @@ final class Big5Data {
     private static final String ASTRALNESS = "''')
 
 bits = []
-for (low, high) in astralRanges:
+for (low, high) in astral_ranges:
   for i in xrange(low, high):
     bits.append(1 if index[i] > 0xFFFF else 0)
 # pad length to multiple of 16
@@ -620,26 +620,26 @@ while i < len(bits):
   for j in xrange(16):
     accu |= bits[i + j] << j
   if accu == 0x22:
-    classFile.write('\\"')
+    class_file.write('\\"')
   else:
-    classFile.write('\\u%04X' % accu)
+    class_file.write('\\u%04X' % accu)
   i += 16
 
-classFile.write('''";
+class_file.write('''";
 
 ''')
 
 j = 0
 for (low, high) in ranges:
-  classFile.write('''    private static final String TABLE%d = "''' % j)
+  class_file.write('''    private static final String TABLE%d = "''' % j)
   for i in xrange(low, high):
-    classFile.write('\\u%04X' % (index[i] & 0xFFFF))
-  classFile.write('''";
+    class_file.write('\\u%04X' % (index[i] & 0xFFFF))
+  class_file.write('''";
 
 ''')
   j += 1
 
-classFile.write('''    private static boolean readBit(int i) {
+class_file.write('''    private static boolean readBit(int i) {
         return (ASTRALNESS.charAt(i >> 4) & (1 << (i & 0xF))) != 0;
     }
 
@@ -648,7 +648,7 @@ classFile.write('''    private static boolean readBit(int i) {
 
 j = 0
 for (low, high) in ranges:
-  classFile.write('''        if (pointer < %d) {
+  class_file.write('''        if (pointer < %d) {
             return '\\u0000';
         }
         if (pointer < %d) {
@@ -657,16 +657,16 @@ for (low, high) in ranges:
 ''' % (low, high, j, low))
   j += 1
 
-classFile.write('''        return '\\u0000';
+class_file.write('''        return '\\u0000';
     }
 
     static boolean isAstral(int pointer) {
 ''')
 
 base = 0
-for (low, high) in astralRanges:
+for (low, high) in astral_ranges:
   if high - low == 1:
-    classFile.write('''        if (pointer < %d) {
+    class_file.write('''        if (pointer < %d) {
             return false;
         }
         if (pointer == %d) {
@@ -674,7 +674,7 @@ for (low, high) in astralRanges:
         }
 ''' % (low, low))
   else:
-    classFile.write('''        if (pointer < %d) {
+    class_file.write('''        if (pointer < %d) {
             return false;
         }
         if (pointer < %d) {
@@ -683,7 +683,7 @@ for (low, high) in astralRanges:
 ''' % (low, high, base, low))
   base += (high - low)
 
-classFile.write('''        return false;
+class_file.write('''        return false;
     }
 
     public static int findPointer(char lowBits, boolean isAstral) {
@@ -691,9 +691,9 @@ classFile.write('''        return false;
             switch (lowBits) {
 ''')
 
-hkscsBound = (0xA1 - 0x81) * 157
+hkscs_bound = (0xA1 - 0x81) * 157
 
-preferLast = [
+prefer_last = [
   0x2550,
   0x255E,
   0x2561,
@@ -702,31 +702,31 @@ preferLast = [
   0x5345,
 ]
 
-for codePoint in preferLast:
+for code_point in prefer_last:
   # Python lists don't have .rindex() :-(
   for i in xrange(len(index) - 1, -1, -1):
     candidate = index[i]
-    if candidate == codePoint:
-       classFile.write('''                case 0x%04X:
+    if candidate == code_point:
+       class_file.write('''                case 0x%04X:
                     return %d;
-''' % (codePoint, i))
+''' % (code_point, i))
        break
 
-classFile.write('''                default:
+class_file.write('''                default:
                     break;
             }
         }''')
 
 j = 0
 for (low, high) in ranges:
-  if high > hkscsBound:
+  if high > hkscs_bound:
     start = 0
-    if low <= hkscsBound and hkscsBound < high:
+    if low <= hkscs_bound and hkscs_bound < high:
       # This is the first range we don't ignore and the
       # range that contains the first non-HKSCS pointer.
       # Avoid searching HKSCS.
-      start = hkscsBound - low
-    classFile.write('''
+      start = hkscs_bound - low
+    class_file.write('''
         for (int i = %d; i < TABLE%d.length(); i++) {
             if (TABLE%d.charAt(i) == lowBits) {
                 int pointer = i + %d;
@@ -737,9 +737,9 @@ for (low, high) in ranges:
         }''' % (start, j, j, low))
   j += 1
 
-classFile.write('''
+class_file.write('''
         return 0;
     }
 }
 ''')
-classFile.close()
+class_file.close()
