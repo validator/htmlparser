@@ -327,10 +327,10 @@ for encoding in single_byte:
   labels = encoding["labels"]
   labels.sort()
   class_name = to_camel_name(name)
-  mappingName = name
-  if mappingName == u"iso-8859-8-i":
-    mappingName = u"iso-8859-8"
-  mapping = indexes[mappingName]
+  mapping_name = name
+  if mapping_name == u"iso-8859-8-i":
+    mapping_name = u"iso-8859-8"
+  mapping = indexes[mapping_name]
   class_file = open("src/nu/validator/encoding/%s.java" % class_name, "w")
   class_file.write('''/*
  * Copyright (c) 2013-2015 Mozilla Foundation
