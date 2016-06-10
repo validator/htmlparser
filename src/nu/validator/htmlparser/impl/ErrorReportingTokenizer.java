@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2013 Mozilla Foundation
+ * Copyright (c) 2009-2017 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -413,8 +413,8 @@ public class ErrorReportingTokenizer extends Tokenizer {
         err("Nameless doctype.");
     }
 
-    @Override protected void errConsecutiveHyphens() throws SAXException {
-        err("Consecutive hyphens did not terminate a comment. \u201C--\u201D is not permitted inside a comment, but e.g. \u201C- -\u201D is.");
+    @Override protected void errNestedComment() throws SAXException {
+        err("Saw \u201C<!--\u201D within a comment. Probable cause: Nested comment (not allowed).");
     }
 
     @Override protected void errPrematureEndOfComment() throws SAXException {
@@ -710,10 +710,6 @@ public class ErrorReportingTokenizer extends Tokenizer {
     @Override protected void errMissingSpaceBeforeDoctypeName()
             throws SAXException {
         err("Missing space before doctype name.");
-    }
-
-    @Override protected void errHyphenHyphenBang() throws SAXException {
-        err("\u201C--!\u201D found in comment.");
     }
 
     @Override protected void errNcrControlChar() throws SAXException {
