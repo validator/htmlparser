@@ -222,6 +222,14 @@ public class Tokenizer implements Locator {
 
     public static final int AMBIGUOUS_AMPERSAND = 75;
 
+    public static final int COMMENT_LESSTHAN = 76;
+
+    public static final int COMMENT_LESSTHAN_BANG = 77;
+
+    public static final int COMMENT_LESSTHAN_BANG_DASH = 78;
+
+    public static final int COMMENT_LESSTHAN_BANG_DASH_DASH = 79;
+
     /**
      * Magic value for UTF-16 operations.
      */
@@ -1015,9 +1023,8 @@ public class Tokenizer implements Locator {
 
     // ]NOCPP]
 
-    @Inline private void adjustDoubleHyphenAndAppendToStrBufAndErr(char c)
+    @Inline private void adjustDoubleHyphenAndAppendToStrBufAndErr(char c, boolean reportedConsecutiveHyphens)
             throws SAXException {
-        errConsecutiveHyphens();
         // [NOCPP[
         switch (commentPolicy) {
             case ALTER_INFOSET:
@@ -1028,7 +1035,9 @@ public class Tokenizer implements Locator {
                 appendStrBuf('-');
                 // CPPONLY: MOZ_FALLTHROUGH;
             case ALLOW:
-                warn("The document is not mappable to XML 1.0 due to two consecutive hyphens in a comment.");
+                if (!reportedConsecutiveHyphens) {
+                    warn("The document is not mappable to XML 1.0 due to two consecutive hyphens in a comment.");
+                }
                 // ]NOCPP]
                 appendStrBuf(c);
                 // [NOCPP[
@@ -1490,6 +1499,7 @@ public class Tokenizer implements Locator {
     @SuppressWarnings("unused") private int stateLoop(int state, char c,
             int pos, @NoLength char[] buf, boolean reconsume, int returnState,
             int endPos) throws SAXException {
+        boolean reportedConsecutiveHyphens = false;
         /*
          * Idioms used in this code:
          *
@@ -2577,6 +2587,7 @@ public class Tokenizer implements Locator {
                     }
                     // CPPONLY: MOZ_FALLTHROUGH;
                 case COMMENT_START:
+                    reportedConsecutiveHyphens = false;
                     commentstartloop: for (;;) {
                         if (++pos == endPos) {
                             break stateloop;
@@ -2608,6 +2619,10 @@ public class Tokenizer implements Locator {
                                  * Switch to the data state.
                                  */
                                 state = transition(state, Tokenizer.DATA, reconsume, pos);
+                                continue stateloop;
+                            case '<':
+                                appendStrBuf(c);
+                                state = transition(state, Tokenizer.COMMENT_LESSTHAN, reconsume, pos);
                                 continue stateloop;
                             case '\r':
                                 appendStrBufCarriageReturn();
@@ -2654,6 +2669,10 @@ public class Tokenizer implements Locator {
                                 state = transition(state, Tokenizer.COMMENT_END_DASH, reconsume, pos);
                                 break commentloop;
                             // continue stateloop;
+                            case '<':
+                                appendStrBuf(c);
+                                state = transition(state, Tokenizer.COMMENT_LESSTHAN, reconsume, pos);
+                                continue stateloop;
                             case '\r':
                                 appendStrBufCarriageReturn();
                                 break stateloop;
@@ -2696,6 +2715,10 @@ public class Tokenizer implements Locator {
                                 state = transition(state, Tokenizer.COMMENT_END, reconsume, pos);
                                 break commentenddashloop;
                             // continue stateloop;
+                            case '<':
+                                appendStrBuf(c);
+                                state = transition(state, Tokenizer.COMMENT_LESSTHAN, reconsume, pos);
+                                continue stateloop;
                             case '\r':
                                 appendStrBufCarriageReturn();
                                 state = transition(state, Tokenizer.COMMENT, reconsume, pos);
@@ -2750,11 +2773,16 @@ public class Tokenizer implements Locator {
                                  * Append a U+002D HYPHEN-MINUS (-) character to
                                  * the comment token's data.
                                  */
-                                adjustDoubleHyphenAndAppendToStrBufAndErr(c);
+                                adjustDoubleHyphenAndAppendToStrBufAndErr(c, reportedConsecutiveHyphens);
+                                reportedConsecutiveHyphens = true;
                                 /*
                                  * Stay in the comment end state.
                                  */
                                 continue;
+                            case '<':
+                                appendStrBuf(c);
+                                state = transition(state, Tokenizer.COMMENT_LESSTHAN, reconsume, pos);
+                                continue stateloop;
                             case '\r':
                                 adjustDoubleHyphenAndAppendToStrBufCarriageReturn();
                                 state = transition(state, Tokenizer.COMMENT, reconsume, pos);
@@ -2764,7 +2792,6 @@ public class Tokenizer implements Locator {
                                 state = transition(state, Tokenizer.COMMENT, reconsume, pos);
                                 continue stateloop;
                             case '!':
-                                errHyphenHyphenBang();
                                 appendStrBuf(c);
                                 state = transition(state, Tokenizer.COMMENT_END_BANG, reconsume, pos);
                                 continue stateloop;
@@ -2777,7 +2804,8 @@ public class Tokenizer implements Locator {
                                  * and the input character to the comment
                                  * token's data.
                                  */
-                                adjustDoubleHyphenAndAppendToStrBufAndErr(c);
+                                adjustDoubleHyphenAndAppendToStrBufAndErr(c, reportedConsecutiveHyphens);
+                                reportedConsecutiveHyphens = true;
                                 /*
                                  * Switch to the comment state.
                                  */
@@ -2845,6 +2873,148 @@ public class Tokenizer implements Locator {
                                 continue stateloop;
                         }
                     }
+                case COMMENT_LESSTHAN:
+                    for (;;) {
+                        if (++pos == endPos) {
+                            break stateloop;
+                        }
+                        c = checkChar(buf, pos);
+                        switch (c) {
+                            case '!':
+                                appendStrBuf(c);
+                                state = transition(state, Tokenizer.COMMENT_LESSTHAN_BANG, reconsume, pos);
+                                continue stateloop;
+                            case '<':
+                                appendStrBuf(c);
+                                state = transition(state, Tokenizer.COMMENT_LESSTHAN, reconsume, pos);
+                                continue stateloop;
+                            case '-':
+                                appendStrBuf(c);
+                                state = transition(state, Tokenizer.COMMENT_END_DASH, reconsume, pos);
+                                continue stateloop;
+                            case '\r':
+                                appendStrBufCarriageReturn();
+                                break stateloop;
+                            case '\n':
+                                appendStrBufLineFeed();
+                                continue;
+                            case '\u0000':
+                                c = '\uFFFD';
+                                // fall thru
+                            default:
+                                appendStrBuf(c);
+                                state = transition(state, Tokenizer.COMMENT, reconsume, pos);
+                                continue stateloop;
+                        }
+                    }
+                case COMMENT_LESSTHAN_BANG:
+                    for (;;) {
+                        if (++pos == endPos) {
+                            break stateloop;
+                        }
+                        c = checkChar(buf, pos);
+                        switch (c) {
+                            case '-':
+                                appendStrBuf(c);
+                                state = transition(state, Tokenizer.COMMENT_LESSTHAN_BANG_DASH, reconsume, pos);
+                                continue stateloop;
+                            case '<':
+                                appendStrBuf(c);
+                                state = transition(state, Tokenizer.COMMENT_LESSTHAN, reconsume, pos);
+                                continue stateloop;
+                            case '\r':
+                                appendStrBufCarriageReturn();
+                                break stateloop;
+                            case '\n':
+                                appendStrBufLineFeed();
+                                continue;
+                            case '\u0000':
+                                c = '\uFFFD';
+                                // fall thru
+                            default:
+                                appendStrBuf(c);
+                                state = transition(state, Tokenizer.COMMENT, reconsume, pos);
+                                continue stateloop;
+                        }
+                    }
+                case COMMENT_LESSTHAN_BANG_DASH:
+                    for (;;) {
+                        if (++pos == endPos) {
+                            break stateloop;
+                        }
+                        c = checkChar(buf, pos);
+                        switch (c) {
+                            case '-':
+                                appendStrBuf(c);
+                                state = transition(state, Tokenizer.COMMENT_LESSTHAN_BANG_DASH_DASH, reconsume, pos);
+                                continue stateloop;
+                            case '<':
+                                appendStrBuf(c);
+                                state = transition(state, Tokenizer.COMMENT_LESSTHAN, reconsume, pos);
+                                continue stateloop;
+                            case '\r':
+                                appendStrBufCarriageReturn();
+                                break stateloop;
+                            case '\n':
+                                appendStrBufLineFeed();
+                                continue;
+                            case '\u0000':
+                                c = '\uFFFD';
+                                // fall thru
+                            default:
+                                appendStrBuf(c);
+                                state = transition(state, Tokenizer.COMMENT, reconsume, pos);
+                                continue stateloop;
+                        }
+                    }
+                case COMMENT_LESSTHAN_BANG_DASH_DASH:
+                    for (;;) {
+                        if (++pos == endPos) {
+                            break stateloop;
+                        }
+                        c = checkChar(buf, pos);
+                        switch (c) {
+                            case '>':
+                                appendStrBuf(c);
+                                emitComment(3, pos);
+                                state = transition(state, Tokenizer.DATA, reconsume, pos);
+                                continue stateloop;
+                            case '-':
+                                errNestedComment();
+                                adjustDoubleHyphenAndAppendToStrBufAndErr(c, reportedConsecutiveHyphens);
+                                reportedConsecutiveHyphens = true;
+                                state = transition(state, Tokenizer.COMMENT_END, reconsume, pos);
+                                continue stateloop;
+                            case '\r':
+                                errNestedComment();
+                                adjustDoubleHyphenAndAppendToStrBufAndErr(c, reportedConsecutiveHyphens);
+                                reportedConsecutiveHyphens = true;
+                                state = transition(state, Tokenizer.COMMENT, reconsume, pos);
+                                break stateloop;
+                            case '\n':
+                                errNestedComment();
+                                adjustDoubleHyphenAndAppendToStrBufAndErr(c, reportedConsecutiveHyphens);
+                                reportedConsecutiveHyphens = true;
+                                state = transition(state, Tokenizer.COMMENT, reconsume, pos);
+                                continue;
+                            case '\u0000':
+                                c = '\uFFFD';
+                                // fall thru
+                            case '!':
+                                errNestedComment();
+                                adjustDoubleHyphenAndAppendToStrBufAndErr(c, reportedConsecutiveHyphens);
+                                reportedConsecutiveHyphens = true;
+                                state = transition(state, Tokenizer.COMMENT_END_BANG, reconsume, pos);
+                                continue stateloop;
+                            default:
+                                errNestedComment();
+                                adjustDoubleHyphenAndAppendToStrBufAndErr(c, reportedConsecutiveHyphens);
+                                reportedConsecutiveHyphens = true;
+                                state = transition(state, Tokenizer.COMMENT_END, reconsume, pos);
+                                continue stateloop;
+                        }
+                    }
+                    // XXX reorder point
                 case COMMENT_START_DASH:
                     if (++pos == endPos) {
                         break stateloop;
@@ -2872,6 +3042,10 @@ public class Tokenizer implements Locator {
                              * Switch to the data state.
                              */
                             state = transition(state, Tokenizer.DATA, reconsume, pos);
+                            continue stateloop;
+                        case '<':
+                            appendStrBuf(c);
+                            state = transition(state, Tokenizer.COMMENT_LESSTHAN, reconsume, pos);
                             continue stateloop;
                         case '\r':
                             appendStrBufCarriageReturn();
@@ -6005,13 +6179,13 @@ public class Tokenizer implements Locator {
     @Inline private void adjustDoubleHyphenAndAppendToStrBufCarriageReturn()
             throws SAXException {
         silentCarriageReturn();
-        adjustDoubleHyphenAndAppendToStrBufAndErr('\n');
+        adjustDoubleHyphenAndAppendToStrBufAndErr('\n', false);
     }
 
     @Inline private void adjustDoubleHyphenAndAppendToStrBufLineFeed()
             throws SAXException {
         silentLineFeed();
-        adjustDoubleHyphenAndAppendToStrBufAndErr('\n');
+        adjustDoubleHyphenAndAppendToStrBufAndErr('\n', false);
     }
 
     @Inline private void appendStrBufLineFeed() {
@@ -6316,6 +6490,8 @@ public class Tokenizer implements Locator {
                     break eofloop;
                 case COMMENT_START:
                 case COMMENT:
+                case COMMENT_LESSTHAN:
+                case COMMENT_LESSTHAN_BANG:
                     /*
                      * EOF Parse error.
                      */
@@ -6327,6 +6503,7 @@ public class Tokenizer implements Locator {
                      */
                     break eofloop;
                 case COMMENT_END:
+                case COMMENT_LESSTHAN_BANG_DASH_DASH:
                     errEofInComment();
                     /* Emit the comment token. */
                     emitComment(2, 0);
@@ -6336,6 +6513,7 @@ public class Tokenizer implements Locator {
                     break eofloop;
                 case COMMENT_END_DASH:
                 case COMMENT_START_DASH:
+                case COMMENT_LESSTHAN_BANG_DASH:
                     errEofInComment();
                     /* Emit the comment token. */
                     emitComment(1, 0);
@@ -6960,7 +7138,7 @@ public class Tokenizer implements Locator {
     protected void errNamelessDoctype() throws SAXException {
     }
 
-    protected void errConsecutiveHyphens() throws SAXException {
+    protected void errNestedComment() throws SAXException {
     }
 
     protected void errPrematureEndOfComment() throws SAXException {
@@ -7108,9 +7286,6 @@ public class Tokenizer implements Locator {
     }
 
     protected void errMissingSpaceBeforeDoctypeName() throws SAXException {
-    }
-
-    protected void errHyphenHyphenBang() throws SAXException {
     }
 
     protected void errNcrControlChar() throws SAXException {
