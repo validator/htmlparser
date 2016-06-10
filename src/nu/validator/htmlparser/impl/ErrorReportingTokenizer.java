@@ -413,8 +413,8 @@ public class ErrorReportingTokenizer extends Tokenizer {
         err("Nameless doctype.");
     }
 
-    @Override protected void errConsecutiveHyphens() throws SAXException {
-        err("Consecutive hyphens did not terminate a comment. \u201C--\u201D is not permitted inside a comment, but e.g. \u201C- -\u201D is.");
+    @Override protected void errNestedComment() throws SAXException {
+        err("Saw \u201C<!--\u201D within a comment. Probable cause: Nested comment (not allowed).");
     }
 
     @Override protected void errPrematureEndOfComment() throws SAXException {
@@ -713,7 +713,7 @@ public class ErrorReportingTokenizer extends Tokenizer {
     }
 
     @Override protected void errHyphenHyphenBang() throws SAXException {
-        err("\u201C--!\u201D found in comment.");
+        err("\u201C--!>\u201D found at end of comment (should just be \u201C-->\u201D).");
     }
 
     @Override protected void errNcrControlChar() throws SAXException {
