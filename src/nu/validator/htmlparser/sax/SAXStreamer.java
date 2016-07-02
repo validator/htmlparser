@@ -172,7 +172,7 @@ class SAXStreamer extends TreeBuilder<Attributes>{
         if (errorHandler != null) {
             errorHandler.fatalError(spe);
         }
-        throw spe;
+        throw new CannotRecoverException(spe, tokenizer);
     }
 
     @Override
