@@ -220,7 +220,8 @@ public class Driver implements EncodingDeclarationHandler {
                     break;
                 } catch (ReparseException e) {
                     if (rewindableInputStream == null) {
-                        tokenizer.fatal("Changing encoding at this point would need non-streamable behavior.");
+                        throw new ChangingEncodingException(
+                                tokenizer.getErrorHandler(), tokenizer);
                     } else {
                         rewindableInputStream.rewind();
                         becomeConfident();
