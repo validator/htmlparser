@@ -203,4 +203,8 @@ public class TokenPrinter implements TokenHandler, ErrorHandler {
     @Override public boolean cdataSectionAllowed() throws SAXException {
         return false;
     }
+
+    @Override public void ensureBufferSpace(int inputLength)
+            throws SAXException {
+    }
 }
