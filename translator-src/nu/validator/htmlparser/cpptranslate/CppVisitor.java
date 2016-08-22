@@ -129,6 +129,9 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
             "NamedCharacters", "NamedCharactersAccel", "Portability",
             "StackNode", "Tokenizer", "TreeBuilder", "UTF16Buffer" };
 
+    private static final String[] METHODS_WITH_UNLIKELY_CONDITIONS = {
+            "appendStrBuf" };
+
     public class SourcePrinter {
 
         private int level = 0;
@@ -1722,30 +1725,51 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
     }
 
     public void visit(AssertStmt n, LocalSymbolTable arg) {
+        String message = null;
+        Expression msg = n.getMessage();
+        boolean hasCheck = true;
+        if (msg != null) {
+            if (msg instanceof StringLiteralExpr) {
+                StringLiteralExpr sle = (StringLiteralExpr) msg;
+                message = sle.getValue();
+            } else {
+                throw new RuntimeException("Bad assertion message.");
+            }
+        }
         String macro = cppTypes.assertionMacro();
+        if (message != null && message.startsWith("RELEASE: ")) {
+            message = message.substring("RELEASE: ".length());
+            macro = cppTypes.releaseAssertionMacro();
+            Expression check = n.getCheck();
+            if (check instanceof BooleanLiteralExpr) {
+                BooleanLiteralExpr expr = (BooleanLiteralExpr) check;
+                if (!expr.getValue()) {
+                    hasCheck = false;
+                    macro = cppTypes.crashMacro();
+                }
+            }
+        }
         if (macro != null) {
             printer.print(macro);
             printer.print("(");
-            n.getCheck().accept(this, arg);
-            Expression msg = n.getMessage();
-            if (msg != null) {
-                printer.print(", \"");
-                if (msg instanceof StringLiteralExpr) {
-                    StringLiteralExpr sle = (StringLiteralExpr) msg;
-                    String str = sle.getValue();
-                    for (int i = 0; i < str.length(); i++) {
-                        char c = str.charAt(i);
-                        if (c == '"') {
-                            printer.print("\"");
-                        } else if (c >= ' ' && c <= '~') {
-                            printer.print("" + c);
-                        } else {
-                            throw new RuntimeException("Bad assertion message string.");
-                        }
-                    }
-                } else {
-                    throw new RuntimeException("Bad assertion message.");
+            if (hasCheck) {
+                n.getCheck().accept(this, arg);
+            }
+            if (message != null) {
+                if (hasCheck) {
+                    printer.print(", ");
                 }
+                printer.print("\"");
+                for (int i = 0; i < message.length(); i++) {
+                    char c = message.charAt(i);
+                    if (c == '"') {
+                        printer.print("\"");
+                    } else if (c >= ' ' && c <= '~') {
+                        printer.print("" + c);
+                    } else {
+                        throw new RuntimeException("Bad assertion message string.");
+                    }
+                }                
                 printer.print("\"");
             }
             printer.print(");");
@@ -2144,8 +2168,19 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
                     n.getElseStmt().accept(this, arg);
                 }
             } else {
+                boolean unlikely = (currentMethod != null)
+                        && (Arrays.binarySearch(
+                                METHODS_WITH_UNLIKELY_CONDITIONS,
+                                currentMethod) >= 0);
                 printer.print("if (");
+                if (unlikely) {
+                    printer.print(cppTypes.unlikely());
+                    printer.print("(");
+                }
                 formatCondition(n.getCondition(), arg);
+                if (unlikely) {
+                    printer.print(")");
+                }
                 printer.print(") ");
                 n.getThenStmt().accept(this, arg);
                 if (n.getElseStmt() != null

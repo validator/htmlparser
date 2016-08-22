@@ -416,9 +416,13 @@ public class CppTypes {
     }
 
     public String errorHandler() {
-        return "MOZ_UNLIKELY(mViewSource)";
+        return this.unlikely() + "(mViewSource)";
     }
 
+    public String unlikely() {
+        return "MOZ_UNLIKELY";
+    }
+    
     public String completedCharacterReference() {
         return "P::completedNamedCharacterReference(mViewSource)";
     }
@@ -429,5 +433,13 @@ public class CppTypes {
 
     public String assertionMacro() {
         return "MOZ_ASSERT";
+    }
+    
+    public String releaseAssertionMacro() {
+        return "MOZ_RELEASE_ASSERT";
+    }
+
+    public String crashMacro() {
+        return "MOZ_CRASH";
     }
 }
