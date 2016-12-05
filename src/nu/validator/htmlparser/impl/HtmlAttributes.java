@@ -2,22 +2,22 @@
  * Copyright (c) 2007 Henri Sivonen
  * Copyright (c) 2008-2011 Mozilla Foundation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a 
- * copy of this software and associated documentation files (the "Software"), 
- * to deal in the Software without restriction, including without limitation 
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, 
- * and/or sell copies of the Software, and to permit persons to whom the 
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL 
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
 
@@ -38,7 +38,7 @@ import org.xml.sax.SAXException;
 /**
  * Be careful with this class. QName is the name in from HTML tokenization.
  * Otherwise, please refer to the interface doc.
- * 
+ *
  * @version $Id: AttributesImpl.java 206 2008-03-20 14:09:29Z hsivonen $
  * @author hsivonen
  */
@@ -115,10 +115,10 @@ public final class HtmlAttributes implements Attributes {
     void destructor() {
         clear(0);
     }
-    
+
     /**
      * Only use with a static argument
-     * 
+     *
      * @param name
      * @return
      */
@@ -133,7 +133,7 @@ public final class HtmlAttributes implements Attributes {
 
     /**
      * Only use with static argument.
-     * 
+     *
      * @see org.xml.sax.Attributes#getValue(java.lang.String)
      */
     public String getValue(AttributeName name) {
@@ -200,7 +200,7 @@ public final class HtmlAttributes implements Attributes {
     }
 
     // [NOCPP[
-    
+
     /**
      * Variant of <code>getQName(int index)</code> without bounds check.
      * @param index a valid attribute index
@@ -227,7 +227,7 @@ public final class HtmlAttributes implements Attributes {
         }
         return -1;
     }
-    
+
     public int getIndex(String uri, String localName) {
         for (int i = 0; i < length; i++) {
             if (names[i].getLocal(mode).equals(localName)
@@ -255,7 +255,7 @@ public final class HtmlAttributes implements Attributes {
             return getType(index);
         }
     }
-    
+
     public String getValue(String qName) {
         int index = getIndex(qName);
         if (index == -1) {
@@ -273,7 +273,7 @@ public final class HtmlAttributes implements Attributes {
             return getValue(index);
         }
     }
-    
+
     public @Local String getLocalName(int index) {
         if (index < length && index >= 0) {
             return names[index].getLocal(mode);
@@ -281,7 +281,7 @@ public final class HtmlAttributes implements Attributes {
             return null;
         }
     }
-    
+
     public @QName String getQName(int index) {
         if (index < length && index >= 0) {
             return names[index].getQName(mode);
@@ -361,7 +361,7 @@ public final class HtmlAttributes implements Attributes {
             return null;
         }
     }
-    
+
     public int getXmlnsIndex(AttributeName name) {
         for (int i = 0; i < xmlnsLength; i++) {
             if (xmlnsNames[i] == name) {
@@ -370,7 +370,7 @@ public final class HtmlAttributes implements Attributes {
         }
         return -1;
     }
-    
+
     public String getXmlnsValue(AttributeName name) {
         int index = getXmlnsIndex(name);
         if (index == -1) {
@@ -379,7 +379,7 @@ public final class HtmlAttributes implements Attributes {
             return getXmlnsValue(index);
         }
     }
-    
+
     public AttributeName getXmlnsAttributeName(int index) {
         if (index < xmlnsLength && index >= 0) {
             return xmlnsNames[index];
@@ -393,7 +393,7 @@ public final class HtmlAttributes implements Attributes {
     void addAttribute(AttributeName name, String value
             // [NOCPP[
             , XmlViolationPolicy xmlnsPolicy
-    // ]NOCPP]        
+    // ]NOCPP]
     ) throws SAXException {
         // [NOCPP[
         if (name == AttributeName.ID) {
@@ -460,15 +460,15 @@ public final class HtmlAttributes implements Attributes {
         xmlnsLength = 0;
         // ]NOCPP]
     }
-    
+
     /**
      * This is used in C++ to release special <code>isindex</code>
      * attribute values whose ownership is not transferred.
      */
     void releaseValue(int i) {
-        Portability.releaseString(values[i]);        
+        Portability.releaseString(values[i]);
     }
-    
+
     /**
      * This is only used for <code>AttributeName</code> ownership transfer
      * in the isindex case to avoid freeing custom names twice in C++.
@@ -557,9 +557,9 @@ public final class HtmlAttributes implements Attributes {
         }
         return true;
     }
-    
+
     // [NOCPP[
-    
+
     void processNonNcNames(TreeBuilder<?> treeBuilder, XmlViolationPolicy namePolicy) throws SAXException {
         for (int i = 0; i < length; i++) {
             AttributeName attName = names[i];
@@ -568,11 +568,11 @@ public final class HtmlAttributes implements Attributes {
                 switch (namePolicy) {
                     case ALTER_INFOSET:
                         names[i] = AttributeName.create(NCName.escapeName(name));
-                        // fall through
-                    case ALLOW:
                         if (attName != AttributeName.XML_LANG) {
                             treeBuilder.warn("Attribute \u201C" + name + "\u201D is not serializable as XML 1.0.");
                         }
+                        break;
+                    case ALLOW:
                         break;
                     case FATAL:
                         treeBuilder.fatal("Attribute \u201C" + name + "\u201D is not serializable as XML 1.0.");
@@ -581,7 +581,7 @@ public final class HtmlAttributes implements Attributes {
             }
         }
     }
-    
+
     public void merge(HtmlAttributes attributes) throws SAXException {
         int len = attributes.getLength();
         for (int i = 0; i < len; i++) {
@@ -594,5 +594,5 @@ public final class HtmlAttributes implements Attributes {
 
 
     // ]NOCPP]
-    
+
 }

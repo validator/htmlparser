@@ -1,35 +1,35 @@
 /*
  * Copyright (c) 2005-2007 Henri Sivonen
  * Copyright (c) 2007-2015 Mozilla Foundation
- * Portions of comments Copyright 2004-2010 Apple Computer, Inc., Mozilla 
+ * Portions of comments Copyright 2004-2010 Apple Computer, Inc., Mozilla
  * Foundation, and Opera Software ASA.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a 
- * copy of this software and associated documentation files (the "Software"), 
- * to deal in the Software without restriction, including without limitation 
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, 
- * and/or sell copies of the Software, and to permit persons to whom the 
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL 
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
 
 /*
- * The comments following this one that use the same comment syntax as this 
- * comment are quotes from the WHATWG HTML 5 spec as of 2 June 2007 
+ * The comments following this one that use the same comment syntax as this
+ * comment are quotes from the WHATWG HTML 5 spec as of 2 June 2007
  * amended as of June 18 2008 and May 31 2010.
  * That document came with this statement:
- * "© Copyright 2004-2010 Apple Computer, Inc., Mozilla Foundation, and 
- * Opera Software ASA. You are granted a license to use, reproduce and 
+ * "© Copyright 2004-2010 Apple Computer, Inc., Mozilla Foundation, and
+ * Opera Software ASA. You are granted a license to use, reproduce and
  * create derivative works of this document."
  */
 
@@ -54,15 +54,15 @@ import org.xml.sax.SAXParseException;
 /**
  * An implementation of
  * https://html.spec.whatwg.org/multipage/syntax.html#tokenization
- * 
+ *
  * This class implements the <code>Locator</code> interface. This is not an
  * incidental implementation detail: Users of this class are encouraged to make
  * use of the <code>Locator</code> nature.
- * 
- * By default, the tokenizer may report data that XML 1.0 bans. The tokenizer
+ *
+ * By default, the tokenizer does not report data that XML 1.0 bans. The tokenizer
  * can be configured to treat these conditions as fatal or to coerce the infoset
  * to something that XML 1.0 allows.
- * 
+ *
  * @version $Id$
  * @author hsivonen
  */
@@ -532,12 +532,12 @@ public class Tokenizer implements Locator {
 
     /**
      * The constructor.
-     * 
+     *
      * @param tokenHandler
      *            the handler for receiving tokens
      */
     public Tokenizer(TokenHandler tokenHandler
-    // CPPONLY: , boolean viewingXmlSource        
+    // CPPONLY: , boolean viewingXmlSource
     ) {
         this.tokenHandler = tokenHandler;
         this.encodingDeclarationHandler = null;
@@ -580,7 +580,7 @@ public class Tokenizer implements Locator {
 
     /**
      * Returns the mappingLangToXmlLang.
-     * 
+     *
      * @return the mappingLangToXmlLang
      */
     public boolean isMappingLangToXmlLang() {
@@ -589,7 +589,7 @@ public class Tokenizer implements Locator {
 
     /**
      * Sets the mappingLangToXmlLang.
-     * 
+     *
      * @param mappingLangToXmlLang
      *            the mappingLangToXmlLang to set
      */
@@ -600,7 +600,7 @@ public class Tokenizer implements Locator {
 
     /**
      * Sets the error handler.
-     * 
+     *
      * @see org.xml.sax.XMLReader#setErrorHandler(org.xml.sax.ErrorHandler)
      */
     public void setErrorHandler(ErrorHandler eh) {
@@ -613,7 +613,7 @@ public class Tokenizer implements Locator {
 
     /**
      * Sets the commentPolicy.
-     * 
+     *
      * @param commentPolicy
      *            the commentPolicy to set
      */
@@ -623,7 +623,7 @@ public class Tokenizer implements Locator {
 
     /**
      * Sets the contentNonXmlCharPolicy.
-     * 
+     *
      * @param contentNonXmlCharPolicy
      *            the contentNonXmlCharPolicy to set
      */
@@ -637,7 +637,7 @@ public class Tokenizer implements Locator {
 
     /**
      * Sets the contentSpacePolicy.
-     * 
+     *
      * @param contentSpacePolicy
      *            the contentSpacePolicy to set
      */
@@ -647,7 +647,7 @@ public class Tokenizer implements Locator {
 
     /**
      * Sets the xmlnsPolicy.
-     * 
+     *
      * @param xmlnsPolicy
      *            the xmlnsPolicy to set
      */
@@ -664,7 +664,7 @@ public class Tokenizer implements Locator {
 
     /**
      * Sets the html4ModeCompatibleWithXhtml1Schemata.
-     * 
+     *
      * @param html4ModeCompatibleWithXhtml1Schemata
      *            the html4ModeCompatibleWithXhtml1Schemata to set
      */
@@ -677,10 +677,10 @@ public class Tokenizer implements Locator {
 
     // For the token handler to call
     /**
-     * Sets the tokenizer state and the associated element name. This should 
+     * Sets the tokenizer state and the associated element name. This should
      * only ever used to put the tokenizer into one of the states that have
      * a special end tag expectation.
-     * 
+     *
      * @param specialTokenizerState
      *            the tokenizer state to set
      * @param endTagExpectation
@@ -699,10 +699,10 @@ public class Tokenizer implements Locator {
     }
 
     /**
-     * Sets the tokenizer state and the associated element name. This should 
+     * Sets the tokenizer state and the associated element name. This should
      * only ever used to put the tokenizer into one of the states that have
      * a special end tag expectation.
-     * 
+     *
      * @param specialTokenizerState
      *            the tokenizer state to set
      * @param endTagExpectation
@@ -848,7 +848,7 @@ public class Tokenizer implements Locator {
 
     /**
      * Appends to the buffer.
-     * 
+     *
      * @param c
      *            the UTF-16 code unit to append
      */
@@ -858,10 +858,10 @@ public class Tokenizer implements Locator {
 
     /**
      * The buffer as a String. Currently only used for error reporting.
-     * 
+     *
      * <p>
      * C++ memory note: The return value must be released.
-     * 
+     *
      * @return the buffer as a string
      */
     protected String strBufToString() {
@@ -873,7 +873,7 @@ public class Tokenizer implements Locator {
     /**
      * Returns the buffer as a local name. The return value is released in
      * emitDoctypeToken().
-     * 
+     *
      * @return the buffer as local name
      */
     private void strBufToDoctypeName() {
@@ -883,7 +883,7 @@ public class Tokenizer implements Locator {
 
     /**
      * Emits the buffer as character tokens.
-     * 
+     *
      * @throws SAXException
      *             if the token handler threw
      */
@@ -898,9 +898,9 @@ public class Tokenizer implements Locator {
         switch (commentPolicy) {
             case ALTER_INFOSET:
                 appendStrBuf(' ');
+                warn("The document is not mappable to XML 1.0 due to two consecutive hyphens in a comment.");
                 // FALLTHROUGH
             case ALLOW:
-                warn("The document is not mappable to XML 1.0 due to two consecutive hyphens in a comment.");
                 // ]NOCPP]
                 appendStrBuf('-');
                 // [NOCPP[
@@ -917,9 +917,9 @@ public class Tokenizer implements Locator {
         switch (commentPolicy) {
             case ALTER_INFOSET:
                 appendStrBuf(' ');
-                // FALLTHROUGH
-            case ALLOW:
                 warn("The document is not mappable to XML 1.0 due to a trailing hyphen in a comment.");
+                break;
+            case ALLOW:
                 break;
             case FATAL:
                 fatal("The document is not mappable to XML 1.0 due to a trailing hyphen in a comment.");
@@ -937,11 +937,11 @@ public class Tokenizer implements Locator {
                 strBufLen--;
                 appendStrBuf(' ');
                 appendStrBuf('-');
-                // FALLTHROUGH
-            case ALLOW:
                 if (!reportedConsecutiveHyphens) {
                     warn("The document is not mappable to XML 1.0 due to two consecutive hyphens in a comment.");
                 }
+                // FALLTHROUGH
+            case ALLOW:
                 // ]NOCPP]
                 appendStrBuf(c);
                 // [NOCPP[
@@ -973,10 +973,10 @@ public class Tokenizer implements Locator {
 
     /**
      * Emits the current comment token.
-     * 
+     *
      * @param pos
      *            TODO
-     * 
+     *
      * @throws SAXException
      */
     private void emitComment(int provisionalHyphens, int pos)
@@ -994,12 +994,12 @@ public class Tokenizer implements Locator {
 
     /**
      * Flushes coalesced character tokens.
-     * 
+     *
      * @param buf
      *            TODO
      * @param pos
      *            TODO
-     * 
+     *
      * @throws SAXException
      */
     protected void flushChars(@NoLength char[] buf, int pos)
@@ -1013,7 +1013,7 @@ public class Tokenizer implements Locator {
     /**
      * Reports an condition that would make the infoset incompatible with XML
      * 1.0 as fatal.
-     * 
+     *
      * @param message
      *            the message
      * @throws SAXException
@@ -1029,7 +1029,7 @@ public class Tokenizer implements Locator {
 
     /**
      * Reports a Parse Error.
-     * 
+     *
      * @param message
      *            the message
      * @throws SAXException
@@ -1060,7 +1060,7 @@ public class Tokenizer implements Locator {
 
     /**
      * Reports a warning
-     * 
+     *
      * @param message
      *            the message
      * @throws SAXException
@@ -1246,7 +1246,7 @@ public class Tokenizer implements Locator {
     }
 
     // ]NOCPP]
-    
+
     public void start() throws SAXException {
         initializeWithoutStarting();
         tokenHandler.startTokenization(this);
@@ -1363,66 +1363,66 @@ public class Tokenizer implements Locator {
         boolean reportedConsecutiveHyphens = false;
         /*
          * Idioms used in this code:
-         * 
-         * 
+         *
+         *
          * Consuming the next input character
-         * 
+         *
          * To consume the next input character, the code does this: if (++pos ==
          * endPos) { break stateloop; } c = checkChar(buf, pos);
-         * 
-         * 
+         *
+         *
          * Staying in a state
-         * 
+         *
          * When there's a state that the tokenizer may stay in over multiple
          * input characters, the state has a wrapper |for(;;)| loop and staying
          * in the state continues the loop.
-         * 
-         * 
+         *
+         *
          * Switching to another state
-         * 
+         *
          * To switch to another state, the code sets the state variable to the
          * magic number of the new state. Then it either continues stateloop or
          * breaks out of the state's own wrapper loop if the target state is
          * right after the current state in source order. (This is a partial
          * workaround for Java's lack of goto.)
-         * 
-         * 
+         *
+         *
          * Reconsume support
-         * 
+         *
          * The spec sometimes says that an input character is reconsumed in
          * another state. If a state can ever be entered so that an input
          * character can be reconsumed in it, the state's code starts with an
          * |if (reconsume)| that sets reconsume to false and skips over the
          * normal code for consuming a new character.
-         * 
+         *
          * To reconsume the current character in another state, the code sets
          * |reconsume| to true and then switches to the other state.
-         * 
-         * 
+         *
+         *
          * Emitting character tokens
-         * 
+         *
          * This method emits character tokens lazily. Whenever a new range of
          * character tokens starts, the field cstart must be set to the start
          * index of the range. The flushChars() method must be called at the end
          * of a range to flush it.
-         * 
-         * 
+         *
+         *
          * U+0000 handling
-         * 
+         *
          * The various states have to handle the replacement of U+0000 with
          * U+FFFD. However, if U+0000 would be reconsumed in another state, the
          * replacement doesn't need to happen, because it's handled by the
          * reconsuming state.
-         * 
-         * 
+         *
+         *
          * LF handling
-         * 
+         *
          * Every state needs to increment the line number upon LF unless the LF
          * gets reconsumed by another state which increments the line number.
-         * 
-         * 
+         *
+         *
          * CR handling
-         * 
+         *
          * Every state needs to handle CR unless the CR gets reconsumed and is
          * handled by the reconsuming state. The CR needs to be handled as if it
          * were and LF, the lastCR field must be set to true and then this
@@ -1475,7 +1475,7 @@ public class Tokenizer implements Locator {
                                 /*
                                  * Anything else Emit the input character as a
                                  * character token.
-                                 * 
+                                 *
                                  * Stay in the data state.
                                  */
                                 continue;
@@ -2352,12 +2352,12 @@ public class Tokenizer implements Locator {
                          * HYPHEN-MINUS characters (-), consume those two
                          * characters, create a comment token whose data is the
                          * empty string, and switch to the comment start state.
-                         * 
+                         *
                          * Otherwise, if the next seven characters are an ASCII
                          * case-insensitive match for the word "DOCTYPE", then
                          * consume those characters and switch to the DOCTYPE
                          * state.
-                         * 
+                         *
                          * Otherwise, if the insertion mode is
                          * "in foreign content" and the current node is not an
                          * element in the HTML namespace and the next seven
@@ -2366,7 +2366,7 @@ public class Tokenizer implements Locator {
                          * U+005B LEFT SQUARE BRACKET character before and
                          * after), then consume those characters and switch to
                          * the CDATA section state.
-                         * 
+                         *
                          * Otherwise, is is a parse error. Switch to the bogus
                          * comment state. The next character that is consumed,
                          * if any, is the first character that will be in the
@@ -2432,8 +2432,8 @@ public class Tokenizer implements Locator {
                         c = checkChar(buf, pos);
                         /*
                          * Comment start state
-                         * 
-                         * 
+                         *
+                         *
                          * Consume the next input character:
                          */
                         switch (c) {
@@ -2659,7 +2659,7 @@ public class Tokenizer implements Locator {
                         c = checkChar(buf, pos);
                         /*
                          * Comment end bang state
-                         * 
+                         *
                          * Consume the next input character:
                          */
                         switch (c) {
@@ -2863,7 +2863,7 @@ public class Tokenizer implements Locator {
                     c = checkChar(buf, pos);
                     /*
                      * Comment start dash state
-                     * 
+                     *
                      * Consume the next input character:
                      */
                     switch (c) {
@@ -2995,11 +2995,11 @@ public class Tokenizer implements Locator {
                         c = checkChar(buf, pos);
                         switch (c) {
                             case ']':
-                                // Saw a third ]. Emit one ] (logically the 
-                                // first one) and stay in this state to 
+                                // Saw a third ]. Emit one ] (logically the
+                                // first one) and stay in this state to
                                 // remember that the last two characters seen
                                 // have been ]].
-                                tokenHandler.characters(Tokenizer.RSQB_RSQB, 0, 1);                                
+                                tokenHandler.characters(Tokenizer.RSQB_RSQB, 0, 1);
                                 continue;
                             case '>':
                                 cstart = pos + 1;
@@ -3093,7 +3093,7 @@ public class Tokenizer implements Locator {
                      * This section defines how to consume a character
                      * reference. This definition is used when parsing character
                      * references in text and in attributes.
-                     * 
+                     *
                      * The behavior depends on the identity of the next
                      * character (the one immediately after the U+0026 AMPERSAND
                      * character):
@@ -3159,7 +3159,7 @@ public class Tokenizer implements Locator {
                         }
                         /*
                          * The data structure is as follows:
-                         * 
+                         *
                          * HILO_ACCEL is a two-dimensional int array whose major
                          * index corresponds to the second character of the
                          * character reference (code point as index) and the
@@ -3170,7 +3170,7 @@ public class Tokenizer implements Locator {
                          * to omit parts of it: The second dimension of the
                          * table is null when no character reference starts with
                          * the character corresponding to that row.
-                         * 
+                         *
                          * The int value HILO_ACCEL (by these indeces) is zero
                          * if there exists no character reference starting with
                          * that two-letter prefix. Otherwise, the value is an
@@ -3182,14 +3182,14 @@ public class Tokenizer implements Locator {
                          * first two character reference names share their
                          * prefix so the packed int cannot be 0 by packing the
                          * two shorts.)
-                         * 
+                         *
                          * NAMES is an array of byte arrays where each byte
                          * array encodes the name of a character references as
                          * ASCII. The names omit the first two letters of the
                          * name. (Since storing the first two letters would be
                          * redundant with the data contained in HILO_ACCEL.) The
                          * entries are lexically sorted.
-                         * 
+                         *
                          * For a given index in NAMES, the same index in VALUES
                          * contains the corresponding expansion as an array of
                          * two UTF-16 code units (either the character and
@@ -3272,18 +3272,18 @@ public class Tokenizer implements Locator {
                         }
 
                         if (c == ';') {
-                            // If we see a semicolon, there cannot be a 
+                            // If we see a semicolon, there cannot be a
                             // longer match. Break the loop. However, before
-                            // breaking, take the longest match so far as the 
-                            // candidate, if we are just about to complete a 
+                            // breaking, take the longest match so far as the
+                            // candidate, if we are just about to complete a
                             // match.
                             if (entCol + 1 == NamedCharacters.NAMES[lo].length()) {
                                 candidate = lo;
                                 charRefBufMark = charRefBufLen;
-                            }                            
+                            }
                             break outer;
                         }
-                        
+
                         if (hi < lo) {
                             break outer;
                         }
@@ -3379,9 +3379,9 @@ public class Tokenizer implements Locator {
                         }
                         // Check if we broke out early with c being the last
                         // character that matched as opposed to being the
-                        // first one that didn't match. In the case of an 
+                        // first one that didn't match. In the case of an
                         // early break, the next run on text should start
-                        // *after* the current character and the current 
+                        // *after* the current character and the current
                         // character shouldn't be reconsumed.
                         boolean earlyBreak = (c == ';' && charRefBufMark == charRefBufLen);
                         if ((returnState & DATA_AND_RCDATA_MASK) == 0) {
@@ -3438,14 +3438,14 @@ public class Tokenizer implements Locator {
                             /*
                              * U+0078 LATIN SMALL LETTER X U+0058 LATIN CAPITAL
                              * LETTER X Consume the X.
-                             * 
+                             *
                              * Follow the steps below, but using the range of
                              * characters U+0030 DIGIT ZERO through to U+0039
                              * DIGIT NINE, U+0061 LATIN SMALL LETTER A through
                              * to U+0066 LATIN SMALL LETTER F, and U+0041 LATIN
                              * CAPITAL LETTER A, through to U+0046 LATIN CAPITAL
                              * LETTER F (in other words, 0-9, A-F, a-f).
-                             * 
+                             *
                              * When it comes to interpreting the number,
                              * interpret it as a hexadecimal number.
                              */
@@ -3457,7 +3457,7 @@ public class Tokenizer implements Locator {
                              * Anything else Follow the steps below, but using
                              * the range of characters U+0030 DIGIT ZERO through
                              * to U+0039 DIGIT NINE (i.e. just 0-9).
-                             * 
+                             *
                              * When it comes to interpreting the number,
                              * interpret it as a decimal number.
                              */
@@ -3514,7 +3514,7 @@ public class Tokenizer implements Locator {
                              * NUMBER SIGN character and, if appropriate, the X
                              * character). This is a parse error; nothing is
                              * returned.
-                             * 
+                             *
                              * Otherwise, if the next character is a U+003B
                              * SEMICOLON, consume that too. If it isn't, there
                              * is a parse error.
@@ -3607,7 +3607,7 @@ public class Tokenizer implements Locator {
                              * NUMBER SIGN character and, if appropriate, the X
                              * character). This is a parse error; nothing is
                              * returned.
-                             * 
+                             *
                              * Otherwise, if the next character is a U+003B
                              * SEMICOLON, consume that too. If it isn't, there
                              * is a parse error.
@@ -3992,9 +3992,9 @@ public class Tokenizer implements Locator {
                          * character (i.e. up to the character just before the
                          * U+003E or EOF character). (If the comment was started
                          * by the end of the file (EOF), the token is empty.)
-                         * 
+                         *
                          * Switch to the data state.
-                         * 
+                         *
                          * If the end of the file was reached, reconsume the EOF
                          * character.
                          */
@@ -5971,17 +5971,17 @@ public class Tokenizer implements Locator {
         returnStateSave = returnState;
         return pos;
     }
-    
+
     // HOTSPOT WORKAROUND INSERTION POINT
-    
+
     // [NOCPP[
-    
+
     protected int transition(int from, int to, boolean reconsume, int pos) throws SAXException {
         return to;
     }
 
     // ]NOCPP]
-    
+
     private void initDoctypeFields() {
         doctypeName = "";
         if (systemIdentifier != null) {
@@ -6485,7 +6485,7 @@ public class Tokenizer implements Locator {
                      * This section defines how to consume an entity. This
                      * definition is used when parsing entities in text and in
                      * attributes.
-                     * 
+                     *
                      * The behavior depends on the identity of the next
                      * character (the one immediately after the U+0026 AMPERSAND
                      * character):
@@ -6642,7 +6642,7 @@ public class Tokenizer implements Locator {
                      * characters (and unconsume the U+0023 NUMBER SIGN
                      * character and, if appropriate, the X character). This is
                      * a parse error; nothing is returned.
-                     * 
+                     *
                      * Otherwise, if the next character is a U+003B SEMICOLON,
                      * consume that too. If it isn't, there is a parse error.
                      */
@@ -6760,14 +6760,14 @@ public class Tokenizer implements Locator {
     }
 
     // [NOCPP[
-    
+
     public void becomeConfident() {
         confident = true;
     }
 
     /**
      * Returns the nextCharOnNewLine.
-     * 
+     *
      * @return the nextCharOnNewLine
      */
     public boolean isNextCharOnNewLine() {
@@ -6780,7 +6780,7 @@ public class Tokenizer implements Locator {
 
     /**
      * Returns the line.
-     * 
+     *
      * @return the line
      */
     public int getLine() {
@@ -6789,7 +6789,7 @@ public class Tokenizer implements Locator {
 
     /**
      * Returns the col.
-     * 
+     *
      * @return the col
      */
     public int getCol() {
@@ -6797,7 +6797,7 @@ public class Tokenizer implements Locator {
     }
 
     // ]NOCPP]
-    
+
     public boolean isInDataState() {
         return (stateSave == DATA);
     }
@@ -7135,7 +7135,7 @@ public class Tokenizer implements Locator {
 
     /**
      * Sets the encodingDeclarationHandler.
-     * 
+     *
      * @param encodingDeclarationHandler
      *            the encodingDeclarationHandler to set
      */
@@ -7143,25 +7143,25 @@ public class Tokenizer implements Locator {
             EncodingDeclarationHandler encodingDeclarationHandler) {
         this.encodingDeclarationHandler = encodingDeclarationHandler;
     }
-    
+
     void destructor() {
         // The translator will write refcount tracing stuff here
         Portability.delete(attributes);
         attributes = null;
     }
-    
+
     // [NOCPP[
-    
+
     /**
-     * Sets an offset to be added to the position reported to 
+     * Sets an offset to be added to the position reported to
      * <code>TransitionHandler</code>.
-     * 
+     *
      * @param offset the offset
      */
     public void setTransitionBaseOffset(int offset) {
-        
+
     }
-    
+
     // ]NOCPP]
 
 }

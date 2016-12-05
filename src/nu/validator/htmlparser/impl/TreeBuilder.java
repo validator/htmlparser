@@ -5095,9 +5095,9 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                     + ns + "\u201D permitted here).");
                             switch (namePolicy) {
                                 case ALTER_INFOSET:
-                                    // fall through
-                                case ALLOW:
                                     warn("Attribute \u201Cxmlns\u201D is not serializable as XML 1.0.");
+                                    break;
+                                case ALLOW:
                                     break;
                                 case FATAL:
                                     fatal("Attribute \u201Cxmlns\u201D is not serializable as XML 1.0.");
@@ -5114,9 +5114,9 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                 + "\u201D for the attribute \u201Cxmlns:link\u201D (only \u201Chttp://www.w3.org/1999/xlink\u201D permitted here).");
                         switch (namePolicy) {
                             case ALTER_INFOSET:
-                                // fall through
-                            case ALLOW:
                                 warn("Attribute \u201Cxmlns:xlink\u201D with a value other than \u201Chttp://www.w3.org/1999/xlink\u201D is not serializable as XML 1.0 without changing document semantics.");
+                                break;
+                            case ALLOW:
                                 break;
                             case FATAL:
                                 fatal("Attribute \u201Cxmlns:xlink\u201D with a value other than \u201Chttp://www.w3.org/1999/xlink\u201D is not serializable as XML 1.0 without changing document semantics.");
@@ -5128,11 +5128,11 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                             + "\u201D not allowed here.");
                     switch (namePolicy) {
                         case ALTER_INFOSET:
-                            // fall through
-                        case ALLOW:
                             warn("Attribute with the local name \u201C"
                                     + attributes.getXmlnsLocalName(i)
                                     + "\u201D is not serializable as XML 1.0.");
+                            break;
+                        case ALLOW:
                             break;
                         case FATAL:
                             fatal("Attribute with the local name \u201C"
@@ -5152,8 +5152,6 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         } else {
             switch (namePolicy) {
                 case ALLOW:
-                    warn("Element name \u201C" + name
-                            + "\u201D cannot be represented as XML 1.0.");
                     return name;
                 case ALTER_INFOSET:
                     warn("Element name \u201C" + name
