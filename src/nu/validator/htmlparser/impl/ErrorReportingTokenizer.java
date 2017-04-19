@@ -1,37 +1,37 @@
 /*
  * Copyright (c) 2009-2013 Mozilla Foundation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a 
- * copy of this software and associated documentation files (the "Software"), 
- * to deal in the Software without restriction, including without limitation 
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, 
- * and/or sell copies of the Software, and to permit persons to whom the 
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL 
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
 
 package nu.validator.htmlparser.impl;
+
+import java.util.HashMap;
+
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
 import nu.validator.htmlparser.annotation.Inline;
 import nu.validator.htmlparser.annotation.NoLength;
 import nu.validator.htmlparser.common.TokenHandler;
 import nu.validator.htmlparser.common.TransitionHandler;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
-
-import java.util.HashMap;
-
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
 
 public class ErrorReportingTokenizer extends Tokenizer {
 
@@ -116,7 +116,7 @@ public class ErrorReportingTokenizer extends Tokenizer {
 
     /**
      * Sets the contentNonXmlCharPolicy.
-     * 
+     *
      * @param contentNonXmlCharPolicy
      *            the contentNonXmlCharPolicy to set
      */
@@ -127,7 +127,7 @@ public class ErrorReportingTokenizer extends Tokenizer {
 
     /**
      * Sets the errorProfile.
-     * 
+     *
      * @param errorProfile
      */
     public void setErrorProfile(HashMap<String, String> errorProfileMap) {
@@ -136,7 +136,7 @@ public class ErrorReportingTokenizer extends Tokenizer {
 
     /**
      * Reports on an event based on profile selected.
-     * 
+     *
      * @param profile
      *            the profile this message belongs to
      * @param message
@@ -176,7 +176,7 @@ public class ErrorReportingTokenizer extends Tokenizer {
 
     /**
      * Returns the line.
-     * 
+     *
      * @return the line
      */
     public int getLine() {
@@ -185,7 +185,7 @@ public class ErrorReportingTokenizer extends Tokenizer {
 
     /**
      * Returns the col.
-     * 
+     *
      * @return the col
      */
     public int getCol() {
@@ -194,7 +194,7 @@ public class ErrorReportingTokenizer extends Tokenizer {
 
     /**
      * Returns the nextCharOnNewLine.
-     * 
+     *
      * @return the nextCharOnNewLine
      */
     public boolean isNextCharOnNewLine() {
@@ -203,12 +203,12 @@ public class ErrorReportingTokenizer extends Tokenizer {
 
     /**
      * Flushes coalesced character tokens.
-     * 
+     *
      * @param buf
      *            TODO
      * @param pos
      *            TODO
-     * 
+     *
      * @throws SAXException
      */
     @Override protected void flushChars(char[] buf, int pos)
@@ -327,7 +327,7 @@ public class ErrorReportingTokenizer extends Tokenizer {
     /**
      * Emits a warning about private use characters if the warning has not been
      * emitted yet.
-     * 
+     *
      * @throws SAXException
      */
     private void warnAboutPrivateUseChar() throws SAXException {
@@ -339,7 +339,7 @@ public class ErrorReportingTokenizer extends Tokenizer {
 
     /**
      * Tells if the argument is a BMP PUA character.
-     * 
+     *
      * @param c
      *            the UTF-16 code unit to check
      * @return <code>true</code> if PUA character
@@ -350,7 +350,7 @@ public class ErrorReportingTokenizer extends Tokenizer {
 
     /**
      * Tells if the argument is an astral PUA character.
-     * 
+     *
      * @param c
      *            the code point to check
      * @return <code>true</code> if astral private use
@@ -388,7 +388,7 @@ public class ErrorReportingTokenizer extends Tokenizer {
                 && ElementName.IFRAME != endTagExpectation) {
             err((stateSave == Tokenizer.DATA ? "CDATA" : "RCDATA")
                     + " element \u201C"
-                    + endTagExpectation.name
+                    + endTagExpectation.getName()
                     + "\u201D contained the string \u201C</\u201D, but it was not the start of the end tag. (HTML4-only error)");
         }
     }
@@ -750,7 +750,7 @@ public class ErrorReportingTokenizer extends Tokenizer {
 
     /**
      * Sets the transitionHandler.
-     * 
+     *
      * @param transitionHandler
      *            the transitionHandler to set
      */
@@ -761,7 +761,7 @@ public class ErrorReportingTokenizer extends Tokenizer {
     /**
      * Sets an offset to be added to the position reported to
      * <code>TransitionHandler</code>.
-     * 
+     *
      * @param offset
      *            the offset
      */

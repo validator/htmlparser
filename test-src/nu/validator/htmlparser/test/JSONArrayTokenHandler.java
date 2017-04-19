@@ -2,31 +2,26 @@
  * Copyright (c) 2007 Henri Sivonen
  * Copyright (c) 2008 Mozilla Foundation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a 
- * copy of this software and associated documentation files (the "Software"), 
- * to deal in the Software without restriction, including without limitation 
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, 
- * and/or sell copies of the Software, and to permit persons to whom the 
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL 
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
 
 package nu.validator.htmlparser.test;
-
-import nu.validator.htmlparser.common.TokenHandler;
-import nu.validator.htmlparser.impl.ElementName;
-import nu.validator.htmlparser.impl.HtmlAttributes;
-import nu.validator.htmlparser.impl.Tokenizer;
 
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
@@ -37,6 +32,11 @@ import com.sdicons.json.model.JSONBoolean;
 import com.sdicons.json.model.JSONNull;
 import com.sdicons.json.model.JSONObject;
 import com.sdicons.json.model.JSONString;
+
+import nu.validator.htmlparser.common.TokenHandler;
+import nu.validator.htmlparser.impl.ElementName;
+import nu.validator.htmlparser.impl.HtmlAttributes;
+import nu.validator.htmlparser.impl.Tokenizer;
 
 public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
 
@@ -61,7 +61,7 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
     private int contentModelFlag;
 
     private String contentModelElement;
-    
+
     public void setContentModelFlag(int contentModelFlag, String contentModelElement) {
         this.contentModelFlag = contentModelFlag;
         this.contentModelElement = contentModelElement;
@@ -102,7 +102,7 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
     }
 
     public void endTag(ElementName eltName) throws SAXException {
-        String name = eltName.name;
+        String name = eltName.getName();
         flushCharacters();
         JSONArray token = new JSONArray();
         token.getValue().add(END_TAG);
@@ -123,7 +123,7 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
 
     public void startTag(ElementName eltName, HtmlAttributes attributes,
             boolean selfClosing) throws SAXException {
-        String name = eltName.name;
+        String name = eltName.getName();
         flushCharacters();
         JSONArray token = new JSONArray();
         token.getValue().add(START_TAG);
@@ -158,7 +158,7 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
 
     /**
      * Returns the array.
-     * 
+     *
      * @return the array
      */
     public JSONArray getArray() {
@@ -166,7 +166,7 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
     }
 
     public void endTokenization() throws SAXException {
-        
+
     }
 
     @Override public void zeroOriginatingReplacementCharacter()
@@ -181,5 +181,5 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
     @Override public void ensureBufferSpace(int inputLength)
             throws SAXException {
     }
-    
+
 }
