@@ -2,26 +2,28 @@
  * Copyright (c) 2007 Henri Sivonen
  * Copyright (c) 2008-2010 Mozilla Foundation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a 
- * copy of this software and associated documentation files (the "Software"), 
- * to deal in the Software without restriction, including without limitation 
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, 
- * and/or sell copies of the Software, and to permit persons to whom the 
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL 
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
 
 package nu.validator.htmlparser.sax;
+
+import org.xml.sax.SAXException;
 
 import nu.validator.htmlparser.impl.HtmlAttributes;
 import nu.validator.htmlparser.impl.TreeBuilder;
@@ -34,22 +36,18 @@ import nu.validator.saxtree.Element;
 import nu.validator.saxtree.Node;
 import nu.validator.saxtree.ParentNode;
 
-import org.xml.sax.SAXException;
-
 class SAXTreeBuilder extends TreeBuilder<Element> {
-
-    private static final char[] ISINDEX_PROMPT = "This is a searchable index. Enter search keywords: ".toCharArray();
 
     private Document document;
 
     private Node cachedTable = null;
-    
+
     private Node cachedTablePreviousSibling = null;
-    
+
     SAXTreeBuilder() {
         super();
     }
-    
+
     @Override
     protected void appendComment(Element parent, char[] buf, int start, int length) {
         parent.appendChild(new Comment(tokenizer, buf, start, length));
@@ -63,14 +61,6 @@ class SAXTreeBuilder extends TreeBuilder<Element> {
     @Override
     protected void appendCharacters(Element parent, char[] buf, int start, int length) {
         parent.appendChild(new Characters(tokenizer, buf, start, length));
-    }
-
-    /**
-     * @see nu.validator.htmlparser.impl.TreeBuilder#appendIsindexPrompt(java.lang.Object)
-     */
-    @Override protected void appendIsindexPrompt(Element parent)
-            throws SAXException {
-        parent.appendChild(new Characters(tokenizer, ISINDEX_PROMPT, 0, ISINDEX_PROMPT.length));
     }
 
     @Override
@@ -105,10 +95,10 @@ class SAXTreeBuilder extends TreeBuilder<Element> {
          dtd.setEndLocator(tokenizer);
          document.appendChild(dtd);
     }
-    
+
     /**
      * Returns the document.
-     * 
+     *
      * @return the document
      */
     Document getDocument() {
@@ -116,7 +106,7 @@ class SAXTreeBuilder extends TreeBuilder<Element> {
         document = null;
         return rv;
     }
-    
+
     DocumentFragment getDocumentFragment() {
         DocumentFragment rv = new DocumentFragment();
         rv.appendChildren(document.getFirstChild());
@@ -125,7 +115,7 @@ class SAXTreeBuilder extends TreeBuilder<Element> {
     }
 
     /**
-     * @throws SAXException 
+     * @throws SAXException
      * @see nu.validator.htmlparser.impl.TreeBuilder#end()
      */
     @Override
@@ -180,7 +170,7 @@ class SAXTreeBuilder extends TreeBuilder<Element> {
             cachedTablePreviousSibling = child;
         } else {
             stackParent.appendChild(child);
-        }        
+        }
     }
 
     @Override protected void insertFosterParentedChild(Element child,
@@ -196,7 +186,7 @@ class SAXTreeBuilder extends TreeBuilder<Element> {
 
     private Node previousSibling(Node table) {
         if (table == cachedTable) {
-            return cachedTablePreviousSibling;   
+            return cachedTablePreviousSibling;
         } else {
             cachedTable = table;
             return (cachedTablePreviousSibling = table.getPreviousSibling());

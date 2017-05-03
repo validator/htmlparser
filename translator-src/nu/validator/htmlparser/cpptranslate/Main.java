@@ -37,18 +37,17 @@
 
 package nu.validator.htmlparser.cpptranslate;
 
-import japa.parser.JavaParser;
-import japa.parser.ParseException;
-import japa.parser.ast.CompilationUnit;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
+
+import japa.parser.JavaParser;
+import japa.parser.ParseException;
+import japa.parser.ast.CompilationUnit;
 
 public class Main {
 
@@ -58,39 +57,37 @@ public class Main {
         "MetaScanner",
         "AttributeName",
         "ElementName",
-        "HtmlAttributes",
         "StackNode",
         "UTF16Buffer",
         "StateSnapshot",
         "Portability",
     };
-    
+
     private static final String[] CPP_LIST = {
         "Tokenizer",
         "TreeBuilder",
         "MetaScanner",
         "AttributeName",
         "ElementName",
-        "HtmlAttributes",
         "StackNode",
         "UTF16Buffer",
         "StateSnapshot",
     };
-    
+
     /**
      * @param args
-     * @throws ParseException 
-     * @throws IOException 
+     * @throws ParseException
+     * @throws IOException
      */
     public static void main(String[] args) throws ParseException, IOException {
         CppTypes cppTypes = new CppTypes(new File(args[2]));
         SymbolTable symbolTable = new SymbolTable();
-        
+
         File javaDirectory = new File(args[0]);
         File targetDirectory = new File(args[1]);
         File cppDirectory = targetDirectory;
         File javaCopyDirectory = new File(targetDirectory, "javasrc");
-        
+
         for (int i = 0; i < H_LIST.length; i++) {
             parseFile(cppTypes, javaDirectory, cppDirectory, H_LIST[i], ".h", new HVisitor(cppTypes, symbolTable));
             copyFile(new File(javaDirectory, H_LIST[i] + ".java"), new File(javaCopyDirectory, H_LIST[i] + ".java"));
@@ -116,7 +113,7 @@ public class Main {
         out.close();
         in.close();
     }
-    
+
     private static void parseFile(CppTypes cppTypes, File javaDirectory,
             File cppDirectory, String className, String fne, CppVisitor visitor)
             throws FileNotFoundException, UnsupportedEncodingException,
