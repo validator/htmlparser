@@ -37,9 +37,12 @@
 
 package nu.validator.htmlparser.cpptranslate;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.Arrays;
@@ -47,32 +50,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class CppTypes {
 
-    /**
-     * The license for the atom list written by this program.
-     */
-    private static final String ATOM_LICENSE = "/*\n"
-            + " * Copyright (c) 2008-2010 Mozilla Foundation\n"
-            + " *\n"
-            + " * Permission is hereby granted, free of charge, to any person obtaining a \n"
-            + " * copy of this software and associated documentation files (the \"Software\"), \n"
-            + " * to deal in the Software without restriction, including without limitation \n"
-            + " * the rights to use, copy, modify, merge, publish, distribute, sublicense, \n"
-            + " * and/or sell copies of the Software, and to permit persons to whom the \n"
-            + " * Software is furnished to do so, subject to the following conditions:\n"
-            + " *\n"
-            + " * The above copyright notice and this permission notice shall be included in \n"
-            + " * all copies or substantial portions of the Software.\n"
-            + " *\n"
-            + " * THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR \n"
-            + " * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, \n"
-            + " * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL \n"
-            + " * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER \n"
-            + " * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING \n"
-            + " * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER \n"
-            + " * DEALINGS IN THE SOFTWARE.\n" + " */\n\n";
+    private static final Pattern ATOM_DEF = Pattern.compile("^GK_ATOM\\(([^,]+),\\s*\"([^\"]*)\"\\).*$");
 
     private static Set<String> reservedWords = new HashSet<String>();
 
@@ -100,7 +83,7 @@ public class CppTypes {
             "nsIAtom", "nsHtml5AtomTable", "nsITimer", "nsHtml5String",
             "nsNameSpaceManager", "nsIContent", "nsTraceRefcnt", "jArray",
             "nsHtml5DocumentMode", "nsHtml5ArrayCopy", "nsHtml5Parser",
-            "nsHtml5Atoms", "nsHtml5TreeOperation", "nsHtml5StateSnapshot",
+            "nsGkAtoms", "nsHtml5TreeOperation", "nsHtml5StateSnapshot",
             "nsHtml5StackNode", "nsHtml5TreeOpExecutor", "nsHtml5StreamParser",
             "nsAHtml5TreeBuilderState", "nsHtml5Highlighter",
             "nsHtml5PlainTextUtils", "nsHtml5ViewSourceUtils",
@@ -110,13 +93,13 @@ public class CppTypes {
             "nsHtml5AtomTable", "nsHtml5String", "nsIContent", "nsTraceRefcnt",
             "jArray", "nsHtml5DocumentMode", "nsHtml5ArrayCopy",
             "nsHtml5NamedCharacters", "nsHtml5NamedCharactersAccel",
-            "nsHtml5Atoms", "nsAHtml5TreeBuilderState", "nsHtml5Macros",
+            "nsGkAtoms", "nsAHtml5TreeBuilderState", "nsHtml5Macros",
             "nsHtml5Highlighter", "nsHtml5TokenizerLoopPolicies" };
 
     private static final String[] INCLUDES = { "nsIAtom", "nsHtml5AtomTable",
             "nsHtml5String", "nsNameSpaceManager", "nsIContent", "nsTraceRefcnt",
             "jArray", "nsHtml5ArrayCopy", "nsAHtml5TreeBuilderState",
-            "nsHtml5Atoms", "nsHtml5ByteReadable", "nsIUnicodeDecoder",
+            "nsGkAtoms", "nsHtml5ByteReadable", "nsIUnicodeDecoder",
             "nsHtml5Macros", "nsIContentHandle", "nsHtml5Portability" };
 
     private static final String[] OTHER_DECLATIONS = {};
@@ -138,23 +121,55 @@ public class CppTypes {
 
     private final Writer atomWriter;
 
+    private StringBuilder manualAtoms = new StringBuilder();
+
     public CppTypes(File atomList) {
         if (atomList == null) {
             atomWriter = null;
         } else {
             try {
+                ingestAtoms(atomList);
                 atomWriter = new OutputStreamWriter(new FileOutputStream(
                         atomList), "utf-8");
-                atomWriter.write(ATOM_LICENSE);
+                atomWriter.append(manualAtoms);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
     }
 
+    private void ingestAtoms(File atomList) throws IOException {
+        // This doesn't need to be efficient, so let's make it easy to write.
+        BufferedReader atomReader = new BufferedReader(
+                new InputStreamReader(new FileInputStream(atomList), "utf-8"));
+        try {
+            String line;
+            while ((line = atomReader.readLine()) != null) {
+                manualAtoms.append(line);
+                manualAtoms.append('\n');
+                if (line.startsWith("// BEGIN GENERATED")) {
+                    return;
+                }
+                if (!line.startsWith("GK_ATOM")) {
+                    continue;
+                }
+                Matcher m = ATOM_DEF.matcher(line);
+                if (!m.matches()) {
+                    throw new RuntimeException("Malformed atom definition: " + line);
+                }
+                atomMap.put(m.group(2), m.group(1));
+            }
+            throw new RuntimeException(
+                    "Atom list did not have a marker for generated section.");
+        } finally {
+            atomReader.close();
+        }
+    }
+
     public void finished() {
         try {
             if (atomWriter != null) {
+                atomWriter.write("// END GENERATED ATOMS, DO NOT ADD CODE BELOW THIS LINE\n");
                 atomWriter.flush();
                 atomWriter.close();
             }
@@ -275,14 +290,14 @@ public class CppTypes {
             atomMap.put(literal, atom);
             if (atomWriter != null) {
                 try {
-                    atomWriter.write("HTML5_ATOM(" + atom + ", \"" + literal
+                    atomWriter.write("// ATOM GENERATED BY HTML PARSER TRANSLATOR (WILL BE AUTOMATICALLY OVERWRITTEN):\nGK_ATOM(" + atom + ", \"" + literal
                             + "\")\n");
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
             }
         }
-        return "nsHtml5Atoms::" + atom;
+        return "nsGkAtoms::" + atom;
     }
 
     private String createAtomName(String literal) {
