@@ -37,7 +37,6 @@
 
 package nu.validator.htmlparser.cpptranslate;
 
-import java.util.LinkedList;
 import java.util.List;
 
 import japa.parser.ast.body.FieldDeclaration;
@@ -45,12 +44,9 @@ import japa.parser.ast.body.MethodDeclaration;
 import japa.parser.ast.body.ModifierSet;
 import japa.parser.ast.body.Parameter;
 import japa.parser.ast.body.VariableDeclarator;
-import japa.parser.ast.expr.IntegerLiteralExpr;
-import japa.parser.ast.expr.MethodCallExpr;
 import japa.parser.ast.stmt.BlockStmt;
 import japa.parser.ast.type.PrimitiveType;
 import japa.parser.ast.type.ReferenceType;
-import japa.parser.ast.type.Type;
 
 public class HVisitor extends CppVisitor {
 
@@ -59,8 +55,6 @@ public class HVisitor extends CppVisitor {
     }
 
     private Visibility previousVisibility = Visibility.NONE;
-
-    private List<String> defines = new LinkedList<String>();
 
     /**
      * @see nu.validator.htmlparser.cpptranslate.CppVisitor#printMethodNamespace()
@@ -76,15 +70,15 @@ public class HVisitor extends CppVisitor {
      * @see nu.validator.htmlparser.cpptranslate.CppVisitor#startClassDeclaration()
      */
     @Override protected void startClassDeclaration() {
-        printer.print("#ifndef ");        
+        printer.print("#ifndef ");
         printer.print(className);
         printer.printLn("_h");
-        printer.print("#define ");        
+        printer.print("#define ");
         printer.print(className);
         printer.printLn("_h");
-        
+
         printer.printLn();
-        
+
         String[] incs = cppTypes.boilerplateIncludes(javaClassName);
         for (int i = 0; i < incs.length; i++) {
             String inc = incs[i];
@@ -103,9 +97,9 @@ public class HVisitor extends CppVisitor {
             String decl = forwDecls[i];
             printer.print("class ");
             printer.print(decl);
-            printer.printLn(";");            
+            printer.printLn(";");
         }
-        
+
         printer.printLn();
 
         for (int i = 0; i < Main.H_LIST.length; i++) {
@@ -117,15 +111,15 @@ public class HVisitor extends CppVisitor {
                 printer.printLn(";");
             }
         }
-        
+
         printer.printLn();
-        
+
         String[] otherDecls = cppTypes.boilerplateDeclarations(javaClassName);
         for (int i = 0; i < otherDecls.length; i++) {
             String decl = otherDecls[i];
             printer.printLn(decl);
         }
-        
+
         printer.printLn();
 
         printer.print("class ");
@@ -145,28 +139,21 @@ public class HVisitor extends CppVisitor {
      */
     @Override protected void endClassDeclaration() {
         printModifiers(ModifierSet.PUBLIC | ModifierSet.STATIC);
-        printer.printLn("void initializeStatics();");        
+        printer.printLn("void initializeStatics();");
         printModifiers(ModifierSet.PUBLIC | ModifierSet.STATIC);
-        printer.printLn("void releaseStatics();");        
-        
+        printer.printLn("void releaseStatics();");
+
         printer.unindent();
         printer.unindent();
-        
+
         if (cppTypes.hasSupplement(javaClassName)) {
             printer.printLn();
             printer.print("#include \"");
             printer.print(className);
             printer.printLn("HSupplement.h\"");
         }
-        
-        printer.printLn("};");
-        printer.printLn();
 
-        for (String define : defines) {
-            printer.printLn(define);
-        }
-        
-        printer.printLn();
+        printer.printLn("};");
         printer.printLn();
         printer.printLn("#endif");
     }
@@ -198,10 +185,10 @@ public class HVisitor extends CppVisitor {
             }
         }
         if (inline()) {
-            printer.print("inline ");            
+            printer.print("inline ");
         }
         if (virtual()) {
-            printer.print("virtual ");            
+            printer.print("virtual ");
         }
         if (ModifierSet.isStatic(modifiers)) {
             printer.print("static ");
@@ -226,18 +213,16 @@ public class HVisitor extends CppVisitor {
                 throw new IllegalStateException(
                         "More than one variable declared by one declarator.");
             }
-            String name = javaClassName + "." + declarator.getId().getName();
-            String value = declarator.getInit().toString();
-            if ("Integer.MAX_VALUE".equals(value)) {
-                value = cppTypes.maxInteger();
-            }
-            String longName = definePrefix + declarator.getId().getName();
-            if (symbolTable.cppDefinesByJavaNames.containsKey(name)) {
-                throw new IllegalStateException(
-                        "Duplicate #define constant local name: " + name);
-            }
-            symbolTable.cppDefinesByJavaNames.put(name, longName);
-            defines.add("#define " + longName + " " + value);
+            printModifiers(modifiers);
+            printer.print("const ");
+            n.getType().accept(this, arg);
+            printer.print(" ");
+            declarator.getId().accept(this, arg);
+            printer.print(" = ");
+            declarator.getInit().accept(this, arg);
+            printer.printLn(";");
+            printer.printLn();
+            symbolTable.addPrimitiveConstant(javaClassName, declarator.getId().toString());
         } else {
             if (n.getType() instanceof ReferenceType) {
                 ReferenceType rt = (ReferenceType) n.getType();
