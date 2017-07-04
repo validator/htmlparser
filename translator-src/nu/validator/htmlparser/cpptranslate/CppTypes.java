@@ -97,9 +97,9 @@ public class CppTypes {
             "nsHtml5Highlighter", "nsHtml5TokenizerLoopPolicies" };
 
     private static final String[] INCLUDES = { "nsIAtom", "nsHtml5AtomTable",
-            "nsHtml5String", "nsNameSpaceManager", "nsIContent", "nsTraceRefcnt",
-            "jArray", "nsHtml5ArrayCopy", "nsAHtml5TreeBuilderState",
-            "nsGkAtoms", "nsHtml5ByteReadable", "nsIUnicodeDecoder",
+            "nsHtml5String", "nsNameSpaceManager", "nsIContent",
+            "nsTraceRefcnt", "jArray", "nsHtml5ArrayCopy",
+            "nsAHtml5TreeBuilderState", "nsGkAtoms", "nsHtml5ByteReadable",
             "nsHtml5Macros", "nsIContentHandle", "nsHtml5Portability" };
 
     private static final String[] OTHER_DECLATIONS = {};
