@@ -100,7 +100,8 @@ public class CppTypes {
             "nsHtml5String", "nsNameSpaceManager", "nsIContent",
             "nsTraceRefcnt", "jArray", "nsHtml5ArrayCopy",
             "nsAHtml5TreeBuilderState", "nsGkAtoms", "nsHtml5ByteReadable",
-            "nsHtml5Macros", "nsIContentHandle", "nsHtml5Portability" };
+            "nsHtml5Macros", "nsIContentHandle", "nsHtml5Portability",
+            "nsHtml5ContentCreatorFunction"};
 
     private static final String[] OTHER_DECLATIONS = {};
 
@@ -245,6 +246,18 @@ public class CppTypes {
 
     public String nodeType() {
         return "nsIContentHandle*";
+    }
+
+    public String htmlCreatorType() {
+        return "mozilla::dom::HTMLContentCreatorFunction";
+    }
+
+    public String svgCreatorType() {
+        return "mozilla::dom::SVGContentCreatorFunction";
+    }
+
+    public String creatorType() {
+        return "nsHtml5ContentCreatorFunction";
     }
 
     public String xhtmlNamespaceLiteral() {
