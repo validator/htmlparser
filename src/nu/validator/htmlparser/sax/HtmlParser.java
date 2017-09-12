@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
- * Copyright (c) 2007-2010 Mozilla Foundation
+ * Copyright (c) 2007-2017 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.HashMap;
 
 import nu.validator.htmlparser.common.CharacterHandler;
-import nu.validator.htmlparser.common.DoctypeExpectation;
 import nu.validator.htmlparser.common.DocumentModeHandler;
 import nu.validator.htmlparser.common.Heuristics;
 import nu.validator.htmlparser.common.TokenHandler;
@@ -108,8 +107,6 @@ public class HtmlParser implements XMLReader {
 
     private DocumentModeHandler documentModeHandler = null;
 
-    private DoctypeExpectation doctypeExpectation = DoctypeExpectation.HTML;
-
     private boolean checkingNormalization = false;
 
     private boolean scriptingEnabled = false;
@@ -126,8 +123,6 @@ public class HtmlParser implements XMLReader {
 
     private XmlViolationPolicy streamabilityViolationPolicy = XmlViolationPolicy.ALLOW;
     
-    private boolean html4ModeCompatibleWithXhtml1Schemata = false;
-
     private boolean mappingLangToXmlLang = false;
 
     private XmlViolationPolicy xmlnsPolicy = XmlViolationPolicy.FATAL;
@@ -193,14 +188,12 @@ public class HtmlParser implements XMLReader {
             this.driver.setCommentPolicy(commentPolicy);
             this.driver.setContentNonXmlCharPolicy(contentNonXmlCharPolicy);
             this.driver.setContentSpacePolicy(contentSpacePolicy);
-            this.driver.setHtml4ModeCompatibleWithXhtml1Schemata(html4ModeCompatibleWithXhtml1Schemata);
             this.driver.setMappingLangToXmlLang(mappingLangToXmlLang);
             this.driver.setXmlnsPolicy(xmlnsPolicy);
             this.driver.setHeuristics(heuristics);
             for (CharacterHandler characterHandler : characterHandlers) {
                 this.driver.addCharacterHandler(characterHandler);
             }
-            this.treeBuilder.setDoctypeExpectation(doctypeExpectation);
             this.treeBuilder.setDocumentModeHandler(documentModeHandler);
             this.treeBuilder.setIgnoringComments(lexicalHandler == null);
             this.treeBuilder.setScriptingEnabled(scriptingEnabled);
@@ -279,8 +272,6 @@ public class HtmlParser implements XMLReader {
      * <dd><code>false</code></dd>
      * <dt><code>http://xml.org/sax/features/xml-1.1</code></dt>
      * <dd><code>false</code></dd>
-     * <dt><code>http://validator.nu/features/html4-mode-compatible-with-xhtml1-schemata</code></dt>
-     * <dd><code>isHtml4ModeCompatibleWithXhtml1Schemata</code></dd>
      * <dt><code>http://validator.nu/features/mapping-lang-to-xml-lang</code></dt>
      * <dd><code>isMappingLangToXmlLang</code></dd>
      * <dt><code>http://validator.nu/features/scripting-enabled</code></dt>
@@ -325,8 +316,6 @@ public class HtmlParser implements XMLReader {
             return false;
         } else if ("http://xml.org/sax/features/xml-1.1".equals(name)) {
             return false;
-        } else if ("http://validator.nu/features/html4-mode-compatible-with-xhtml1-schemata".equals(name)) {
-            return isHtml4ModeCompatibleWithXhtml1Schemata();
         } else if ("http://validator.nu/features/mapping-lang-to-xml-lang".equals(name)) {
             return isMappingLangToXmlLang();
         } else if ("http://validator.nu/features/scripting-enabled".equals(name)) {
@@ -362,8 +351,6 @@ public class HtmlParser implements XMLReader {
      * <dd><code>getStreamabilityViolationPolicy</code></dd>
      * <dt><code>http://validator.nu/properties/document-mode-handler</code></dt>
      * <dd><code>getDocumentModeHandler</code></dd>
-     * <dt><code>http://validator.nu/properties/doctype-expectation</code></dt>
-     * <dd><code>getDoctypeExpectation</code></dd>
      * <dt><code>http://xml.org/sax/features/unicode-normalization-checking</code></dt>
      * </dl>
      * 
@@ -401,8 +388,6 @@ public class HtmlParser implements XMLReader {
             return getStreamabilityViolationPolicy();
         } else if ("http://validator.nu/properties/document-mode-handler".equals(name)) {
             return getDocumentModeHandler();
-        } else if ("http://validator.nu/properties/doctype-expectation".equals(name)) {
-            return getDoctypeExpectation();
         } else if ("http://validator.nu/properties/xml-policy".equals(name)) {
             throw new SAXNotSupportedException(
                     "Cannot get a convenience setter.");
@@ -584,8 +569,6 @@ public class HtmlParser implements XMLReader {
      * <dl>
      * <dt><code>http://xml.org/sax/features/unicode-normalization-checking</code></dt>
      * <dd><code>setCheckingNormalization</code></dd>
-     * <dt><code>http://validator.nu/features/html4-mode-compatible-with-xhtml1-schemata</code></dt>
-     * <dd><code>setHtml4ModeCompatibleWithXhtml1Schemata</code></dd>
      * <dt><code>http://validator.nu/features/mapping-lang-to-xml-lang</code></dt>
      * <dd><code>setMappingLangToXmlLang</code></dd>
      * <dt><code>http://validator.nu/features/scripting-enabled</code></dt>
@@ -654,8 +637,6 @@ public class HtmlParser implements XMLReader {
             if (value) {
                 throw new SAXNotSupportedException("Cannot set " + name + ".");
             }
-        } else if ("http://validator.nu/features/html4-mode-compatible-with-xhtml1-schemata".equals(name)) {
-            setHtml4ModeCompatibleWithXhtml1Schemata(value);
         } else if ("http://validator.nu/features/mapping-lang-to-xml-lang".equals(name)) {
             setMappingLangToXmlLang(value);
         } else if ("http://validator.nu/features/scripting-enabled".equals(name)) {
@@ -686,8 +667,6 @@ public class HtmlParser implements XMLReader {
      * <dd><code>setStreamabilityViolationPolicy</code></dd>
      * <dt><code>http://validator.nu/properties/document-mode-handler</code></dt>
      * <dd><code>setDocumentModeHandler</code></dd>
-     * <dt><code>http://validator.nu/properties/doctype-expectation</code></dt>
-     * <dd><code>setDoctypeExpectation</code></dd>
      * <dt><code>http://validator.nu/properties/xml-policy</code></dt>
      * <dd><code>setXmlPolicy</code></dd>
      * </dl>
@@ -723,8 +702,6 @@ public class HtmlParser implements XMLReader {
             setStreamabilityViolationPolicy((XmlViolationPolicy) value);
         } else if ("http://validator.nu/properties/document-mode-handler".equals(name)) {
             setDocumentModeHandler((DocumentModeHandler) value);
-        } else if ("http://validator.nu/properties/doctype-expectation".equals(name)) {
-            setDoctypeExpectation((DoctypeExpectation) value);
         } else if ("http://validator.nu/properties/xml-policy".equals(name)) {
             setXmlPolicy((XmlViolationPolicy) value);
         } else if ("http://validator.nu/properties/heuristics".equals(name)) {
@@ -813,29 +790,6 @@ public class HtmlParser implements XMLReader {
     }
 
     /**
-     * Returns the doctype expectation.
-     * 
-     * @return the doctypeExpectation
-     */
-    public DoctypeExpectation getDoctypeExpectation() {
-        return doctypeExpectation;
-    }
-
-    /**
-     * Sets the doctype expectation.
-     * 
-     * @param doctypeExpectation
-     *            the doctypeExpectation to set
-     * @see nu.validator.htmlparser.impl.TreeBuilder#setDoctypeExpectation(nu.validator.htmlparser.common.DoctypeExpectation)
-     */
-    public void setDoctypeExpectation(DoctypeExpectation doctypeExpectation) {
-        this.doctypeExpectation = doctypeExpectation;
-        if (treeBuilder != null) {
-            treeBuilder.setDoctypeExpectation(doctypeExpectation);
-        }
-    }
-
-    /**
      * Returns the document mode handler.
      * 
      * @return the documentModeHandler
@@ -877,34 +831,11 @@ public class HtmlParser implements XMLReader {
     }
 
     /**
-     * Whether the HTML 4 mode reports boolean attributes in a way that repeats
-     * the name in the value.
-     * @param html4ModeCompatibleWithXhtml1Schemata
-     */
-    public void setHtml4ModeCompatibleWithXhtml1Schemata(
-            boolean html4ModeCompatibleWithXhtml1Schemata) {
-        this.html4ModeCompatibleWithXhtml1Schemata = html4ModeCompatibleWithXhtml1Schemata;
-        if (driver != null) {
-            driver.setHtml4ModeCompatibleWithXhtml1Schemata(html4ModeCompatibleWithXhtml1Schemata);
-        }
-    }
-
-    /**
      * Returns the <code>Locator</code> during parse.
      * @return the <code>Locator</code>
      */
     public Locator getDocumentLocator() {
         return driver.getDocumentLocator();
-    }
-
-    /**
-     * Whether the HTML 4 mode reports boolean attributes in a way that repeats
-     * the name in the value.
-     * 
-     * @return the html4ModeCompatibleWithXhtml1Schemata
-     */
-    public boolean isHtml4ModeCompatibleWithXhtml1Schemata() {
-        return html4ModeCompatibleWithXhtml1Schemata;
     }
 
     /**
