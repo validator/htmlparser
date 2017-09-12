@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2005, 2006, 2007 Henri Sivonen
- * Copyright (c) 2007-2013 Mozilla Foundation
+ * Copyright (c) 2007-2017 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -552,15 +552,6 @@ public class Driver implements EncodingDeclarationHandler {
         } else if (transitionHandler != null) {
             throw new IllegalStateException("Attempt to set a transition handler on a plain tokenizer.");
         }
-    }
-
-    /**
-     * @param html4ModeCompatibleWithXhtml1Schemata
-     * @see nu.validator.htmlparser.impl.Tokenizer#setHtml4ModeCompatibleWithXhtml1Schemata(boolean)
-     */
-    public void setHtml4ModeCompatibleWithXhtml1Schemata(
-            boolean html4ModeCompatibleWithXhtml1Schemata) {
-        tokenizer.setHtml4ModeCompatibleWithXhtml1Schemata(html4ModeCompatibleWithXhtml1Schemata);
     }
 
     /**
