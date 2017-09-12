@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
- * Copyright (c) 2008-2009 Mozilla Foundation
+ * Copyright (c) 2008-2017 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -376,7 +376,7 @@ class BrowserTreeBuilder extends CoalescingTreeBuilder<JavaScriptObject> {
     }
 
     protected void documentMode(DocumentMode mode, String publicIdentifier,
-            String systemIdentifier, boolean html4SpecificAdditionalErrorChecks)
+            String systemIdentifier)
             throws SAXException {
         // document.setUserData("nu.validator.document-mode", mode, null);
     }
