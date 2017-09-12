@@ -369,28 +369,10 @@ public class ErrorReportingTokenizer extends Tokenizer {
     }
 
     @Override protected void errWarnLtSlashInRcdata() throws SAXException {
-        if (html4) {
-            err((stateSave == Tokenizer.DATA ? "CDATA" : "RCDATA")
-                    + " element \u201C"
-                    + endTagExpectation
-                    + "\u201D contained the string \u201C</\u201D, but it was not the start of the end tag. (HTML4-only error)");
-        } else {
-            warn((stateSave == Tokenizer.DATA ? "CDATA" : "RCDATA")
-                    + " element \u201C"
-                    + endTagExpectation
-                    + "\u201D contained the string \u201C</\u201D, but this did not close the element.");
-        }
-    }
-
-    @Override protected void errHtml4LtSlashInRcdata(char folded)
-            throws SAXException {
-        if (html4 && (index > 0 || (folded >= 'a' && folded <= 'z'))
-                && ElementName.IFRAME != endTagExpectation) {
-            err((stateSave == Tokenizer.DATA ? "CDATA" : "RCDATA")
-                    + " element \u201C"
-                    + endTagExpectation.getName()
-                    + "\u201D contained the string \u201C</\u201D, but it was not the start of the end tag. (HTML4-only error)");
-        }
+        warn((stateSave == Tokenizer.DATA ? "CDATA" : "RCDATA")
+                + " element \u201C"
+                + endTagExpectation
+                + "\u201D contained the string \u201C</\u201D, but this did not close the element.");
     }
 
     @Override protected void errCharRefLacksSemicolon() throws SAXException {
@@ -448,24 +430,8 @@ public class ErrorReportingTokenizer extends Tokenizer {
         err("A slash was not immediately followed by \u201C>\u201D.");
     }
 
-    @Override protected void errHtml4XmlVoidSyntax() throws SAXException {
-        if (html4) {
-            err("The \u201C/>\u201D syntax on void elements is not allowed.  (This is an HTML4-only error.)");
-        }
-    }
-
     @Override protected void errNoSpaceBetweenAttributes() throws SAXException {
         err("No space between attributes.");
-    }
-
-    @Override protected void errHtml4NonNameInUnquotedAttribute(char c)
-            throws SAXException {
-        if (html4
-                && !((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
-                        || (c >= '0' && c <= '9') || c == '.' || c == '-'
-                        || c == '_' || c == ':')) {
-            err("Non-name character in an unquoted attribute value. (This is an HTML4-only error.)");
-        }
     }
 
     @Override protected void errLtOrEqualsOrGraveInUnquotedAttributeOrNull(
