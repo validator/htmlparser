@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
- * Copyright (c) 2007-2008 Mozilla Foundation
+ * Copyright (c) 2007-2017 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -34,7 +34,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import nu.validator.htmlparser.common.CharacterHandler;
-import nu.validator.htmlparser.common.DoctypeExpectation;
 import nu.validator.htmlparser.common.DocumentModeHandler;
 import nu.validator.htmlparser.common.Heuristics;
 import nu.validator.htmlparser.common.TokenHandler;
@@ -122,8 +121,6 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
     
     private DocumentModeHandler documentModeHandler = null;
 
-    private DoctypeExpectation doctypeExpectation = DoctypeExpectation.HTML;
-
     private boolean checkingNormalization = false;
 
     private boolean scriptingEnabled = false;
@@ -140,8 +137,6 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
 
     private XmlViolationPolicy streamabilityViolationPolicy = XmlViolationPolicy.ALLOW;
     
-    private boolean html4ModeCompatibleWithXhtml1Schemata = false;
-
     private boolean mappingLangToXmlLang = false;
 
     private XmlViolationPolicy xmlnsPolicy = XmlViolationPolicy.FATAL;
@@ -223,14 +218,12 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
             this.driver.setCommentPolicy(commentPolicy);
             this.driver.setContentNonXmlCharPolicy(contentNonXmlCharPolicy);
             this.driver.setContentSpacePolicy(contentSpacePolicy);
-            this.driver.setHtml4ModeCompatibleWithXhtml1Schemata(html4ModeCompatibleWithXhtml1Schemata);
             this.driver.setMappingLangToXmlLang(mappingLangToXmlLang);
             this.driver.setXmlnsPolicy(xmlnsPolicy);
             this.driver.setHeuristics(heuristics);
             for (CharacterHandler characterHandler : characterHandlers) {
                 this.driver.addCharacterHandler(characterHandler);
             }
-            this.treeBuilder.setDoctypeExpectation(doctypeExpectation);
             this.treeBuilder.setDocumentModeHandler(documentModeHandler);
             this.treeBuilder.setScriptingEnabled(scriptingEnabled);
             this.treeBuilder.setReportingDoctype(reportingDoctype);
@@ -458,29 +451,6 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
     }
 
     /**
-     * Returns the doctype expectation.
-     * 
-     * @return the doctypeExpectation
-     */
-    public DoctypeExpectation getDoctypeExpectation() {
-        return doctypeExpectation;
-    }
-
-    /**
-     * Sets the doctype expectation.
-     * 
-     * @param doctypeExpectation
-     *            the doctypeExpectation to set
-     * @see nu.validator.htmlparser.impl.TreeBuilder#setDoctypeExpectation(nu.validator.htmlparser.common.DoctypeExpectation)
-     */
-    public void setDoctypeExpectation(DoctypeExpectation doctypeExpectation) {
-        this.doctypeExpectation = doctypeExpectation;
-        if (treeBuilder != null) {
-            treeBuilder.setDoctypeExpectation(doctypeExpectation);
-        }
-    }
-
-    /**
      * Returns the document mode handler.
      * 
      * @return the documentModeHandler
@@ -522,34 +492,11 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
     }
 
     /**
-     * Whether the HTML 4 mode reports boolean attributes in a way that repeats
-     * the name in the value.
-     * @param html4ModeCompatibleWithXhtml1Schemata
-     */
-    public void setHtml4ModeCompatibleWithXhtml1Schemata(
-            boolean html4ModeCompatibleWithXhtml1Schemata) {
-        this.html4ModeCompatibleWithXhtml1Schemata = html4ModeCompatibleWithXhtml1Schemata;
-        if (driver != null) {
-            driver.setHtml4ModeCompatibleWithXhtml1Schemata(html4ModeCompatibleWithXhtml1Schemata);
-        }
-    }
-
-    /**
      * Returns the <code>Locator</code> during parse.
      * @return the <code>Locator</code>
      */
     public Locator getDocumentLocator() {
         return driver.getDocumentLocator();
-    }
-
-    /**
-     * Whether the HTML 4 mode reports boolean attributes in a way that repeats
-     * the name in the value.
-     * 
-     * @return the html4ModeCompatibleWithXhtml1Schemata
-     */
-    public boolean isHtml4ModeCompatibleWithXhtml1Schemata() {
-        return html4ModeCompatibleWithXhtml1Schemata;
     }
 
     /**
