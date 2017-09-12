@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
+ * Copyright (c) 2017 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -39,8 +40,7 @@ public interface DocumentModeHandler {
      * @param mode the document mode
      * @param publicIdentifier the public id of the doctype or <code>null</code> if unavailable
      * @param systemIdentifier the system id of the doctype or <code>null</code> if unavailable
-     * @param html4SpecificAdditionalErrorChecks <code>true</code> if HTML 4-specific checks were enabled, <code>false</code> otherwise
      * @throws SAXException if things go wrong
      */
-    public void documentMode(DocumentMode mode, String publicIdentifier, String systemIdentifier, boolean html4SpecificAdditionalErrorChecks) throws SAXException;
+    public void documentMode(DocumentMode mode, String publicIdentifier, String systemIdentifier) throws SAXException;
 }
