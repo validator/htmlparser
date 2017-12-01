@@ -412,7 +412,7 @@ public class CppTypes {
     }
 
     public String staticAssert() {
-        return "PR_STATIC_ASSERT";
+        return "static_assert";
     }
 
     public String continueMacro() {

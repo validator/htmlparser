@@ -533,11 +533,10 @@ public class GenerateNamedCharactersCpp {
         String arrayLengthMacro = cppTypes.arrayLengthMacro();
         String staticAssert = cppTypes.staticAssert();
         if (staticAssert != null && arrayLengthMacro != null) {
-            out.write("/* check that the start positions will fit in 16 bits */\n");
             out.write(staticAssert + "(" + arrayLengthMacro
-                    + "(ALL_NAMES) < 0x10000);\n\n");
+                    + "(ALL_NAMES) < 0x10000, \"Start positions should fit in 16 bits\");\n\n");
         }
-        
+
         out.write("const " + cppTypes.characterNameTypeDeclaration() + " " + cppTypes.classPrefix()
                 + "NamedCharacters::NAMES[] = {\n");
         defineMacroAndInclude(out, "{ NAME_##N##_START, LEN, },", "{ NAME_##N##_START, LEN, N },", includeFile);
