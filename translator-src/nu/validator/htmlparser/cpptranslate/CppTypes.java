@@ -383,7 +383,7 @@ public class CppTypes {
         return "MOZ_COUNT_CTOR(" + className + ");";
     }
 
-    public String destructorBoilderplate(String className) {
+    public String destructorBoilerplate(String className) {
         return "MOZ_COUNT_DTOR(" + className + ");";
     }
 

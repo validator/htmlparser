@@ -1634,7 +1634,7 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
             printer.printLn("{");
             printer.indent();
             if (destructor) {
-                String boilerplate = cppTypes.destructorBoilderplate(className);
+                String boilerplate = cppTypes.destructorBoilerplate(className);
                 if (boilerplate != null) {
                     printer.printLn(boilerplate);
                 }
