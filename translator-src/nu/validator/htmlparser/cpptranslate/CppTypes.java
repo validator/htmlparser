@@ -80,7 +80,7 @@ public class CppTypes {
     }
 
     private static final String[] TREE_BUILDER_INCLUDES = { "nsContentUtils",
-            "nsIAtom", "nsHtml5AtomTable", "nsITimer", "nsHtml5String",
+            "nsAtom", "nsHtml5AtomTable", "nsITimer", "nsHtml5String",
             "nsNameSpaceManager", "nsIContent", "nsTraceRefcnt", "jArray",
             "nsHtml5DocumentMode", "nsHtml5ArrayCopy", "nsHtml5Parser",
             "nsGkAtoms", "nsHtml5TreeOperation", "nsHtml5StateSnapshot",
@@ -89,14 +89,14 @@ public class CppTypes {
             "nsHtml5PlainTextUtils", "nsHtml5ViewSourceUtils",
             "mozilla/Likely", "nsIContentHandle", "nsHtml5OplessBuilder" };
 
-    private static final String[] TOKENIZER_INCLUDES = { "nsIAtom",
+    private static final String[] TOKENIZER_INCLUDES = { "nsAtom",
             "nsHtml5AtomTable", "nsHtml5String", "nsIContent", "nsTraceRefcnt",
             "jArray", "nsHtml5DocumentMode", "nsHtml5ArrayCopy",
             "nsHtml5NamedCharacters", "nsHtml5NamedCharactersAccel",
             "nsGkAtoms", "nsAHtml5TreeBuilderState", "nsHtml5Macros",
             "nsHtml5Highlighter", "nsHtml5TokenizerLoopPolicies" };
 
-    private static final String[] INCLUDES = { "nsIAtom", "nsHtml5AtomTable",
+    private static final String[] INCLUDES = { "nsAtom", "nsHtml5AtomTable",
             "nsHtml5String", "nsNameSpaceManager", "nsIContent",
             "nsTraceRefcnt", "jArray", "nsHtml5ArrayCopy",
             "nsAHtml5TreeBuilderState", "nsGkAtoms", "nsHtml5ByteReadable",
@@ -217,11 +217,11 @@ public class CppTypes {
     }
 
     public String localType() {
-        return "nsIAtom*";
+        return "nsAtom*";
     }
 
     public String prefixType() {
-        return "nsIAtom*";
+        return "nsAtom*";
     }
 
     public String nsUriType() {
