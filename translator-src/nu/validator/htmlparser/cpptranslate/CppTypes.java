@@ -415,10 +415,6 @@ public class CppTypes {
         return "PR_STATIC_ASSERT";
     }
 
-    public String abortIfFalse() {
-        return "NS_ABORT_IF_FALSE";
-    }
-
     public String continueMacro() {
         return "NS_HTML5_CONTINUE";
     }
