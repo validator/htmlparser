@@ -1493,15 +1493,15 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
         for (Statement statement : statements) {
             if (statement instanceof ExpressionStmt
                     && ((ExpressionStmt) statement).getExpression() instanceof AssignExpr) {
+                printer.printLn();
                 if (i == 0) {
-                    printer.printLn();
+                    // : firstMember(arg)
                     printer.indent();
                     printer.print(": ");
                     needOutdent = true;
                 } else {
-                    printer.print(",");
-                    printer.printLn();
-                    printer.print("  ");
+                    // , secondMember(arg)
+                    printer.print(", ");
                 }
                 statement.accept(this, arg);
                 i++;
