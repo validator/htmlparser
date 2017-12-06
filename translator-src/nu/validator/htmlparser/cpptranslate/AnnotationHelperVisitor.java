@@ -84,6 +84,10 @@ public class AnnotationHelperVisitor<T> extends VoidVisitorAdapter<T> {
         return hasAnnotation("Virtual");
     }
 
+    protected boolean override() {
+        return hasAnnotation("Override");
+    }
+
     protected boolean isConst() {
         return hasAnnotation("Const");
     }

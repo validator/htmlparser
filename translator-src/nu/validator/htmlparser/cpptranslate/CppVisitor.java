@@ -1602,7 +1602,6 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
             printer.print(n.getName());
         }
 
-        currentAnnotations = null;
         printer.print("(");
         if (n.getParameters() != null) {
             for (Iterator<Parameter> i = n.getParameters().iterator(); i.hasNext();) {
@@ -1618,6 +1617,12 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
         for (int i = 0; i < n.getArrayCount(); i++) {
             printer.print("[]");
         }
+
+        if (override() && inHeader()) {
+            printer.print(" override");
+        }
+
+        currentAnnotations = null;
 
         if (inHeader() == isInline) {
             printMethodBody(n.getBody(), arg);
