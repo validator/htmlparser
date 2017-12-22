@@ -131,7 +131,6 @@ public class HVisitor extends CppVisitor {
         printer.printLn();
         printer.printLn("{");
         printer.indent();
-        printer.indent();
     }
 
     /**
@@ -144,7 +143,6 @@ public class HVisitor extends CppVisitor {
         printer.printLn("void releaseStatics();");
 
         printer.unindent();
-        printer.unindent();
 
         if (cppTypes.hasSupplement(javaClassName)) {
             printer.printLn();
@@ -155,7 +153,7 @@ public class HVisitor extends CppVisitor {
 
         printer.printLn("};");
         printer.printLn();
-        printer.printLn("#endif");
+        printer.print("#endif");
     }
 
     /**

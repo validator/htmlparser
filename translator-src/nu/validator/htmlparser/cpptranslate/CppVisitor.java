@@ -581,7 +581,7 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
             }
             n.getType().accept(this, arg);
             for (int i = 0; i < n.getArrayCount(); i++) {
-                printer.print(",");
+                printer.print(", ");
                 printer.print(cppTypes.intType());
                 printer.print(">");
             }
@@ -690,7 +690,7 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
                         suppressPointer = true;
                         rt.getType().accept(this, arg);
                         suppressPointer = false;
-                        printer.print(",");
+                        printer.print(", ");
                         printer.print(cppTypes.intType());
                         printer.print("> ");
                         printer.print(className);
@@ -717,7 +717,7 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
                             suppressPointer = true;
                             rt.getType().accept(this, arg);
                             suppressPointer = false;
-                            printer.print(",");
+                            printer.print(", ");
                             printer.print(cppTypes.intType());
                             printer.print(">::");
                             printer.print(cppTypes.newArrayCreator());
@@ -868,7 +868,7 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
                     printer.print(cppTypes.arrayTemplate());
                     printer.print("<");
                     n.getType().accept(this, arg);
-                    printer.print(",");
+                    printer.print(", ");
                     printer.print(cppTypes.intType());
                     printer.print(">::");
                     printer.print(cppTypes.newArrayCreator());
@@ -1809,15 +1809,19 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
         }
         String label = n.getLabel();
         if (labels.contains(label)) {
+            printer.unindent();
             printer.print(label);
-            printer.print(": ");
+            printer.indent();
+            printer.printLn(":");
         }
         stmt.accept(this, arg);
         printer.printLn();
         label += "_end";
         if (labels.contains(label)) {
+            printer.unindent();
             printer.print(label);
-            printer.print(": ;");
+            printer.indent();
+            printer.print(":;");
         }
     }
 
@@ -1924,7 +1928,7 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
     }
 
     public void visit(SwitchStmt n, LocalSymbolTable arg) {
-        printer.print("switch(");
+        printer.print("switch (");
         n.getSelector().accept(this, arg);
         printer.printLn(") {");
         if (n.getEntries() != null) {
@@ -2267,12 +2271,14 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
                 }
             }
         }
-        printer.print("; ");
+        printer.print(";");
         if (n.getCompare() != null) {
+            printer.print(" ");
             n.getCompare().accept(this, arg);
         }
-        printer.print("; ");
+        printer.print(";");
         if (n.getUpdate() != null) {
+            printer.print(" ");
             for (Iterator<Expression> i = n.getUpdate().iterator(); i.hasNext();) {
                 Expression e = i.next();
                 e.accept(this, arg);
