@@ -1805,9 +1805,10 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                         case TBODY_OR_THEAD_OR_TFOOT:
                         case TR:
                         case TD_OR_TH:
-                            errStrayStartTag(name);
                             eltPos = findLastInTableScope("caption");
                             if (eltPos == TreeBuilder.NOT_FOUND_ON_STACK) {
+                                assert fragment || isTemplateContents();
+                                errStrayStartTag(name);
                                 break starttagloop;
                             }
                             generateImpliedEndTags();
@@ -3281,9 +3282,11 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                             mode = IN_TABLE;
                             break endtagloop;
                         case TABLE:
-                            errTableClosedWhileCaptionOpen();
                             eltPos = findLastInTableScope("caption");
+
                             if (eltPos == TreeBuilder.NOT_FOUND_ON_STACK) {
+                                assert fragment || isTemplateContents();
+                                errStrayEndTag(name);
                                 break endtagloop;
                             }
                             generateImpliedEndTags();
@@ -6460,10 +6463,6 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         }
         errNoCheck("HTML start tag \u201C" + name
                 + "\u201D in a foreign namespace context.");
-    }
-
-    private void errTableClosedWhileCaptionOpen() throws SAXException {
-        err("\u201Ctable\u201D closed but \u201Ccaption\u201D was still open.");
     }
 
     private void errNoTableRowToClose() throws SAXException {
