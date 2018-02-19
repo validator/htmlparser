@@ -131,9 +131,9 @@ public final class HtmlInputStreamReader extends Reader implements
             if (encoding == null) {
                 declared = false;
             } else if (encoding != Encoding.UTF8) {
-                warn("Legacy encoding \u201C"
+                err("Legacy encoding \u201C"
                         + encoding.getCanonName()
-                        + "\u201D used. Documents should use UTF-8.");
+                        + "\u201D used. Documents must use UTF-8.");
             }
             if (encoding == null
                     && (heuristics == Heuristics.CHARDET || heuristics == Heuristics.ALL)) {
@@ -160,9 +160,9 @@ public final class HtmlInputStreamReader extends Reader implements
                     driver.setEncoding(Encoding.UTF8, Confidence.CERTAIN);
                 }
             } else {
-                warn("Legacy encoding \u201C"
+                err("Legacy encoding \u201C"
                         + encoding.getCanonName()
-                        + "\u201D used. Documents should use UTF-8.");
+                        + "\u201D used. Documents must use UTF-8.");
                 if (driver != null) {
                     driver.setEncoding(Encoding.UTF16, Confidence.CERTAIN);
                 }
