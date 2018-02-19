@@ -197,9 +197,9 @@ public class Driver implements EncodingDeclarationHandler {
                         tokenizer.getErrorHandler(), tokenizer, this, heuristics);
             } else {
                 if (this.characterEncoding != Encoding.UTF8) {
-                    warnWithoutLocation("Legacy encoding \u201C"
+                    errorWithoutLocation("Legacy encoding \u201C"
                             + this.characterEncoding.getCanonName()
-                            + "\u201D used. Documents should use UTF-8.");
+                            + "\u201D used. Documents must use UTF-8.");
                 }
                 becomeConfident();
                 this.reader = new HtmlInputStreamReader(inputStream,
@@ -416,14 +416,14 @@ public class Driver implements EncodingDeclarationHandler {
      *            the message
      * @throws SAXException
      */
-    protected void warnWithoutLocation(String message) throws SAXException {
+    protected void errorWithoutLocation(String message) throws SAXException {
         ErrorHandler errorHandler = tokenizer.getErrorHandler();
         if (errorHandler == null) {
             return;
         }
         SAXParseException spe = new SAXParseException(message, null,
                 tokenizer.getSystemId(), -1, -1);
-        errorHandler.warning(spe);
+        errorHandler.error(spe);
     }
 
     /**
