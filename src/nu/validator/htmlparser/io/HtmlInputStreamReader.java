@@ -26,6 +26,7 @@ package nu.validator.htmlparser.io;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
@@ -172,8 +173,8 @@ public final class HtmlInputStreamReader extends Reader implements
         sniffing = false;
         position = 0;
         bytesRead = 0;
-        byteBuffer.position(position);
-        byteBuffer.limit(limit);
+        ((Buffer) byteBuffer).position(position);
+        ((Buffer) byteBuffer).limit(limit);
         initDecoder();
     }
 
@@ -196,8 +197,8 @@ public final class HtmlInputStreamReader extends Reader implements
         this.sniffing = false;
         position = 0;
         bytesRead = 0;
-        byteBuffer.position(0);
-        byteBuffer.limit(0);
+        ((Buffer) byteBuffer).position(0);
+        ((Buffer) byteBuffer).limit(0);
         shouldReadBytes = true;
         initDecoder();
     }
@@ -217,8 +218,8 @@ public final class HtmlInputStreamReader extends Reader implements
             needToNotifyTokenizer = false;
         }
         CharBuffer charBuffer = CharBuffer.wrap(charArray);
-        charBuffer.limit(charArray.length);
-        charBuffer.position(0);
+        ((Buffer) charBuffer).limit(charArray.length);
+        ((Buffer) charBuffer).position(0);
         if (flushing) {
             decoder.flush(charBuffer);
             // return -1 if zero
@@ -231,7 +232,7 @@ public final class HtmlInputStreamReader extends Reader implements
         }
         for (;;) {
             if (shouldReadBytes) {
-                int oldLimit = byteBuffer.limit();
+                int oldLimit = ((Buffer) byteBuffer).limit();
                 int readLen;
                 if (charsetBoundaryPassed) {
                     readLen = byteArray.length - oldLimit;
@@ -243,17 +244,17 @@ public final class HtmlInputStreamReader extends Reader implements
                     eofSeen = true;
                     inputStream.close();
                 } else {
-                    byteBuffer.position(0);
-                    byteBuffer.limit(oldLimit + num);
+                    ((Buffer) byteBuffer).position(0);
+                    ((Buffer) byteBuffer).limit(oldLimit + num);
                 }
                 shouldReadBytes = false;
             }
             boolean finalDecode = false;
             for (;;) {
-                int oldBytePos = byteBuffer.position();
+                int oldBytePos = ((Buffer) byteBuffer).position();
                 CoderResult cr = decoder.decode(byteBuffer, charBuffer,
                         finalDecode);
-                bytesRead += byteBuffer.position() - oldBytePos;
+                bytesRead += ((Buffer) byteBuffer).position() - oldBytePos;
                 if (cr == CoderResult.OVERFLOW) {
                     // Decoder will remember surrogates
                     return charBuffer.position();
@@ -273,11 +274,11 @@ public final class HtmlInputStreamReader extends Reader implements
                     // incomplete byte sequence that needs to seed the next
                     // buffer.
                     if (remaining > 0) {
-                        System.arraycopy(byteArray, byteBuffer.position(),
+                        System.arraycopy(byteArray, ((Buffer) byteBuffer).position(),
                                 byteArray, 0, remaining);
                     }
-                    byteBuffer.position(0);
-                    byteBuffer.limit(remaining);
+                    ((Buffer) byteBuffer).position(0);
+                    ((Buffer) byteBuffer).limit(remaining);
                     if (flushing) {
                         // The final decode was successful. Not sure if this
                         // ever happens.
