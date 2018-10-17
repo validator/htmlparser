@@ -80,7 +80,7 @@ public class Main {
      * @throws IOException
      */
     public static void main(String[] args) throws ParseException, IOException {
-        CppTypes cppTypes = new CppTypes(new File(args[2]));
+        CppTypes cppTypes = new CppTypes(new File(args[2]), new File(args[3]));
         SymbolTable symbolTable = new SymbolTable();
 
         File javaDirectory = new File(args[0]);

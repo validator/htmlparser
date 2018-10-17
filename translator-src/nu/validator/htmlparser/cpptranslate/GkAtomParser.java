@@ -47,7 +47,9 @@ import java.util.regex.Pattern;
 
 public class GkAtomParser {
 
-    private static final Pattern ATOM = Pattern.compile("^GK_ATOM\\(([^,]+),\\s*\"([^\"]*)\"\\).*$");
+    /* Please note we aren't looking for the following Atom definitions:
+       PseudoElementAtom or NonInheritingAnonBoxAtom or InheritingAnonBoxAtom */
+    private static final Pattern ATOM = Pattern.compile("^Atom\\(\"([^,]+)\",\\s*\"([^\"]*)\"\\).*$");
     
     private final BufferedReader reader;
     
@@ -59,7 +61,7 @@ public class GkAtomParser {
         Map<String, String> map = new HashMap<String, String>();
         String line;
         while((line = reader.readLine()) != null) {
-            Matcher m = ATOM.matcher(line);
+            Matcher m = ATOM.matcher(line.trim());
             if (m.matches()) {
                 map.put(m.group(2), m.group(1));
             }
