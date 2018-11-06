@@ -197,6 +197,7 @@ public class HVisitor extends CppVisitor {
      * @see nu.validator.htmlparser.cpptranslate.CppVisitor#fieldDeclaration(japa.parser.ast.body.FieldDeclaration, java.lang.LocalSymbolTable)
      */
     @Override protected void fieldDeclaration(FieldDeclaration n, LocalSymbolTable arg) {
+        inField = true;
         int modifiers = n.getModifiers();
         List<VariableDeclarator> variables = n.getVariables();
         VariableDeclarator declarator = variables.get(0);
@@ -253,6 +254,7 @@ public class HVisitor extends CppVisitor {
             inStatic = false;
             inPrimitiveNoLengthFieldDeclarator = false;
         }
+        inField = false;
     }
 
     /**

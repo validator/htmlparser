@@ -204,6 +204,10 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
 
     protected boolean inPrimitiveNoLengthFieldDeclarator = false;
 
+    protected boolean inField = false;
+
+    protected boolean inArray = false;
+
     protected final SymbolTable symbolTable;
 
     protected String definePrefix;
@@ -467,7 +471,7 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
         String name = n.getName();
         if ("String".equals(name)) {
             if (local()) {
-                name = cppTypes.localType();
+                name = inField || inArray ? cppTypes.localType() : cppTypes.weakLocalType();
             } else if (prefix()) {
                 name = cppTypes.prefixType();
             } else if (nsUri()) {
@@ -559,6 +563,10 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
         if (isConst()) {
             printer.print("const ");
         }
+        boolean wasInArray = inArray;
+        if (n.getArrayCount() > 0) {
+            inArray = true;
+        }
         if (noLength()) {
             n.getType().accept(this, arg);
             for (int i = 0; i < n.getArrayCount(); i++) {
@@ -585,6 +593,9 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
                 printer.print(cppTypes.intType());
                 printer.print(">");
             }
+        }
+        if (n.getArrayCount() > 0) {
+            inArray = wasInArray;
         }
     }
 
@@ -616,6 +627,7 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
     }
 
     protected void fieldDeclaration(FieldDeclaration n, LocalSymbolTable arg) {
+        inField = true;
         tempPrinterHolder = printer;
         printer = staticInitializerPrinter;
         int modifiers = n.getModifiers();
@@ -777,6 +789,7 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
         currentArrayCount = 0;
         printer = tempPrinterHolder;
         inPrimitiveNoLengthFieldDeclarator = false;
+        inField = false;
     }
 
     private void printArrayInit(VariableDeclaratorId variableDeclaratorId,
@@ -854,6 +867,7 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
         // n.getType().accept(this, arg);
         // printTypeArgs(n.getTypeArgs(), arg);
 
+        inArray = true;
         if (n.getDimensions() != null) {
             if (noLength()) {
                 for (Expression dim : n.getDimensions()) {
@@ -887,6 +901,7 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
                     "Array initializer as part of array creation not supported. "
                             + n.toString());
         }
+        inArray = false;
     }
 
     public void visit(AssignExpr n, LocalSymbolTable arg) {

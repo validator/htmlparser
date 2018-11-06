@@ -235,12 +235,16 @@ public class CppTypes {
         return "nsHtml5String";
     }
 
-    public String localType() {
+    public String weakLocalType() {
         return "nsAtom*";
     }
 
+    public String localType() {
+        return "RefPtr<nsAtom>";
+    }
+
     public String prefixType() {
-        return "nsAtom*";
+        return "nsStaticAtom*";
     }
 
     public String nsUriType() {
