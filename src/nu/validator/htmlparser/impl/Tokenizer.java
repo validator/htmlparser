@@ -551,7 +551,7 @@ public class Tokenizer implements Locator {
         this.bmpChar = new char[1];
         this.astralChar = new char[2];
         this.endTagExpectation = null;
-        this.endTagExpectationAsArray = new char[0];
+        this.endTagExpectationAsArray = null;
         this.endTag = false;
         this.containsHyphen = false;
         this.tagName = null;
@@ -608,7 +608,7 @@ public class Tokenizer implements Locator {
         this.bmpChar = new char[1];
         this.astralChar = new char[2];
         this.endTagExpectation = null;
-        this.endTagExpectationAsArray = new char[0];
+        this.endTagExpectationAsArray = null;
         this.endTag = false;
         this.containsHyphen = false;
         this.tagName = null;
