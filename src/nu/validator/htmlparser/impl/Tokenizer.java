@@ -565,7 +565,7 @@ public class Tokenizer implements Locator {
         this.shouldSuspend = false;
         this.confident = false;
         this.line = 0;
-        this.attributeLine = 0;
+        // CPPONLY: this.attributeLine = 0;
         this.interner = null;
     }
 
@@ -626,7 +626,7 @@ public class Tokenizer implements Locator {
         this.shouldSuspend = false;
         this.confident = false;
         this.line = 0;
-        this.attributeLine = 0;
+        // CPPONLY: this.attributeLine = 0;
         this.interner = null;
         // CPPONLY: this.viewingXmlSource = viewingXmlSource;
     }

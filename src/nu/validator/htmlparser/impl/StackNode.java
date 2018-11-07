@@ -100,11 +100,11 @@ final class StackNode<T> {
         this.flags = 0;
         this.name = null;
         this.popName = null;
-        this.ns = 0;
+        // CPPONLY: this.ns = 0;
         this.node = null;
         this.attributes = null;
         this.refcount = 0;
-        this.htmlCreator = null;
+        // CPPONLY: this.htmlCreator = null;
     }
 
     // CPPONLY: public @HtmlCreator Object getHtmlCreator() {
