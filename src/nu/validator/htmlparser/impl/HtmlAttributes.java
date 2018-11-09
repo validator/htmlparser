@@ -435,8 +435,7 @@ public final class HtmlAttributes implements Attributes {
         mode = AttributeName.SVG;
     }
 
-    public HtmlAttributes cloneAttributes(Interner interner)
-            throws SAXException {
+    public HtmlAttributes cloneAttributes() throws SAXException {
         assert (length == 0
                 && xmlnsLength == 0
                 )
