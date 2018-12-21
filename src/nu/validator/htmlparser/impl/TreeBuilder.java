@@ -3360,6 +3360,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                     }
                 }
                 eltPos = currentPtr;
+                int origPos = currentPtr;
                 for (;;) {
                     if (eltPos == 0) {
                         assert fragment: "We can get this close to the root of the stack in foreign content only in the fragment case.";
@@ -3367,7 +3368,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                     }
                     if (stack[eltPos].name == name) {
                         while (currentPtr >= eltPos) {
-                            pop();
+                            popForeign(origPos);
                         }
                         break endtagloop;
                     }
@@ -5220,6 +5221,17 @@ public abstract class TreeBuilder<T> implements TokenHandler,
 
     private void pop() throws SAXException {
         StackNode<T> node = stack[currentPtr];
+        assert debugOnlyClearLastStackSlot();
+        currentPtr--;
+        elementPopped(node.ns, node.popName, node.node);
+        node.release(this);
+    }
+
+    private void popForeign(int origPos) throws SAXException {
+    	StackNode<T> node = stack[currentPtr];
+    	if (origPos != currentPtr) {
+            markMalformedIfScript(node.node);    		
+    	}
         assert debugOnlyClearLastStackSlot();
         currentPtr--;
         elementPopped(node.ns, node.popName, node.node);
