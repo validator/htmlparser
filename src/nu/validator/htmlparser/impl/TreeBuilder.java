@@ -3361,7 +3361,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                     }
                     if (stack[eltPos].name == name) {
                         while (currentPtr >= eltPos) {
-                            popForeign(origPos);
+                            popForeign(origPos, eltPos);
                         }
                         break endtagloop;
                     }
@@ -5227,10 +5227,10 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         node.release(this);
     }
 
-    private void popForeign(int origPos) throws SAXException {
-    	StackNode<T> node = stack[currentPtr];
-    	if (origPos != currentPtr) {
-            markMalformedIfScript(node.node);    		
+    private void popForeign(int origPos, int eltPos) throws SAXException {
+        StackNode<T> node = stack[currentPtr];
+        if (origPos != currentPtr || eltPos != currentPtr) {
+            markMalformedIfScript(node.node);
     	}
         assert debugOnlyClearLastStackSlot();
         currentPtr--;
