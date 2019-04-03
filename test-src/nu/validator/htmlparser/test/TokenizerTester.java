@@ -57,7 +57,11 @@ public class TokenizerTester {
 
     private static JSONString RCDATA = new JSONString("RCDATA state");
 
+    private static JSONString CDATA = new JSONString("CDATA section state");
+
     private static JSONString RAWTEXT = new JSONString("RAWTEXT state");
+
+    private static JSONString SCRIPT_DATA = new JSONString("Script data state");
 
     private static boolean jsonDeepEquals(JSONValue one, JSONValue other) {
         if (one.isSimple()) {
@@ -144,9 +148,15 @@ public class TokenizerTester {
                 } else if (RCDATA.equals(value)) {
                     runTestInner(inputString, expectedTokens, description,
                             Tokenizer.RCDATA, lastStartTag);
+                } else if (CDATA.equals(value)) {
+                    runTestInner(inputString, expectedTokens, description,
+                            Tokenizer.CDATA_SECTION, lastStartTag);
                 } else if (PLAINTEXT.equals(value)) {
                     runTestInner(inputString, expectedTokens, description,
                             Tokenizer.PLAINTEXT, lastStartTag);
+                } else if (SCRIPT_DATA.equals(value)) {
+                    runTestInner(inputString, expectedTokens, description,
+                            Tokenizer.SCRIPT_DATA, "script");
                 } else {
                     throw new RuntimeException("Broken test data.");
                 }

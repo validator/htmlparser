@@ -145,8 +145,8 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
     }
 
     public void error(SAXParseException exception) throws SAXException {
-        flushCharacters();
-        array.getValue().add(PARSE_ERROR);
+//        flushCharacters();
+//        array.getValue().add(PARSE_ERROR);
     }
 
     public void fatalError(SAXParseException exception) throws SAXException {

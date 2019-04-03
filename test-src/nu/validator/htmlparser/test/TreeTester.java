@@ -83,12 +83,25 @@ public class TreeTester {
                 // spin
             }
 
+            boolean newErrors = false;
             StringBuilder sb = new StringBuilder();
             int c;
             while ((c = aggregateStream.read()) != '\n') {
                 sb.append((char) c);
             }
             String label = sb.toString();
+            if ("new-errors".equals(label)) {
+                newErrors = true;
+                stream = new UntilHashInputStream(aggregateStream);
+                while (stream.read() != -1) {
+                    // spin
+                }
+                sb.setLength(0);
+                while ((c = aggregateStream.read()) != '\n') {
+                    sb.append((char) c);
+                }
+                label = sb.toString();
+            }
             if ("document-fragment".equals(label)) {
                 sb.setLength(0);
                 while ((c = aggregateStream.read()) != '\n') {
@@ -158,6 +171,18 @@ public class TreeTester {
             String line = null;
             while ((line = br.readLine()) != null) {
                 expectedErrors.add(line);
+            }
+
+            if (newErrors) {
+                if (skipLabel()) { // #new-errors
+                    System.err.println("Premature end of test data.");
+                    return false;
+                }
+                br = new BufferedReader(new InputStreamReader(
+                        new UntilHashInputStream(aggregateStream), "UTF-8"));
+                while ((line = br.readLine()) != null) {
+                    expectedErrors.add(line);
+                }
             }
 
             if (context != null) {
