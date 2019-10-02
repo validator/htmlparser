@@ -647,7 +647,7 @@ public class ErrorReportingTokenizer extends Tokenizer {
     }
 
     @Override protected void errNcrInC1Range() throws SAXException {
-        err("A numeric character calls a C1 control code instead of an HTML decimal entity.");
+        err("A numeric character reference expanded to the C1 controls range. Use an HTML decimal entity.");
     }
 
     @Override protected void errEofInPublicId() throws SAXException {
