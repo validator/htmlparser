@@ -81,15 +81,12 @@ public class CppTypes {
         reservedWords.add("unicode");
     }
 
-    private static final String[] TREE_BUILDER_INCLUDES = { "nsContentUtils",
-            "nsAtom", "nsHtml5AtomTable", "nsITimer", "nsHtml5String",
-            "nsNameSpaceManager", "nsIContent", "nsTraceRefcnt", "jArray",
-            "nsHtml5DocumentMode", "nsHtml5ArrayCopy", "nsHtml5Parser",
-            "nsGkAtoms", "nsHtml5TreeOperation", "nsHtml5StateSnapshot",
-            "nsHtml5StackNode", "nsHtml5TreeOpExecutor", "nsHtml5StreamParser",
-            "nsAHtml5TreeBuilderState", "nsHtml5Highlighter",
-            "nsHtml5PlainTextUtils", "nsHtml5ViewSourceUtils",
-            "mozilla/Likely", "nsIContentHandle", "nsHtml5OplessBuilder" };
+	private static final String[] TREE_BUILDER_INCLUDES = { "nsContentUtils", "nsAtom", "nsHtml5AtomTable", "nsITimer",
+			"nsHtml5String", "nsNameSpaceManager", "nsIContent", "nsTraceRefcnt", "jArray", "nsHtml5DocumentMode",
+			"nsHtml5ArrayCopy", "nsHtml5Parser", "nsGkAtoms", "nsHtml5TreeOperation", "nsHtml5StateSnapshot",
+			"nsHtml5StackNode", "nsHtml5TreeOpExecutor", "nsHtml5StreamParser", "nsAHtml5TreeBuilderState",
+			"nsHtml5Highlighter", "nsHtml5PlainTextUtils", "nsHtml5ViewSourceUtils", "mozilla/ImportScanner",
+			"mozilla/Likely", "nsIContentHandle", "nsHtml5OplessBuilder", };
 
     private static final String[] TOKENIZER_INCLUDES = { "nsAtom",
             "nsHtml5AtomTable", "nsHtml5String", "nsIContent", "nsTraceRefcnt",
