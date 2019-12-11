@@ -24,12 +24,15 @@
 package nu.validator.htmlparser.impl;
 
 import org.xml.sax.Locator;
+import org.xml.sax.ext.Locator2;
 
-public class LocatorImpl implements Locator {
+public class LocatorImpl implements Locator, Locator2 {
 
     private final String systemId;
 
     private final String publicId;
+
+    private final String encoding;
 
     private final int column;
 
@@ -40,6 +43,7 @@ public class LocatorImpl implements Locator {
         this.publicId = locator.getPublicId();
         this.column = locator.getColumnNumber();
         this.line = locator.getLineNumber();
+        this.encoding = ((Locator2)locator).getEncoding();
     }
 
     public final int getColumnNumber() {
@@ -56,5 +60,13 @@ public class LocatorImpl implements Locator {
 
     public final String getSystemId() {
         return systemId;
+    }
+
+    public final String getXMLVersion() {
+        return "1.0";
+    }
+
+    public final String getEncoding() {
+        return encoding;
     }
 }

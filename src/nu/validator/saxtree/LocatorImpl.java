@@ -24,13 +24,14 @@
 package nu.validator.saxtree;
 
 import org.xml.sax.Locator;
+import org.xml.sax.ext.Locator2;
 
 /**
  * A locator implementation.
  * @version $Id$
  * @author hsivonen
  */
-public final class LocatorImpl implements Locator {
+public final class LocatorImpl implements Locator, Locator2 {
 
     /**
      * The system id.
@@ -41,6 +42,11 @@ public final class LocatorImpl implements Locator {
      * The public id.
      */
     private final String publicId;
+    
+    /**
+     * The encoding.
+     */
+    private final String encoding;
     
     /**
      * The column.
@@ -62,11 +68,13 @@ public final class LocatorImpl implements Locator {
             this.publicId = null;
             this.column = -1;
             this.line = -1;
+            this.encoding = null;
         } else {
             this.systemId = locator.getSystemId();
             this.publicId = locator.getPublicId();
             this.column = locator.getColumnNumber();
             this.line = locator.getLineNumber();
+            this.encoding = ((Locator2)locator).getEncoding();
         }
     }
     
@@ -101,4 +109,21 @@ public final class LocatorImpl implements Locator {
     public String getSystemId() {
         return systemId;
     }
+
+    /**
+     * 
+     * @see org.xml.sax.ext.Locator2#getXMLVersion()
+     */
+    public String getXMLVersion() {
+        return "1.0";
+    }
+
+    /**
+     * 
+     * @see org.xml.sax.ext.Locator2#getEncoding()
+     */
+    public String getEncoding() {
+        return encoding;
+    }
+
 }
