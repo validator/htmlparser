@@ -81,7 +81,7 @@ public class CppTypes {
         reservedWords.add("unicode");
     }
 
-	private static final String[] TREE_BUILDER_INCLUDES = { "nsContentUtils", "nsAtom", "nsHtml5AtomTable", "nsITimer",
+	private static final String[] TREE_BUILDER_INCLUDES = { "nsContentUtils", "nsAtom", "nsHtml5AtomTable",
 			"nsHtml5String", "nsNameSpaceManager", "nsIContent", "nsTraceRefcnt", "jArray", "nsHtml5DocumentMode",
 			"nsHtml5ArrayCopy", "nsHtml5Parser", "nsGkAtoms", "nsHtml5TreeOperation", "nsHtml5StateSnapshot",
 			"nsHtml5StackNode", "nsHtml5TreeOpExecutor", "nsHtml5StreamParser", "nsAHtml5TreeBuilderState",

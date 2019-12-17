@@ -334,6 +334,8 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
             printer.print("this");
         } else if ("errorHandler".equals(n.getName())) {
             printer.print(cppTypes.errorHandler());
+        } else if ("MOZ_FALLTHROUGH".equals(n.getName())) {
+            printer.print("[[fallthrough]]");
         } else {
             printer.print(n.getName());
         }
