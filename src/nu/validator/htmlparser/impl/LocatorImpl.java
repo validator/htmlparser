@@ -38,12 +38,24 @@ public class LocatorImpl implements Locator, Locator2 {
 
     private final int line;
 
+    /**
+     * Create a new Locator with default values
+     */
+    public LocatorImpl() {
+        this.systemId = this.publicId = this.encoding = null;
+        this.column = this.line = 0;
+    }
+
     public LocatorImpl(Locator locator) {
         this.systemId = locator.getSystemId();
         this.publicId = locator.getPublicId();
         this.column = locator.getColumnNumber();
         this.line = locator.getLineNumber();
-        this.encoding = ((Locator2)locator).getEncoding();
+        if (locator instanceof Locator2) {
+            this.encoding = ((Locator2)locator).getEncoding();
+        } else {
+            this.encoding = null;
+        }
     }
 
     public final int getColumnNumber() {
