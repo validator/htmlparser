@@ -303,7 +303,7 @@ public final class TreeParser implements Locator, Locator2 {
      * @see org.xml.sax.Locator#getSystemId()
      */
     public String getXMLVersion() {
-        if (locatorDelegate == null) {
+        if (!(locatorDelegate instanceof Locator2)) {
             return null;
         } else {
             return ((Locator2)locatorDelegate).getXMLVersion();
@@ -314,7 +314,7 @@ public final class TreeParser implements Locator, Locator2 {
      * @see org.xml.sax.Locator#getSystemId()
      */
     public String getEncoding() {
-        if (locatorDelegate == null) {
+        if (!(locatorDelegate instanceof Locator2)) {
             return null;
         } else {
             return ((Locator2)locatorDelegate).getEncoding();

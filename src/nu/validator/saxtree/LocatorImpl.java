@@ -74,7 +74,11 @@ public final class LocatorImpl implements Locator, Locator2 {
             this.publicId = locator.getPublicId();
             this.column = locator.getColumnNumber();
             this.line = locator.getLineNumber();
-            this.encoding = ((Locator2)locator).getEncoding();
+            if (locator instanceof Locator2) {
+                this.encoding = ((Locator2)locator).getEncoding();
+            } else {
+                this.encoding = null;
+            }
         }
     }
     
