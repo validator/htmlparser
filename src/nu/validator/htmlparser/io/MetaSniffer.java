@@ -30,10 +30,11 @@ import nu.validator.htmlparser.impl.MetaScanner;
 
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.Locator;
+import org.xml.sax.ext.Locator2;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
-public class MetaSniffer extends MetaScanner implements Locator {
+public class MetaSniffer extends MetaScanner implements Locator, Locator2 {
     
     private Encoding characterEncoding = null;
 
@@ -139,6 +140,20 @@ public class MetaSniffer extends MetaScanner implements Locator {
     public String getSystemId() {
         if (locator != null) {
             return locator.getSystemId();
+        }
+        return null;
+    }
+
+    public String getXMLVersion() {
+        if (locator != null) {
+            return ((Locator2)locator).getXMLVersion();
+        }
+        return null;
+    }
+
+    public String getEncoding() {
+        if (locator != null) {
+            return ((Locator2)locator).getEncoding();
         }
         return null;
     }
