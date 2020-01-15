@@ -42,6 +42,7 @@ import nu.validator.htmlparser.impl.Tokenizer;
 
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.Locator;
+import org.xml.sax.ext.Locator2;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
@@ -58,7 +59,7 @@ import org.xml.sax.SAXParseException;
  * @author hsivonen
  */
 public final class HtmlInputStreamReader extends Reader implements
-        ByteReadable, Locator {
+        ByteReadable, Locator, Locator2 {
 
     private static final int SNIFFING_LIMIT = 1024;
 
@@ -448,6 +449,20 @@ public final class HtmlInputStreamReader extends Reader implements
     public String getSystemId() {
         if (tokenizer != null) {
             return tokenizer.getSystemId();
+        }
+        return null;
+    }
+
+    public String getXMLVersion() {
+        if (tokenizer != null) {
+            return tokenizer.getXMLVersion();
+        }
+        return null;
+    }
+
+    public String getEncoding() {
+        if (tokenizer != null) {
+            return tokenizer.getEncoding();
         }
         return null;
     }
