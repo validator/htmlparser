@@ -27,6 +27,7 @@ import java.util.List;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
+import org.xml.sax.ext.Locator2;
 import org.xml.sax.SAXException;
 
 /**
@@ -34,7 +35,7 @@ import org.xml.sax.SAXException;
  * @version $Id$
  * @author hsivonen
  */
-public abstract class Node implements Locator {
+public abstract class Node implements Locator, Locator2 {
 
     /**
      * The system id.
@@ -45,6 +46,11 @@ public abstract class Node implements Locator {
      * The public id.
      */
     private final String publicId;
+
+    /**
+     * The encoding.
+     */
+    private final String encoding;
     
     /**
      * The column.
@@ -75,6 +81,7 @@ public abstract class Node implements Locator {
         if (locator == null) {
             this.systemId = null;
             this.publicId = null;
+            this.encoding = null;
             this.column = -1;
             this.line = -1;
         } else {
@@ -82,6 +89,11 @@ public abstract class Node implements Locator {
             this.publicId = locator.getPublicId();
             this.column = locator.getColumnNumber();
             this.line = locator.getLineNumber();
+            if (locator instanceof Locator2) {
+                this.encoding = ((Locator2)locator).getEncoding();
+            } else {
+                this.encoding = null;
+            }
         }
     }
     
@@ -115,6 +127,20 @@ public abstract class Node implements Locator {
      */
     public String getSystemId() {
         return systemId;
+    }
+
+    /**
+     * @see org.xml.sax.ext.Locator2#getXMLVersion()
+     */
+    public String getXMLVersion() {
+        return "1.0";
+    }
+
+    /**
+     * @see org.xml.sax.ext.Locator2#getEncoding
+     */
+    public String getEncoding() {
+        return encoding;
     }
 
     /**
