@@ -23,7 +23,7 @@
 
 package nu.validator.saxtree;
 
-import org.xml.sax.helpers.LocatorImpl;
+import nu.validator.htmlparser.impl.LocatorImpl;
 
 /**
  * A document fragment.
