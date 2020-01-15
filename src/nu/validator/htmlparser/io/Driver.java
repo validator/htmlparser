@@ -579,7 +579,7 @@ public class Driver implements EncodingDeclarationHandler {
     }
 
     public String getCharacterEncoding() throws SAXException {
-        return characterEncoding.getCanonName();
+        return characterEncoding == null ? null : characterEncoding.getCanonName();
     }
 
     public Locator getDocumentLocator() {

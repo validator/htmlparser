@@ -26,6 +26,7 @@ package nu.validator.saxtree;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
+import org.xml.sax.ext.Locator2;
 import org.xml.sax.SAXException;
 import org.xml.sax.ext.LexicalHandler;
 
@@ -34,7 +35,7 @@ import org.xml.sax.ext.LexicalHandler;
  * @version $Id$
  * @author hsivonen
  */
-public final class TreeParser implements Locator {
+public final class TreeParser implements Locator, Locator2 {
     
     /**
      * The content handler.
@@ -283,7 +284,6 @@ public final class TreeParser implements Locator {
         if (locatorDelegate == null) {
             return null;
         } else {
-
             return locatorDelegate.getPublicId();
         }
     }
@@ -296,6 +296,28 @@ public final class TreeParser implements Locator {
             return null;
         } else {
             return locatorDelegate.getSystemId();
+        }
+    }
+
+    /**
+     * @see org.xml.sax.Locator#getSystemId()
+     */
+    public String getXMLVersion() {
+        if (!(locatorDelegate instanceof Locator2)) {
+            return null;
+        } else {
+            return ((Locator2)locatorDelegate).getXMLVersion();
+        }
+    }
+
+    /**
+     * @see org.xml.sax.Locator#getSystemId()
+     */
+    public String getEncoding() {
+        if (!(locatorDelegate instanceof Locator2)) {
+            return null;
+        } else {
+            return ((Locator2)locatorDelegate).getEncoding();
         }
     }
 }
