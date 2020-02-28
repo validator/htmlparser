@@ -460,7 +460,7 @@ public class CppTypes {
     }
 
     public String firstTransitionArg() {
-        return "mViewSource";
+        return "mViewSource.get()";
     }
 
     public String errorHandler() {
