@@ -472,7 +472,7 @@ public class CppTypes {
     }
 
     public String completedCharacterReference() {
-        return "P::completedNamedCharacterReference(mViewSource)";
+        return "P::completedNamedCharacterReference(mViewSource.get())";
     }
 
     public String[] stateLoopPolicies() {
