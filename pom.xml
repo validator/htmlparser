@@ -158,6 +158,7 @@
             <Bundle-SymbolicName>nu.validator.htmlparser</Bundle-SymbolicName>
             <Bundle-Version>${project.version}</Bundle-Version>
             <Bundle-RequiredExecutionEnvironment>J2SE-1.5</Bundle-RequiredExecutionEnvironment>
+            <Automatic-Module-Name>nu.validator.htmlparser</Automatic-Module-Name>
             <_removeheaders>Built-By,Bnd-LastModified</_removeheaders>
           </instructions>
         </configuration>
