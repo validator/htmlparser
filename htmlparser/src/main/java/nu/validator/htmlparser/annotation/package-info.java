@@ -1,7 +1,4 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
-<html>
-<head><title>Package Overview</title>
-<!--
+/*
  Copyright (c) 2008 Mozilla Foundation
 
  Permission is hereby granted, free of charge, to any person obtaining a 
@@ -21,10 +18,10 @@
  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
  DEALINGS IN THE SOFTWARE.
--->
-</head>
-<body bgcolor="white">
-<p>This package provides annotations for facilitating automated translation 
-of the source code into other programming languages.</p>
-</body>
-</html>
+ */
+
+/**
+ * This package provides annotations for facilitating automated translation
+ * of the source code into other programming languages.
+ */
+package nu.validator.htmlparser.annotation;
