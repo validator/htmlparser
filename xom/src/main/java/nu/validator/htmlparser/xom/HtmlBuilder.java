@@ -687,6 +687,7 @@ public class HtmlBuilder extends Builder {
      * Does nothing.
      * @deprecated
      */
+    @Deprecated
     public void setBogusXmlnsPolicy(
             XmlViolationPolicy bogusXmlnsPolicy) {
     }
@@ -696,6 +697,7 @@ public class HtmlBuilder extends Builder {
      * @deprecated
      * @return <code>XmlViolationPolicy.ALTER_INFOSET</code>
      */
+    @Deprecated
     public XmlViolationPolicy getBogusXmlnsPolicy() {
         return XmlViolationPolicy.ALTER_INFOSET;
     }

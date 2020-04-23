@@ -650,6 +650,7 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
      * Does nothing.
      * @deprecated
      */
+    @Deprecated
     public void setBogusXmlnsPolicy(
             XmlViolationPolicy bogusXmlnsPolicy) {
     }
@@ -659,6 +660,7 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
      * @deprecated
      * @return <code>XmlViolationPolicy.ALTER_INFOSET</code>
      */
+    @Deprecated
     public XmlViolationPolicy getBogusXmlnsPolicy() {
         return XmlViolationPolicy.ALTER_INFOSET;
     }

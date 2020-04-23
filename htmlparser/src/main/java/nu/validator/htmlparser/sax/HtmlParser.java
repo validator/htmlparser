@@ -552,6 +552,7 @@ public class HtmlParser implements XMLReader {
      * @see org.xml.sax.XMLReader#setErrorHandler(org.xml.sax.ErrorHandler)
      * @deprecated For Validator.nu internal use
      */
+    @Deprecated
     public void setTreeBuilderErrorHandlerOverride(ErrorHandler handler) {
         treeBuilderErrorHandler = handler;
         if (driver != null) {
@@ -1006,6 +1007,7 @@ public class HtmlParser implements XMLReader {
      * Does nothing.
      * @deprecated
      */
+    @Deprecated
     public void setBogusXmlnsPolicy(
             XmlViolationPolicy bogusXmlnsPolicy) {
     }
@@ -1015,6 +1017,7 @@ public class HtmlParser implements XMLReader {
      * @deprecated
      * @return <code>XmlViolationPolicy.ALTER_INFOSET</code>
      */
+    @Deprecated
     public XmlViolationPolicy getBogusXmlnsPolicy() {
         return XmlViolationPolicy.ALTER_INFOSET;
     }
