@@ -225,6 +225,7 @@ public class ErrorReportingTokenizer extends Tokenizer {
         cstart = 0x7fffffff;
     }
 
+    @SuppressWarnings("fallthrough")
     @Override protected char checkChar(@NoLength char[] buf, int pos)
             throws SAXException {
         linePrev = line;
@@ -564,6 +565,7 @@ public class ErrorReportingTokenizer extends Tokenizer {
         }
     }
 
+    @SuppressWarnings("fallthrough")
     @Override protected char errNcrNonCharacter(char ch) throws SAXException {
         switch (contentNonXmlCharPolicy) {
             case FATAL:
@@ -592,6 +594,7 @@ public class ErrorReportingTokenizer extends Tokenizer {
         err("Character reference expands to a surrogate.");
     }
 
+    @SuppressWarnings("fallthrough")
     @Override protected char errNcrControlChar(char ch) throws SAXException {
         switch (contentNonXmlCharPolicy) {
             case FATAL:

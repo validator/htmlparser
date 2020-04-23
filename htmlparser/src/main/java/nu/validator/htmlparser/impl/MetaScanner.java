@@ -208,6 +208,7 @@ public abstract class MetaScanner {
     /**
      * The runs the meta scanning algorithm.
      */
+    @SuppressWarnings("fallthrough")
     protected final void stateLoop(int state)
             throws SAXException, IOException {
         int c = -1;

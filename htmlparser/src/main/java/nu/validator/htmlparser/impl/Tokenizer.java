@@ -66,6 +66,7 @@ import nu.validator.htmlparser.common.XmlViolationPolicy;
  * @version $Id$
  * @author hsivonen
  */
+@SuppressWarnings("fallthrough")
 public class Tokenizer implements Locator2 {
 
     private static final int DATA_AND_RCDATA_MASK = ~1;

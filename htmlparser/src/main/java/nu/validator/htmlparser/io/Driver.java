@@ -497,6 +497,7 @@ public class Driver implements EncodingDeclarationHandler {
         }
     }
 
+    @SuppressWarnings("serial")
     private class ReparseException extends SAXException {
 
     }

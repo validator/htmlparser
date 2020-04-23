@@ -577,7 +577,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
 
     // ]NOCPP]
 
-    @SuppressWarnings("unchecked") public final void startTokenization(Tokenizer self) throws SAXException {
+    @SuppressWarnings({"rawtypes", "unchecked"}) public final void startTokenization(Tokenizer self) throws SAXException {
         tokenizer = self;
         stackNodes = new StackNode[64];
         stack = new StackNode[64];
@@ -844,6 +844,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
      * @see nu.validator.htmlparser.common.TokenHandler#characters(char[], int,
      *      int)
      */
+    @SuppressWarnings("fallthrough")
     public final void characters(@Const @NoLength char[] buf, int start, int length)
             throws SAXException {
         // Note: Can't attach error messages to EOF in C++ yet
@@ -1241,6 +1242,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         }
     }
 
+    @SuppressWarnings("fallthrough")
     public final void eof() throws SAXException {
         flushCharacters();
         // Note: Can't attach error messages to EOF in C++ yet
@@ -1448,6 +1450,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         end();
     }
 
+    @SuppressWarnings("fallthrough")
     public final void startTag(ElementName elementName,
             HtmlAttributes attributes, boolean selfClosing) throws SAXException {
         flushCharacters();
@@ -3093,6 +3096,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         }
     }
 
+    @SuppressWarnings("fallthrough")
     public final void endTag(ElementName elementName) throws SAXException {
         flushCharacters();
         needToDropLF = false;
@@ -4290,7 +4294,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         templateModeStack[templateModePtr] = mode;
     }
 
-    @SuppressWarnings("unchecked") private void push(StackNode<T> node) throws SAXException {
+    @SuppressWarnings({"rawtypes", "unchecked"}) private void push(StackNode<T> node) throws SAXException {
         currentPtr++;
         if (currentPtr == stack.length) {
             StackNode<T>[] newStack = new StackNode[stack.length + 64];
@@ -4301,7 +4305,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         elementPushed(node.ns, node.popName, node.node);
     }
 
-    @SuppressWarnings("unchecked") private void silentPush(StackNode<T> node) throws SAXException {
+    @SuppressWarnings({"rawtypes", "unchecked"}) private void silentPush(StackNode<T> node) throws SAXException {
         currentPtr++;
         if (currentPtr == stack.length) {
             StackNode<T>[] newStack = new StackNode[stack.length + 64];
@@ -4311,7 +4315,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         stack[currentPtr] = node;
     }
 
-    @SuppressWarnings("unchecked") private void append(StackNode<T> node) {
+    @SuppressWarnings({"rawtypes", "unchecked"}) private void append(StackNode<T> node) {
         listPtr++;
         if (listPtr == listOfActiveFormattingElements.length) {
             StackNode<T>[] newList = new StackNode[listOfActiveFormattingElements.length + 64];
@@ -4785,7 +4789,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         }
     }
 
-    @SuppressWarnings("unchecked") private StackNode<T> getUnusedStackNode() {
+    @SuppressWarnings({"rawtypes", "unchecked"}) private StackNode<T> getUnusedStackNode() {
         // Search for an unused stack node.
         while (stackNodesIdx < numStackNodes) {
             if (stackNodes[stackNodesIdx].isUnused()) {
@@ -5869,7 +5873,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
      * @return a snapshot.
      * @throws SAXException
      */
-    @SuppressWarnings("unchecked") public TreeBuilderState<T> newSnapshot()
+    @SuppressWarnings({"rawtypes", "unchecked"}) public TreeBuilderState<T> newSnapshot()
             throws SAXException {
         StackNode<T>[] listCopy = new StackNode[listPtr + 1];
         for (int i = 0; i < listCopy.length; i++) {
@@ -5963,7 +5967,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         return true;
     }
 
-    @SuppressWarnings("unchecked") public void loadState(
+    @SuppressWarnings({"rawtypes", "unchecked"}) public void loadState(
             TreeBuilderState<T> snapshot)
             throws SAXException {
         // CPPONLY: mCurrentHtmlScriptIsAsyncOrDefer = false;

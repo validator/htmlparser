@@ -482,6 +482,7 @@ public final class HtmlAttributes implements Attributes {
         return true;
     }
 
+    @SuppressWarnings("fallthrough")
     void processNonNcNames(TreeBuilder<?> treeBuilder, XmlViolationPolicy namePolicy) throws SAXException {
         for (int i = 0; i < length; i++) {
             AttributeName attName = names[i];
