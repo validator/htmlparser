@@ -31,7 +31,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 import com.ibm.icu.lang.UCharacter;
-import com.ibm.icu.text.Normalizer;
+import com.ibm.icu.text.Normalizer2;
 import com.ibm.icu.text.UnicodeSet;
 
 /**
@@ -47,7 +47,7 @@ public final class NormalizationChecker implements CharacterHandler {
     /**
      * A thread-safe set of composing characters as per Charmod Norm.
      */
-    private static final UnicodeSet COMPOSING_CHARACTERS = (UnicodeSet) new UnicodeSet(
+    private static final UnicodeSet COMPOSING_CHARACTERS = new UnicodeSet(
             "[[:nfc_qc=maybe:][:^ccc=0:]]").freeze();
 
     // see http://sourceforge.net/mailarchive/message.php?msg_id=37279908
@@ -186,7 +186,7 @@ public final class NormalizationChecker implements CharacterHandler {
             if (i == stop) {
                 return;
             } else {
-                if (!Normalizer.isNormalized(buf, 0, pos, Normalizer.NFC, 0)) {
+                if (!Normalizer2.getNFCInstance().isNormalized(new String(buf, 0, pos))) {
                     errAboutTextRun();
                 }
                 pos = 0;
@@ -199,7 +199,7 @@ public final class NormalizationChecker implements CharacterHandler {
                 i--;
             }
             if (i > start) {
-                if (!Normalizer.isNormalized(ch, start, i, Normalizer.NFC, 0)) {
+                if (!Normalizer2.getNFCInstance().isNormalized(new String(ch, start, i))) {
                     errAboutTextRun();
                 }
             }
@@ -248,7 +248,7 @@ public final class NormalizationChecker implements CharacterHandler {
      */
     public void end() throws SAXException {
         if (!alreadyComplainedAboutThisRun
-                && !Normalizer.isNormalized(buf, 0, pos, Normalizer.NFC, 0)) {
+                && !Normalizer2.getNFCInstance().isNormalized(new String(buf, 0, pos))) {
             errAboutTextRun();
         }
         if (bufHolder != null) {

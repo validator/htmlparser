@@ -82,8 +82,7 @@
   </scm>
 
   <properties>
-    <maven.compiler.source>1.5</maven.compiler.source>
-    <maven.compiler.target>1.5</maven.compiler.target>
+    <maven.compiler.release>11</maven.compiler.release>
     <skipTests>true</skipTests>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
@@ -118,6 +117,20 @@
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.8.1</version>
+          <executions>
+            <execution>
+              <id>base-compile</id>
+              <goals>
+                <goal>compile</goal>
+              </goals>
+              <configuration>
+                <release>8</release>
+                <excludes>
+                  <exclude>module-info.java</exclude>
+                </excludes>
+              </configuration>
+            </execution>
+          </executions>
         </plugin>
         <plugin>
           <artifactId>maven-javadoc-plugin</artifactId>
