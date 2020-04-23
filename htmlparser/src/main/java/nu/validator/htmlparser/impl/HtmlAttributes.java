@@ -31,7 +31,6 @@ import nu.validator.htmlparser.annotation.Local;
 import nu.validator.htmlparser.annotation.NsUri;
 import nu.validator.htmlparser.annotation.Prefix;
 import nu.validator.htmlparser.annotation.QName;
-import nu.validator.htmlparser.common.Interner;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
 
 /**
