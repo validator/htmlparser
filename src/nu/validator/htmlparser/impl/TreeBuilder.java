@@ -1348,9 +1348,11 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                         assert fragment;
                         break eofloop;
                     }
+                    // [NOCPP[
                     if (errorHandler != null) {
                         errListUnclosedStartTags(0);
                     }
+                    // ]NOCPP]
                     while (currentPtr >= eltPos) {
                         pop();
                     }
