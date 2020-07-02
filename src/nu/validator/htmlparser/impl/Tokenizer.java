@@ -2851,10 +2851,6 @@ public class Tokenizer implements Locator, Locator2 {
                                 appendStrBuf(c);
                                 state = transition(state, Tokenizer.COMMENT_LESSTHAN_BANG, reconsume, pos);
                                 continue stateloop;
-                            case '<':
-                                appendStrBuf(c);
-                                state = transition(state, Tokenizer.COMMENT_LESSTHAN, reconsume, pos);
-                                continue stateloop;
                             case '-':
                                 appendStrBuf(c);
                                 state = transition(state, Tokenizer.COMMENT_END_DASH, reconsume, pos);
@@ -2874,6 +2870,7 @@ public class Tokenizer implements Locator, Locator2 {
                                 continue stateloop;
                         }
                     }
+                    // CPPONLY: MOZ_FALLTHROUGH;
                 case COMMENT_LESSTHAN_BANG:
                     for (;;) {
                         if (++pos == endPos) {
@@ -2904,6 +2901,7 @@ public class Tokenizer implements Locator, Locator2 {
                                 continue stateloop;
                         }
                     }
+                    // CPPONLY: MOZ_FALLTHROUGH;
                 case COMMENT_LESSTHAN_BANG_DASH:
                     for (;;) {
                         if (++pos == endPos) {
@@ -2934,6 +2932,7 @@ public class Tokenizer implements Locator, Locator2 {
                                 continue stateloop;
                         }
                     }
+                    // CPPONLY: MOZ_FALLTHROUGH;
                 case COMMENT_LESSTHAN_BANG_DASH_DASH:
                     for (;;) {
                         if (++pos == endPos) {
@@ -2981,6 +2980,7 @@ public class Tokenizer implements Locator, Locator2 {
                                 continue stateloop;
                         }
                     }
+                    // CPPONLY: MOZ_FALLTHROUGH;
                     // XXX reorder point
                 case COMMENT_START_DASH:
                     if (++pos == endPos) {
