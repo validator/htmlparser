@@ -731,7 +731,9 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                         systemIdentifier == null ? emptyString
                                 : systemIdentifier);
                 Portability.releaseString(emptyString);
+                // [NOCPP[
             }
+            // ]NOCPP]
             if (isQuirky(name, publicIdentifier, systemIdentifier,
                     forceQuirks)) {
                 errQuirkyDoctype();
