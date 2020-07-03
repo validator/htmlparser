@@ -2851,6 +2851,9 @@ public class Tokenizer implements Locator, Locator2 {
                                 appendStrBuf(c);
                                 state = transition(state, Tokenizer.COMMENT_LESSTHAN_BANG, reconsume, pos);
                                 continue stateloop;
+                            case '<':
+                                appendStrBuf(c);
+                                continue;
                             case '-':
                                 appendStrBuf(c);
                                 state = transition(state, Tokenizer.COMMENT_END_DASH, reconsume, pos);
@@ -2863,7 +2866,7 @@ public class Tokenizer implements Locator, Locator2 {
                                 continue;
                             case '\u0000':
                                 c = '\uFFFD';
-                                // fall thru
+                                // CPPONLY: MOZ_FALLTHROUGH;
                             default:
                                 appendStrBuf(c);
                                 state = transition(state, Tokenizer.COMMENT, reconsume, pos);
@@ -2894,7 +2897,7 @@ public class Tokenizer implements Locator, Locator2 {
                                 continue;
                             case '\u0000':
                                 c = '\uFFFD';
-                                // fall thru
+                                // CPPONLY: MOZ_FALLTHROUGH;
                             default:
                                 appendStrBuf(c);
                                 state = transition(state, Tokenizer.COMMENT, reconsume, pos);
@@ -2925,7 +2928,7 @@ public class Tokenizer implements Locator, Locator2 {
                                 continue;
                             case '\u0000':
                                 c = '\uFFFD';
-                                // fall thru
+                                // CPPONLY: MOZ_FALLTHROUGH;
                             default:
                                 appendStrBuf(c);
                                 state = transition(state, Tokenizer.COMMENT, reconsume, pos);
@@ -2965,7 +2968,7 @@ public class Tokenizer implements Locator, Locator2 {
                                 continue;
                             case '\u0000':
                                 c = '\uFFFD';
-                                // fall thru
+                                // CPPONLY: MOZ_FALLTHROUGH;
                             case '!':
                                 errNestedComment();
                                 adjustDoubleHyphenAndAppendToStrBufAndErr(c, reportedConsecutiveHyphens);
