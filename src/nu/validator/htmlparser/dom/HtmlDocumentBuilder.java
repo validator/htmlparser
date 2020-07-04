@@ -462,6 +462,7 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
      * 
      * @return the doctypeExpectation
      */
+    @Deprecated
     public DoctypeExpectation getDoctypeExpectation() {
         return doctypeExpectation;
     }
@@ -473,6 +474,7 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
      *            the doctypeExpectation to set
      * @see nu.validator.htmlparser.impl.TreeBuilder#setDoctypeExpectation(nu.validator.htmlparser.common.DoctypeExpectation)
      */
+    @Deprecated
     public void setDoctypeExpectation(DoctypeExpectation doctypeExpectation) {
         this.doctypeExpectation = doctypeExpectation;
         if (treeBuilder != null) {
@@ -526,6 +528,7 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
      * the name in the value.
      * @param html4ModeCompatibleWithXhtml1Schemata
      */
+    @Deprecated
     public void setHtml4ModeCompatibleWithXhtml1Schemata(
             boolean html4ModeCompatibleWithXhtml1Schemata) {
         this.html4ModeCompatibleWithXhtml1Schemata = html4ModeCompatibleWithXhtml1Schemata;
@@ -548,6 +551,7 @@ public class HtmlDocumentBuilder extends DocumentBuilder {
      * 
      * @return the html4ModeCompatibleWithXhtml1Schemata
      */
+    @Deprecated
     public boolean isHtml4ModeCompatibleWithXhtml1Schemata() {
         return html4ModeCompatibleWithXhtml1Schemata;
     }

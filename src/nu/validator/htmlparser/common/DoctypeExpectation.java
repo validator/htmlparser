@@ -28,6 +28,7 @@ package nu.validator.htmlparser.common;
  * @version $Id$
  * @author hsivonen
  */
+@Deprecated
 public enum DoctypeExpectation {
     /**
      * Be a pure HTML5 parser.

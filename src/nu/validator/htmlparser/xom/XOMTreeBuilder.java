@@ -254,9 +254,19 @@ class XOMTreeBuilder extends CoalescingTreeBuilder<Element> {
 
     /**
      * @see nu.validator.htmlparser.impl.TreeBuilder#documentMode(nu.validator.htmlparser.common.DocumentMode,
-     *      java.lang.String, java.lang.String, boolean)
+     *      java.lang.String, java.lang.String)
      */
+    protected void documentMode(DocumentMode mode, String publicIdentifier,
+            String systemIdentifier)
+            throws SAXException {
+        if (document instanceof Mode) {
+            Mode modal = (Mode) document;
+            modal.setMode(mode);
+        }
+    }
+
     @Override
+    @Deprecated
     protected void documentMode(DocumentMode mode, String publicIdentifier,
             String systemIdentifier, boolean html4SpecificAdditionalErrorChecks)
             throws SAXException {

@@ -6027,6 +6027,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
      * @param doctypeExpectation
      *            the doctypeExpectation to set
      */
+    @Deprecated
     public void setDoctypeExpectation(DoctypeExpectation doctypeExpectation) {
         this.doctypeExpectation = doctypeExpectation;
     }

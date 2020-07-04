@@ -39,8 +39,10 @@ public interface DocumentModeHandler {
      * @param mode the document mode
      * @param publicIdentifier the public id of the doctype or <code>null</code> if unavailable
      * @param systemIdentifier the system id of the doctype or <code>null</code> if unavailable
-     * @param html4SpecificAdditionalErrorChecks <code>true</code> if HTML 4-specific checks were enabled, <code>false</code> otherwise
      * @throws SAXException if things go wrong
      */
+    public void documentMode(DocumentMode mode, String publicIdentifier, String systemIdentifier) throws SAXException;
+
+    @Deprecated
     public void documentMode(DocumentMode mode, String publicIdentifier, String systemIdentifier, boolean html4SpecificAdditionalErrorChecks) throws SAXException;
 }
