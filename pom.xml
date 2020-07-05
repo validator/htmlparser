@@ -69,8 +69,8 @@
     </license>
   </licenses>
   <scm>
-    <connection>scm:hg:http://hg.mozilla.org/projects/htmlparser/</connection>
-    <url>http://hg.mozilla.org/projects/htmlparser/</url>
+    <connection>scm:git:https://github.com/validator/htmlparser.git</connection>
+    <url>https://github.com/validator/htmlparser</url>
   </scm>
   <build>
     <sourceDirectory>${project.build.directory}/src</sourceDirectory>
