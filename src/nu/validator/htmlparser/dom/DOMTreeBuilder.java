@@ -248,8 +248,15 @@ class DOMTreeBuilder extends CoalescingTreeBuilder<Element> {
     /**
      * 
      * @see nu.validator.htmlparser.impl.TreeBuilder#documentMode(nu.validator.htmlparser.common.DocumentMode,
-     *      java.lang.String, java.lang.String, boolean)
+     *      java.lang.String, java.lang.String)
      */
+    protected void documentMode(DocumentMode mode, String publicIdentifier,
+            String systemIdentifier)
+            throws SAXException {
+        document.setUserData("nu.validator.document-mode", mode, null);
+    }
+
+    @Deprecated
     protected void documentMode(DocumentMode mode, String publicIdentifier,
             String systemIdentifier, boolean html4SpecificAdditionalErrorChecks)
             throws SAXException {

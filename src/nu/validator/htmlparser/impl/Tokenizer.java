@@ -748,6 +748,7 @@ public class Tokenizer implements Locator, Locator2 {
      * @param html4ModeCompatibleWithXhtml1Schemata
      *            the html4ModeCompatibleWithXhtml1Schemata to set
      */
+    @Deprecated
     public void setHtml4ModeCompatibleWithXhtml1Schemata(
             boolean html4ModeCompatibleWithXhtml1Schemata) {
         this.html4ModeCompatibleWithXhtml1Schemata = html4ModeCompatibleWithXhtml1Schemata;

@@ -558,6 +558,7 @@ public class Driver implements EncodingDeclarationHandler {
      * @param html4ModeCompatibleWithXhtml1Schemata
      * @see nu.validator.htmlparser.impl.Tokenizer#setHtml4ModeCompatibleWithXhtml1Schemata(boolean)
      */
+    @Deprecated
     public void setHtml4ModeCompatibleWithXhtml1Schemata(
             boolean html4ModeCompatibleWithXhtml1Schemata) {
         tokenizer.setHtml4ModeCompatibleWithXhtml1Schemata(html4ModeCompatibleWithXhtml1Schemata);
