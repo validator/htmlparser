@@ -195,6 +195,7 @@
         <configuration>
           <source>7</source>
           <quiet>true</quiet>
+          <doclint>none</doclint>
         </configuration>
         <executions>
           <execution>
