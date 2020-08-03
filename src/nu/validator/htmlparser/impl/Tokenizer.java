@@ -3455,6 +3455,13 @@ public class Tokenizer implements Locator, Locator2 {
                                      * LATIN CAPITAL LETTER Z, or U+0061 LATIN
                                      * SMALL LETTER A to U+007A LATIN SMALL
                                      * LETTER Z, then, for historical reasons,
+                                     * ---
+                                     * FIXME: The remainder of this comment
+                                     * doesn't actually match the current spec.
+                                     * But the code behavior here also doesn't
+                                     * match the current spec, so it's unclear
+                                     * how to reconcile it...
+                                     * ---
                                      * all the characters that were matched
                                      * after the U+0026 AMPERSAND (&) must be
                                      * unconsumed, and nothing is returned.
