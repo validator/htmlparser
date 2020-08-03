@@ -3533,14 +3533,14 @@ public class Tokenizer implements Locator, Locator2 {
                     }
                     // XXX reorder point
                 case AMBIGUOUS_AMPERSAND:
+                    /*
+                     * Unlike the definition is the spec, we don't consume the
+                     * next input character right away when entering this state;
+                     * that's because our current implementation differs from
+                     * the spec in that we've already consumed the relevant
+                     * character *before* entering this state.
+                     */
                     ampersandloop: for (;;) {
-                        if (reconsume) {
-                            if (++pos == endPos) {
-                                break stateloop;
-                            }
-                            pos--;
-                            c = checkChar(buf, pos);
-                        }
                         if (c == ';') {
                             errNoNamedCharacterMatch();
                         } else if ((c >= '0' && c <= '9')
@@ -3550,11 +3550,13 @@ public class Tokenizer implements Locator, Locator2 {
                             if ((returnState & DATA_AND_RCDATA_MASK) == 0) {
                                 cstart = pos;
                             }
-                            /* The following pos++ is necessary due to how we’ve
-                             * handled the "reconsume" block for this case. */
-                            pos++;
+                            if (++pos == endPos) {
+                                break stateloop;
+                            }
+                            c = checkChar(buf, pos);
                             continue;
                         }
+                        reconsume = true;
                         state = transition(state, returnState, reconsume, pos);
                         continue stateloop;
                     }
