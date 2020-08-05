@@ -57,7 +57,7 @@ public class TokenizerTester {
 
     private static JSONString PLAINTEXT = new JSONString("PLAINTEXT state");
 
-    private static JSONString PCDATA = new JSONString("DATA state");
+    private static JSONString PCDATA = new JSONString("Data state");
 
     private static JSONString RCDATA = new JSONString("RCDATA state");
 
