@@ -3546,12 +3546,13 @@ public class Tokenizer implements Locator, Locator2 {
                         } else if ((c >= '0' && c <= '9')
                                 || (c >= 'A' && c <= 'Z')
                                 || (c >= 'a' && c <= 'z')) {
+                            if (++pos == endPos) {
+                                break stateloop;
+                            }
+                            appendCharRefBuf(c);
                             emitOrAppendCharRefBuf(returnState);
                             if ((returnState & DATA_AND_RCDATA_MASK) == 0) {
                                 cstart = pos;
-                            }
-                            if (++pos == endPos) {
-                                break stateloop;
                             }
                             c = checkChar(buf, pos);
                             continue;
