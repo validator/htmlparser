@@ -402,10 +402,17 @@ public class HtmlParser implements XMLReader {
      * @see org.xml.sax.XMLReader#parse(org.xml.sax.InputSource)
      */
     public void parse(InputSource input) throws IOException, SAXException {
+        parse(input, -1);
+    }
+
+    /**
+     * @see org.xml.sax.XMLReader#parse(org.xml.sax.InputSource)
+     */
+    public void parse(InputSource input, int bufferSize) throws IOException, SAXException {
         lazyInit();
         try {
             treeBuilder.setFragmentContext(null);
-            tokenize(input);
+            tokenize(input, bufferSize);
         } finally {
             if (saxTreeBuilder != null) {
                 Document document = saxTreeBuilder.getDocument();
@@ -426,10 +433,27 @@ public class HtmlParser implements XMLReader {
      */
     public void parseFragment(InputSource input, String context)
             throws IOException, SAXException {
+            parseFragment(input, context, -1);
+    }
+    /**
+     * Parses a fragment with HTML context.
+     *
+     * @param input the input to parse
+     * @param context the name of the context element (HTML namespace assumed)
+     * @param bufferSize the size of the buffer to feed to the tokenizer
+     * @throws IOException
+     * @throws SAXException
+     */
+    public void parseFragment(InputSource input, String context, int bufferSize)
+            throws IOException, SAXException {
         lazyInit();
         try {
             treeBuilder.setFragmentContext(context.intern());
-            tokenize(input);
+            if (bufferSize == -1) {
+                tokenize(input);
+            } else {
+                tokenize(input, bufferSize);
+            }
         } finally {
             if (saxTreeBuilder != null) {
                 DocumentFragment fragment = saxTreeBuilder.getDocumentFragment();
@@ -449,10 +473,29 @@ public class HtmlParser implements XMLReader {
      */
     public void parseFragment(InputSource input, String contextLocal, String contextNamespace)
             throws IOException, SAXException {
+            parseFragment(input, contextLocal, contextNamespace, -1);
+    }
+    /**
+     * Parses a fragment.
+     *
+     * @param input the input to parse
+     * @param contextLocal the local name of the context element
+     * @param contextNamespace the namespace of the context element
+     * @param bufferSize the size of the buffer to feed to the tokenizer
+     * @throws IOException
+     * @throws SAXException
+     */
+    public void parseFragment(InputSource input, String contextLocal,
+            String contextNamespace, int bufferSize)
+            throws IOException, SAXException {
         lazyInit();
         try {
             treeBuilder.setFragmentContext(contextLocal.intern(), contextNamespace.intern(), null, false);
-            tokenize(input);
+            if (bufferSize == -1) {
+                tokenize(input);
+            } else {
+                tokenize(input, bufferSize);
+            }
         } finally {
             if (saxTreeBuilder != null) {
                 DocumentFragment fragment = saxTreeBuilder.getDocumentFragment();
@@ -468,6 +511,10 @@ public class HtmlParser implements XMLReader {
      * @throws MalformedURLException
      */
     private void tokenize(InputSource is) throws SAXException, IOException, MalformedURLException {
+        tokenize(is, -1);
+    }
+    private void tokenize(InputSource is, int bufferSize) throws SAXException,
+            IOException, MalformedURLException {
         if (is == null) {
             throw new IllegalArgumentException("Null input.");            
         }
@@ -485,7 +532,11 @@ public class HtmlParser implements XMLReader {
                 is.setByteStream(new URL(systemId).openStream());
             }
         }
-        driver.tokenize(is);
+        if (bufferSize == -1) {
+            driver.tokenize(is);
+        } else {
+            driver.tokenize(is, bufferSize);
+        }
     }
 
     /**
