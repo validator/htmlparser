@@ -3373,6 +3373,9 @@ public class Tokenizer implements Locator, Locator2 {
                             c = checkChar(buf, pos);
                             continue;
                         }
+                        if ((returnState & DATA_AND_RCDATA_MASK) == 0) {
+                            reconsume = true;
+                        }
                         state = transition(state, returnState, reconsume, pos);
                         continue stateloop;
                     }
