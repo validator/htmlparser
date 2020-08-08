@@ -3355,26 +3355,29 @@ public class Tokenizer implements Locator, Locator2 {
                      * that's because our current implementation differs from
                      * the spec in that we've already consumed the relevant
                      * character *before* entering this state.
+                     * Also, our implementation of this state has no looping.
+                     * So we never stay in this state; instead, we always
+                     * transition out from it back to returnState.
                      */
                     state = returnState;
-                        if (c == ';') {
-                            errNoNamedCharacterMatch();
-                            continue stateloop;
-                        } else if ((c >= '0' && c <= '9')
-                                || (c >= 'A' && c <= 'Z')
-                                || (c >= 'a' && c <= 'z')) {
-                            appendCharRefBuf(c);
-                            emitOrAppendCharRefBuf(returnState);
-                            if ((returnState & DATA_AND_RCDATA_MASK) == 0) {
-                                cstart = pos + 1;
-                            }
-                            if (++pos == endPos) {
-                                break stateloop;
-                            }
-                            c = checkChar(buf, pos);
-                            continue stateloop;
-                        }
+                    if (c == ';') {
+                        errNoNamedCharacterMatch();
                         continue stateloop;
+                    } else if ((c >= '0' && c <= '9')
+                            || (c >= 'A' && c <= 'Z')
+                            || (c >= 'a' && c <= 'z')) {
+                        appendCharRefBuf(c);
+                        emitOrAppendCharRefBuf(returnState);
+                        if ((returnState & DATA_AND_RCDATA_MASK) == 0) {
+                            cstart = pos + 1;
+                        }
+                        if (++pos == endPos) {
+                            break stateloop;
+                        }
+                        c = checkChar(buf, pos);
+                        continue stateloop;
+                    }
+                    continue stateloop;
                 case CONSUME_NCR:
                     if (++pos == endPos) {
                         break stateloop;
