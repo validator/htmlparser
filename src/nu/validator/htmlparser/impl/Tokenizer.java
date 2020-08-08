@@ -3356,9 +3356,10 @@ public class Tokenizer implements Locator, Locator2 {
                      * the spec in that we've already consumed the relevant
                      * character *before* entering this state.
                      */
-                    ampersandloop: for (;;) {
+                    state = returnState;
                         if (c == ';') {
                             errNoNamedCharacterMatch();
+                            continue stateloop;
                         } else if ((c >= '0' && c <= '9')
                                 || (c >= 'A' && c <= 'Z')
                                 || (c >= 'a' && c <= 'z')) {
@@ -3371,14 +3372,9 @@ public class Tokenizer implements Locator, Locator2 {
                                 break stateloop;
                             }
                             c = checkChar(buf, pos);
-                            continue;
+                            continue stateloop;
                         }
-                        if ((returnState & DATA_AND_RCDATA_MASK) == 0) {
-                            reconsume = true;
-                        }
-                        state = transition(state, returnState, reconsume, pos);
                         continue stateloop;
-                    }
                 case CONSUME_NCR:
                     if (++pos == endPos) {
                         break stateloop;
