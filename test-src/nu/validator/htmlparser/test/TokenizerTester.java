@@ -111,6 +111,7 @@ public class TokenizerTester {
         driver.setNamePolicy(XmlViolationPolicy.ALLOW);
         driver.setXmlnsPolicy(XmlViolationPolicy.ALLOW);
         driver.setErrorHandler(tokenHandler);
+        driver.dontSwallowBom();
         writer = new OutputStreamWriter(System.out, "UTF-8");
         JSONParser jsonParser = new JSONParser(new InputStreamReader(stream,
                 "UTF-8"));
