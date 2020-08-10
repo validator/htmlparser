@@ -22,6 +22,7 @@
 
 package nu.validator.htmlparser.test;
 
+import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,6 +32,9 @@ import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import nu.validator.htmlparser.common.XmlViolationPolicy;
 import nu.validator.htmlparser.impl.ErrorReportingTokenizer;
@@ -217,8 +221,12 @@ public class TokenizerTester {
     public static void main(String[] args) throws TokenStreamException,
             RecognitionException, SAXException, IOException {
         for (int i = 0; i < args.length; i++) {
-            TokenizerTester tester = new TokenizerTester(new FileInputStream(
-                    args[i]));
+            byte[] fileBytes = Files.readAllBytes(Paths.get(args[i]));
+            String fileContent = new String(fileBytes, StandardCharsets.UTF_8);
+            String unescapedContent = fileContent.replace("\\\\u", "\\u");
+            byte[] newBytes = unescapedContent.getBytes(StandardCharsets.UTF_8);
+            ByteArrayInputStream bais = new ByteArrayInputStream(newBytes);
+            TokenizerTester tester = new TokenizerTester(bais);
             tester.runTests();
         }
     }
