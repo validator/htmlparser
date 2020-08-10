@@ -59,7 +59,7 @@ public class Driver implements EncodingDeclarationHandler {
      */
     private RewindableInputStream rewindableInputStream;
 
-    private boolean swallowBom;
+    private boolean swallowBom = true;
 
     private Encoding characterEncoding;
 
@@ -196,7 +196,6 @@ public class Driver implements EncodingDeclarationHandler {
         }
         tokenizer.start();
         confidence = Confidence.TENTATIVE;
-        swallowBom = true;
         rewindableInputStream = null;
         tokenizer.initLocation(is.getPublicId(), is.getSystemId());
         this.reader = is.getCharacterStream();
@@ -284,7 +283,7 @@ public class Driver implements EncodingDeclarationHandler {
         }
     }
 
-    void dontSwallowBom() {
+    public void dontSwallowBom() {
         swallowBom = false;
     }
 
