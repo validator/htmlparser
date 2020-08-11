@@ -164,8 +164,9 @@ public class TokenizerTester {
                     runTestInner(inputString, expectedTokens, description,
                             Tokenizer.PLAINTEXT, lastStartTag);
                 } else if (SCRIPT_DATA.equals(value)) {
+                    lastStartTag = lastStartTag == null ? "script" : lastStartTag;
                     runTestInner(inputString, expectedTokens, description,
-                            Tokenizer.SCRIPT_DATA, "script");
+                            Tokenizer.SCRIPT_DATA, lastStartTag);
                 } else {
                     throw new RuntimeException("Broken test data.");
                 }
