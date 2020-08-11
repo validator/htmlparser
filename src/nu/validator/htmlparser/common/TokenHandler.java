@@ -145,6 +145,17 @@ public interface TokenHandler {
     public void zeroOriginatingReplacementCharacter() throws SAXException;
     
     /**
+     * Emits:
+     *
+     *  * U+0000 if only tokenization is being performed
+     *  * U+FFFD if tree construction is being performed also
+     *
+     * @throws SAXException
+     *             if something went wrong
+     */
+    public void zeroOrReplacementCharacter() throws SAXException;
+
+    /**
      * The end-of-file token.
      * 
      * @throws SAXException

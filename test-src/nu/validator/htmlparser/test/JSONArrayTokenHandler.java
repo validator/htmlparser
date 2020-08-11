@@ -54,6 +54,8 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
 
     private static final char[] REPLACEMENT_CHARACTER = { '\uFFFD' };
 
+    private static final char[] NULL = { '\u0000' };
+
     private final StringBuilder builder = new StringBuilder();
 
     private JSONArray array = null;
@@ -172,6 +174,11 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
     @Override public void zeroOriginatingReplacementCharacter()
             throws SAXException {
         builder.append(REPLACEMENT_CHARACTER, 0, 1);
+    }
+
+    @Override public void zeroOrReplacementCharacter()
+            throws SAXException {
+        builder.append(NULL, 0, 1);
     }
 
     @Override public boolean cdataSectionAllowed() throws SAXException {
