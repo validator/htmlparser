@@ -26,66 +26,108 @@
   <artifactId>htmlparser</artifactId>
   <version>1.4</version>
   <name>htmlparser</name>
-  <url>http://about.validator.nu/htmlparser/</url>
+  <url>https://about.validator.nu/htmlparser/</url>
   <description>The Validator.nu HTML Parser is an implementation of the HTML5 parsing algorithm in Java for applications. The parser is designed to work as a drop-in replacement for the XML parser in applications that already support XHTML 1.x content with an XML parser and use SAX, DOM or XOM to interface with the parser.</description>
   <!--
     Usage notes for this POM:
 
-    To build without signing, run:
-    mvn clean source:jar javadoc:jar repository:bundle-create
-    (enter 0 <return> when prompted)
+    To build without signing, run (with JDK 12 or higher):
+    mvn clean package
 
     To build and sign, run:
-    mvn clean source:jar javadoc:jar package gpg:sign repository:bundle-create
-    (enter 0 <return> when prompted)
+    mvn clean package gpg:sign
 
-    This POM file is used for creating the bundle for distribution via the
+    This POM file is used for creating the artifacts for distribution via the
     Maven Central Repository. It is not used as part of the normal development
     process of the parser and the maintainer of the parser (Henri Sivonen) 
     isn't experienced in POM tweaking. If you need this POM to do something
     that it currently does not do or do something better, you need to write
     the changes you need yourself and contribute a patch via
-    http://bugzilla.validator.nu/
+    https://github.com/validator/htmlparser
   -->
   <developers>
     <developer>
       <id>hsivonen</id>
       <name>Henri Sivonen</name>
       <email>hsivonen@iki.fi</email>
-      <url>http://hsivonen.iki.fi/</url>
+      <url>https://hsivonen.iki.fi/</url>
     </developer>
   </developers>
   <licenses>
     <license>
       <name>The MIT License</name>
-      <url>http://www.opensource.org/licenses/mit-license.php</url>
+      <url>https://www.opensource.org/licenses/mit-license.php</url>
       <distribution>repo</distribution>
     </license>
     <license>
       <name>The (New) BSD License</name>
-      <url>http://www.opensource.org/licenses/bsd-license.php</url>
+      <url>https://www.opensource.org/licenses/bsd-license.php</url>
       <distribution>repo</distribution>
     </license>
   </licenses>
   <scm>
-    <connection>scm:hg:http://hg.mozilla.org/projects/htmlparser/</connection>
-    <url>http://hg.mozilla.org/projects/htmlparser/</url>
+    <connection>scm:git:https://github.com/validator/htmlparser.git</connection>
+    <url>https://github.com/validator/htmlparser</url>
   </scm>
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
   <build>
     <sourceDirectory>${project.build.directory}/src</sourceDirectory>
     <testSourceDirectory>${basedir}/test-src</testSourceDirectory>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>3.2.1</version>
+        <executions>
+          <execution>
+              <id>attach-sources</id>
+              <goals>
+                <goal>jar-no-fork</goal>
+              </goals>
+            </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <source>1.7</source>
-          <target>1.7</target>
-        </configuration>
+        <version>3.8.1</version>
+        <executions>
+          <execution>
+            <id>default-compile</id>
+            <configuration>
+              <release>11</release>
+            </configuration>
+          </execution>
+          <execution>
+            <id>base-compile</id>
+            <goals>
+              <goal>compile</goal>
+            </goals>
+            <configuration>
+              <source>1.7</source>
+              <target>1.7</target>
+              <excludes>
+                <exclude>module-info.java</exclude>
+              </excludes>
+            </configuration>
+          </execution>
+          <execution>
+            <id>default-testCompile</id>
+              <goals>
+                <goal>testCompile</goal>
+              </goals>
+              <configuration>
+                <source>1.7</source>
+                <target>1.7</target>
+              </configuration>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <artifactId>maven-antrun-plugin</artifactId>
-        <version>1.7</version>
+        <version>3.0.0</version>
         <executions>
           <execution>
             <id>intitialize-sources</id>
@@ -111,6 +153,7 @@
             </goals>
             <configuration>
               <target>
+                <property name="build.compiler" value="extJavac"/>
                 <property name="translator.sources" value="${basedir}/translator-src"/>
                 <property name="translator.classes" value="${project.build.directory}/translator-classes"/>
                 <mkdir dir="${translator.classes}"/>
@@ -129,10 +172,39 @@
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.2.0</version>
+        <configuration>
+        <archive>
+          <addMavenDescriptor>false</addMavenDescriptor>
+        </archive>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.0.0-M5</version>
         <configuration>
           <skip>true</skip>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>3.1.0</version>
+        <configuration>
+          <source>7</source>
+          <quiet>true</quiet>
+          <doclint>none</doclint>
+        </configuration>
+        <executions>
+          <execution>
+            <id>attach-javadocs</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
@@ -140,7 +212,13 @@
     <dependency>
       <groupId>com.ibm.icu</groupId>
       <artifactId>icu4j</artifactId>
-      <version>4.0.1</version>
+      <!--
+        A module name was set for version 64.1 (see
+        https://unicode-org.atlassian.net/browse/ICU-20192) but
+        only 64.2 (and later) is available from Maven Central.
+        See also https://github.com/unicode-org/icu/pull/193
+      -->
+      <version>[64.2,)</version>
       <scope>compile</scope>
       <optional>true</optional>
     </dependency>
@@ -161,7 +239,7 @@
     <dependency>
       <groupId>com.sdicons.jsontools</groupId>
       <artifactId>jsontools-core</artifactId>
-      <version>1.4</version>
+      <version>1.7</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
