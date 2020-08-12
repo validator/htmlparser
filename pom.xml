@@ -20,13 +20,13 @@
  * DEALINGS IN THE SOFTWARE.
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>nu.validator.htmlparser</groupId>
   <artifactId>htmlparser</artifactId>
   <version>1.4</version>
   <name>htmlparser</name>
-  <url>http://about.validator.nu/htmlparser/</url>
+  <url>https://about.validator.nu/htmlparser/</url>
   <description>The Validator.nu HTML Parser is an implementation of the HTML5 parsing algorithm in Java for applications. The parser is designed to work as a drop-in replacement for the XML parser in applications that already support XHTML 1.x content with an XML parser and use SAX, DOM or XOM to interface with the parser.</description>
   <!--
     Usage notes for this POM:
@@ -43,31 +43,31 @@
     isn't experienced in POM tweaking. If you need this POM to do something
     that it currently does not do or do something better, you need to write
     the changes you need yourself and contribute a patch via
-    http://bugzilla.validator.nu/
+    https://github.com/validator/htmlparser/issues
   -->
   <developers>
     <developer>
       <id>hsivonen</id>
       <name>Henri Sivonen</name>
       <email>hsivonen@iki.fi</email>
-      <url>http://hsivonen.iki.fi/</url>
+      <url>https://hsivonen.fi/</url>
     </developer>
   </developers>
   <licenses>
     <license>
       <name>The MIT License</name>
-      <url>http://www.opensource.org/licenses/mit-license.php</url>
+      <url>https://opensource.org/licenses/mit-license.php</url>
       <distribution>repo</distribution>
     </license>
     <license>
       <name>The (New) BSD License</name>
-      <url>http://www.opensource.org/licenses/bsd-license.php</url>
+      <url>https://opensource.org/licenses/bsd-license.php</url>
       <distribution>repo</distribution>
     </license>
   </licenses>
   <scm>
-    <connection>scm:hg:http://hg.mozilla.org/projects/htmlparser/</connection>
-    <url>http://hg.mozilla.org/projects/htmlparser/</url>
+    <connection>scm:git:https://github.com/validator/htmlparser.git</connection>
+    <url>https://github.com/validator/htmlparser</url>
   </scm>
   <build>
     <sourceDirectory>${project.build.directory}/src</sourceDirectory>
