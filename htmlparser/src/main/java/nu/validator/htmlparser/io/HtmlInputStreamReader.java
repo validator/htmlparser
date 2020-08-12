@@ -46,7 +46,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 /**
- * Be very careful with this class. It is not a general-purpose subclass of of
+ * Be very careful with this class. It is not a general-purpose subclass of
  * <code>Reader</code>. Instead, it is the minimal implementation that does
  * what <code>Tokenizer</code> needs while being an instance of
  * <code>Reader</code>.

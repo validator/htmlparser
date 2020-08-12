@@ -233,7 +233,7 @@ public class HtmlBuilder extends Builder {
      * @param is the <code>InputSource</code>
      * @return the document
      * @throws ParsingException in case of an XML violation
-     * @throws IOException if IO goes wrang
+     * @throws IOException if IO goes wrong
      */
     public Document build(InputSource is) throws ParsingException, IOException {
         lazyInit();
@@ -249,7 +249,7 @@ public class HtmlBuilder extends Builder {
      * @param context the name of the context element (HTML namespace assumed)
      * @return the fragment
      * @throws ParsingException in case of an XML violation
-     * @throws IOException if IO goes wrang
+     * @throws IOException if IO goes wrong
      */
     public Nodes buildFragment(InputSource is, String context)
             throws IOException, ParsingException {
@@ -263,10 +263,10 @@ public class HtmlBuilder extends Builder {
      * Parse a fragment from SAX <code>InputSource</code>.
      * @param is the <code>InputSource</code>
      * @param contextLocal the local name of the context element
-     * @parem contextNamespace the namespace of the context element
+     * @param contextNamespace the namespace of the context element
      * @return the fragment
      * @throws ParsingException in case of an XML violation
-     * @throws IOException if IO goes wrang
+     * @throws IOException if IO goes wrong
      */
     public Nodes buildFragment(InputSource is, String contextLocal, String contextNamespace)
             throws IOException, ParsingException {
@@ -281,7 +281,7 @@ public class HtmlBuilder extends Builder {
      * @param file the file
      * @return the document
      * @throws ParsingException in case of an XML violation
-     * @throws IOException if IO goes wrang
+     * @throws IOException if IO goes wrong
      * @see nu.xom.Builder#build(java.io.File)
      */
     @Override
@@ -296,7 +296,7 @@ public class HtmlBuilder extends Builder {
      * @param uri the base URI
      * @return the document
      * @throws ParsingException in case of an XML violation
-     * @throws IOException if IO goes wrang
+     * @throws IOException if IO goes wrong
      * @see nu.xom.Builder#build(java.io.InputStream, java.lang.String)
      */
     @Override
@@ -312,7 +312,7 @@ public class HtmlBuilder extends Builder {
      * @param stream the stream
      * @return the document
      * @throws ParsingException in case of an XML violation
-     * @throws IOException if IO goes wrang
+     * @throws IOException if IO goes wrong
      * @see nu.xom.Builder#build(java.io.InputStream)
      */
     @Override
@@ -327,7 +327,7 @@ public class HtmlBuilder extends Builder {
      * @param uri the base URI
      * @return the document
      * @throws ParsingException in case of an XML violation
-     * @throws IOException if IO goes wrang
+     * @throws IOException if IO goes wrong
      * @see nu.xom.Builder#build(java.io.Reader, java.lang.String)
      */
     @Override
@@ -343,7 +343,7 @@ public class HtmlBuilder extends Builder {
      * @param stream the reader
      * @return the document
      * @throws ParsingException in case of an XML violation
-     * @throws IOException if IO goes wrang
+     * @throws IOException if IO goes wrong
      * @see nu.xom.Builder#build(java.io.Reader)
      */
     @Override
@@ -358,7 +358,7 @@ public class HtmlBuilder extends Builder {
      * @param uri the base URI
      * @return the document
      * @throws ParsingException in case of an XML violation
-     * @throws IOException if IO goes wrang
+     * @throws IOException if IO goes wrong
      * @see nu.xom.Builder#build(java.lang.String, java.lang.String)
      */
     @Override
@@ -372,7 +372,7 @@ public class HtmlBuilder extends Builder {
      * @param uri the URI of the document
      * @return the document
      * @throws ParsingException in case of an XML violation
-     * @throws IOException if IO goes wrang
+     * @throws IOException if IO goes wrong
      * @see nu.xom.Builder#build(java.lang.String)
      */
     @Override
