@@ -35,7 +35,7 @@ import org.xml.sax.SAXException;
  * @version $Id$
  * @author hsivonen
  */
-public abstract class Node implements Locator, Locator2 {
+public abstract class Node implements Locator2 {
 
     /**
      * The system id.

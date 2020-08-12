@@ -41,7 +41,6 @@ import nu.validator.htmlparser.extra.IcuDetectorSniffer;
 import nu.validator.htmlparser.impl.Tokenizer;
 
 import org.xml.sax.ErrorHandler;
-import org.xml.sax.Locator;
 import org.xml.sax.ext.Locator2;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -58,8 +57,7 @@ import org.xml.sax.SAXParseException;
  * @version $Id$
  * @author hsivonen
  */
-public final class HtmlInputStreamReader extends Reader implements
-        ByteReadable, Locator, Locator2 {
+public final class HtmlInputStreamReader extends Reader implements ByteReadable, Locator2 {
 
     private static final int SNIFFING_LIMIT = 1024;
 

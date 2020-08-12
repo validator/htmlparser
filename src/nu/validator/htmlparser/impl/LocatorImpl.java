@@ -26,7 +26,7 @@ package nu.validator.htmlparser.impl;
 import org.xml.sax.Locator;
 import org.xml.sax.ext.Locator2;
 
-public class LocatorImpl implements Locator, Locator2 {
+public class LocatorImpl implements Locator2 {
 
     private final String systemId;
 

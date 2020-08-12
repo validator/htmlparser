@@ -35,7 +35,7 @@ import org.xml.sax.ext.LexicalHandler;
  * @version $Id$
  * @author hsivonen
  */
-public final class TreeParser implements Locator, Locator2 {
+public final class TreeParser implements Locator2 {
     
     /**
      * The content handler.

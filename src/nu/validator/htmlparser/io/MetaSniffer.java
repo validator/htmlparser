@@ -34,7 +34,7 @@ import org.xml.sax.ext.Locator2;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
-public class MetaSniffer extends MetaScanner implements Locator, Locator2 {
+public class MetaSniffer extends MetaScanner implements Locator2 {
     
     private Encoding characterEncoding = null;
 

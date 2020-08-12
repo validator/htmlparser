@@ -31,7 +31,7 @@ import org.xml.sax.ext.Locator2;
  * @version $Id$
  * @author hsivonen
  */
-public final class LocatorImpl implements Locator, Locator2 {
+public final class LocatorImpl implements Locator2 {
 
     /**
      * The system id.
