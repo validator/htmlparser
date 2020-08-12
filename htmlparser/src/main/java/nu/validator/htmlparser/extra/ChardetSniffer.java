@@ -33,6 +33,7 @@ import org.mozilla.intl.chardet.nsPSMDetector;
 
 import com.ibm.icu.text.CharsetDetector;
 
+@SuppressWarnings("exports")
 public class ChardetSniffer implements nsICharsetDetectionObserver {
 
     private final byte[] source;

@@ -29,6 +29,7 @@ package nu.validator.htmlparser.impl;
  * @version $Id$
  * @author hsivonen
  */
+@SuppressWarnings("exports")
 public interface TreeBuilderState<T> {
 
     /**

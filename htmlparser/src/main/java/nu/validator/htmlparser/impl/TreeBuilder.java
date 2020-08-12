@@ -56,6 +56,7 @@ import nu.validator.htmlparser.common.DocumentModeHandler;
 import nu.validator.htmlparser.common.TokenHandler;
 import nu.validator.htmlparser.common.XmlViolationPolicy;
 
+@SuppressWarnings("exports")
 public abstract class TreeBuilder<T> implements TokenHandler,
         TreeBuilderState<T> {
 

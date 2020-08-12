@@ -25,6 +25,7 @@ package nu.validator.htmlparser.impl;
 import nu.validator.htmlparser.annotation.Auto;
 
 
+@SuppressWarnings("exports")
 public class StateSnapshot<T> implements TreeBuilderState<T> {
 
     private final @Auto StackNode<T>[] stack;
