@@ -1,0 +1,146 @@
+<!--
+ * Copyright (c) 2007-2012 Mozilla Foundation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a 
+ * copy of this software and associated documentation files (the "Software"), 
+ * to deal in the Software without restriction, including without limitation 
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense, 
+ * and/or sell copies of the Software, and to permit persons to whom the 
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in 
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL 
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * DEALINGS IN THE SOFTWARE.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>nu.validator.htmlparser</groupId>
+    <artifactId>parent</artifactId>
+    <version>1.4</version>
+  </parent>
+
+  <artifactId>htmlparser</artifactId>
+
+  <name>htmlparser</name>
+
+  <dependencies>
+    <dependency>
+      <groupId>nu.validator.htmlparser</groupId>
+      <artifactId>saxtree</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.ibm.icu</groupId>
+      <artifactId>icu4j</artifactId>
+      <version>4.0.1</version>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>net.sourceforge.jchardet</groupId>
+      <artifactId>jchardet</artifactId>
+      <version>1.0</version>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>com.sdicons.jsontools</groupId>
+      <artifactId>jsontools-core</artifactId>
+      <version>1.4</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>backup-tokenizer</id>
+            <phase>process-sources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <overwrite>true</overwrite>
+              <outputDirectory>${project.build.directory}/hotspot-backup</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>src/main/java/nu/validator/htmlparser/impl</directory>
+                  <includes>
+                    <li>Tokenizer.java</li>
+                  </includes>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+          <execution>
+            <id>restore-tokenizer</id>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <overwrite>true</overwrite>
+              <outputDirectory>src/main/java/nu/validator/htmlparser/impl</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${project.build.directory}/hotspot-backup</directory>
+                  <includes>
+                    <li>Tokenizer.java</li>
+                  </includes>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>tokenizer-hotspot-workaround-javac</id>
+            <phase>process-sources</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <executable>javac</executable>
+              <arguments>
+                <arg>${project.basedir}/src/hotspot/java/nu/validator/htmlparser/generator/ApplyHotSpotWorkaround.java</arg>
+                <arg>-d</arg>
+                <arg>${project.build.directory}/hotspot-classes</arg>
+              </arguments>
+            </configuration>
+          </execution>
+          <execution>
+            <id>tokenizer-hotspot-workaround-java</id>
+            <phase>process-sources</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <executable>java</executable>
+              <arguments>
+                <arg>-cp</arg>
+                <arg>${project.build.directory}/hotspot-classes</arg>
+                <arg>nu.validator.htmlparser.generator.ApplyHotSpotWorkaround</arg>
+                <arg>${project.build.sourceDirectory}/nu/validator/htmlparser/impl/Tokenizer.java</arg>
+                <arg>${project.basedir}/src/hotspot/resources/HotSpotWorkaround.txt</arg>
+              </arguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

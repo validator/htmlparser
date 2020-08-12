@@ -31,7 +31,7 @@
     To build and sign, run:
     mvn clean source:jar javadoc:jar package gpg:sign
 
-    This POM file is used for creating the JAR for distribution via the
+    This POM file is used for creating the JARs for distribution via the
     Maven Central Repository. It is not used as part of the normal development
     process of the parser and the maintainer of the parser (Henri Sivonen) 
     isn't experienced in POM tweaking. If you need this POM to do something
@@ -41,10 +41,11 @@
   -->
 
   <groupId>nu.validator.htmlparser</groupId>
-  <artifactId>htmlparser</artifactId>
+  <artifactId>parent</artifactId>
   <version>1.4</version>
+  <packaging>pom</packaging>
 
-  <name>htmlparser</name>
+  <name>parent</name>
   <description>The Validator.nu HTML Parser is an implementation of the HTML5 parsing algorithm in Java for applications. The parser is designed to work as a drop-in replacement for the XML parser in applications that already support XHTML 1.x content with an XML parser and use SAX, DOM or XOM to interface with the parser.</description>
   <url>https://about.validator.nu/htmlparser/</url>
   <licenses>
@@ -69,6 +70,12 @@
     </developer>
   </developers>
 
+  <modules>
+    <module>htmlparser</module>
+    <module>saxtree</module>
+    <module>xom</module>
+  </modules>
+
   <scm>
     <connection>scm:git:https://github.com/validator/htmlparser.git</connection>
     <url>https://github.com/validator/htmlparser</url>
@@ -81,35 +88,25 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
-  <dependencies>
-    <dependency>
-      <groupId>com.ibm.icu</groupId>
-      <artifactId>icu4j</artifactId>
-      <version>4.0.1</version>
-      <scope>compile</scope>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>xom</groupId>
-      <artifactId>xom</artifactId>
-      <version>1.1</version>
-      <scope>compile</scope>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>net.sourceforge.jchardet</groupId>
-      <artifactId>jchardet</artifactId>
-      <version>1.0</version>
-      <scope>compile</scope>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>com.sdicons.jsontools</groupId>
-      <artifactId>jsontools-core</artifactId>
-      <version>1.4</version>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>nu.validator.htmlparser</groupId>
+        <artifactId>htmlparser</artifactId>
+        <version>1.4</version>
+      </dependency>
+      <dependency>
+        <groupId>nu.validator.htmlparser</groupId>
+        <artifactId>saxtree</artifactId>
+        <version>1.4</version>
+      </dependency>
+      <dependency>
+        <groupId>nu.validator.htmlparser</groupId>
+        <artifactId>xom</artifactId>
+        <version>1.4</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <build>
     <pluginManagement>
@@ -145,88 +142,5 @@
         </plugin>
       </plugins>
     </pluginManagement>
-    <plugins>
-      <plugin>
-        <artifactId>maven-resources-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>backup-tokenizer</id>
-            <phase>process-sources</phase>
-            <goals>
-              <goal>copy-resources</goal>
-            </goals>
-            <configuration>
-              <overwrite>true</overwrite>
-              <outputDirectory>${project.build.directory}/hotspot-backup</outputDirectory>
-              <resources>
-                <resource>
-                  <directory>src/main/java/nu/validator/htmlparser/impl</directory>
-                  <includes>
-                    <li>Tokenizer.java</li>
-                  </includes>
-                </resource>
-              </resources>
-            </configuration>
-          </execution>
-          <execution>
-            <id>restore-tokenizer</id>
-            <phase>process-classes</phase>
-            <goals>
-              <goal>copy-resources</goal>
-            </goals>
-            <configuration>
-              <overwrite>true</overwrite>
-              <outputDirectory>src/main/java/nu/validator/htmlparser/impl</outputDirectory>
-              <resources>
-                <resource>
-                  <directory>${project.build.directory}/hotspot-backup</directory>
-                  <includes>
-                    <li>Tokenizer.java</li>
-                  </includes>
-                </resource>
-              </resources>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>tokenizer-hotspot-workaround-javac</id>
-            <phase>process-sources</phase>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-            <configuration>
-              <executable>javac</executable>
-              <arguments>
-                <arg>${project.basedir}/src/hotspot/java/nu/validator/htmlparser/generator/ApplyHotSpotWorkaround.java</arg>
-                <arg>-d</arg>
-                <arg>${project.build.directory}/hotspot-classes</arg>
-              </arguments>
-            </configuration>
-          </execution>
-          <execution>
-            <id>tokenizer-hotspot-workaround-java</id>
-            <phase>process-sources</phase>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-            <configuration>
-              <executable>java</executable>
-              <arguments>
-                <arg>-cp</arg>
-                <arg>${project.build.directory}/hotspot-classes</arg>
-                <arg>nu.validator.htmlparser.generator.ApplyHotSpotWorkaround</arg>
-                <arg>${project.build.sourceDirectory}/nu/validator/htmlparser/impl/Tokenizer.java</arg>
-                <arg>${project.basedir}/src/hotspot/resources/HotSpotWorkaround.txt</arg>
-              </arguments>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
   </build>
 </project>
