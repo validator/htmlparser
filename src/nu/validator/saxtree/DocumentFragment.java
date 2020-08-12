@@ -23,7 +23,7 @@
 
 package nu.validator.saxtree;
 
-import nu.validator.htmlparser.impl.LocatorImpl;
+import org.xml.sax.ext.Locator2Impl;
 
 /**
  * A document fragment.
@@ -37,7 +37,7 @@ public final class DocumentFragment extends ParentNode {
      * The constructor.
      */
     public DocumentFragment() {
-        super(new LocatorImpl());
+        super(new Locator2Impl());
     }
 
     /**
