@@ -40,7 +40,7 @@ public class NameCheckingXmlSerializer extends XmlSerializer {
     }
 
     /**
-     * @see nu.validator.htmlparser.sax.XmlSerializer#checkNCName()
+     * @see nu.validator.htmlparser.sax.XmlSerializer#checkNCName(String)
      */
     @Override protected void checkNCName(String name) throws SAXException {
         if (!NCName.isNCName(name)) {

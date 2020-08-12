@@ -110,7 +110,9 @@ public final class HtmlInputStreamReader extends Reader implements ByteReadable,
     /**
      * @param inputStream
      * @param errorHandler
-     * @param locator
+     * @param tokenizer
+     * @param driver
+     * @param heuristics
      * @throws IOException
      * @throws SAXException
      */

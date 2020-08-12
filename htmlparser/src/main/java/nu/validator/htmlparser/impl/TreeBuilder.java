@@ -2898,8 +2898,6 @@ public abstract class TreeBuilder<T> implements TokenHandler,
      * C++ memory note: The return value must be released.
      *
      * @return
-     * @throws SAXException
-     * @throws StopSniffingException
      */
     public static String extractCharsetFromContent(String attributeValue
         // CPPONLY: , TreeBuilder tb

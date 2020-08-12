@@ -714,7 +714,7 @@ public class HtmlParser implements XMLReader {
     /**
      * Indicates whether NFC normalization of source is being checked.
      * @return <code>true</code> if NFC normalization of source is being checked.
-     * @see nu.validator.htmlparser.impl.Tokenizer#isCheckingNormalization()
+     * @see nu.validator.htmlparser.io.Driver#isCheckingNormalization()
      */
     public boolean isCheckingNormalization() {
         return checkingNormalization;
@@ -723,7 +723,7 @@ public class HtmlParser implements XMLReader {
     /**
      * Toggles the checking of the NFC normalization of source.
      * @param enable <code>true</code> to check normalization
-     * @see nu.validator.htmlparser.impl.Tokenizer#setCheckingNormalization(boolean)
+     * @see nu.validator.htmlparser.io.Driver#setCheckingNormalization(boolean)
      */
     public void setCheckingNormalization(boolean enable) {
         this.checkingNormalization = enable;
@@ -941,8 +941,8 @@ public class HtmlParser implements XMLReader {
     }
 
     /**
-     * @param errorProfile
-     * @see nu.validator.htmlparser.impl.errorReportingTokenizer#setErrorProfile(set)
+     * @param errorProfileMap
+     * @see nu.validator.htmlparser.impl.ErrorReportingTokenizer#setErrorProfile(HashMap)
      */
     public void setErrorProfile(HashMap<String, String> errorProfileMap) {
         this.errorProfileMap = errorProfileMap;
@@ -965,7 +965,7 @@ public class HtmlParser implements XMLReader {
      * Sets the encoding sniffing heuristics.
      * 
      * @param heuristics the heuristics to set
-     * @see nu.validator.htmlparser.impl.Tokenizer#setHeuristics(nu.validator.htmlparser.common.Heuristics)
+     * @see nu.validator.htmlparser.io.Driver#setHeuristics(nu.validator.htmlparser.common.Heuristics)
      */
     public void setHeuristics(Heuristics heuristics) {
         this.heuristics = heuristics;

@@ -91,7 +91,6 @@ public class MetaSniffer extends MetaScanner implements Locator2 {
      * 
      * @throws SAXException
      * @throws IOException
-     * @throws
      */
     public Encoding sniff(ByteReadable readable) throws SAXException, IOException {
         this.readable = readable;

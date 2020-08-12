@@ -122,10 +122,9 @@ public final class NormalizationChecker implements CharacterHandler {
     }
 
     /**
-     * Constructor with mode selection.
+     * Constructor with locator.
      * 
-     * @param sourceTextMode whether the source text-related messages 
-     * should be enabled.
+     * @param locator
      */
     public NormalizationChecker(Locator locator) {
         super();

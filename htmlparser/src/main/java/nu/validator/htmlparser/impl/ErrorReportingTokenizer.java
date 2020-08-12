@@ -128,7 +128,7 @@ public class ErrorReportingTokenizer extends Tokenizer {
     /**
      * Sets the errorProfile.
      *
-     * @param errorProfile
+     * @param errorProfileMap
      */
     public void setErrorProfile(HashMap<String, String> errorProfileMap) {
         this.errorProfileMap = errorProfileMap;
