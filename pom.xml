@@ -75,6 +75,9 @@
   </scm>
 
   <properties>
+    <maven.compiler.source>1.5</maven.compiler.source>
+    <maven.compiler.target>1.5</maven.compiler.target>
+    <skipTests>true</skipTests>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
@@ -109,76 +112,120 @@
   </dependencies>
 
   <build>
-    <sourceDirectory>${project.build.directory}/src</sourceDirectory>
-    <testSourceDirectory>${basedir}/test-src</testSourceDirectory>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <artifactId>maven-clean-plugin</artifactId>
+          <version>3.1.0</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.8.1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>3.2.0</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-resources-plugin</artifactId>
+          <version>3.2.0</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-source-plugin</artifactId>
+          <version>3.2.1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>2.22.2</version>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>exec-maven-plugin</artifactId>
+          <version>3.0.0</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
     <plugins>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <source>1.5</source>
-          <target>1.5</target>
-        </configuration>
-      </plugin>
-      <plugin>
-        <artifactId>maven-antrun-plugin</artifactId>
-        <version>1.7</version>
-        <dependencies>
-          <dependency>
-            <groupId>com.sun</groupId>
-            <artifactId>tools</artifactId>
-            <version>1.5.0</version>
-            <scope>system</scope>
-            <systemPath>${java.home}/../lib/tools.jar</systemPath>
-          </dependency>
-        </dependencies>
+        <artifactId>maven-resources-plugin</artifactId>
         <executions>
           <execution>
-            <id>intitialize-sources</id>
-            <phase>initialize</phase>
+            <id>backup-tokenizer</id>
+            <phase>process-sources</phase>
             <goals>
-              <goal>run</goal>
+              <goal>copy-resources</goal>
             </goals>
             <configuration>
-              <target>
-                <delete dir="${project.build.sourceDirectory}"/>
-                <mkdir dir="${project.build.sourceDirectory}"/>
-                <copy todir="${project.build.sourceDirectory}">
-                  <fileset dir="${basedir}/src"/>
-                </copy>
-              </target>
+              <overwrite>true</overwrite>
+              <outputDirectory>${project.build.directory}/hotspot-backup</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>src/main/java/nu/validator/htmlparser/impl</directory>
+                  <includes>
+                    <li>Tokenizer.java</li>
+                  </includes>
+                </resource>
+              </resources>
             </configuration>
           </execution>
           <execution>
-            <id>tokenizer-hotspot-workaround</id>
-            <phase>process-sources</phase>
+            <id>restore-tokenizer</id>
+            <phase>process-classes</phase>
             <goals>
-              <goal>run</goal>
+              <goal>copy-resources</goal>
             </goals>
             <configuration>
-              <target>
-                <property name="translator.sources" value="${basedir}/translator-src"/>
-                <property name="translator.classes" value="${project.build.directory}/translator-classes"/>
-                <mkdir dir="${translator.classes}"/>
-                <javac srcdir="${translator.sources}" includes="nu/validator/htmlparser/generator/ApplyHotSpotWorkaround.java" destdir="${translator.classes}" includeantruntime="false"/>
-                <java classname="nu.validator.htmlparser.generator.ApplyHotSpotWorkaround">
-                  <classpath>
-                    <pathelement location="${translator.classes}"/>
-                  </classpath>
-                  <arg value="${project.build.sourceDirectory}/nu/validator/htmlparser/impl/Tokenizer.java"/>
-                  <arg value="${project.build.sourceDirectory}/nu/validator/htmlparser/impl/HotSpotWorkaround.txt"/>
-                </java>
-              </target>
+              <overwrite>true</overwrite>
+              <outputDirectory>src/main/java/nu/validator/htmlparser/impl</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${project.build.directory}/hotspot-backup</directory>
+                  <includes>
+                    <li>Tokenizer.java</li>
+                  </includes>
+                </resource>
+              </resources>
             </configuration>
           </execution>
         </executions>
       </plugin>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <skip>true</skip>
-        </configuration>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>tokenizer-hotspot-workaround-javac</id>
+            <phase>process-sources</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <executable>javac</executable>
+              <arguments>
+                <arg>${project.basedir}/src/hotspot/java/nu/validator/htmlparser/generator/ApplyHotSpotWorkaround.java</arg>
+                <arg>-d</arg>
+                <arg>${project.build.directory}/hotspot-classes</arg>
+              </arguments>
+            </configuration>
+          </execution>
+          <execution>
+            <id>tokenizer-hotspot-workaround-java</id>
+            <phase>process-sources</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <executable>java</executable>
+              <arguments>
+                <arg>-cp</arg>
+                <arg>${project.build.directory}/hotspot-classes</arg>
+                <arg>nu.validator.htmlparser.generator.ApplyHotSpotWorkaround</arg>
+                <arg>${project.build.sourceDirectory}/nu/validator/htmlparser/impl/Tokenizer.java</arg>
+                <arg>${project.basedir}/src/hotspot/resources/HotSpotWorkaround.txt</arg>
+              </arguments>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
