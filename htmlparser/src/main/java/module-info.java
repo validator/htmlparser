@@ -25,12 +25,9 @@
  * The parser is designed to work as a drop-in replacement for the XML parser in applications
  * that already support XHTML 1.x content with an XML parser and use SAX or DOM to interface with the parser.
  */
-@SuppressWarnings("requires-automatic")
 module nu.validator.htmlparser {
     requires transitive java.xml;
     requires nu.validator.saxtree;
-    requires static com.ibm.icu;
-    requires static jchardet;
 
     exports nu.validator.htmlparser.annotation;
     exports nu.validator.htmlparser.common;

@@ -35,8 +35,6 @@ import java.nio.charset.CodingErrorAction;
 
 import nu.validator.htmlparser.common.ByteReadable;
 import nu.validator.htmlparser.common.Heuristics;
-import nu.validator.htmlparser.extra.ChardetSniffer;
-import nu.validator.htmlparser.extra.IcuDetectorSniffer;
 import nu.validator.htmlparser.impl.Tokenizer;
 
 import org.xml.sax.ErrorHandler;
@@ -134,15 +132,6 @@ public final class HtmlInputStreamReader extends Reader implements ByteReadable,
                 err("Legacy encoding \u201C"
                         + encoding.getCanonName()
                         + "\u201D used. Documents must use UTF-8.");
-            }
-            if (encoding == null
-                    && (heuristics == Heuristics.CHARDET || heuristics == Heuristics.ALL)) {
-                encoding = (new ChardetSniffer(byteArray, limit)).sniff();
-            }
-            if (encoding == null
-                    && (heuristics == Heuristics.ICU || heuristics == Heuristics.ALL)) {
-                position = 0;
-                encoding = (new IcuDetectorSniffer(this)).sniff();
             }
             sniffing = false;
             if (encoding == null) {

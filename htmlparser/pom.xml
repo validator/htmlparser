@@ -39,18 +39,6 @@
       <artifactId>saxtree</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.ibm.icu</groupId>
-      <artifactId>icu4j</artifactId>
-      <version>67.1</version>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>net.sourceforge.jchardet</groupId>
-      <artifactId>jchardet</artifactId>
-      <version>1.0</version>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
       <groupId>com.sdicons.jsontools</groupId>
       <artifactId>jsontools-core</artifactId>
       <version>1.7</version>
