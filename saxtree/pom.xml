@@ -26,7 +26,7 @@
   <parent>
     <groupId>nu.validator.htmlparser</groupId>
     <artifactId>parent</artifactId>
-    <version>1.4</version>
+    <version>2.0</version>
   </parent>
 
   <artifactId>saxtree</artifactId>
