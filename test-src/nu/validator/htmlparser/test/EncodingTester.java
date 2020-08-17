@@ -86,7 +86,6 @@ public class EncodingTester {
         String sniffed = charset.name();
         String expected = Encoding.forName(builder.toString()).newDecoder().charset().name();
         if (expected.equalsIgnoreCase(sniffed)) {
-            System.err.println("Success.");
             // System.err.println(stream);
         } else {
             exitStatus = 1;

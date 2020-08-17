@@ -181,9 +181,7 @@ public class TokenizerTester {
         try {
             driver.tokenize(is);
             JSONArray actualTokens = tokenHandler.getArray();
-            if (jsonDeepEquals(actualTokens, expectedTokens)) {
-                writer.write("Success\n");
-            } else {
+            if (!jsonDeepEquals(actualTokens, expectedTokens)) {
                 exitStatus = 1;
                 writer.write("Failure\n");
                 writer.write(description);

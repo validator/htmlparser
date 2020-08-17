@@ -223,7 +223,6 @@ public class TreeTester {
              * && expectedErrors.size() ==
              * actualErrors.size()
              */) {
-                System.err.println("Success.");
                 // System.err.println(stream);
             } else {
                 exitStatus = 1;
