@@ -43,6 +43,8 @@ public class TreeTester {
 
     private boolean streaming = false;
 
+    private static int exitStatus = 0;
+
     /**
      * @param aggregateStream
      */
@@ -228,6 +230,7 @@ public class TreeTester {
                 System.err.println("Success.");
                 // System.err.println(stream);
             } else {
+                exitStatus = 1;
                 System.err.print("Failure.\nData:\n" + stream + "\nExpected:\n"
                         + expected + "Got: \n" + actual);
                 System.err.println("Expected errors:");
@@ -240,6 +243,7 @@ public class TreeTester {
                 }
             }
         } catch (Throwable t) {
+            exitStatus = 1;
             System.err.println("Failure.\nData:\n" + stream);
             throw t;
         }
@@ -270,6 +274,7 @@ public class TreeTester {
             TreeTester tester = new TreeTester(new FileInputStream(args[i]));
             tester.runTests();
         }
+        System.exit(exitStatus);
     }
 
 }
