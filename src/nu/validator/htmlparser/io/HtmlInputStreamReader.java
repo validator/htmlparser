@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007 Henri Sivonen
- * Copyright (c) 2013 Mozilla Foundation
+ * Copyright (c) 2013-2020 Mozilla Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a 
  * copy of this software and associated documentation files (the "Software"), 
@@ -61,7 +61,7 @@ import org.xml.sax.SAXParseException;
 public final class HtmlInputStreamReader extends Reader implements
         ByteReadable, Locator, Locator2 {
 
-    private static final int SNIFFING_LIMIT = 1024;
+    private int sniffingLimit = 1024;
 
     private final InputStream inputStream;
 
@@ -87,11 +87,9 @@ public final class HtmlInputStreamReader extends Reader implements
 
     private boolean charsetBoundaryPassed = false;
 
-    private final byte[] byteArray = new byte[4096]; // Length must be >=
+    private byte[] byteArray = new byte[4096]; // Length must be >= sniffingLimit
 
-    // SNIFFING_LIMIT
-
-    private final ByteBuffer byteBuffer = ByteBuffer.wrap(byteArray);
+    private ByteBuffer byteBuffer = ByteBuffer.wrap(byteArray);
 
     private boolean needToNotifyTokenizer = false;
 
@@ -112,18 +110,27 @@ public final class HtmlInputStreamReader extends Reader implements
     /**
      * @param inputStream
      * @param errorHandler
-     * @param locator
+     * @param tokenizer
+     * @param driver
+     * @param heuristics
+     * @param sniffingLimit
      * @throws IOException
      * @throws SAXException
      */
     public HtmlInputStreamReader(InputStream inputStream,
             ErrorHandler errorHandler, Tokenizer tokenizer, Driver driver,
-            Heuristics heuristics) throws SAXException, IOException {
+            Heuristics heuristics, int sniffingLimit)
+            throws SAXException, IOException {
         this.inputStream = inputStream;
         this.errorHandler = errorHandler;
         this.tokenizer = tokenizer;
         this.driver = driver;
         this.sniffing = true;
+        if (sniffingLimit != -1) {
+            this.sniffingLimit = sniffingLimit;
+            this.byteArray = new byte[sniffingLimit];
+            this.byteBuffer = ByteBuffer.wrap(byteArray);
+        }
         Encoding encoding = (new BomSniffer(this)).sniff();
         if (encoding == null) {
             position = 0;
@@ -176,6 +183,12 @@ public final class HtmlInputStreamReader extends Reader implements
         byteBuffer.position(position);
         byteBuffer.limit(limit);
         initDecoder();
+    }
+
+    public HtmlInputStreamReader(InputStream inputStream,
+            ErrorHandler errorHandler, Tokenizer tokenizer, Driver driver,
+            Heuristics heuristics) throws SAXException, IOException {
+        this(inputStream, errorHandler, tokenizer, driver, heuristics, -1);
     }
 
     /**
@@ -237,7 +250,7 @@ public final class HtmlInputStreamReader extends Reader implements
                 if (charsetBoundaryPassed) {
                     readLen = byteArray.length - oldLimit;
                 } else {
-                    readLen = SNIFFING_LIMIT - oldLimit;
+                    readLen = sniffingLimit - oldLimit;
                 }
                 int num = inputStream.read(byteArray, oldLimit, readLen);
                 if (num == -1) {
@@ -261,7 +274,7 @@ public final class HtmlInputStreamReader extends Reader implements
                 } else if (cr == CoderResult.UNDERFLOW) {
                     int remaining = byteBuffer.remaining();
                     if (!charsetBoundaryPassed) {
-                        if (bytesRead + remaining >= SNIFFING_LIMIT) {
+                        if (bytesRead + remaining >= sniffingLimit) {
                             needToNotifyTokenizer = true;
                             charsetBoundaryPassed = true;
                         }
@@ -389,12 +402,12 @@ public final class HtmlInputStreamReader extends Reader implements
             throw new IllegalStateException(
                     "readByte() called when not in the sniffing state.");
         }
-        if (position == SNIFFING_LIMIT) {
+        if (position == sniffingLimit) {
             return -1;
         } else if (position < limit) {
             return byteArray[position++] & 0xFF;
         } else {
-            int num = inputStream.read(byteArray, limit, SNIFFING_LIMIT - limit);
+            int num = inputStream.read(byteArray, limit, sniffingLimit - limit);
             if (num == -1) {
                 return -1;
             } else {
