@@ -53,6 +53,7 @@ public class EncodingTester {
         }
     }
 
+    @SuppressWarnings("resource")
     private boolean runTest() throws IOException, SAXException {
         if (skipLabel()) {
             return false;

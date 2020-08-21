@@ -60,6 +60,7 @@ public class TreeTester {
         }
     }
 
+    @SuppressWarnings("resource")
     private boolean runTest() throws Throwable {
         UntilHashInputStream stream = null;
         try {
