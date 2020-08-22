@@ -43,7 +43,7 @@ public class TreeTester {
 
     private boolean streaming = false;
 
-    private static int exitStatus = 0;
+    static int exitStatus = 0;
 
     /**
      * @param aggregateStream
@@ -52,7 +52,7 @@ public class TreeTester {
         this.aggregateStream = new BufferedInputStream(aggregateStream);
     }
 
-    private void runTests() throws Throwable {
+    void runTests() throws Throwable {
         if (aggregateStream.read() != '#') {
             System.err.println("No hash at start!");
             return;

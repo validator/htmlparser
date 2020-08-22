@@ -36,7 +36,7 @@ import org.xml.sax.SAXException;
 
 public class EncodingTester {
 
-    private static int exitStatus = 0;
+    static int exitStatus = 0;
 
     protected static int SNIFFING_LIMIT = 16384;
 
@@ -51,7 +51,7 @@ public class EncodingTester {
         this.aggregateStream = aggregateStream;
     }
 
-    private void runTests() throws IOException, SAXException {
+    void runTests() throws IOException, SAXException {
         while (runTest()) {
             // spin
         }
