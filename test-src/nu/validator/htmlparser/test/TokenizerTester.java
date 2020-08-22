@@ -51,7 +51,7 @@ import com.sdicons.json.parser.JSONParser;
 
 public class TokenizerTester {
 
-    private static int exitStatus = 0;
+    static int exitStatus = 0;
 
     private static JSONString PLAINTEXT = new JSONString("PLAINTEXT state");
 
@@ -121,7 +121,7 @@ public class TokenizerTester {
         }
     }
 
-    private void runTests() throws SAXException, IOException {
+    void runTests() throws SAXException, IOException {
         for (JSONValue val : tests.getValue()) {
             runTest((JSONObject) val);
         }
