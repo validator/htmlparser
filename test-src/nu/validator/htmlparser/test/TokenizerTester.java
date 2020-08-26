@@ -101,7 +101,7 @@ public class TokenizerTester {
 
     private final Writer writer;
 
-    private TokenizerTester(InputStream stream) throws TokenStreamException,
+    public TokenizerTester(InputStream stream) throws TokenStreamException,
             RecognitionException, UnsupportedEncodingException {
         tokenHandler = new JSONArrayTokenHandler();
         driver = new Driver(new ErrorReportingTokenizer(tokenHandler));
