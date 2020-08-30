@@ -42,7 +42,7 @@ public class Html5libTest {
 
     public void testEncoding() throws Exception {
         Files.walkFileTree(testDir.resolve("encoding"), //
-                new TestVisitor(true, false, file -> //
+                new TestVisitor(true, ".dat", file -> //
                 new EncodingTester(Files.newInputStream(file)).runTests()));
         if (EncodingTester.exitStatus != 0) {
             assert false : "Encoding test failed";
@@ -51,7 +51,7 @@ public class Html5libTest {
 
     public void testTokenizer() throws Exception {
         Files.walkFileTree(testDir.resolve("tokenizer"),
-                new TestVisitor(true, true, file -> //
+                new TestVisitor(true, ".test", file -> //
                 new TokenizerTester(Files.newInputStream(file)).runTests()));
         if (TokenizerTester.exitStatus != 0) {
             assert false : "Tokenizer test failed";
@@ -60,7 +60,7 @@ public class Html5libTest {
 
     public void testTree() throws Exception {
         Files.walkFileTree(testDir.resolve("tree-construction"),
-                new TestVisitor(true, false, file -> //
+                new TestVisitor(true, ".dat", file -> //
                 new TreeTester(Files.newInputStream(file)).runTests()));
         if (TreeTester.exitStatus != 0) {
             assert false : "Tree test failed";
@@ -86,14 +86,14 @@ public class Html5libTest {
 
         private final boolean skipScripted;
 
-        private final boolean requireTestExtension;
+        private final String requiredTestExtension;
 
         private final TestConsumer runner;
 
-        private TestVisitor(boolean skipScripted, boolean requireTestExtension,
+        private TestVisitor(boolean skipScripted, String requiredTestExtension,
                 TestConsumer runner) {
             this.skipScripted = skipScripted;
-            this.requireTestExtension = requireTestExtension;
+            this.requiredTestExtension = requiredTestExtension;
             this.runner = runner;
         }
 
@@ -110,8 +110,7 @@ public class Html5libTest {
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
                 throws IOException {
-            if (!requireTestExtension
-                    || file.getFileName().toString().endsWith(".test")) {
+            if (file.getFileName().toString().endsWith(requiredTestExtension)) {
                 runner.accept(file);
             }
             return FileVisitResult.CONTINUE;
