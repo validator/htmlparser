@@ -22,8 +22,10 @@
 
 package nu.validator.htmlparser.test;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -52,7 +54,7 @@ public class Html5libTest {
     public void testTokenizer() throws Exception {
         Files.walkFileTree(testDir.resolve("tokenizer"),
                 new TestVisitor(true, ".test", file -> //
-                new TokenizerTester(Files.newInputStream(file)).runTests()));
+                new TokenizerTester(getDoubleEscapedInput(file)).runTests()));
         if (TokenizerTester.exitStatus != 0) {
             assert false : "Tokenizer test failed";
         }
@@ -65,6 +67,15 @@ public class Html5libTest {
         if (TreeTester.exitStatus != 0) {
             assert false : "Tree test failed";
         }
+    }
+
+    private ByteArrayInputStream getDoubleEscapedInput(Path file)
+            throws IOException {
+        byte[] fileBytes = Files.readAllBytes(file);
+        String fileContent = new String(fileBytes, StandardCharsets.UTF_8);
+        String unescapedContent = fileContent.replace("\\\\u", "\\u");
+        byte[] newBytes = unescapedContent.getBytes(StandardCharsets.UTF_8);
+        return new ByteArrayInputStream(newBytes);
     }
 
     private interface TestConsumer extends Consumer<Path> {
