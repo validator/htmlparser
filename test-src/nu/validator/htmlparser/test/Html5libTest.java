@@ -29,6 +29,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.function.Consumer;
@@ -38,7 +39,7 @@ public class Html5libTest {
     private final Path testDir;
 
     public Html5libTest() throws URISyntaxException {
-        this.testDir = Path.of(
+        this.testDir = Paths.get(
                 Html5libTest.class.getResource("/html5lib-tests").toURI());
     }
 
@@ -111,7 +112,8 @@ public class Html5libTest {
         @Override
         public FileVisitResult preVisitDirectory(Path dir,
                 BasicFileAttributes attrs) throws IOException {
-            if (skipScripted && dir.getFileName().equals(Path.of("scripted"))) {
+            if (skipScripted
+                    && dir.getFileName().equals(Paths.get("scripted"))) {
                 return FileVisitResult.SKIP_SUBTREE;
             }
 
