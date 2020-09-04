@@ -115,8 +115,12 @@
                 <property name="translator.sources" value="${basedir}/translator-src"/>
                 <property name="translator.classes" value="${project.build.directory}/translator-classes"/>
                 <mkdir dir="${translator.classes}"/>
-                <javac srcdir="${translator.sources}" includes="nu/validator/htmlparser/generator/ApplyHotSpotWorkaround.java" destdir="${translator.classes}" includeantruntime="false"/>
-                <java classname="nu.validator.htmlparser.generator.ApplyHotSpotWorkaround">
+                <javac srcdir="${translator.sources}" destdir="${translator.classes}"
+                       includes="nu/validator/htmlparser/generator/ApplyHotSpotWorkaround.java"
+                       includeantruntime="false"
+                       fork="${fork}"/>
+                <java classname="nu.validator.htmlparser.generator.ApplyHotSpotWorkaround"
+                      fork="${fork}">
                   <classpath>
                     <pathelement location="${translator.classes}"/>
                   </classpath>
@@ -227,6 +231,7 @@
     <rpm.java.dir>/usr/share/java</rpm.java.dir>
     <rpm.javadoc.dir>/usr/share/javadoc</rpm.javadoc.dir>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <fork>false</fork>
   </properties>
   <profiles>
     <profile>
@@ -234,6 +239,9 @@
       <activation>
         <jdk>1.8</jdk>
       </activation>
+      <properties>
+        <fork>true</fork>
+      </properties>
       <dependencies>
         <dependency>
           <groupId>com.sun</groupId>
