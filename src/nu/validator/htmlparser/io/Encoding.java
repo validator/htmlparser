@@ -52,17 +52,6 @@ public class Encoding {
 
     public static final Encoding WINDOWS1252;
 
-    private static String[] SHOULD_NOT = { "jisx02121990", "xjis0208" };
-
-    private static String[] BANNED = { "bocu1", "cesu8", "compoundtext",
-            "iscii91", "macarabic", "maccentraleurroman", "maccroatian",
-            "maccyrillic", "macdevanagari", "macfarsi", "macgreek",
-            "macgujarati", "macgurmukhi", "machebrew", "macicelandic",
-            "macroman", "macromanian", "macthai", "macturkish", "macukranian",
-            "scsu", "utf32", "utf32be", "utf32le", "utf7", "ximapmailboxname",
-            "xjisautodetect", "xutf16bebom", "xutf16lebom", "xutf32bebom",
-            "xutf32lebom", "xutf16oppositeendian", "xutf16platformendian",
-            "xutf32oppositeendian", "xutf32platformendian" };
     private static Map<String, Encoding> encodingByLabel =
         new HashMap<String, Encoding>();
 
@@ -304,12 +293,6 @@ public class Encoding {
 
     private final Charset charset;
 
-    private final boolean obscure;
-
-    private final boolean shouldNot;
-
-    private final boolean likelyEbcdic;
-
     static {
         Set<Encoding> encodings = new HashSet<Encoding>();
 
@@ -343,30 +326,6 @@ public class Encoding {
         UTF16BE = forName("utf-16be");
         UTF16LE = forName("utf-16le");
         WINDOWS1252 = forName("windows-1252");
-    }
-
-    private static boolean isObscure(String lowerCasePreferredIanaName) {
-        return !(Arrays.binarySearch(NOT_OBSCURE, lowerCasePreferredIanaName) > -1);
-    }
-
-    private static boolean isBanned(String lowerCasePreferredIanaName) {
-        if (lowerCasePreferredIanaName.startsWith("xibm")) {
-            return true;
-        }
-        return (Arrays.binarySearch(BANNED, lowerCasePreferredIanaName) > -1);
-    }
-
-    private static boolean isShouldNot(String lowerCasePreferredIanaName) {
-        return (Arrays.binarySearch(SHOULD_NOT, lowerCasePreferredIanaName) > -1);
-    }
-
-    private static boolean isLikelyEbcdic(String canonName,
-            boolean asciiSuperset) {
-        if (!asciiSuperset) {
-            return (canonName.startsWith("cp") || canonName.startsWith("ibm") || canonName.startsWith("xibm"));
-        } else {
-            return false;
-        }
     }
 
     public static Encoding forName(String name) {
@@ -452,37 +411,6 @@ public class Encoding {
      */
     public String getCanonName() {
         return canonName;
-    }
-
-    /**
-     * Returns the likelyEbcdic.
-     * 
-     * @return the likelyEbcdic
-     */
-    public boolean isLikelyEbcdic() {
-        return likelyEbcdic;
-    }
-
-    /**
-     * Returns the obscure.
-     * 
-     * @return the obscure
-     */
-    public boolean isObscure() {
-        return obscure;
-    }
-
-    /**
-     * Returns the shouldNot.
-     * 
-     * @return the shouldNot
-     */
-    public boolean isShouldNot() {
-        return shouldNot;
-    }
-
-    public boolean isRegistered() {
-        return !canonName.startsWith("x-");
     }
 
     /**

@@ -169,28 +169,6 @@ public class MetaSniffer extends MetaScanner implements Locator, Locator2 {
             } else {
                 Encoding cs = Encoding.forName(encoding);
                 String canonName = cs.getCanonName();
-                if (!cs.isRegistered()) {
-                    if (encoding.startsWith("x-")) {
-                        err("The encoding \u201C"
-                                + encoding
-                                + "\u201D is not an IANA-registered encoding. (Charmod C022)");                    
-                    } else {
-                        err("The encoding \u201C"
-                                + encoding
-                                + "\u201D is not an IANA-registered encoding and did not use the \u201Cx-\u201D prefix. (Charmod C023)");
-                    }
-                } else if (!cs.getCanonName().equals(encoding)) {
-                    err("The encoding \u201C" + encoding
-                            + "\u201D is not the preferred name of the character encoding in use. The preferred name is \u201C"
-                            + canonName + "\u201D. (Charmod C024)");
-                }
-                if (cs.isShouldNot()) {
-                    warn("Authors should not use the character encoding \u201C"
-                            + encoding
-                            + "\u201D. It is recommended to use \u201CUTF-8\u201D.");                
-                } else if (cs.isObscure()) {
-                    warn("The character encoding \u201C" + encoding + "\u201D is not widely supported. Better interoperability may be achieved by using \u201CUTF-8\u201D.");
-                }
                 if (!cs.getCanonName().equals(encoding)) {
                     err(Encoding.msgNotCanonicalName(encoding, canonName));
                     this.characterEncoding = cs;
