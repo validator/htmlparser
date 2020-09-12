@@ -169,7 +169,8 @@ public final class HtmlInputStreamReader extends Reader implements
             } else {
                 err(Encoding.msgLegacyEncoding(encoding.getCanonName()));
                 if (driver != null) {
-                    driver.setEncoding(Encoding.UTF16, Confidence.CERTAIN);
+                    // XXX Why did we do driver.setEncoding(encoding.UTF16... ?
+                    driver.setEncoding(encoding, Confidence.CERTAIN);
                 }
             }
         }
