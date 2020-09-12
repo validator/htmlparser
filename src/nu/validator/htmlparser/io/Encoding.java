@@ -388,20 +388,10 @@ public class Encoding {
     /**
      * @param canonName
      * @param charset
-     * @param asciiSuperset
-     * @param obscure
-     * @param shouldNot
-     * @param likelyEbcdic
      */
-    private Encoding(final String canonName, final Charset charset,
-            final boolean asciiSuperset, final boolean obscure,
-            final boolean shouldNot, final boolean likelyEbcdic) {
+    private Encoding(final String canonName, final Charset charset) {
         this.canonName = canonName;
         this.charset = charset;
-        this.asciiSuperset = asciiSuperset;
-        this.obscure = obscure;
-        this.shouldNot = shouldNot;
-        this.likelyEbcdic = likelyEbcdic;
     }
 
     /**
@@ -466,11 +456,7 @@ public class Encoding {
         for (Map.Entry<String, Encoding> entry : encodingByLabel.entrySet()) {
             String name = entry.getKey();
             Encoding enc = entry.getValue();
-            System.out.printf(
-                    "%21s: canon %21s, obs %5s, reg %5s, asc %5s, ebc %5s\n",
-                    name, enc.getCanonName(), enc.isObscure(),
-                    enc.isRegistered(), enc.isAsciiSuperset(),
-                    enc.isLikelyEbcdic());
+            System.out.printf("%21s: canon %13s\n", name, enc.getCanonName());
         }
     }
 
