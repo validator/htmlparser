@@ -63,6 +63,8 @@ public class Encoding {
             "xjisautodetect", "xutf16bebom", "xutf16lebom", "xutf32bebom",
             "xutf32lebom", "xutf16oppositeendian", "xutf16platformendian",
             "xutf32oppositeendian", "xutf32platformendian" };
+    private static Map<String, Encoding> encodingByLabel =
+        new HashMap<String, Encoding>();
 
     /* From the table at https://encoding.spec.whatwg.org/#names-and-labels,
      * everything in the Labels column, sorted */
@@ -339,14 +341,14 @@ public class Encoding {
                 encodings.add(enc);
                 Set<String> aliases = cs.aliases();
                 for (String alias : aliases) {
-                    encodingByCookedName.put(toNameKey(alias).intern(), enc);
+                    encodingByLabel.put(toNameKey(alias).intern(), enc);
                 }
             }
         }
         // Overwrite possible overlapping aliases with the real things--just in
         // case
         for (Encoding encoding : encodings) {
-            encodingByCookedName.put(toNameKey(encoding.getCanonName()),
+            encodingByLabel.put(toNameKey(encoding.getCanonName()),
                     encoding);
         }
         UTF8 = forName("utf-8");
@@ -383,15 +385,15 @@ public class Encoding {
         } catch (UnsupportedCharsetException e) {
         }
         try {
-            encodingByCookedName.put("x-x-big5", forName("big5"));
+            encodingByLabel.put("x-x-big5", forName("big5"));
         } catch (UnsupportedCharsetException e) {
         }
         try {
-            encodingByCookedName.put("euc-kr", forName("windows-949"));
+            encodingByLabel.put("euc-kr", forName("windows-949"));
         } catch (UnsupportedCharsetException e) {
         }
         try {
-            encodingByCookedName.put("ks_c_5601-1987", forName("windows-949"));
+            encodingByLabel.put("ks_c_5601-1987", forName("windows-949"));
         } catch (UnsupportedCharsetException e) {
         }
     }
@@ -459,7 +461,7 @@ public class Encoding {
     }
 
     public static Encoding forName(String name) {
-        Encoding rv = encodingByCookedName.get(toNameKey(name));
+        Encoding rv = encodingByLabel.get(toNameKey(name));
         if (rv == null) {
             throw new UnsupportedCharsetException(name);
         } else {
@@ -617,7 +619,7 @@ public class Encoding {
     }
 
     public static void main(String[] args) {
-        for (Map.Entry<String, Encoding> entry : encodingByCookedName.entrySet()) {
+        for (Map.Entry<String, Encoding> entry : encodingByLabel.entrySet()) {
             String name = entry.getKey();
             Encoding enc = entry.getValue();
             System.out.printf(
