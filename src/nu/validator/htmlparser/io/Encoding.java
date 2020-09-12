@@ -425,35 +425,6 @@ public class Encoding {
         return new String(buf, 0, j);
     }
 
-    public static String stripDashAndUnderscore(String str) {
-        if (str == null) {
-            return null;
-        }
-        char[] buf = new char[str.length()];
-        for (int i = 0; i < str.length(); i++) {
-            char c = str.charAt(i);
-            if (c == '-' || c == '_') {
-                buf[i] = c;
-            }
-        }
-        return new String(buf);
-    }
-
-    public static String toAsciiLowerCase(String str) {
-        if (str == null) {
-            return null;
-        }
-        char[] buf = new char[str.length()];
-        for (int i = 0; i < str.length(); i++) {
-            char c = str.charAt(i);
-            if (c >= 'A' && c <= 'Z') {
-                c += 0x20;
-            }
-            buf[i] = c;
-        }
-        return new String(buf);
-    }
-
     /**
      * @param canonName
      * @param charset

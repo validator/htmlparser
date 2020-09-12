@@ -159,7 +159,7 @@ public class MetaSniffer extends MetaScanner implements Locator, Locator2 {
     }
     
     protected boolean tryCharset(String encoding) throws SAXException {
-        encoding = Encoding.toAsciiLowerCase(encoding);
+        encoding = encoding.toLowerCase();
         try {
             // XXX spec says only UTF-16
             if ("utf-16".equals(encoding) || "utf-16be".equals(encoding) || "utf-16le".equals(encoding) || "utf-32".equals(encoding) || "utf-32be".equals(encoding) || "utf-32le".equals(encoding)) {
