@@ -384,7 +384,7 @@ public class Driver implements EncodingDeclarationHandler {
                         + "\u201D disagrees with the actual encoding of the document (\u201C"
                         + characterEncoding.getCanonName() + "\u201D).");
             } else {
-                Encoding newEnc = whineAboutEncodingAndReturnActual(
+                Encoding newEnc = whineAboutEncodingAndReturnCanonical(
                         internalCharset, cs);
                 tokenizer.errTreeBuilder("Changing character encoding \u201C"
                         + internalCharset + "\u201D and reparsing.");
@@ -452,7 +452,7 @@ public class Driver implements EncodingDeclarationHandler {
                     || "utf-32".equals(cs.getCanonName())) {
                 swallowBom = false;
             }
-            return whineAboutEncodingAndReturnActual(encoding, cs);
+            return whineAboutEncodingAndReturnCanonical(encoding, cs);
         } catch (UnsupportedCharsetException e) {
             tokenizer.err("Unsupported character encoding name: \u201C" + encoding
                     + "\u201D. Will sniff.");
@@ -467,7 +467,7 @@ public class Driver implements EncodingDeclarationHandler {
      * @return
      * @throws SAXException
      */
-    protected Encoding whineAboutEncodingAndReturnActual(String encoding,
+    protected Encoding whineAboutEncodingAndReturnCanonical(String encoding,
             Encoding cs) throws SAXException {
         String canonName = cs.getCanonName();
         if (!canonName.equals(encoding)) {
