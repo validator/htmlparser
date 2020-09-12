@@ -165,6 +165,10 @@ public class MetaSniffer extends MetaScanner implements Locator, Locator2 {
                 this.characterEncoding = Encoding.UTF8;
                 err(Encoding.msgIgnoredCharset(encoding, "utf-8"));
                 return true;
+            } else if ("x-user-defined".equals(encoding)) {
+                this.characterEncoding = Encoding.WINDOWS1252;
+                err(Encoding.msgIgnoredCharset("x-user-defined", "windows-1252"));
+                return true;
             } else {
                 Encoding cs = Encoding.forName(encoding);
                 String canonName = cs.getCanonName();
