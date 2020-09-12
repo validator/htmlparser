@@ -44,8 +44,6 @@ public class Encoding {
 
     public static final Encoding UTF8;
 
-    public static final Encoding UTF16;
-
     public static final Encoding UTF16LE;
 
     public static final Encoding UTF16BE;
@@ -391,7 +389,6 @@ public class Encoding {
 
     static {
         UTF8 = forName("utf-8");
-        UTF16 = forName("utf-16");
         UTF16BE = forName("utf-16be");
         UTF16LE = forName("utf-16le");
         WINDOWS1252 = forName("windows-1252");

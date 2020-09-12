@@ -354,9 +354,8 @@ public class Driver implements EncodingDeclarationHandler {
             throws SAXException {
         try {
             internalCharset = internalCharset.toLowerCase();
-            Encoding cs;
-            if ("utf-16".equals(internalCharset)
-                    || "utf-16be".equals(internalCharset)
+            Encoding cs = Encoding.forName(internalCharset);
+            if ("utf-16be".equals(internalCharset)
                     || "utf-16le".equals(internalCharset)) {
                 tokenizer.errTreeBuilder("Internal encoding declaration specified \u201C"
                         + internalCharset
@@ -448,8 +447,8 @@ public class Driver implements EncodingDeclarationHandler {
         encoding = encoding.toLowerCase();
         try {
             Encoding cs = Encoding.forName(encoding);
-            if ("utf-16".equals(cs.getCanonName())
-                    || "utf-32".equals(cs.getCanonName())) {
+            if ("utf-16be".equals(cs.getCanonName())
+                    || "utf-16le".equals(cs.getCanonName())) {
                 swallowBom = false;
             }
             return whineAboutEncodingAndReturnCanonical(encoding, cs);

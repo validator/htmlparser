@@ -161,8 +161,7 @@ public class MetaSniffer extends MetaScanner implements Locator, Locator2 {
     protected boolean tryCharset(String encoding) throws SAXException {
         encoding = encoding.toLowerCase();
         try {
-            // XXX spec says only UTF-16
-            if ("utf-16".equals(encoding) || "utf-16be".equals(encoding) || "utf-16le".equals(encoding) || "utf-32".equals(encoding) || "utf-32be".equals(encoding) || "utf-32le".equals(encoding)) {
+            if ("utf-16be".equals(encoding) || "utf-16le".equals(encoding)) {
                 this.characterEncoding = Encoding.UTF8;
                 err("The internal character encoding declaration specified \u201C" + encoding + "\u201D which is not a rough superset of ASCII. Using \u201CUTF-8\u201D instead.");
                 return true;
