@@ -163,7 +163,7 @@ public class MetaSniffer extends MetaScanner implements Locator, Locator2 {
         try {
             if ("utf-16be".equals(encoding) || "utf-16le".equals(encoding)) {
                 this.characterEncoding = Encoding.UTF8;
-                err("The internal character encoding declaration specified \u201C" + encoding + "\u201D which is not a rough superset of ASCII. Using \u201CUTF-8\u201D instead.");
+                err(Encoding.msgIgnoredCharset(encoding, "utf-8"));
                 return true;
             } else {
                 Encoding cs = Encoding.forName(encoding);
@@ -171,14 +171,12 @@ public class MetaSniffer extends MetaScanner implements Locator, Locator2 {
                 if (!cs.getCanonName().equals(encoding)) {
                     err(Encoding.msgNotCanonicalName(encoding, canonName));
                     this.characterEncoding = cs;
-                } else {
-                    warn("Using \u201C" + actual.getCanonName() + "\u201D instead of the declared encoding \u201C" + encoding + "\u201D.");
-                    this.characterEncoding = actual;
                 }
                 return true;
             }
         } catch (UnsupportedCharsetException e) {
-            err("Unsupported character encoding name: \u201C" + encoding + "\u201D. Will continue sniffing.");
+            err(Encoding.msgBadInternalCharset(encoding)
+                    + " Will continue sniffing.");
         }
         return false;
     }
