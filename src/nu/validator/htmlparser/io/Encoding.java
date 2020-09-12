@@ -304,8 +304,6 @@ public class Encoding {
 
     private final Charset charset;
 
-    private final boolean asciiSuperset;
-
     private final boolean obscure;
 
     private final boolean shouldNot;
@@ -315,15 +313,6 @@ public class Encoding {
     private Encoding actualHtmlEncoding = null;
 
     static {
-        byte[] testBuf = new byte[0x7F];
-        for (int i = 0; i < 0x7F; i++) {
-            if (isAsciiSupersetnessSensitive(i)) {
-                testBuf[i] = (byte) i;
-            } else {
-                testBuf[i] = (byte) 0x20;
-            }
-        }
-
         Set<Encoding> encodings = new HashSet<Encoding>();
 
         SortedMap<String, Charset> charsets = Charset.availableCharsets();
@@ -398,12 +387,6 @@ public class Encoding {
         }
     }
 
-    private static boolean isAsciiSupersetnessSensitive(int c) {
-        return (c >= 0x09 && c <= 0x0D) || (c >= 0x20 && c <= 0x22)
-                || (c >= 0x26 && c <= 0x27) || (c >= 0x2C && c <= 0x3F)
-                || (c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A);
-    }
-
     private static boolean isObscure(String lowerCasePreferredIanaName) {
         return !(Arrays.binarySearch(NOT_OBSCURE, lowerCasePreferredIanaName) > -1);
     }
@@ -417,38 +400,6 @@ public class Encoding {
 
     private static boolean isShouldNot(String lowerCasePreferredIanaName) {
         return (Arrays.binarySearch(SHOULD_NOT, lowerCasePreferredIanaName) > -1);
-    }
-
-    /**
-     * @param testBuf
-     * @param cs
-     */
-    private static boolean asciiMapsToBasicLatin(byte[] testBuf, Charset cs) {
-        CharsetDecoder dec = cs.newDecoder();
-        dec.onMalformedInput(CodingErrorAction.REPORT);
-        dec.onUnmappableCharacter(CodingErrorAction.REPORT);
-        Reader r = new InputStreamReader(new ByteArrayInputStream(testBuf), dec);
-        try {
-            for (int i = 0; i < 0x7F; i++) {
-                if (isAsciiSupersetnessSensitive(i)) {
-                    if (r.read() != i) {
-                        return false;
-                    }
-                } else {
-                    if (r.read() != 0x20) {
-                        return false;
-                    }
-                }
-            }
-        } catch (IOException e) {
-            return false;
-        } catch (Exception e) {
-            return false;
-        } catch (CoderMalfunctionError e) {
-            return false;
-        }
-
-        return true;
     }
 
     private static boolean isLikelyEbcdic(String canonName,
@@ -534,15 +485,6 @@ public class Encoding {
         this.obscure = obscure;
         this.shouldNot = shouldNot;
         this.likelyEbcdic = likelyEbcdic;
-    }
-
-    /**
-     * Returns the asciiSuperset.
-     * 
-     * @return the asciiSuperset
-     */
-    public boolean isAsciiSuperset() {
-        return asciiSuperset;
     }
 
     /**

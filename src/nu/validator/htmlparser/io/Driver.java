@@ -370,12 +370,6 @@ public class Driver implements EncodingDeclarationHandler {
             if (actual == null) {
                 actual = cs;
             }
-            if (!actual.isAsciiSuperset()) {
-                tokenizer.errTreeBuilder("Internal encoding declaration specified \u201C"
-                        + internalCharset
-                        + "\u201D which is not an ASCII superset. Not changing the encoding.");
-                return false;
-            }
             if (characterEncoding == null) {
                 // Reader case
                 return true;

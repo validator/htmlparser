@@ -169,12 +169,6 @@ public class MetaSniffer extends MetaScanner implements Locator, Locator2 {
             } else {
                 Encoding cs = Encoding.forName(encoding);
                 String canonName = cs.getCanonName();
-                if (!cs.isAsciiSuperset()) {
-                    err("The encoding \u201C"
-                                + encoding
-                                + "\u201D is not an ASCII superset and, therefore, cannot be used in an internal encoding declaration. Continuing the sniffing algorithm.");
-                    return false;
-                }
                 if (!cs.isRegistered()) {
                     if (encoding.startsWith("x-")) {
                         err("The encoding \u201C"

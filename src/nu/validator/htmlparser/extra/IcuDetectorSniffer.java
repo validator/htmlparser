@@ -57,7 +57,8 @@ public class IcuDetectorSniffer extends InputStream {
             if (actual != null) {
                 enc = actual;
             }
-            if (enc != Encoding.WINDOWS1252 && enc.isAsciiSuperset()) {
+            if (enc != Encoding.WINDOWS1252 //
+                    && enc != Encoding.UTF16BE && enc != Encoding.UTF16LE) {
                 return enc;
             } else {
                 return null;
