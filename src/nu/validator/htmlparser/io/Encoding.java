@@ -310,8 +310,6 @@ public class Encoding {
 
     private final boolean likelyEbcdic;
 
-    private Encoding actualHtmlEncoding = null;
-
     static {
         Set<Encoding> encodings = new HashSet<Encoding>();
 
@@ -345,46 +343,6 @@ public class Encoding {
         UTF16BE = forName("utf-16be");
         UTF16LE = forName("utf-16le");
         WINDOWS1252 = forName("windows-1252");
-        try {
-            forName("iso-8859-1").actualHtmlEncoding = forName("windows-1252");
-        } catch (UnsupportedCharsetException e) {
-        }
-        try {
-            forName("iso-8859-9").actualHtmlEncoding = forName("windows-1254");
-        } catch (UnsupportedCharsetException e) {
-        }
-        try {
-            forName("iso-8859-11").actualHtmlEncoding = forName("windows-874");
-        } catch (UnsupportedCharsetException e) {
-        }
-        try {
-            forName("x-iso-8859-11").actualHtmlEncoding = forName("windows-874");
-        } catch (UnsupportedCharsetException e) {
-        }
-        try {
-            forName("tis-620").actualHtmlEncoding = forName("windows-874");
-        } catch (UnsupportedCharsetException e) {
-        }
-        try {
-            forName("gb_2312-80").actualHtmlEncoding = forName("gbk");
-        } catch (UnsupportedCharsetException e) {
-        }
-        try {
-            forName("gb2312").actualHtmlEncoding = forName("gbk");
-        } catch (UnsupportedCharsetException e) {
-        }
-        try {
-            encodingByLabel.put("x-x-big5", forName("big5"));
-        } catch (UnsupportedCharsetException e) {
-        }
-        try {
-            encodingByLabel.put("euc-kr", forName("windows-949"));
-        } catch (UnsupportedCharsetException e) {
-        }
-        try {
-            encodingByLabel.put("ks_c_5601-1987", forName("windows-949"));
-        } catch (UnsupportedCharsetException e) {
-        }
     }
 
     private static boolean isObscure(String lowerCasePreferredIanaName) {
@@ -549,15 +507,6 @@ public class Encoding {
      */
     public CharsetEncoder newEncoder() {
         return charset.newEncoder();
-    }
-
-    /**
-     * Returns the actualHtmlEncoding.
-     * 
-     * @return the actualHtmlEncoding
-     */
-    public Encoding getActualHtmlEncoding() {
-        return actualHtmlEncoding;
     }
 
     protected static String msgLegacyEncoding(String name) {

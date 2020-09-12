@@ -53,10 +53,6 @@ public class IcuDetectorSniffer extends InputStream {
             detector.setText(this);
             CharsetMatch match = detector.detect();
             Encoding enc = Encoding.forName(match.getName());
-            Encoding actual = enc.getActualHtmlEncoding();
-            if (actual != null) {
-                enc = actual;
-            }
             if (enc != Encoding.WINDOWS1252 //
                     && enc != Encoding.UTF16BE && enc != Encoding.UTF16LE) {
                 return enc;

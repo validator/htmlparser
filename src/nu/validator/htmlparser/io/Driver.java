@@ -497,15 +497,10 @@ public class Driver implements EncodingDeclarationHandler {
                     + encoding
                     + "\u201D is not widely supported. Better interoperability may be achieved by using \u201CUTF-8\u201D.");
         }
-        Encoding actual = cs.getActualHtmlEncoding();
-        if (actual == null) {
-            return cs;
-        } else {
-            tokenizer.warn("Using \u201C" + actual.getCanonName()
-                    + "\u201D instead of the declared encoding \u201C"
-                    + encoding + "\u201D.");
-            return actual;
+        if (!canonName.equals(encoding)) {
+            tokenizer.err(Encoding.msgNotPreferredName(encoding, canonName));
         }
+        return cs;
     }
 
     private class ReparseException extends SAXException {

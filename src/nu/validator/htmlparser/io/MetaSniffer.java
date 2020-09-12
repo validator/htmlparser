@@ -191,8 +191,8 @@ public class MetaSniffer extends MetaScanner implements Locator, Locator2 {
                 } else if (cs.isObscure()) {
                     warn("The character encoding \u201C" + encoding + "\u201D is not widely supported. Better interoperability may be achieved by using \u201CUTF-8\u201D.");
                 }
-                Encoding actual = cs.getActualHtmlEncoding();
-                if (actual == null) {
+                if (!cs.getCanonName().equals(encoding)) {
+                    err(Encoding.msgNotCanonicalName(encoding, canonName));
                     this.characterEncoding = cs;
                 } else {
                     warn("Using \u201C" + actual.getCanonName() + "\u201D instead of the declared encoding \u201C" + encoding + "\u201D.");

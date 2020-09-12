@@ -74,10 +74,6 @@ public class ChardetSniffer implements nsICharsetDetectionObserver {
     public void Notify(String charsetName) {
         try {
             Encoding enc = Encoding.forName(charsetName);
-            Encoding actual = enc.getActualHtmlEncoding();
-            if (actual != null) {
-                enc = actual;
-            }
             returnValue = enc;
         } catch (UnsupportedCharsetException e) {
             returnValue = null;
