@@ -21,6 +21,14 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+/*
+ * The comments following this one that use the same comment syntax as this
+ * comment are quotes from the HTML Standard at https://html.spec.whatwg.org/
+ * as of 10 September 2020. That document came with this statement:
+ * Copyright © WHATWG (Apple, Google, Mozilla, Microsoft). This work is
+ * licensed under a Creative Commons Attribution 4.0 International License.
+ */
+
 package nu.validator.htmlparser.io;
 
 import java.io.IOException;
@@ -214,9 +222,8 @@ public class Driver implements EncodingDeclarationHandler {
                         tokenizer.getErrorHandler(), tokenizer, this, heuristics);
             } else {
                 if (this.characterEncoding != Encoding.UTF8) {
-                    errorWithoutLocation("Legacy encoding \u201C"
-                            + this.characterEncoding.getCanonName()
-                            + "\u201D used. Documents must use UTF-8.");
+                    errorWithoutLocation(Encoding.msgLegacyEncoding(
+                            this.characterEncoding.getCanonName()));
                 }
                 becomeConfident();
                 this.reader = new HtmlInputStreamReader(inputStream,
@@ -350,50 +357,92 @@ public class Driver implements EncodingDeclarationHandler {
         }
     }
 
+    private void errInternalActualDiffer(String internalCharset, String actual)
+            throws SAXException {
+        if (!internalCharset.equals(actual)) {
+            tokenizer.errTreeBuilder(
+                    "Ignoring internal encoding declaration \u201C"
+                            + internalCharset + "\u201D, which disagrees with"
+                            + " the actual encoding of the document (\u201C"
+                            + actual + "\u201D).");
+        }
+    }
+
     public boolean internalEncodingDeclaration(String internalCharset)
             throws SAXException {
+        String actual = characterEncoding.getCanonName();
+        if (confidence == Confidence.CERTAIN) {
+            errInternalActualDiffer(internalCharset, actual);
+            return true;
+        }
+        /* https://html.spec.whatwg.org/#changing-the-encoding-while-parsing */
         try {
+            if ("utf-16be".equals(actual) || "utf-16le".equals(actual)) {
+                errInternalActualDiffer(internalCharset, actual);
+                /*
+                 * 1. If the encoding that is already being used to interpret
+                 * the input stream is a UTF-16 encoding, then set the
+                 * confidence to certain and return. The new encoding is ignored
+                 * becomeConfident();
+                 */
+                return true;
+            }
             internalCharset = internalCharset.toLowerCase();
             Encoding cs = Encoding.forName(internalCharset);
             if ("utf-16be".equals(internalCharset)
                     || "utf-16le".equals(internalCharset)) {
-                tokenizer.errTreeBuilder("Internal encoding declaration specified \u201C"
-                        + internalCharset
-                        + "\u201D which is not an ASCII superset. Continuing as if the encoding had been \u201Cutf-8\u201D.");
+                /*
+                 * 2. If the new encoding is a UTF-16 encoding, then change it
+                 * to UTF-8.
+                 */
+                tokenizer.errTreeBuilder(
+                        Encoding.msgIgnoredCharset(internalCharset, "utf-8"));
                 cs = Encoding.UTF8;
                 internalCharset = "utf-8";
-            } else {
-                cs = Encoding.forName(internalCharset);
-            }
-            Encoding actual = cs.getActualHtmlEncoding();
-            if (actual == null) {
-                actual = cs;
+            } else if ("x-user-defined".equals(internalCharset)) {
+                /*
+                 * 3. If the new encoding is x-user-defined, then change it to
+                 * windows-1252.
+                 */
+                tokenizer.errTreeBuilder(Encoding.msgIgnoredCharset(
+                        "x-user-defined", "windows-1252"));
+                cs = Encoding.WINDOWS1252;
+                internalCharset = "windows-1252";
             }
             if (characterEncoding == null) {
                 // Reader case
                 return true;
             }
-            if (characterEncoding == actual) {
+            if (characterEncoding == cs) {
+                /*
+                 * 4. If the new encoding is identical or equivalent to the
+                 * encoding that is already being used to interpret the input
+                 * stream, then set the confidence to certain and return.
+                 */
                 becomeConfident();
                 return true;
             }
-            if (confidence == Confidence.CERTAIN && actual != characterEncoding) {
-                tokenizer.errTreeBuilder("Internal encoding declaration \u201C"
-                        + internalCharset
-                        + "\u201D disagrees with the actual encoding of the document (\u201C"
-                        + characterEncoding.getCanonName() + "\u201D).");
-            } else {
-                Encoding newEnc = whineAboutEncodingAndReturnCanonical(
-                        internalCharset, cs);
-                tokenizer.errTreeBuilder("Changing character encoding \u201C"
-                        + internalCharset + "\u201D and reparsing.");
-                characterEncoding = newEnc;
-                throw new ReparseException();
-            }
-            return true;
+            /*
+             * 6. Otherwise, navigate to the document again, with
+             * historyHandling set to "replace", and using the same source
+             * browsing context, but this time skip the encoding sniffing
+             * algorithm and instead just set the encoding to the new encoding
+             */
+            Encoding newEnc = whineAboutEncodingAndReturnCanonical(
+                    internalCharset, cs);
+            tokenizer.errTreeBuilder("Changing character encoding to \u201C"
+                    + internalCharset + "\u201D and reparsing.");
+            characterEncoding = newEnc;
+            // Note: We intentionally don’t call becomeConfident() at this
+            // point. If we did, it would end up causing the exception
+            // java.lang.IllegalStateException: rewind() after willNotRewind()
+            // to be thrown later. So we are departing here from strictly
+            // following the ordering in the corresponding spec language, which
+            // specifies setting the confidence to "certain" at this point.
+            throw new ReparseException();
         } catch (UnsupportedCharsetException e) {
-            tokenizer.errTreeBuilder("Internal encoding declaration named an unsupported chararacter encoding \u201C"
-                    + internalCharset + "\u201D.");
+            tokenizer.errTreeBuilder(
+                    Encoding.msgBadInternalCharset(internalCharset));
             return false;
         }
     }
@@ -453,8 +502,7 @@ public class Driver implements EncodingDeclarationHandler {
             }
             return whineAboutEncodingAndReturnCanonical(encoding, cs);
         } catch (UnsupportedCharsetException e) {
-            tokenizer.err("Unsupported character encoding name: \u201C" + encoding
-                    + "\u201D. Will sniff.");
+            tokenizer.err(Encoding.msgBadEncoding(encoding) + " Will sniff.");
             swallowBom = true;
         }
         return null; // keep the compiler happy
@@ -470,7 +518,7 @@ public class Driver implements EncodingDeclarationHandler {
             Encoding cs) throws SAXException {
         String canonName = cs.getCanonName();
         if (!canonName.equals(encoding)) {
-            tokenizer.err(Encoding.msgNotPreferredName(encoding, canonName));
+            tokenizer.err(Encoding.msgNotCanonicalName(encoding, canonName));
         }
         return cs;
     }
