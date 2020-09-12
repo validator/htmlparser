@@ -560,6 +560,31 @@ public class Encoding {
         return actualHtmlEncoding;
     }
 
+    protected static String msgLegacyEncoding(String name) {
+        return "Legacy encoding \u201C" + name + "\u201D used. Documents must"
+                + " use UTF-8.";
+    }
+
+    protected static String msgIgnoredCharset(String ignored, String name) {
+        return "Internal encoding declaration specified \u201C" + ignored
+                + "\u201D. Continuing as if the encoding had been \u201C"
+                + name + "\u201D.";
+    }
+    protected static String msgNotCanonicalName(String label, String name) {
+        return "The encoding \u201C" + label + "\u201D is not the canonical"
+                + " name of the character encoding in use. The canonical name"
+                + " is \u201C" + name + "\u201D. (Charmod C024)";
+    }
+
+    protected static String msgBadInternalCharset(String internalCharset) {
+        return "Internal encoding declaration named an unsupported character"
+            + " encoding \u201C" + internalCharset + "\u201D.";
+    }
+
+    protected static String msgBadEncoding(String name) {
+        return "Unsupported character encoding name: \u201C" + name + "\u201D.";
+    }
+
     public static void main(String[] args) {
         for (Map.Entry<String, Encoding> entry : encodingByLabel.entrySet()) {
             String name = entry.getKey();
