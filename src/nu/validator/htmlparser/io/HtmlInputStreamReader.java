@@ -139,9 +139,7 @@ public final class HtmlInputStreamReader extends Reader implements
             if (encoding == null) {
                 declared = false;
             } else if (encoding != Encoding.UTF8) {
-                err("Legacy encoding \u201C"
-                        + encoding.getCanonName()
-                        + "\u201D used. Documents must use UTF-8.");
+                err(Encoding.msgLegacyEncoding(encoding.getCanonName()));
             }
             if (encoding == null
                     && (heuristics == Heuristics.CHARDET || heuristics == Heuristics.ALL)) {
@@ -157,7 +155,8 @@ public final class HtmlInputStreamReader extends Reader implements
                 encoding = Encoding.WINDOWS1252;
             }
             if (!declared) {
-                err("The character encoding was not declared. Proceeding using \u201C" + encoding.getCanonName() + "\u201D.");
+                err("The character encoding was not declared. Proceeding using"
+                        + " \u201C" + encoding.getCanonName() + "\u201D.");
             }
             if (driver != null) {
                 driver.setEncoding(encoding, Confidence.TENTATIVE);
@@ -168,9 +167,7 @@ public final class HtmlInputStreamReader extends Reader implements
                     driver.setEncoding(Encoding.UTF8, Confidence.CERTAIN);
                 }
             } else {
-                err("Legacy encoding \u201C"
-                        + encoding.getCanonName()
-                        + "\u201D used. Documents must use UTF-8.");
+                err(Encoding.msgLegacyEncoding(encoding.getCanonName()));
                 if (driver != null) {
                     driver.setEncoding(Encoding.UTF16, Confidence.CERTAIN);
                 }
