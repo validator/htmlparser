@@ -173,6 +173,24 @@ public class Driver implements EncodingDeclarationHandler {
      *             if the stream threw
      */
     public void tokenize(InputSource is) throws SAXException, IOException {
+        int bufferSize = 2048;
+        tokenize(is, bufferSize);
+    }
+    /**
+     * Runs the tokenization. This is the main entry point.
+     *
+     * @param is
+     *            the input source
+     * @param bufferSize
+     *            the size of the buffer to feed to the tokenizer
+     * @throws SAXException
+     *             on fatal error (if configured to treat XML violations as
+     *             fatal) or if the token handler threw
+     * @throws IOException
+     *             if the stream threw
+     */
+    public void tokenize(InputSource is, int bufferSize)
+            throws SAXException, IOException {
         if (is == null) {
             throw new IllegalArgumentException("InputSource was null.");
         }
@@ -216,7 +234,7 @@ public class Driver implements EncodingDeclarationHandler {
                         CharacterHandler ch = characterHandlers[i];
                         ch.start();
                     }
-                    runStates();
+                    runStates(bufferSize);
                     break;
                 } catch (ReparseException e) {
                     if (rewindableInputStream == null) {
@@ -270,8 +288,8 @@ public class Driver implements EncodingDeclarationHandler {
         swallowBom = false;
     }
 
-    private void runStates() throws SAXException, IOException {
-        char[] buffer = new char[2048];
+    private void runStates(int bufferSize) throws SAXException, IOException {
+        char[] buffer = new char[bufferSize];
         UTF16Buffer bufr = new UTF16Buffer(buffer, 0, 0);
         boolean lastWasCR = false;
         int len = -1;
