@@ -36,6 +36,8 @@ import org.xml.sax.SAXException;
 
 public class EncodingTester {
 
+    protected static int SNIFFING_LIMIT = 16384;
+
     private final InputStream aggregateStream;
 
     private final StringBuilder builder = new StringBuilder();
@@ -59,7 +61,7 @@ public class EncodingTester {
         }
         UntilHashInputStream stream = new UntilHashInputStream(aggregateStream);
         HtmlInputStreamReader reader = new HtmlInputStreamReader(stream, null,
-                null, null, Heuristics.NONE);
+                null, null, Heuristics.NONE, SNIFFING_LIMIT);
         Charset charset = reader.getCharset();
         stream.close();
         if (skipLabel()) {
