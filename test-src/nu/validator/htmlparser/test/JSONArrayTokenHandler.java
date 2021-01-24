@@ -94,7 +94,7 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
         flushCharacters();
         JSONArray token = new JSONArray();
         token.getValue().add(DOCTYPE);
-        token.getValue().add(new JSONString(name));
+        token.getValue().add(name == null ? JSONNull.NULL : new JSONString(name));
         token.getValue().add(publicIdentifier == null ? JSONNull.NULL : new JSONString(publicIdentifier));
         token.getValue().add(systemIdentifier == null ? JSONNull.NULL : new JSONString(systemIdentifier));
         token.getValue().add(new JSONBoolean(!forceQuirks));
