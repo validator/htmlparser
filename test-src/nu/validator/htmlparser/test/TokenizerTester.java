@@ -140,18 +140,23 @@ public class TokenizerTester {
         } else {
             for (JSONValue value : contentModelFlags.getValue()) {
                 if (PCDATA.equals(value)) {
+                    lastStartTag = lastStartTag == null ? "xmp" : lastStartTag;
                     runTestInner(inputString, expectedTokens, description,
                             Tokenizer.DATA, lastStartTag);
                 } else if (RAWTEXT.equals(value)) {
+                    lastStartTag = lastStartTag == null ? "xmp" : lastStartTag;
                     runTestInner(inputString, expectedTokens, description,
                             Tokenizer.RAWTEXT, lastStartTag);
                 } else if (RCDATA.equals(value)) {
+                    lastStartTag = lastStartTag == null ? "xmp" : lastStartTag;
                     runTestInner(inputString, expectedTokens, description,
                             Tokenizer.RCDATA, lastStartTag);
                 } else if (CDATA.equals(value)) {
+                    lastStartTag = lastStartTag == null ? "xmp" : lastStartTag;
                     runTestInner(inputString, expectedTokens, description,
                             Tokenizer.CDATA_SECTION, lastStartTag);
                 } else if (PLAINTEXT.equals(value)) {
+                    lastStartTag = lastStartTag == null ? "plaintext" : lastStartTag;
                     runTestInner(inputString, expectedTokens, description,
                             Tokenizer.PLAINTEXT, lastStartTag);
                 } else if (SCRIPT_DATA.equals(value)) {
