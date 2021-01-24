@@ -200,6 +200,11 @@ public class TokenPrinter implements TokenHandler, ErrorHandler {
         }
     }
 
+    @Override public void zeroOrReplacementCharacter()
+            throws SAXException {
+        zeroOriginatingReplacementCharacter();
+    }
+
     @Override public boolean cdataSectionAllowed() throws SAXException {
         return false;
     }
