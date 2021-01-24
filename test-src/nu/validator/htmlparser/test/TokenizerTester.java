@@ -51,9 +51,11 @@ import com.sdicons.json.parser.JSONParser;
 
 public class TokenizerTester {
 
+    static int exitStatus = 0;
+
     private static JSONString PLAINTEXT = new JSONString("PLAINTEXT state");
 
-    private static JSONString PCDATA = new JSONString("DATA state");
+    private static JSONString PCDATA = new JSONString("Data state");
 
     private static JSONString RCDATA = new JSONString("RCDATA state");
 
@@ -95,7 +97,7 @@ public class TokenizerTester {
 
     private final Writer writer;
 
-    private TokenizerTester(InputStream stream) throws TokenStreamException,
+    public TokenizerTester(InputStream stream) throws TokenStreamException,
             RecognitionException, UnsupportedEncodingException {
         tokenHandler = new JSONArrayTokenHandler();
         driver = new Driver(new ErrorReportingTokenizer(tokenHandler));
@@ -119,7 +121,7 @@ public class TokenizerTester {
         }
     }
 
-    private void runTests() throws SAXException, IOException {
+    void runTests() throws SAXException, IOException {
         for (JSONValue val : tests.getValue()) {
             runTest((JSONObject) val);
         }
@@ -179,9 +181,8 @@ public class TokenizerTester {
         try {
             driver.tokenize(is);
             JSONArray actualTokens = tokenHandler.getArray();
-            if (jsonDeepEquals(actualTokens, expectedTokens)) {
-                writer.write("Success\n");
-            } else {
+            if (!jsonDeepEquals(actualTokens, expectedTokens)) {
+                exitStatus = 1;
                 writer.write("Failure\n");
                 writer.write(description);
                 writer.write("\nInput:\n");
@@ -193,6 +194,7 @@ public class TokenizerTester {
                 writer.write("\n");
             }
         } catch (Throwable t) {
+            exitStatus = 1;
             writer.write("Failure\n");
             writer.write(description);
             writer.write("\nInput:\n");
@@ -216,6 +218,7 @@ public class TokenizerTester {
                     args[i]));
             tester.runTests();
         }
+        System.exit(exitStatus);
     }
 
 }
