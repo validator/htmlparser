@@ -81,33 +81,36 @@ public class CppTypes {
         reservedWords.add("unicode");
     }
 
-	private static final String[] TREE_BUILDER_INCLUDES = { "nsContentUtils", "nsAtom", "nsHtml5AtomTable",
-			"nsHtml5String", "nsNameSpaceManager", "nsIContent", "nsTraceRefcnt", "jArray", "nsHtml5DocumentMode",
-			"nsHtml5ArrayCopy", "nsHtml5Parser", "nsGkAtoms", "nsHtml5TreeOperation", "nsHtml5StateSnapshot",
-			"nsHtml5StackNode", "nsHtml5TreeOpExecutor", "nsHtml5StreamParser", "nsAHtml5TreeBuilderState",
-			"nsHtml5Highlighter", "nsHtml5PlainTextUtils", "nsHtml5ViewSourceUtils", "mozilla/ImportScanner",
-			"mozilla/Likely", "nsIContentHandle", "nsHtml5OplessBuilder", };
+    private static final String[] TREE_BUILDER_INCLUDES = { "jArray",
+            "mozilla/ImportScanner", "mozilla/Likely",
+            "nsAHtml5TreeBuilderState", "nsAtom", "nsContentUtils", "nsGkAtoms",
+            "nsHtml5ArrayCopy", "nsHtml5AtomTable", "nsHtml5DocumentMode",
+            "nsHtml5Highlighter", "nsHtml5OplessBuilder", "nsHtml5Parser",
+            "nsHtml5PlainTextUtils", "nsHtml5StackNode", "nsHtml5StateSnapshot",
+            "nsHtml5StreamParser", "nsHtml5String", "nsHtml5TreeOperation",
+            "nsHtml5TreeOpExecutor", "nsHtml5ViewSourceUtils", "nsIContent",
+            "nsIContentHandle", "nsNameSpaceManager", "nsTraceRefcnt", };
 
-    private static final String[] TOKENIZER_INCLUDES = { "nsAtom",
-            "nsHtml5AtomTable", "nsHtml5String", "nsIContent", "nsTraceRefcnt",
-            "jArray", "nsHtml5DocumentMode", "nsHtml5ArrayCopy",
-            "nsHtml5NamedCharacters", "nsHtml5NamedCharactersAccel",
-            "nsGkAtoms", "nsAHtml5TreeBuilderState", "nsHtml5Macros",
-            "nsHtml5Highlighter", "nsHtml5TokenizerLoopPolicies" };
+    private static final String[] TOKENIZER_INCLUDES = { "jArray",
+            "nsAHtml5TreeBuilderState", "nsAtom", "nsGkAtoms",
+            "nsHtml5ArrayCopy", "nsHtml5AtomTable", "nsHtml5DocumentMode",
+            "nsHtml5Highlighter", "nsHtml5Macros", "nsHtml5NamedCharacters",
+            "nsHtml5NamedCharactersAccel", "nsHtml5String",
+            "nsHtml5TokenizerLoopPolicies", "nsIContent", "nsTraceRefcnt" };
 
     private static final String[] INCLUDES = { "nsAtom", "nsHtml5AtomTable",
             "nsHtml5String", "nsNameSpaceManager", "nsIContent",
             "nsTraceRefcnt", "jArray", "nsHtml5ArrayCopy",
             "nsAHtml5TreeBuilderState", "nsGkAtoms", "nsHtml5ByteReadable",
             "nsHtml5Macros", "nsIContentHandle", "nsHtml5Portability",
-            "nsHtml5ContentCreatorFunction"};
+            "nsHtml5ContentCreatorFunction" };
 
     private static final String[] OTHER_DECLATIONS = {};
 
     private static final String[] TREE_BUILDER_OTHER_DECLATIONS = {};
 
     private static final String[] NAMED_CHARACTERS_INCLUDES = { "jArray",
-            "nscore", "nsDebug", "mozilla/Logging", "nsMemory" };
+            "mozilla/Logging", "nscore", "nsDebug", "nsMemory" };
 
     private static final String[] FORWARD_DECLARATIONS = { "nsHtml5StreamParser" };
 
