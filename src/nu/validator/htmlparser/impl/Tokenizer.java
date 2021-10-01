@@ -365,6 +365,8 @@ public class Tokenizer implements Locator, Locator2 {
 
     private boolean seenDigits;
 
+    private boolean suspendAfterCurrentNonTextToken;
+
     protected int cstart;
 
     /**
@@ -543,6 +545,7 @@ public class Tokenizer implements Locator, Locator2 {
         this.charRefBufMark = 0;
         this.value = 0;
         this.seenDigits = false;
+        this.suspendAfterCurrentNonTextToken = false;
         this.cstart = 0;
         this.strBufLen = 0;
         this.newAttributesEachTime = newAttributesEachTime;
@@ -601,6 +604,7 @@ public class Tokenizer implements Locator, Locator2 {
         this.charRefBufMark = 0;
         this.value = 0;
         this.seenDigits = false;
+        this.suspendAfterCurrentNonTextToken = false;
         this.cstart = 0;
         this.strBufLen = 0;
         // &CounterClockwiseContourIntegral; is the longest valid char ref and
@@ -1086,6 +1090,16 @@ public class Tokenizer implements Locator, Locator2 {
     /**
      * Emits the current comment token.
      *
+     * NOTE: The method may set <code>shouldSuspend</code>, so the caller
+     * must have this pattern after the state's <code>transition</code> call:
+     *
+     * <pre>
+     * if (shouldSuspend) {
+     *     break stateloop;
+     * }
+     * continue stateloop;
+     * </pre>
+     *
      * @param pos
      *            TODO
      *
@@ -1093,6 +1107,7 @@ public class Tokenizer implements Locator, Locator2 {
      */
     private void emitComment(int provisionalHyphens, int pos)
             throws SAXException {
+        // CPPONLY: RememberGt(pos);
         // [NOCPP[
         if (wantsComments) {
             // ]NOCPP]
@@ -1103,6 +1118,7 @@ public class Tokenizer implements Locator, Locator2 {
         // ]NOCPP]
         clearStrBufAfterUse();
         cstart = pos + 1;
+        suspendIfRequestedAfterCurrentNonTextToken();
     }
 
     /**
@@ -1213,8 +1229,26 @@ public class Tokenizer implements Locator, Locator2 {
         clearStrBufAfterUse();
     }
 
+    /**
+     * Emits a tag token.
+     *
+     * NOTE: The method may set <code>shouldSuspend</code>, so the caller
+     * must have this pattern after the state's <code>transition</code> call:
+     * <pre>
+     * if (shouldSuspend) {
+     *     break stateloop;
+     * }
+     * continue stateloop;
+     * </pre>
+     *
+     * @param selfClosing
+     * @param pos
+     * @return
+     * @throws SAXException
+     */
     private int emitCurrentTagToken(boolean selfClosing, int pos)
             throws SAXException {
+        // CPPONLY: RememberGt(pos);
         cstart = pos + 1;
         maybeErrSlashInEndTag(selfClosing);
         stateSave = Tokenizer.DATA;
@@ -1252,6 +1286,7 @@ public class Tokenizer implements Locator, Locator2 {
          * The token handler may have called setStateAndEndTagExpectation
          * and changed stateSave since the start of this method.
          */
+        suspendIfRequestedAfterCurrentNonTextToken();
         return stateSave;
     }
 
@@ -2582,6 +2617,9 @@ public class Tokenizer implements Locator, Locator2 {
                                  * Switch to the data state.
                                  */
                                 state = transition(state, Tokenizer.DATA, reconsume, pos);
+                                if (shouldSuspend) {
+                                    break stateloop;
+                                }
                                 continue stateloop;
                             case '<':
                                 appendStrBuf(c);
@@ -2729,6 +2767,9 @@ public class Tokenizer implements Locator, Locator2 {
                                  * Switch to the data state.
                                  */
                                 state = transition(state, Tokenizer.DATA, reconsume, pos);
+                                if (shouldSuspend) {
+                                    break stateloop;
+                                }
                                 continue stateloop;
                             case '-':
                                 /* U+002D HYPHEN-MINUS (-) Parse error. */
@@ -2798,6 +2839,9 @@ public class Tokenizer implements Locator, Locator2 {
                                  * Switch to the data state.
                                  */
                                 state = transition(state, Tokenizer.DATA, reconsume, pos);
+                                if (shouldSuspend) {
+                                    break stateloop;
+                                }
                                 continue stateloop;
                             case '-':
                                 /*
@@ -2945,6 +2989,9 @@ public class Tokenizer implements Locator, Locator2 {
                                 appendStrBuf(c);
                                 emitComment(3, pos);
                                 state = transition(state, Tokenizer.DATA, reconsume, pos);
+                                if (shouldSuspend) {
+                                    break stateloop;
+                                }
                                 continue stateloop;
                             case '-':
                                 errNestedComment();
@@ -3010,6 +3057,9 @@ public class Tokenizer implements Locator, Locator2 {
                              * Switch to the data state.
                              */
                             state = transition(state, Tokenizer.DATA, reconsume, pos);
+                            if (shouldSuspend) {
+                                break stateloop;
+                            }
                             continue stateloop;
                         case '<':
                             appendStrBuf(c);
@@ -3131,6 +3181,10 @@ public class Tokenizer implements Locator, Locator2 {
                             case '>':
                                 cstart = pos + 1;
                                 state = transition(state, Tokenizer.DATA, reconsume, pos);
+                                suspendIfRequestedAfterCurrentNonTextToken();
+                                if (shouldSuspend) {
+                                    break stateloop;
+                                }
                                 continue stateloop;
                             default:
                                 tokenHandler.characters(Tokenizer.RSQB_RSQB, 0, 2);
@@ -4130,6 +4184,9 @@ public class Tokenizer implements Locator, Locator2 {
                             case '>':
                                 emitComment(0, pos);
                                 state = transition(state, Tokenizer.DATA, reconsume, pos);
+                                if (shouldSuspend) {
+                                    break stateloop;
+                                }
                                 continue stateloop;
                             case '-':
                                 appendStrBuf(c);
@@ -4163,6 +4220,9 @@ public class Tokenizer implements Locator, Locator2 {
                                 // ]NOCPP]
                                 emitComment(0, pos);
                                 state = transition(state, Tokenizer.DATA, reconsume, pos);
+                                if (shouldSuspend) {
+                                    break stateloop;
+                                }
                                 continue stateloop;
                             case '-':
                                 appendSecondHyphenToBogusComment();
@@ -4964,6 +5024,9 @@ public class Tokenizer implements Locator, Locator2 {
                                  * Switch to the data state.
                                  */
                                 state = transition(state, Tokenizer.DATA, reconsume, pos);
+                                if (shouldSuspend) {
+                                    break stateloop;
+                                }
                                 continue stateloop;
                             case '\u0000':
                                 c = '\uFFFD';
@@ -5037,6 +5100,9 @@ public class Tokenizer implements Locator, Locator2 {
                                  * Switch to the data state.
                                  */
                                 state = transition(state, Tokenizer.DATA, reconsume, pos);
+                                if (shouldSuspend) {
+                                    break stateloop;
+                                }
                                 continue stateloop;
                             case '\u0000':
                                 c = '\uFFFD';
@@ -5100,6 +5166,9 @@ public class Tokenizer implements Locator, Locator2 {
                                  * Switch to the data state.
                                  */
                                 state = transition(state, Tokenizer.DATA, reconsume, pos);
+                                if (shouldSuspend) {
+                                    break stateloop;
+                                }
                                 continue stateloop;
                             case 'p':
                             case 'P':
@@ -5246,6 +5315,9 @@ public class Tokenizer implements Locator, Locator2 {
                                  * Switch to the data state.
                                  */
                                 state = transition(state, Tokenizer.DATA, reconsume, pos);
+                                if (shouldSuspend) {
+                                    break stateloop;
+                                }
                                 continue stateloop;
                             default:
                                 bogusDoctype();
@@ -5331,6 +5403,9 @@ public class Tokenizer implements Locator, Locator2 {
                                  * Switch to the data state.
                                  */
                                 state = transition(state, Tokenizer.DATA, reconsume, pos);
+                                if (shouldSuspend) {
+                                    break stateloop;
+                                }
                                 continue stateloop;
                             default:
                                 bogusDoctype();
@@ -5385,6 +5460,9 @@ public class Tokenizer implements Locator, Locator2 {
                                  * Switch to the data state.
                                  */
                                 state = transition(state, Tokenizer.DATA, reconsume, pos);
+                                if (shouldSuspend) {
+                                    break stateloop;
+                                }
                                 continue stateloop;
                             case '\r':
                                 appendStrBufCarriageReturn();
@@ -5449,6 +5527,9 @@ public class Tokenizer implements Locator, Locator2 {
                                  * Switch to the data state.
                                  */
                                 state = transition(state, Tokenizer.DATA, reconsume, pos);
+                                if (shouldSuspend) {
+                                    break stateloop;
+                                }
                                 continue stateloop;
                             case '"':
                                 /*
@@ -5533,6 +5614,9 @@ public class Tokenizer implements Locator, Locator2 {
                                  * Switch to the data state.
                                  */
                                 state = transition(state, Tokenizer.DATA, reconsume, pos);
+                                if (shouldSuspend) {
+                                    break stateloop;
+                                }
                                 continue stateloop;
                             case '"':
                                 /*
@@ -5613,6 +5697,9 @@ public class Tokenizer implements Locator, Locator2 {
                                  * Switch to the data state.
                                  */
                                 state = transition(state, Tokenizer.DATA, reconsume, pos);
+                                if (shouldSuspend) {
+                                    break stateloop;
+                                }
                                 continue stateloop;
                             case '\r':
                                 appendStrBufCarriageReturn();
@@ -5672,6 +5759,9 @@ public class Tokenizer implements Locator, Locator2 {
                                  * Switch to the data state.
                                  */
                                 state = transition(state, Tokenizer.DATA, reconsume, pos);
+                                if (shouldSuspend) {
+                                    break stateloop;
+                                }
                                 continue stateloop;
                             default:
                                 /*
@@ -5710,6 +5800,9 @@ public class Tokenizer implements Locator, Locator2 {
                                  * Switch to the data state.
                                  */
                                 state = transition(state, Tokenizer.DATA, reconsume, pos);
+                                if (shouldSuspend) {
+                                    break stateloop;
+                                }
                                 continue stateloop;
                             case '\r':
                                 silentCarriageReturn();
@@ -5840,6 +5933,9 @@ public class Tokenizer implements Locator, Locator2 {
                                  * Switch to the data state.
                                  */
                                 state = transition(state, Tokenizer.DATA, reconsume, pos);
+                                if (shouldSuspend) {
+                                    break stateloop;
+                                }
                                 continue stateloop;
                             default:
                                 bogusDoctype();
@@ -5925,6 +6021,9 @@ public class Tokenizer implements Locator, Locator2 {
                                  * Switch to the data state.
                                  */
                                 state = transition(state, Tokenizer.DATA, reconsume, pos);
+                                if (shouldSuspend) {
+                                    break stateloop;
+                                }
                                 continue stateloop;
                             default:
                                 bogusDoctype();
@@ -5975,6 +6074,9 @@ public class Tokenizer implements Locator, Locator2 {
                                  * Switch to the data state.
                                  */
                                 state = transition(state, Tokenizer.DATA, reconsume, pos);
+                                if (shouldSuspend) {
+                                    break stateloop;
+                                }
                                 continue stateloop;
                             case '\r':
                                 appendStrBufCarriageReturn();
@@ -6033,6 +6135,9 @@ public class Tokenizer implements Locator, Locator2 {
                                  * Switch to the data state.
                                  */
                                 state = transition(state, Tokenizer.DATA, reconsume, pos);
+                                if (shouldSuspend) {
+                                    break stateloop;
+                                }
                                 continue stateloop;
                             case '\r':
                                 appendStrBufCarriageReturn();
@@ -6085,6 +6190,10 @@ public class Tokenizer implements Locator, Locator2 {
                         case '>':
                             state = transition(state, Tokenizer.DATA,
                                     reconsume, pos);
+                            suspendIfRequestedAfterCurrentNonTextToken();
+                            if (shouldSuspend) {
+                                break stateloop;
+                            }
                             continue stateloop;
                         default:
                             state = transition(state,
@@ -6826,7 +6935,23 @@ public class Tokenizer implements Locator, Locator2 {
         return;
     }
 
+    /**
+     * Emits a doctype token.
+     *
+     * NOTE: The method may set <code>shouldSuspend</code>, so the caller
+     * must have this pattern after the state's <code>transition</code> call:
+     * <pre>
+     * if (shouldSuspend) {
+     *     break stateloop;
+     * }
+     * continue stateloop;
+     * </pre>
+     *
+     * @param pos
+     * @throws SAXException
+     */
     private void emitDoctypeToken(int pos) throws SAXException {
+        // CPPONLY: RememberGt(pos);
         cstart = pos + 1;
         tokenHandler.doctype(doctypeName, publicIdentifier, systemIdentifier,
                 forceQuirks);
@@ -6838,6 +6963,130 @@ public class Tokenizer implements Locator, Locator2 {
         publicIdentifier = null;
         Portability.releaseString(systemIdentifier);
         systemIdentifier = null;
+        suspendIfRequestedAfterCurrentNonTextToken();
+    }
+
+    private void suspendIfRequestedAfterCurrentNonTextToken() {
+        if (suspendAfterCurrentNonTextToken) {
+            suspendAfterCurrentNonTextToken = false;
+            shouldSuspend = true;
+        }
+    }
+
+    // Making this private until the full Java implementation is done.
+    /**
+     * Request suspension after the current token if the tokenizer is currently
+     * in a non-text state (i.e. it's known that the next token will be a
+     * non-text token).
+     *
+     * Must not be called when <code>tokenizeBuffer()</code> is on the call
+     * stack.
+     */
+    @SuppressWarnings("unused") private void suspendAfterCurrentTokenIfNotInText() {
+        switch (stateSave) {
+            case DATA:
+            case RCDATA:
+            case SCRIPT_DATA:
+            case RAWTEXT:
+            case SCRIPT_DATA_ESCAPED:
+            case PLAINTEXT:
+            case NON_DATA_END_TAG_NAME: // We haven't yet committed to the next
+                                        // token being a non-text token, though
+                                        // it could be.
+            case SCRIPT_DATA_LESS_THAN_SIGN:
+            case SCRIPT_DATA_ESCAPE_START:
+            case SCRIPT_DATA_ESCAPE_START_DASH:
+            case SCRIPT_DATA_ESCAPED_DASH:
+            case SCRIPT_DATA_ESCAPED_DASH_DASH:
+            case RAWTEXT_RCDATA_LESS_THAN_SIGN:
+            case SCRIPT_DATA_ESCAPED_LESS_THAN_SIGN:
+            case SCRIPT_DATA_DOUBLE_ESCAPE_START:
+            case SCRIPT_DATA_DOUBLE_ESCAPED:
+            case SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN_SIGN:
+            case SCRIPT_DATA_DOUBLE_ESCAPED_DASH:
+            case SCRIPT_DATA_DOUBLE_ESCAPED_DASH_DASH:
+            case SCRIPT_DATA_DOUBLE_ESCAPE_END:
+                return;
+            case TAG_NAME:
+            case BEFORE_ATTRIBUTE_NAME:
+            case ATTRIBUTE_NAME:
+            case AFTER_ATTRIBUTE_NAME:
+            case BEFORE_ATTRIBUTE_VALUE:
+            case AFTER_ATTRIBUTE_VALUE_QUOTED:
+            case BOGUS_COMMENT:
+            case MARKUP_DECLARATION_OPEN:
+            case DOCTYPE:
+            case BEFORE_DOCTYPE_NAME:
+            case DOCTYPE_NAME:
+            case AFTER_DOCTYPE_NAME:
+            case BEFORE_DOCTYPE_PUBLIC_IDENTIFIER:
+            case DOCTYPE_PUBLIC_IDENTIFIER_DOUBLE_QUOTED:
+            case DOCTYPE_PUBLIC_IDENTIFIER_SINGLE_QUOTED:
+            case AFTER_DOCTYPE_PUBLIC_IDENTIFIER:
+            case BEFORE_DOCTYPE_SYSTEM_IDENTIFIER:
+            case DOCTYPE_SYSTEM_IDENTIFIER_DOUBLE_QUOTED:
+            case DOCTYPE_SYSTEM_IDENTIFIER_SINGLE_QUOTED:
+            case AFTER_DOCTYPE_SYSTEM_IDENTIFIER:
+            case BOGUS_DOCTYPE:
+            case COMMENT_START:
+            case COMMENT_START_DASH:
+            case COMMENT:
+            case COMMENT_END_DASH:
+            case COMMENT_END:
+            case COMMENT_END_BANG:
+            case TAG_OPEN:
+            case CLOSE_TAG_OPEN:
+            case MARKUP_DECLARATION_HYPHEN:
+            case MARKUP_DECLARATION_OCTYPE:
+            case DOCTYPE_UBLIC:
+            case DOCTYPE_YSTEM:
+            case AFTER_DOCTYPE_PUBLIC_KEYWORD:
+            case BETWEEN_DOCTYPE_PUBLIC_AND_SYSTEM_IDENTIFIERS:
+            case AFTER_DOCTYPE_SYSTEM_KEYWORD:
+            case SELF_CLOSING_START_TAG:
+            case ATTRIBUTE_VALUE_DOUBLE_QUOTED:
+            case ATTRIBUTE_VALUE_SINGLE_QUOTED:
+            case ATTRIBUTE_VALUE_UNQUOTED:
+            case BOGUS_COMMENT_HYPHEN:
+            case COMMENT_LESSTHAN:
+            case COMMENT_LESSTHAN_BANG:
+            case COMMENT_LESSTHAN_BANG_DASH:
+            case COMMENT_LESSTHAN_BANG_DASH_DASH:
+            case CDATA_START:
+            case CDATA_SECTION:
+            case CDATA_RSQB:
+            case CDATA_RSQB_RSQB:
+            case PROCESSING_INSTRUCTION:
+            case PROCESSING_INSTRUCTION_QUESTION_MARK:
+                break;
+            case CONSUME_CHARACTER_REFERENCE:
+            case CONSUME_NCR:
+            case CHARACTER_REFERENCE_TAIL:
+            case HEX_NCR_LOOP:
+            case DECIMAL_NRC_LOOP:
+            case HANDLE_NCR_VALUE:
+            case HANDLE_NCR_VALUE_RECONSUME:
+            case CHARACTER_REFERENCE_HILO_LOOKUP:
+                if (returnStateSave == DATA || returnStateSave == RCDATA) {
+                    return;
+                }
+                break;
+            default:
+                assert false : "Incomplete switch";
+                return;
+        }
+        suspendAfterCurrentNonTextToken = true;
+    }
+
+    // Making this private until the full Java implementation is done.
+    /**
+     * Queries if we are about to suspend after the current non-text token due to a request
+     * from <code>suspendAfterCurrentTokenIfNotInText()</code>.
+     * @return <code>true</code> iff <code>suspendAfterCurrentTokenIfNotInText()</code> was
+     * called in a non-text position and the then-current token has not been emitted yet.
+     */
+    @SuppressWarnings("unused") private boolean suspensionAfterCurrentNonTextTokenPending() {
+        return suspendAfterCurrentNonTextToken;
     }
 
     @Inline protected char checkChar(@NoLength char[] buf, int pos)
@@ -6966,6 +7215,7 @@ public class Tokenizer implements Locator, Locator2 {
         charRefBufMark = 0;
         value = 0;
         seenDigits = false;
+        suspendAfterCurrentNonTextToken = false;
         endTag = false;
         shouldSuspend = false;
         initDoctypeFields();
@@ -7009,6 +7259,7 @@ public class Tokenizer implements Locator, Locator2 {
         seenDigits = other.seenDigits;
         endTag = other.endTag;
         shouldSuspend = false;
+        suspendAfterCurrentNonTextToken = false;
         doctypeName = other.doctypeName;
 
         Portability.releaseString(systemIdentifier);

@@ -115,7 +115,7 @@ public class CppTypes {
     private static final String[] FORWARD_DECLARATIONS = { "nsHtml5StreamParser" };
 
     private static final String[] CLASSES_THAT_NEED_SUPPLEMENT = {
-            "MetaScanner", "Tokenizer", "TreeBuilder", "UTF16Buffer", };
+            "Tokenizer", "TreeBuilder", "UTF16Buffer", };
 
     private static final String[] STATE_LOOP_POLICIES = {
             "nsHtml5ViewSourcePolicy", "nsHtml5SilentPolicy" };
