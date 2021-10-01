@@ -125,7 +125,7 @@ import japa.parser.ast.type.WildcardType;
 public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
 
     private static final String[] CLASS_NAMES = { "AttributeName",
-            "ElementName", "HtmlAttributes", "LocatorImpl", "MetaScanner",
+            "ElementName", "HtmlAttributes", "LocatorImpl",
             "NamedCharacters", "NamedCharactersAccel", "Portability",
             "StackNode", "Tokenizer", "TreeBuilder", "UTF16Buffer" };
 
