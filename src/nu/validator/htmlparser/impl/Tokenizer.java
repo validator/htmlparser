@@ -1463,7 +1463,7 @@ public class Tokenizer implements Locator, Locator2 {
             // but not doing that without profiling. In C++ with jemalloc,
             // the corresponding method should do math to round up here
             // to avoid slop.
-            char[] newBuf = new char[worstCase];
+            char[] newBuf = new char[Math.max(worstCase, (strBuf.length*5)/4)];
             System.arraycopy(strBuf, 0, newBuf, 0, strBufLen);
             strBuf = newBuf;
         }
