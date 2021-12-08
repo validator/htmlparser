@@ -3181,6 +3181,12 @@ public class Tokenizer implements Locator, Locator2 {
                             case '>':
                                 cstart = pos + 1;
                                 state = transition(state, Tokenizer.DATA, reconsume, pos);
+                                // Since a CDATA section starts with a less-than sign, it
+                                // is participates in the suspension-after-current-token
+                                // behavior. (The suspension can be requested when the
+                                // less-than sign has been seen but we don't yet know the
+                                // resulting token type.) Therefore, we need to deal with
+                                // a potential request here.
                                 suspendIfRequestedAfterCurrentNonTextToken();
                                 if (shouldSuspend) {
                                     break stateloop;
@@ -6189,6 +6195,19 @@ public class Tokenizer implements Locator, Locator2 {
                         case '>':
                             state = transition(state, Tokenizer.DATA,
                                     reconsume, pos);
+                            // Processing instruction syntax goes through these
+                            // states only in Gecko's XML View Source--not in HTML
+                            // parsing in Java or in Gecko.
+                            // Since XML View Source doesn't use the
+                            // suspension-after-current-token facility, its extension
+                            // to processing instruction states is strictly unnecessary
+                            // at the moment. However, if these states ever were to be
+                            // used together with the suspension-after-current-token
+                            // facility, these states would need to participate, since
+                            // suspension could be requested when only less-than has been
+                            // seen and we don't yet know if we end up here. Handling
+                            // the currently unnecessary case in order to avoid leaving
+                            // a trap for future modification.
                             suspendIfRequestedAfterCurrentNonTextToken();
                             if (shouldSuspend) {
                                 break stateloop;
@@ -6959,6 +6978,11 @@ public class Tokenizer implements Locator, Locator2 {
         suspendIfRequestedAfterCurrentNonTextToken();
     }
 
+    /**
+     * If a previous call to <code>suspendAfterCurrentTokenIfNotInText()</code>
+     * happened in a non-text context, this method turns that deferred suspension
+     * request into an immediately pending suspension request.
+     */
     private void suspendIfRequestedAfterCurrentNonTextToken() {
         if (suspendAfterCurrentNonTextToken) {
             suspendAfterCurrentNonTextToken = false;
