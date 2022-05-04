@@ -1610,8 +1610,8 @@ public class Tokenizer implements Locator, Locator2 {
                                 flushChars(buf, pos);
 
                                 state = transition(state, Tokenizer.TAG_OPEN, reconsume, pos);
-                                break dataloop; // FALL THROUGH continue
-                            // stateloop;
+                                // `break` optimizes; `continue stateloop;` would be valid
+                                break dataloop;
                             case '\u0000':
                                 maybeEmitReplacementCharacter(buf, pos);
                                 continue;
@@ -1667,8 +1667,8 @@ public class Tokenizer implements Locator, Locator2 {
                              * (Don't emit the token yet; further details will
                              * be filled in before it is emitted.)
                              */
+                            // `break` optimizes; `continue stateloop;` would be valid
                             break tagopenloop;
-                            // continue stateloop;
                         } else if (c >= 'a' && c <= 'z') {
                             /*
                              * U+0061 LATIN SMALL LETTER A through to U+007A
@@ -1688,8 +1688,8 @@ public class Tokenizer implements Locator, Locator2 {
                              * (Don't emit the token yet; further details will
                              * be filled in before it is emitted.)
                              */
+                            // `break` optimizes; `continue stateloop;` would be valid
                             break tagopenloop;
-                            // continue stateloop;
                         }
                         switch (c) {
                             case '!':
@@ -1788,8 +1788,8 @@ public class Tokenizer implements Locator, Locator2 {
                                  */
                                 strBufToElementNameString();
                                 state = transition(state, Tokenizer.BEFORE_ATTRIBUTE_NAME, reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break tagnameloop;
-                            // continue stateloop;
                             case '/':
                                 /*
                                  * U+002F SOLIDUS (/) Switch to the self-closing
@@ -1939,8 +1939,8 @@ public class Tokenizer implements Locator, Locator2 {
                                  * Switch to the attribute name state.
                                  */
                                 state = transition(state, Tokenizer.ATTRIBUTE_NAME, reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break beforeattributenameloop;
-                            // continue stateloop;
                         }
                     }
                     // CPPONLY: MOZ_FALLTHROUGH;
@@ -1989,8 +1989,8 @@ public class Tokenizer implements Locator, Locator2 {
                                  */
                                 attributeNameComplete();
                                 state = transition(state, Tokenizer.BEFORE_ATTRIBUTE_VALUE, reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break attributenameloop;
-                            // continue stateloop;
                             case '>':
                                 /*
                                  * U+003E GREATER-THAN SIGN (>) Emit the current
@@ -2079,8 +2079,8 @@ public class Tokenizer implements Locator, Locator2 {
                                 // CPPONLY: attributeLine = line;
                                 clearStrBufBeforeUse();
                                 state = transition(state, Tokenizer.ATTRIBUTE_VALUE_DOUBLE_QUOTED, reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break beforeattributevalueloop;
-                            // continue stateloop;
                             case '&':
                                 /*
                                  * U+0026 AMPERSAND (&) Switch to the attribute
@@ -2176,8 +2176,8 @@ public class Tokenizer implements Locator, Locator2 {
                                 addAttributeWithValue();
 
                                 state = transition(state, Tokenizer.AFTER_ATTRIBUTE_VALUE_QUOTED, reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break attributevaluedoublequotedloop;
-                            // continue stateloop;
                             case '&':
                                 /*
                                  * U+0026 AMPERSAND (&) Switch to the character
@@ -2247,8 +2247,8 @@ public class Tokenizer implements Locator, Locator2 {
                                  * start tag state.
                                  */
                                 state = transition(state, Tokenizer.SELF_CLOSING_START_TAG, reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break afterattributevaluequotedloop;
-                            // continue stateloop;
                             case '>':
                                 /*
                                  * U+003E GREATER-THAN SIGN (>) Emit the current
@@ -2311,6 +2311,7 @@ public class Tokenizer implements Locator, Locator2 {
                             state = transition(state, Tokenizer.BEFORE_ATTRIBUTE_NAME, reconsume, pos);
                             continue stateloop;
                     }
+                    // no fallthrough, reordering opportunity
                 case ATTRIBUTE_VALUE_UNQUOTED:
                     for (;;) {
                         if (reconsume) {
@@ -2402,7 +2403,8 @@ public class Tokenizer implements Locator, Locator2 {
                                 continue;
                         }
                     }
-                case AFTER_ATTRIBUTE_NAME:
+                    // no fallthrough, reordering opportunity
+               case AFTER_ATTRIBUTE_NAME:
                     for (;;) {
                         if (++pos == endPos) {
                             break stateloop;
@@ -2501,6 +2503,7 @@ public class Tokenizer implements Locator, Locator2 {
                                 continue stateloop;
                         }
                     }
+                    // no fallthrough, reordering opportunity
                 case MARKUP_DECLARATION_OPEN:
                     markupdeclarationopenloop: for (;;) {
                         if (++pos == endPos) {
@@ -2537,8 +2540,8 @@ public class Tokenizer implements Locator, Locator2 {
                                 clearStrBufBeforeUse();
                                 appendStrBuf(c);
                                 state = transition(state, Tokenizer.MARKUP_DECLARATION_HYPHEN, reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break markupdeclarationopenloop;
-                            // continue stateloop;
                             case 'd':
                             case 'D':
                                 clearStrBufBeforeUse();
@@ -2574,8 +2577,8 @@ public class Tokenizer implements Locator, Locator2 {
                             case '-':
                                 clearStrBufAfterOneHyphen();
                                 state = transition(state, Tokenizer.COMMENT_START, reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break markupdeclarationhyphenloop;
-                            // continue stateloop;
                             default:
                                 errBogusComment();
                                 reconsume = true;
@@ -2646,8 +2649,8 @@ public class Tokenizer implements Locator, Locator2 {
                                  * Switch to the comment state.
                                  */
                                 state = transition(state, Tokenizer.COMMENT, reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break commentstartloop;
-                            // continue stateloop;
                         }
                     }
                     // CPPONLY: MOZ_FALLTHROUGH;
@@ -2668,8 +2671,8 @@ public class Tokenizer implements Locator, Locator2 {
                                  */
                                 appendStrBuf(c);
                                 state = transition(state, Tokenizer.COMMENT_END_DASH, reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break commentloop;
-                            // continue stateloop;
                             case '<':
                                 appendStrBuf(c);
                                 state = transition(state, Tokenizer.COMMENT_LESSTHAN, reconsume, pos);
@@ -2714,8 +2717,8 @@ public class Tokenizer implements Locator, Locator2 {
                                  */
                                 appendStrBuf(c);
                                 state = transition(state, Tokenizer.COMMENT_END, reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break commentenddashloop;
-                            // continue stateloop;
                             case '<':
                                 appendStrBuf(c);
                                 state = transition(state, Tokenizer.COMMENT_LESSTHAN, reconsume, pos);
@@ -2798,7 +2801,8 @@ public class Tokenizer implements Locator, Locator2 {
                             case '!':
                                 appendStrBuf(c);
                                 state = transition(state, Tokenizer.COMMENT_END_BANG, reconsume, pos);
-                                continue stateloop;
+                                // `break` optimizes; `continue stateloop;` would be valid
+                                break commentendloop;
                             case '\u0000':
                                 c = '\uFFFD';
                                 // CPPONLY: MOZ_FALLTHROUGH;
@@ -2817,6 +2821,7 @@ public class Tokenizer implements Locator, Locator2 {
                                 continue stateloop;
                         }
                     }
+                    // CPPONLY: MOZ_FALLTHROUGH;
                 case COMMENT_END_BANG:
                     for (;;) {
                         if (++pos == endPos) {
@@ -2882,8 +2887,9 @@ public class Tokenizer implements Locator, Locator2 {
                                 continue stateloop;
                         }
                     }
+                    // no fallthrough, reordering opportunity
                 case COMMENT_LESSTHAN:
-                    for (;;) {
+                    commentlessthanloop: for (;;) {
                         if (++pos == endPos) {
                             break stateloop;
                         }
@@ -2892,7 +2898,8 @@ public class Tokenizer implements Locator, Locator2 {
                             case '!':
                                 appendStrBuf(c);
                                 state = transition(state, Tokenizer.COMMENT_LESSTHAN_BANG, reconsume, pos);
-                                continue stateloop;
+                                // `break` optimizes; `continue stateloop;` would be valid
+                                break commentlessthanloop;
                             case '<':
                                 appendStrBuf(c);
                                 continue;
@@ -2902,10 +2909,12 @@ public class Tokenizer implements Locator, Locator2 {
                                 continue stateloop;
                             case '\r':
                                 appendStrBufCarriageReturn();
+                                state = transition(state, Tokenizer.COMMENT, reconsume, pos);
                                 break stateloop;
                             case '\n':
                                 appendStrBufLineFeed();
-                                continue;
+                                state = transition(state, Tokenizer.COMMENT, reconsume, pos);
+                                continue stateloop;
                             case '\u0000':
                                 c = '\uFFFD';
                                 // CPPONLY: MOZ_FALLTHROUGH;
@@ -2917,7 +2926,7 @@ public class Tokenizer implements Locator, Locator2 {
                     }
                     // CPPONLY: MOZ_FALLTHROUGH;
                 case COMMENT_LESSTHAN_BANG:
-                    for (;;) {
+                    commentlessthanbangloop: for (;;) {
                         if (++pos == endPos) {
                             break stateloop;
                         }
@@ -2926,17 +2935,20 @@ public class Tokenizer implements Locator, Locator2 {
                             case '-':
                                 appendStrBuf(c);
                                 state = transition(state, Tokenizer.COMMENT_LESSTHAN_BANG_DASH, reconsume, pos);
-                                continue stateloop;
+                                // `break` optimizes; `continue stateloop;` would be valid
+                                break commentlessthanbangloop;
                             case '<':
                                 appendStrBuf(c);
                                 state = transition(state, Tokenizer.COMMENT_LESSTHAN, reconsume, pos);
                                 continue stateloop;
                             case '\r':
                                 appendStrBufCarriageReturn();
+                                state = transition(state, Tokenizer.COMMENT, reconsume, pos);
                                 break stateloop;
                             case '\n':
                                 appendStrBufLineFeed();
-                                continue;
+                                state = transition(state, Tokenizer.COMMENT, reconsume, pos);
+                                continue stateloop;
                             case '\u0000':
                                 c = '\uFFFD';
                                 // CPPONLY: MOZ_FALLTHROUGH;
@@ -2948,88 +2960,106 @@ public class Tokenizer implements Locator, Locator2 {
                     }
                     // CPPONLY: MOZ_FALLTHROUGH;
                 case COMMENT_LESSTHAN_BANG_DASH:
-                    for (;;) {
-                        if (++pos == endPos) {
+                    if (++pos == endPos) {
+                        break stateloop;
+                    }
+                    c = checkChar(buf, pos);
+                    switch (c) {
+                        case '-':
+                            appendStrBuf(c);
+                            state = transition(state,
+                                    Tokenizer.COMMENT_LESSTHAN_BANG_DASH_DASH,
+                                    reconsume, pos);
+                            // `break` optimizes; `continue stateloop;` would be valid
+                            break;
+                        case '<':
+                            appendStrBuf(c);
+                            state = transition(state,
+                                    Tokenizer.COMMENT_LESSTHAN, reconsume, pos);
+                            continue stateloop;
+                        case '\r':
+                            appendStrBufCarriageReturn();
+                            state = transition(state, Tokenizer.COMMENT,
+                                    reconsume, pos);
                             break stateloop;
-                        }
-                        c = checkChar(buf, pos);
-                        switch (c) {
-                            case '-':
-                                appendStrBuf(c);
-                                state = transition(state, Tokenizer.COMMENT_LESSTHAN_BANG_DASH_DASH, reconsume, pos);
-                                continue stateloop;
-                            case '<':
-                                appendStrBuf(c);
-                                state = transition(state, Tokenizer.COMMENT_LESSTHAN, reconsume, pos);
-                                continue stateloop;
-                            case '\r':
-                                appendStrBufCarriageReturn();
-                                break stateloop;
-                            case '\n':
-                                appendStrBufLineFeed();
-                                continue;
-                            case '\u0000':
-                                c = '\uFFFD';
-                                // CPPONLY: MOZ_FALLTHROUGH;
-                            default:
-                                appendStrBuf(c);
-                                state = transition(state, Tokenizer.COMMENT, reconsume, pos);
-                                continue stateloop;
-                        }
+                        case '\n':
+                            appendStrBufLineFeed();
+                            state = transition(state, Tokenizer.COMMENT,
+                                    reconsume, pos);
+                            continue stateloop;
+                        case '\u0000':
+                            c = '\uFFFD';
+                            // CPPONLY: MOZ_FALLTHROUGH;
+                        default:
+                            appendStrBuf(c);
+                            state = transition(state, Tokenizer.COMMENT,
+                                    reconsume, pos);
+                            continue stateloop;
                     }
                     // CPPONLY: MOZ_FALLTHROUGH;
                 case COMMENT_LESSTHAN_BANG_DASH_DASH:
-                    for (;;) {
-                        if (++pos == endPos) {
-                            break stateloop;
-                        }
-                        c = checkChar(buf, pos);
-                        switch (c) {
-                            case '>':
-                                appendStrBuf(c);
-                                emitComment(3, pos);
-                                state = transition(state, Tokenizer.DATA, reconsume, pos);
-                                if (shouldSuspend) {
-                                    break stateloop;
-                                }
-                                continue stateloop;
-                            case '-':
-                                errNestedComment();
-                                adjustDoubleHyphenAndAppendToStrBufAndErr(c, reportedConsecutiveHyphens);
-                                reportedConsecutiveHyphens = true;
-                                state = transition(state, Tokenizer.COMMENT_END, reconsume, pos);
-                                continue stateloop;
-                            case '\r':
-                                errNestedComment();
-                                adjustDoubleHyphenAndAppendToStrBufAndErr(c, reportedConsecutiveHyphens);
-                                reportedConsecutiveHyphens = true;
-                                state = transition(state, Tokenizer.COMMENT, reconsume, pos);
-                                break stateloop;
-                            case '\n':
-                                errNestedComment();
-                                adjustDoubleHyphenAndAppendToStrBufAndErr(c, reportedConsecutiveHyphens);
-                                reportedConsecutiveHyphens = true;
-                                state = transition(state, Tokenizer.COMMENT, reconsume, pos);
-                                continue;
-                            case '\u0000':
-                                c = '\uFFFD';
-                                // CPPONLY: MOZ_FALLTHROUGH;
-                            case '!':
-                                errNestedComment();
-                                adjustDoubleHyphenAndAppendToStrBufAndErr(c, reportedConsecutiveHyphens);
-                                reportedConsecutiveHyphens = true;
-                                state = transition(state, Tokenizer.COMMENT_END_BANG, reconsume, pos);
-                                continue stateloop;
-                            default:
-                                errNestedComment();
-                                adjustDoubleHyphenAndAppendToStrBufAndErr(c, reportedConsecutiveHyphens);
-                                reportedConsecutiveHyphens = true;
-                                state = transition(state, Tokenizer.COMMENT_END, reconsume, pos);
-                                continue stateloop;
-                        }
+                    if (++pos == endPos) {
+                        break stateloop;
                     }
-                    // CPPONLY: MOZ_FALLTHROUGH;
-                    // XXX reorder point
+                    c = checkChar(buf, pos);
+                    switch (c) {
+                        case '>':
+                            appendStrBuf(c);
+                            emitComment(3, pos);
+                            state = transition(state, Tokenizer.DATA, reconsume,
+                                    pos);
+                            if (shouldSuspend) {
+                                break stateloop;
+                            }
+                            continue stateloop;
+                        case '-':
+                            errNestedComment();
+                            adjustDoubleHyphenAndAppendToStrBufAndErr(c,
+                                    reportedConsecutiveHyphens);
+                            reportedConsecutiveHyphens = true;
+                            state = transition(state, Tokenizer.COMMENT_END,
+                                    reconsume, pos);
+                            continue stateloop;
+                        case '\r':
+                            c = '\n';
+                            silentCarriageReturn();
+                            errNestedComment();
+                            adjustDoubleHyphenAndAppendToStrBufAndErr(c,
+                                    reportedConsecutiveHyphens);
+                            reportedConsecutiveHyphens = true;
+                            state = transition(state, Tokenizer.COMMENT,
+                                    reconsume, pos);
+                            break stateloop;
+                        case '\n':
+                            silentLineFeed();
+                            errNestedComment();
+                            adjustDoubleHyphenAndAppendToStrBufAndErr(c,
+                                    reportedConsecutiveHyphens);
+                            reportedConsecutiveHyphens = true;
+                            state = transition(state, Tokenizer.COMMENT,
+                                    reconsume, pos);
+                            continue stateloop;
+                        case '!':
+                            errNestedComment();
+                            adjustDoubleHyphenAndAppendToStrBufAndErr(c,
+                                    reportedConsecutiveHyphens);
+                            reportedConsecutiveHyphens = true;
+                            state = transition(state,
+                                    Tokenizer.COMMENT_END_BANG, reconsume, pos);
+                            continue stateloop;
+                        case '\u0000':
+                            c = '\uFFFD';
+                            // CPPONLY: MOZ_FALLTHROUGH;
+                        default:
+                            errNestedComment();
+                            adjustDoubleHyphenAndAppendToStrBufAndErr(c,
+                                    reportedConsecutiveHyphens);
+                            reportedConsecutiveHyphens = true;
+                            state = transition(state, Tokenizer.COMMENT,
+                                    reconsume, pos);
+                            continue stateloop;
+                    }
+                    // no fallthrough, reordering opportunity
                 case COMMENT_START_DASH:
                     if (++pos == endPos) {
                         break stateloop;
@@ -3089,6 +3119,7 @@ public class Tokenizer implements Locator, Locator2 {
                             state = transition(state, Tokenizer.COMMENT, reconsume, pos);
                             continue stateloop;
                     }
+                    // no fallthrough, reordering opportunity
                 case CDATA_START:
                     for (;;) {
                         if (++pos == endPos) {
@@ -3111,7 +3142,8 @@ public class Tokenizer implements Locator, Locator2 {
                             cstart = pos; // start coalescing
                             reconsume = true;
                             state = transition(state, Tokenizer.CDATA_SECTION, reconsume, pos);
-                            break; // FALL THROUGH continue stateloop;
+                            // `break` optimizes; `continue stateloop;` would be valid
+                            break;
                         }
                     }
                     // CPPONLY: MOZ_FALLTHROUGH;
@@ -3129,7 +3161,8 @@ public class Tokenizer implements Locator, Locator2 {
                             case ']':
                                 flushChars(buf, pos);
                                 state = transition(state, Tokenizer.CDATA_RSQB, reconsume, pos);
-                                break cdatasectionloop; // FALL THROUGH
+                                // `break` optimizes; `continue stateloop;` would be valid
+                                break cdatasectionloop;
                             case '\u0000':
                                 maybeEmitReplacementCharacter(buf, pos);
                                 continue;
@@ -3145,23 +3178,23 @@ public class Tokenizer implements Locator, Locator2 {
                     }
                     // CPPONLY: MOZ_FALLTHROUGH;
                 case CDATA_RSQB:
-                    cdatarsqb: for (;;) {
-                        if (++pos == endPos) {
-                            break stateloop;
-                        }
-                        c = checkChar(buf, pos);
-                        switch (c) {
-                            case ']':
-                                state = transition(state, Tokenizer.CDATA_RSQB_RSQB, reconsume, pos);
-                                break cdatarsqb;
-                            default:
-                                tokenHandler.characters(Tokenizer.RSQB_RSQB, 0,
-                                        1);
-                                cstart = pos;
-                                reconsume = true;
-                                state = transition(state, Tokenizer.CDATA_SECTION, reconsume, pos);
-                                continue stateloop;
-                        }
+                    if (++pos == endPos) {
+                        break stateloop;
+                    }
+                    c = checkChar(buf, pos);
+                    switch (c) {
+                        case ']':
+                            state = transition(state, Tokenizer.CDATA_RSQB_RSQB,
+                                    reconsume, pos);
+                            // `break` optimizes; `continue stateloop;` would be valid
+                            break;
+                        default:
+                            tokenHandler.characters(Tokenizer.RSQB_RSQB, 0, 1);
+                            cstart = pos;
+                            reconsume = true;
+                            state = transition(state, Tokenizer.CDATA_SECTION,
+                                    reconsume, pos);
+                            continue stateloop;
                     }
                     // CPPONLY: MOZ_FALLTHROUGH;
                 case CDATA_RSQB_RSQB:
@@ -3200,6 +3233,7 @@ public class Tokenizer implements Locator, Locator2 {
                                 continue stateloop;
                         }
                     }
+                    // no fallthrough, reordering opportunity
                 case ATTRIBUTE_VALUE_SINGLE_QUOTED:
                     attributevaluesinglequotedloop: for (;;) {
                         if (reconsume) {
@@ -3235,8 +3269,8 @@ public class Tokenizer implements Locator, Locator2 {
                                 setAdditionalAndRememberAmpersandLocation('\'');
                                 returnState = state;
                                 state = transition(state, Tokenizer.CONSUME_CHARACTER_REFERENCE, reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break attributevaluesinglequotedloop;
-                            // continue stateloop;
                             case '\r':
                                 appendStrBufCarriageReturn();
                                 break stateloop;
@@ -3335,7 +3369,8 @@ public class Tokenizer implements Locator, Locator2 {
                             // Didn't fail yet
                             appendCharRefBuf(c);
                             state = transition(state, Tokenizer.CHARACTER_REFERENCE_HILO_LOOKUP, reconsume, pos);
-                            // FALL THROUGH continue stateloop;
+                            // `break` optimizes; `continue stateloop;` would be valid
+                            break;
                     }
                     // CPPONLY: MOZ_FALLTHROUGH;
                 case CHARACTER_REFERENCE_HILO_LOOKUP:
@@ -3411,7 +3446,7 @@ public class Tokenizer implements Locator, Locator2 {
                         candidate = -1;
                         charRefBufMark = 0;
                         state = transition(state, Tokenizer.CHARACTER_REFERENCE_TAIL, reconsume, pos);
-                        // FALL THROUGH continue stateloop;
+                        // fallthrough optimizes; `continue stateloop;` would also be valid
                     }
                     // CPPONLY: MOZ_FALLTHROUGH;
                 case CHARACTER_REFERENCE_TAIL:
@@ -3639,7 +3674,8 @@ public class Tokenizer implements Locator, Locator2 {
                              */
                             reconsume = true;
                             state = transition(state, Tokenizer.DECIMAL_NRC_LOOP, reconsume, pos);
-                            // FALL THROUGH continue stateloop;
+                            // `break` optimizes; `continue stateloop;` would be valid
+                            break;
                     }
                     // CPPONLY: MOZ_FALLTHROUGH;
                 case DECIMAL_NRC_LOOP:
@@ -3671,7 +3707,7 @@ public class Tokenizer implements Locator, Locator2 {
                                     cstart = pos + 1;
                                 }
                                 state = transition(state, Tokenizer.HANDLE_NCR_VALUE, reconsume, pos);
-                                // FALL THROUGH continue stateloop;
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break decimalloop;
                             } else {
                                 errNoDigitsInNCR();
@@ -3711,7 +3747,7 @@ public class Tokenizer implements Locator, Locator2 {
                                 }
                                 reconsume = true;
                                 state = transition(state, Tokenizer.HANDLE_NCR_VALUE, reconsume, pos);
-                                // FALL THROUGH continue stateloop;
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break decimalloop;
                             }
                         }
@@ -3725,6 +3761,7 @@ public class Tokenizer implements Locator, Locator2 {
                     handleNcrValue(returnState);
                     state = transition(state, returnState, reconsume, pos);
                     continue stateloop;
+                    // no fallthrough, reordering opportunity
                 case HEX_NCR_LOOP:
                     for (;;) {
                         if (++pos == endPos) {
@@ -3809,6 +3846,7 @@ public class Tokenizer implements Locator, Locator2 {
                             }
                         }
                     }
+                    // no fallthrough, reordering opportunity
                 case PLAINTEXT:
                     plaintextloop: for (;;) {
                         if (reconsume) {
@@ -3838,6 +3876,7 @@ public class Tokenizer implements Locator, Locator2 {
                                 continue;
                         }
                     }
+                    // no fallthrough, reordering opportunity
                 case CLOSE_TAG_OPEN:
                     if (++pos == endPos) {
                         break stateloop;
@@ -3919,6 +3958,7 @@ public class Tokenizer implements Locator, Locator2 {
                                 continue stateloop;
                             }
                     }
+                    // no fallthrough, reordering opportunity
                 case RCDATA:
                     rcdataloop: for (;;) {
                         if (reconsume) {
@@ -3969,6 +4009,7 @@ public class Tokenizer implements Locator, Locator2 {
                                 continue;
                         }
                     }
+                    // no fallthrough, reordering opportunity
                 case RAWTEXT:
                     rawtextloop: for (;;) {
                         if (reconsume) {
@@ -3989,8 +4030,8 @@ public class Tokenizer implements Locator, Locator2 {
 
                                 returnState = state;
                                 state = transition(state, Tokenizer.RAWTEXT_RCDATA_LESS_THAN_SIGN, reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break rawtextloop;
-                            // FALL THRU continue stateloop;
                             case '\u0000':
                                 emitReplacementCharacter(buf, pos);
                                 continue;
@@ -4025,8 +4066,8 @@ public class Tokenizer implements Locator, Locator2 {
                                 index = 0;
                                 clearStrBufBeforeUse();
                                 state = transition(state, Tokenizer.NON_DATA_END_TAG_NAME, reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break rawtextrcdatalessthansignloop;
-                            // FALL THRU continue stateloop;
                             default:
                                 /*
                                  * Otherwise, emit a U+003C LESS-THAN SIGN
@@ -4157,6 +4198,7 @@ public class Tokenizer implements Locator, Locator2 {
                             }
                         }
                     }
+                    // no fallthrough, reordering opportunity
                     // BEGIN HOTSPOT WORKAROUND
                 case BOGUS_COMMENT:
                     boguscommentloop: for (;;) {
@@ -4197,6 +4239,7 @@ public class Tokenizer implements Locator, Locator2 {
                             case '-':
                                 appendStrBuf(c);
                                 state = transition(state, Tokenizer.BOGUS_COMMENT_HYPHEN, reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break boguscommentloop;
                             case '\r':
                                 appendStrBufCarriageReturn();
@@ -4250,6 +4293,7 @@ public class Tokenizer implements Locator, Locator2 {
                                 continue stateloop;
                         }
                     }
+                    // no fallthrough, reordering opportunity
                 case SCRIPT_DATA:
                     scriptdataloop: for (;;) {
                         if (reconsume) {
@@ -4269,8 +4313,8 @@ public class Tokenizer implements Locator, Locator2 {
                                 flushChars(buf, pos);
                                 returnState = state;
                                 state = transition(state, Tokenizer.SCRIPT_DATA_LESS_THAN_SIGN, reconsume, pos);
-                                break scriptdataloop; // FALL THRU continue
-                            // stateloop;
+                                // `break` optimizes; `continue stateloop;` would be valid
+                                break scriptdataloop;
                             case '\u0000':
                                 emitReplacementCharacter(buf, pos);
                                 continue;
@@ -4311,9 +4355,8 @@ public class Tokenizer implements Locator, Locator2 {
                                 tokenHandler.characters(Tokenizer.LT_GT, 0, 1);
                                 cstart = pos;
                                 state = transition(state, Tokenizer.SCRIPT_DATA_ESCAPE_START, reconsume, pos);
-                                break scriptdatalessthansignloop; // FALL THRU
-                            // continue
-                            // stateloop;
+                                // `break` optimizes; `continue stateloop;` would be valid
+                                break scriptdatalessthansignloop;
                             default:
                                 /*
                                  * Otherwise, emit a U+003C LESS-THAN SIGN
@@ -4348,9 +4391,8 @@ public class Tokenizer implements Locator, Locator2 {
                                  * script data escape start dash state.
                                  */
                                 state = transition(state, Tokenizer.SCRIPT_DATA_ESCAPE_START_DASH, reconsume, pos);
-                                break scriptdataescapestartloop; // FALL THRU
-                            // continue
-                            // stateloop;
+                                // `break` optimizes; `continue stateloop;` would be valid
+                                break scriptdataescapestartloop;
                             default:
                                 /*
                                  * Anything else Reconsume the current input
@@ -4379,8 +4421,8 @@ public class Tokenizer implements Locator, Locator2 {
                                  * script data escaped dash dash state.
                                  */
                                 state = transition(state, Tokenizer.SCRIPT_DATA_ESCAPED_DASH_DASH, reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break scriptdataescapestartdashloop;
-                            // continue stateloop;
                             default:
                                 /*
                                  * Anything else Reconsume the current input
@@ -4443,8 +4485,8 @@ public class Tokenizer implements Locator, Locator2 {
                                  * script data escaped state.
                                  */
                                 state = transition(state, Tokenizer.SCRIPT_DATA_ESCAPED, reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break scriptdataescapeddashdashloop;
-                            // continue stateloop;
                         }
                     }
                     // CPPONLY: MOZ_FALLTHROUGH;
@@ -4469,9 +4511,8 @@ public class Tokenizer implements Locator, Locator2 {
                                  * script data escaped dash state.
                                  */
                                 state = transition(state, Tokenizer.SCRIPT_DATA_ESCAPED_DASH, reconsume, pos);
-                                break scriptdataescapedloop; // FALL THRU
-                            // continue
-                            // stateloop;
+                                // `break` optimizes; `continue stateloop;` would be valid
+                                break scriptdataescapedloop;
                             case '<':
                                 /*
                                  * U+003C LESS-THAN SIGN (<) Switch to the
@@ -4524,8 +4565,8 @@ public class Tokenizer implements Locator, Locator2 {
                                  */
                                 flushChars(buf, pos);
                                 state = transition(state, Tokenizer.SCRIPT_DATA_ESCAPED_LESS_THAN_SIGN, reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break scriptdataescapeddashloop;
-                            // continue stateloop;
                             case '\u0000':
                                 emitReplacementCharacter(buf, pos);
                                 state = transition(state, Tokenizer.SCRIPT_DATA_ESCAPED, reconsume, pos);
@@ -4589,8 +4630,8 @@ public class Tokenizer implements Locator, Locator2 {
                                  * escape start state.
                                  */
                                 state = transition(state, Tokenizer.SCRIPT_DATA_DOUBLE_ESCAPE_START, reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break scriptdataescapedlessthanloop;
-                            // continue stateloop;
                             default:
                                 /*
                                  * Anything else Emit a U+003C LESS-THAN SIGN
@@ -4649,8 +4690,8 @@ public class Tokenizer implements Locator, Locator2 {
                                  * script data double escaped state.
                                  */
                                 state = transition(state, Tokenizer.SCRIPT_DATA_DOUBLE_ESCAPED, reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break scriptdatadoubleescapestartloop;
-                            // continue stateloop;
                             default:
                                 /*
                                  * Anything else Reconsume the current input
@@ -4683,9 +4724,8 @@ public class Tokenizer implements Locator, Locator2 {
                                  * script data double escaped dash state.
                                  */
                                 state = transition(state, Tokenizer.SCRIPT_DATA_DOUBLE_ESCAPED_DASH, reconsume, pos);
-                                break scriptdatadoubleescapedloop; // FALL THRU
-                            // continue
-                            // stateloop;
+                                // `break` optimizes; `continue stateloop;` would be valid
+                                break scriptdatadoubleescapedloop;
                             case '<':
                                 /*
                                  * U+003C LESS-THAN SIGN (<) Emit a U+003C
@@ -4731,8 +4771,8 @@ public class Tokenizer implements Locator, Locator2 {
                                  * script data double escaped dash dash state.
                                  */
                                 state = transition(state, Tokenizer.SCRIPT_DATA_DOUBLE_ESCAPED_DASH_DASH, reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break scriptdatadoubleescapeddashloop;
-                            // continue stateloop;
                             case '<':
                                 /*
                                  * U+003C LESS-THAN SIGN (<) Emit a U+003C
@@ -4789,6 +4829,7 @@ public class Tokenizer implements Locator, Locator2 {
                                  * state.
                                  */
                                 state = transition(state, Tokenizer.SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN_SIGN, reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break scriptdatadoubleescapeddashdashloop;
                             case '>':
                                 /*
@@ -4839,6 +4880,7 @@ public class Tokenizer implements Locator, Locator2 {
                                  */
                                 index = 0;
                                 state = transition(state, Tokenizer.SCRIPT_DATA_DOUBLE_ESCAPE_END, reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break scriptdatadoubleescapedlessthanloop;
                             default:
                                 /*
@@ -4905,6 +4947,7 @@ public class Tokenizer implements Locator, Locator2 {
                                 continue stateloop;
                         }
                     }
+                    // no fallthrough, reordering opportunity
                 case MARKUP_DECLARATION_OCTYPE:
                     markupdeclarationdoctypeloop: for (;;) {
                         if (++pos == endPos) {
@@ -4929,8 +4972,8 @@ public class Tokenizer implements Locator, Locator2 {
                         } else {
                             reconsume = true;
                             state = transition(state, Tokenizer.DOCTYPE, reconsume, pos);
+                            // `break` optimizes; `continue stateloop;` would be valid
                             break markupdeclarationdoctypeloop;
-                            // continue stateloop;
                         }
                     }
                     // CPPONLY: MOZ_FALLTHROUGH;
@@ -4965,8 +5008,8 @@ public class Tokenizer implements Locator, Locator2 {
                                  * Switch to the before DOCTYPE name state.
                                  */
                                 state = transition(state, Tokenizer.BEFORE_DOCTYPE_NAME, reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break doctypeloop;
-                            // continue stateloop;
                             default:
                                 /*
                                  * Anything else Parse error.
@@ -4978,8 +5021,8 @@ public class Tokenizer implements Locator, Locator2 {
                                  */
                                 reconsume = true;
                                 state = transition(state, Tokenizer.BEFORE_DOCTYPE_NAME, reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break doctypeloop;
-                            // continue stateloop;
                         }
                     }
                     // CPPONLY: MOZ_FALLTHROUGH;
@@ -5060,8 +5103,8 @@ public class Tokenizer implements Locator, Locator2 {
                                  * Switch to the DOCTYPE name state.
                                  */
                                 state = transition(state, Tokenizer.DOCTYPE_NAME, reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break beforedoctypenameloop;
-                            // continue stateloop;
                         }
                     }
                     // CPPONLY: MOZ_FALLTHROUGH;
@@ -5093,8 +5136,8 @@ public class Tokenizer implements Locator, Locator2 {
                                  */
                                 strBufToDoctypeName();
                                 state = transition(state, Tokenizer.AFTER_DOCTYPE_NAME, reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break doctypenameloop;
-                            // continue stateloop;
                             case '>':
                                 /*
                                  * U+003E GREATER-THAN SIGN (>) Emit the current
@@ -5180,8 +5223,8 @@ public class Tokenizer implements Locator, Locator2 {
                             case 'P':
                                 index = 0;
                                 state = transition(state, Tokenizer.DOCTYPE_UBLIC, reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break afterdoctypenameloop;
-                            // continue stateloop;
                             case 's':
                             case 'S':
                                 index = 0;
@@ -5235,8 +5278,8 @@ public class Tokenizer implements Locator, Locator2 {
                         } else {
                             reconsume = true;
                             state = transition(state, Tokenizer.AFTER_DOCTYPE_PUBLIC_KEYWORD, reconsume, pos);
+                            // `break` optimizes; `continue stateloop;` would be valid
                             break doctypeublicloop;
-                            // continue stateloop;
                         }
                     }
                     // CPPONLY: MOZ_FALLTHROUGH;
@@ -5271,8 +5314,8 @@ public class Tokenizer implements Locator, Locator2 {
                                  * identifier state.
                                  */
                                 state = transition(state, Tokenizer.BEFORE_DOCTYPE_PUBLIC_IDENTIFIER, reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break afterdoctypepublickeywordloop;
-                            // FALL THROUGH continue stateloop
                             case '"':
                                 /*
                                  * U+0022 QUOTATION MARK (") Parse Error.
@@ -5378,8 +5421,8 @@ public class Tokenizer implements Locator, Locator2 {
                                  * (double-quoted) state.
                                  */
                                 state = transition(state, Tokenizer.DOCTYPE_PUBLIC_IDENTIFIER_DOUBLE_QUOTED, reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break beforedoctypepublicidentifierloop;
-                            // continue stateloop;
                             case '\'':
                                 /*
                                  * U+0027 APOSTROPHE (') Set the DOCTYPE token's
@@ -5445,8 +5488,8 @@ public class Tokenizer implements Locator, Locator2 {
                                  */
                                 publicIdentifier = strBufToString();
                                 state = transition(state, Tokenizer.AFTER_DOCTYPE_PUBLIC_IDENTIFIER, reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break doctypepublicidentifierdoublequotedloop;
-                            // continue stateloop;
                             case '>':
                                 /*
                                  * U+003E GREATER-THAN SIGN (>) Parse error.
@@ -5521,8 +5564,8 @@ public class Tokenizer implements Locator, Locator2 {
                                  * system identifiers state.
                                  */
                                 state = transition(state, Tokenizer.BETWEEN_DOCTYPE_PUBLIC_AND_SYSTEM_IDENTIFIERS, reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break afterdoctypepublicidentifierloop;
-                            // continue stateloop;
                             case '>':
                                 /*
                                  * U+003E GREATER-THAN SIGN (>) Emit the current
@@ -5636,8 +5679,8 @@ public class Tokenizer implements Locator, Locator2 {
                                  * (double-quoted) state.
                                  */
                                 state = transition(state, Tokenizer.DOCTYPE_SYSTEM_IDENTIFIER_DOUBLE_QUOTED, reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break betweendoctypepublicandsystemidentifiersloop;
-                            // continue stateloop;
                             case '\'':
                                 /*
                                  * U+0027 APOSTROPHE (') Set the DOCTYPE token's
@@ -5683,7 +5726,8 @@ public class Tokenizer implements Locator, Locator2 {
                                  */
                                 systemIdentifier = strBufToString();
                                 state = transition(state, Tokenizer.AFTER_DOCTYPE_SYSTEM_IDENTIFIER, reconsume, pos);
-                                continue stateloop;
+                                // `break` optimizes; `continue stateloop;` would be valid
+                                break doctypesystemidentifierdoublequotedloop;
                             case '>':
                                 /*
                                  * U+003E GREATER-THAN SIGN (>) Parse error.
@@ -5730,6 +5774,7 @@ public class Tokenizer implements Locator, Locator2 {
                                 continue;
                         }
                     }
+                    // CPPONLY: MOZ_FALLTHROUGH;
                 case AFTER_DOCTYPE_SYSTEM_IDENTIFIER:
                     afterdoctypesystemidentifierloop: for (;;) {
                         if (++pos == endPos) {
@@ -5777,8 +5822,8 @@ public class Tokenizer implements Locator, Locator2 {
                                  */
                                 bogusDoctypeWithoutQuirks();
                                 state = transition(state, Tokenizer.BOGUS_DOCTYPE, reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break afterdoctypesystemidentifierloop;
-                            // continue stateloop;
                         }
                     }
                     // CPPONLY: MOZ_FALLTHROUGH;
@@ -5824,6 +5869,7 @@ public class Tokenizer implements Locator, Locator2 {
                                 continue;
                         }
                     }
+                    // no fallthrough, reordering opportunity
                 case DOCTYPE_YSTEM:
                     doctypeystemloop: for (;;) {
                         if (++pos == endPos) {
@@ -5853,8 +5899,8 @@ public class Tokenizer implements Locator, Locator2 {
                         } else {
                             reconsume = true;
                             state = transition(state, Tokenizer.AFTER_DOCTYPE_SYSTEM_KEYWORD, reconsume, pos);
+                            // `break` optimizes; `continue stateloop;` would be valid
                             break doctypeystemloop;
-                            // continue stateloop;
                         }
                     }
                     // CPPONLY: MOZ_FALLTHROUGH;
@@ -5889,8 +5935,8 @@ public class Tokenizer implements Locator, Locator2 {
                                  * identifier state.
                                  */
                                 state = transition(state, Tokenizer.BEFORE_DOCTYPE_SYSTEM_IDENTIFIER, reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break afterdoctypesystemkeywordloop;
-                            // FALL THROUGH continue stateloop
                             case '"':
                                 /*
                                  * U+0022 QUOTATION MARK (") Parse Error.
@@ -6009,8 +6055,8 @@ public class Tokenizer implements Locator, Locator2 {
                                  * (single-quoted) state.
                                  */
                                 state = transition(state, Tokenizer.DOCTYPE_SYSTEM_IDENTIFIER_SINGLE_QUOTED, reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break beforedoctypesystemidentifierloop;
-                            // continue stateloop;
                             case '>':
                                 /* U+003E GREATER-THAN SIGN (>) Parse error. */
                                 errExpectedSystemId();
@@ -6107,6 +6153,7 @@ public class Tokenizer implements Locator, Locator2 {
                                 continue;
                         }
                     }
+                    // no fallthrough, reordering opportunity
                 case DOCTYPE_PUBLIC_IDENTIFIER_SINGLE_QUOTED:
                     for (;;) {
                         if (++pos == endPos) {
@@ -6168,6 +6215,7 @@ public class Tokenizer implements Locator, Locator2 {
                                 continue;
                         }
                     }
+                    // no fallthrough, reordering opportunity
                 case PROCESSING_INSTRUCTION:
                     processinginstructionloop: for (;;) {
                         if (++pos == endPos) {
@@ -6180,8 +6228,8 @@ public class Tokenizer implements Locator, Locator2 {
                                         state,
                                         Tokenizer.PROCESSING_INSTRUCTION_QUESTION_MARK,
                                         reconsume, pos);
+                                // `break` optimizes; `continue stateloop;` would be valid
                                 break processinginstructionloop;
-                            // continue stateloop;
                             default:
                                 continue;
                         }
