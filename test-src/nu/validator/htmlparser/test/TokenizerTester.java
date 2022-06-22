@@ -13,7 +13,7 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL 
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
@@ -52,7 +52,6 @@ import com.sdicons.json.model.JSONObject;
 import com.sdicons.json.model.JSONString;
 import com.sdicons.json.model.JSONValue;
 import com.sdicons.json.parser.JSONParser;
-import com.sdicons.json.parser.ParserException;
 
 public class TokenizerTester {
 
@@ -103,7 +102,7 @@ public class TokenizerTester {
     private final Writer writer;
 
     public TokenizerTester(InputStream stream) throws TokenStreamException,
-            RecognitionException, UnsupportedEncodingException, ParserException {
+            RecognitionException, UnsupportedEncodingException {
         tokenHandler = new JSONArrayTokenHandler();
         driver = new Driver(new ErrorReportingTokenizer(tokenHandler));
         driver.setCommentPolicy(XmlViolationPolicy.ALLOW);
@@ -222,10 +221,9 @@ public class TokenizerTester {
      * @throws TokenStreamException
      * @throws IOException
      * @throws SAXException
-     * @throws ParserException
      */
     public static void main(String[] args) throws TokenStreamException,
-            RecognitionException, SAXException, IOException, ParserException {
+            RecognitionException, SAXException, IOException {
         for (int i = 0; i < args.length; i++) {
             byte[] fileBytes = Files.readAllBytes(Paths.get(args[i]));
             String fileContent = new String(fileBytes, StandardCharsets.UTF_8);
