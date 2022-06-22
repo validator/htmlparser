@@ -557,8 +557,6 @@ public final class ElementName
 //                return "ANNOTATION_XML";
 //            case TreeBuilder.FOREIGNOBJECT_OR_DESC:
 //                return "FOREIGNOBJECT_OR_DESC";
-//            case TreeBuilder.MENUITEM:
-//                return "MENUITEM";
 //        }
 //        return null;
 //    }
@@ -1143,10 +1141,6 @@ public static final ElementName FORM = new ElementName("form", "form",
 // CPPONLY: NS_NewHTMLFormElement,
 // CPPONLY: NS_NewSVGUnknownElement, 
 TreeBuilder.FORM | SPECIAL);
-public static final ElementName MENUITEM = new ElementName("menuitem", "menuitem", 
-// CPPONLY: NS_NewHTMLMenuItemElement,
-// CPPONLY: NS_NewSVGUnknownElement, 
-TreeBuilder.MENUITEM);
 public static final ElementName PARAM = new ElementName("param", "param", 
 // CPPONLY: NS_NewHTMLSharedElement,
 // CPPONLY: NS_NewSVGUnknownElement, 
@@ -1672,7 +1666,6 @@ UL,
 SYMBOL,
 ANIMATETRANSFORM,
 EM,
-MENUITEM,
 ANIMATEMOTION,
 CAPTION,
 MN,

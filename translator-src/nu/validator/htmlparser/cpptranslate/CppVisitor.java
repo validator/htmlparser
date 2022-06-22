@@ -1961,16 +1961,9 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
 
     public void visit(SwitchEntryStmt n, LocalSymbolTable arg) {
         if (n.getLabel() != null) {
-            boolean isMenuitem = n.getLabel().toString().equals("MENUITEM");
-            if (isMenuitem) {
-                printer.printWithoutIndent("#ifdef ENABLE_VOID_MENUITEM\n");
-            }
             printer.print("case ");
             n.getLabel().accept(this, arg);
             printer.print(":");
-            if (isMenuitem) {
-                printer.printWithoutIndent("\n#endif");
-            }
         } else {
             printer.print("default:");
         }
