@@ -2292,7 +2292,6 @@ public class Tokenizer implements Locator, Locator2 {
                              * flag of the current tag token. Emit the current
                              * tag token.
                              */
-                            noteSelfClosingTag();
                             state = transition(state, emitCurrentTagToken(true, pos), reconsume, pos);
                             if (shouldSuspend) {
                                 break stateloop;
@@ -7586,9 +7585,6 @@ public class Tokenizer implements Locator, Locator2 {
     }
 
     protected void noteUnquotedAttributeValue() throws SAXException {
-    }
-
-    protected void noteSelfClosingTag() throws SAXException {
     }
 
     /**

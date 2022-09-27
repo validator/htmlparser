@@ -199,6 +199,7 @@ public class HtmlParser implements XMLReader {
             this.treeBuilder.setScriptingEnabled(scriptingEnabled);
             this.treeBuilder.setReportingDoctype(reportingDoctype);
             this.treeBuilder.setNamePolicy(namePolicy);
+            this.treeBuilder.setErrorProfile(errorProfileMap);
             if (saxStreamer != null) {
                 saxStreamer.setContentHandler(contentHandler == null ? new DefaultHandler()
                         : contentHandler);

@@ -710,18 +710,6 @@ public class ErrorReportingTokenizer extends Tokenizer {
         note("xhtml1", "Unquoted attribute value.");
     }
 
-    @Override
-    protected void noteSelfClosingTag() throws SAXException {
-        note("html-strict",
-                "Self-closing tag syntax in text/html documents is widely"
-                        + " discouraged; it’s unnecessary and interacts badly"
-                        + " with other HTML features (e.g., unquoted attribute"
-                        + " values). If you’re using a tool that injects"
-                        + " self-closing tag syntax into all void elements,"
-                        + " without any option to prevent it from doing so,"
-                        + " then consider switching to a different tool.");
-    }
-
     /**
      * Sets the transitionHandler.
      *
