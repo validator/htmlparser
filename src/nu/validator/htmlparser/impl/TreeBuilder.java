@@ -2885,6 +2885,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         }
         if (selfClosing) {
             errSelfClosing();
+        // [NOCPP[
         } else if (wasSelfClosing && voidElement
                 && tokenizer.getErrorProfile() != null
                 && tokenizer.getErrorProfile().get("html-strict") != null) {
@@ -2895,6 +2896,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                     + " self-closing tag syntax into all void elements,"
                     + " without any option to prevent it from doing so,"
                     + " then consider switching to a different tool.");
+        // ]NOCPP]
         }
         // CPPONLY: if (mBuilder == null && attributes != HtmlAttributes.EMPTY_ATTRIBUTES) {
         // CPPONLY:    Portability.delete(attributes);
