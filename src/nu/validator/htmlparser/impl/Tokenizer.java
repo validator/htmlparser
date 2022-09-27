@@ -35,6 +35,8 @@
 
 package nu.validator.htmlparser.impl;
 
+import java.util.HashMap;
+
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.Locator;
 import org.xml.sax.ext.Locator2;
@@ -684,6 +686,15 @@ public class Tokenizer implements Locator, Locator2 {
 
     public ErrorHandler getErrorHandler() {
         return this.errorHandler;
+    }
+
+    /**
+     * Gets the errorProfile.
+     *
+     * @param errorProfile
+     */
+    public HashMap getErrorProfile() {
+        return null;
     }
 
     /**
@@ -2292,7 +2303,6 @@ public class Tokenizer implements Locator, Locator2 {
                              * flag of the current tag token. Emit the current
                              * tag token.
                              */
-                            noteSelfClosingTag();
                             state = transition(state, emitCurrentTagToken(true, pos), reconsume, pos);
                             if (shouldSuspend) {
                                 break stateloop;
@@ -7586,9 +7596,6 @@ public class Tokenizer implements Locator, Locator2 {
     }
 
     protected void noteUnquotedAttributeValue() throws SAXException {
-    }
-
-    protected void noteSelfClosingTag() throws SAXException {
     }
 
     /**
