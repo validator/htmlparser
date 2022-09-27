@@ -438,8 +438,6 @@ public abstract class TreeBuilder<T> implements TokenHandler,
 
     private boolean reportingDoctype = true;
 
-    private HashMap<String, String> errorProfileMap = null;
-
     private XmlViolationPolicy namePolicy = XmlViolationPolicy.ALTER_INFOSET;
 
     private final Map<String, LocatorImpl> idLocations = new HashMap<String, LocatorImpl>();
@@ -1460,17 +1458,8 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         flushCharacters();
 
         // [NOCPP[
-        if (contextNamespace == "http://www.w3.org/1999/xhtml" &&
-                selfClosing && errorProfileMap != null &&
-                errorProfileMap.get("html-strict") != null) {
-            warn("Self-closing tag syntax in text/html documents is widely"
-                    + " discouraged; it’s unnecessary and interacts badly"
-                    + " with other HTML features (e.g., unquoted attribute"
-                    + " values). If you’re using a tool that injects"
-                    + " self-closing tag syntax into all void elements,"
-                    + " without any option to prevent it from doing so,"
-                    + " then consider switching to a different tool.");
-        }
+        boolean wasSelfClosing = selfClosing;
+        boolean voidElement = false;
         if (errorHandler != null) {
             // ID uniqueness
             @IdType String id = attributes.getId();
@@ -1593,6 +1582,9 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                     elementName,
                                     attributes);
                             selfClosing = false;
+                            // [NOCPP[
+                            voidElement = true;
+                            // ]NOCPP]
                             attributes = null; // CPP
                             break starttagloop;
                         case TITLE:
@@ -1605,6 +1597,9 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                     elementName,
                                     attributes);
                             selfClosing = false;
+                            // [NOCPP[
+                            voidElement = true;
+                            // ]NOCPP]
                             attributes = null; // CPP
                             break starttagloop;
                         case SCRIPT:
@@ -1791,6 +1786,9 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                         attributes,
                                         formPointer);
                                 selfClosing = false;
+                                // [NOCPP[
+                                voidElement = true;
+                                // ]NOCPP]
                                 attributes = null; // CPP
                                 break starttagloop;
                             case FORM:
@@ -2137,6 +2135,9 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                         elementName,
                                         attributes);
                                 selfClosing = false;
+                                // [NOCPP[
+                                voidElement = true;
+                                // ]NOCPP]
                                 attributes = null; // CPP
                                 break starttagloop;
                             case HR:
@@ -2145,6 +2146,9 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                         elementName,
                                         attributes);
                                 selfClosing = false;
+                                // [NOCPP[
+                                voidElement = true;
+                                // ]NOCPP]
                                 attributes = null; // CPP
                                 break starttagloop;
                             case IMAGE:
@@ -2158,6 +2162,9 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                         elementName, attributes,
                                         formPointer);
                                 selfClosing = false;
+                                // [NOCPP[
+                                voidElement = true;
+                                // ]NOCPP]
                                 attributes = null; // CPP
                                 break starttagloop;
                             case TEXTAREA:
@@ -2337,6 +2344,9 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                         elementName,
                                         attributes);
                                 selfClosing = false;
+                                // [NOCPP[
+                                voidElement = true;
+                                // ]NOCPP]
                                 attributes = null; // CPP
                                 break starttagloop;
                             case META:
@@ -2404,6 +2414,9 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                     elementName,
                                     attributes);
                             selfClosing = false;
+                            // [NOCPP[
+                            voidElement = true;
+                            // ]NOCPP]
                             attributes = null; // CPP
                             break starttagloop;
                         case META:
@@ -2412,6 +2425,9 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                     elementName,
                                     attributes);
                             selfClosing = false;
+                            // [NOCPP[
+                            voidElement = true;
+                            // ]NOCPP]
                             attributes = null; // CPP
                             break starttagloop;
                         case STYLE:
@@ -2451,6 +2467,9 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                     elementName,
                                     attributes);
                             selfClosing = false;
+                            // [NOCPP[
+                            voidElement = true;
+                            // ]NOCPP]
                             attributes = null; // CPP
                             break starttagloop;
                         case TEMPLATE:
@@ -2585,6 +2604,9 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                     elementName,
                                     attributes);
                             selfClosing = false;
+                            // [NOCPP[
+                            voidElement = true;
+                            // ]NOCPP]
                             attributes = null; // CPP
                             break starttagloop;
                         default:
@@ -2758,6 +2780,9 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                     elementName,
                                     attributes);
                             selfClosing = false;
+                            // [NOCPP[
+                            voidElement = true;
+                            // ]NOCPP]
                             pop(); // head
                             attributes = null; // CPP
                             break starttagloop;
@@ -2769,6 +2794,9 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                     elementName,
                                     attributes);
                             selfClosing = false;
+                            // [NOCPP[
+                            voidElement = true;
+                            // ]NOCPP]
                             pop(); // head
                             attributes = null; // CPP
                             break starttagloop;
@@ -2857,6 +2885,16 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         }
         if (selfClosing) {
             errSelfClosing();
+        } else if (wasSelfClosing && voidElement
+                && tokenizer.getErrorProfile() != null
+                && tokenizer.getErrorProfile().get("html-strict") != null) {
+            warn("Self-closing tag syntax in text/html documents is widely"
+                    + " discouraged; it’s unnecessary and interacts badly"
+                    + " with other HTML features (e.g., unquoted attribute"
+                    + " values). If you’re using a tool that injects"
+                    + " self-closing tag syntax into all void elements,"
+                    + " without any option to prevent it from doing so,"
+                    + " then consider switching to a different tool.");
         }
         // CPPONLY: if (mBuilder == null && attributes != HtmlAttributes.EMPTY_ATTRIBUTES) {
         // CPPONLY:    Portability.delete(attributes);
@@ -5829,15 +5867,6 @@ public abstract class TreeBuilder<T> implements TokenHandler,
 
     public void setNamePolicy(XmlViolationPolicy namePolicy) {
         this.namePolicy = namePolicy;
-    }
-
-    /**
-     * Sets the errorProfile.
-     *
-     * @param errorProfile
-     */
-    public void setErrorProfile(HashMap<String, String> errorProfileMap) {
-        this.errorProfileMap = errorProfileMap;
     }
 
     /**
