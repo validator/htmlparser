@@ -135,15 +135,6 @@ public class ErrorReportingTokenizer extends Tokenizer {
     }
 
     /**
-     * Gets the errorProfile.
-     *
-     * @param errorProfile
-     */
-    @Override public HashMap getErrorProfile() {
-        return errorProfileMap;
-    }
-
-    /**
      * Reports on an event based on profile selected.
      *
      * @param profile
