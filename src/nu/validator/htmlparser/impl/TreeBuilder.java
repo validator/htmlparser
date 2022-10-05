@@ -2889,9 +2889,8 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         } else if (wasSelfClosing && voidElement
                 && tokenizer.getErrorProfile() != null
                 && tokenizer.getErrorProfile().get("html-strict") != null) {
-            warn("Void elements cannot be marked as self-closing. Closing"
-                    + " slashes in void-element start tags are unnecessary and"
-                    + " interact badly with unquoted attribute values.");
+            warn("Trailing slash on void elements has no effect and interacts"
+                    + " badly with unquoted attribute values.");
         // ]NOCPP]
         }
         // CPPONLY: if (mBuilder == null && attributes != HtmlAttributes.EMPTY_ATTRIBUTES) {
