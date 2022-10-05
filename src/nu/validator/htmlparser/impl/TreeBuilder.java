@@ -2889,13 +2889,9 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         } else if (wasSelfClosing && voidElement
                 && tokenizer.getErrorProfile() != null
                 && tokenizer.getErrorProfile().get("html-strict") != null) {
-            warn("Self-closing tag syntax in text/html documents is widely"
-                    + " discouraged; it’s unnecessary and interacts badly"
-                    + " with other HTML features (e.g., unquoted attribute"
-                    + " values). If you’re using a tool that injects"
-                    + " self-closing tag syntax into all void elements,"
-                    + " without any option to prevent it from doing so,"
-                    + " then consider switching to a different tool.");
+            warn("Void elements cannot be marked as self-closing. Closing"
+                    + " slashes in void-element start tags are unnecessary and"
+                    + " interact badly with unquoted attribute values.");
         // ]NOCPP]
         }
         // CPPONLY: if (mBuilder == null && attributes != HtmlAttributes.EMPTY_ATTRIBUTES) {
