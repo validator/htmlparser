@@ -1463,7 +1463,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         if (errorHandler != null) {
             // ID uniqueness
             @IdType String id = attributes.getId();
-            if (id != null) {
+            if (id != null && !isTemplateContents()) {
                 LocatorImpl oldLoc = idLocations.get(id);
                 if (oldLoc != null) {
                     err("Duplicate ID \u201C" + id + "\u201D.");
