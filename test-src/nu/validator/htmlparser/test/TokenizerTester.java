@@ -135,7 +135,14 @@ public class TokenizerTester {
 
     private void runTest(JSONObject test) throws SAXException, IOException {
         String inputString = ((JSONString) test.get("input")).getValue();
+        String expectedError = null;
+        boolean errorReported = false;
         JSONArray expectedTokens = (JSONArray) test.get("output");
+        JSONArray errorsArray = (JSONArray) test.getValue().get("errors");
+        if (errorsArray != null) {
+            JSONObject errorsObject = (JSONObject) errorsArray.get(0);
+            expectedError = ((JSONString) errorsObject.get("code")).getValue();
+        }
         String description = ((JSONString) test.get("description")).getValue();
         JSONString lastStartTagJSON = ((JSONString) test.get("lastStartTag"));
         String lastStartTag = lastStartTagJSON == null ? null
@@ -143,33 +150,33 @@ public class TokenizerTester {
         JSONArray contentModelFlags = (JSONArray) test.get("initialStates");
         if (contentModelFlags == null) {
             runTestInner(inputString, expectedTokens, description,
-                    Tokenizer.DATA, null);
+                    expectedError, Tokenizer.DATA, null);
         } else {
             for (JSONValue value : contentModelFlags.getValue()) {
                 if (PCDATA.equals(value)) {
                     lastStartTag = lastStartTag == null ? "xmp" : lastStartTag;
                     runTestInner(inputString, expectedTokens, description,
-                            Tokenizer.DATA, lastStartTag);
+                            expectedError, Tokenizer.DATA, lastStartTag);
                 } else if (RAWTEXT.equals(value)) {
                     lastStartTag = lastStartTag == null ? "xmp" : lastStartTag;
                     runTestInner(inputString, expectedTokens, description,
-                            Tokenizer.RAWTEXT, lastStartTag);
+                            expectedError, Tokenizer.RAWTEXT, lastStartTag);
                 } else if (RCDATA.equals(value)) {
                     lastStartTag = lastStartTag == null ? "xmp" : lastStartTag;
                     runTestInner(inputString, expectedTokens, description,
-                            Tokenizer.RCDATA, lastStartTag);
+                            expectedError, Tokenizer.RCDATA, lastStartTag);
                 } else if (CDATA.equals(value)) {
                     lastStartTag = lastStartTag == null ? "xmp" : lastStartTag;
                     runTestInner(inputString, expectedTokens, description,
-                            Tokenizer.CDATA_SECTION, lastStartTag);
+                            expectedError, Tokenizer.CDATA_SECTION, lastStartTag);
                 } else if (PLAINTEXT.equals(value)) {
                     lastStartTag = lastStartTag == null ? "plaintext" : lastStartTag;
                     runTestInner(inputString, expectedTokens, description,
-                            Tokenizer.PLAINTEXT, lastStartTag);
+                            expectedError, Tokenizer.PLAINTEXT, lastStartTag);
                 } else if (SCRIPT_DATA.equals(value)) {
                     lastStartTag = lastStartTag == null ? "script" : lastStartTag;
                     runTestInner(inputString, expectedTokens, description,
-                            Tokenizer.SCRIPT_DATA, lastStartTag);
+                            expectedError, Tokenizer.SCRIPT_DATA, lastStartTag);
                 } else {
                     throw new RuntimeException("Broken test data.");
                 }
@@ -185,13 +192,28 @@ public class TokenizerTester {
      * @throws IOException
      */
     private void runTestInner(String inputString, JSONArray expectedTokens,
-            String description, int contentModelFlag,
+            String description, String expectedError, int contentModelFlag,
             String contentModelElement) throws SAXException, IOException {
         tokenHandler.setContentModelFlag(contentModelFlag, contentModelElement);
         InputSource is = new InputSource(new StringReader(inputString));
         try {
             driver.tokenize(is);
             JSONArray actualTokens = tokenHandler.getArray();
+            if (expectedError != null
+                    && !expectedError.equals("eof-in-cdata")
+                    && !expectedError.equals("surrogate-in-input-stream")
+                    && !expectedError.startsWith("eof-in-script-html-comment")
+                    && !expectedError.startsWith("incorrectly-closed-comment")
+                    && !tokenHandler.hasError()) {
+                exitStatus = 1;
+                writer.write("Failure\n");
+                writer.write(description);
+                writer.write("\nInput:\n");
+                writer.write(inputString);
+                writer.write("\nError expected:\n");
+                writer.write(expectedError);
+                writer.write("\n");
+            }
             if (!jsonDeepEquals(actualTokens, expectedTokens)) {
                 exitStatus = 1;
                 writer.write("Failure\n");

@@ -132,7 +132,6 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <test>Html5libTest</test>
-          <testFailureIgnore>true</testFailureIgnore> <!-- FIXME: Remove this testFailureIgnore after we have all tests passing -->
           <additionalClasspathElements>
             <additionalClasspathElement>${project.build.testSourceDirectory}/test/resources</additionalClasspathElement>
           </additionalClasspathElements>

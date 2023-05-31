@@ -60,6 +60,8 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
 
     private JSONArray array = null;
 
+    private boolean hasError = false;
+
     private int contentModelFlag;
 
     private String contentModelElement;
@@ -118,6 +120,7 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
 
     public void startTokenization(Tokenizer self) throws SAXException {
         array = new JSONArray();
+        hasError = false;
         if (contentModelElement != null) {
             self.setStateAndEndTagExpectation(contentModelFlag, contentModelElement);
         }
@@ -149,6 +152,7 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
     public void error(SAXParseException exception) throws SAXException {
 //        flushCharacters();
 //        array.getValue().add(PARSE_ERROR);
+        hasError = true;
     }
 
     public void fatalError(SAXParseException exception) throws SAXException {
@@ -165,6 +169,10 @@ public class JSONArrayTokenHandler implements TokenHandler, ErrorHandler {
      */
     public JSONArray getArray() {
         return array;
+    }
+
+    public boolean hasError() {
+        return hasError;
     }
 
     public void endTokenization() throws SAXException {
