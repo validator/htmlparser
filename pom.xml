@@ -144,7 +144,7 @@
     <dependency>
       <groupId>com.ibm.icu</groupId>
       <artifactId>icu4j</artifactId>
-      <version>71.1</version>
+      <version>73.2</version>
       <scope>compile</scope>
       <optional>true</optional>
     </dependency>
