@@ -98,6 +98,13 @@ public class CppTypes {
             "nsHtml5NamedCharactersAccel", "nsHtml5String",
             "nsHtml5TokenizerLoopPolicies", "nsIContent", "nsTraceRefcnt" };
 
+    private static final String[] STACK_NODE_INCLUDES = { "nsAtom", "nsHtml5AtomTable",
+            "nsHtml5HtmlAttributes", "nsHtml5String", "nsNameSpaceManager", "nsIContent",
+            "nsTraceRefcnt", "jArray", "nsHtml5ArrayCopy",
+            "nsAHtml5TreeBuilderState", "nsGkAtoms", "nsHtml5ByteReadable",
+            "nsHtml5Macros", "nsIContentHandle", "nsHtml5Portability",
+            "nsHtml5ContentCreatorFunction" };
+
     private static final String[] INCLUDES = { "nsAtom", "nsHtml5AtomTable",
             "nsHtml5String", "nsNameSpaceManager", "nsIContent",
             "nsTraceRefcnt", "jArray", "nsHtml5ArrayCopy",
@@ -365,6 +372,8 @@ public class CppTypes {
             return TREE_BUILDER_INCLUDES;
         } else if ("Tokenizer".equals(javaClass)) {
             return TOKENIZER_INCLUDES;
+        } else if ("StackNode".equals(javaClass)) {
+            return STACK_NODE_INCLUDES;
         } else {
             return INCLUDES;
         }

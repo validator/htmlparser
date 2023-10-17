@@ -424,16 +424,6 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
         printer.printLn("_cpp__");
         printer.printLn();
 
-        String[] incs = cppTypes.boilerplateIncludes(javaClassName);
-        for (int i = 0; i < incs.length; i++) {
-            String inc = incs[i];
-            printer.print("#include \"");
-            printer.print(inc);
-            printer.printLn(".h\"");
-        }
-
-        printer.printLn();
-
         for (int i = 0; i < Main.H_LIST.length; i++) {
             String klazz = Main.H_LIST[i];
             if (!klazz.equals(javaClassName)) {
