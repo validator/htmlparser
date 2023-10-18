@@ -439,6 +439,16 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
         printer.print(className);
         printer.printLn(".h\"");
         printer.printLn();
+        
+        if ("Tokenizer".equals(javaClassName)) {
+            String loopPolicyInclude = cppTypes.loopPolicyInclude();
+            if (loopPolicyInclude != null) {
+                printer.print("#include \"");
+                printer.print(loopPolicyInclude);
+                printer.printLn(".h\"");
+                printer.printLn();                
+            }
+        }
     }
 
     public void visit(EmptyTypeDeclaration n, LocalSymbolTable arg) {
@@ -1280,6 +1290,15 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
         } else if ("transition".equals(n.getName())
                 && n.getScope() == null) {
             visitTransition(n, arg);
+        } else if ("checkChar".equals(n.getName())
+                && n.getScope() == null) {
+            visitCheckChar(n, arg);
+        } else if ("silentCarriageReturn".equals(n.getName())
+                && n.getScope() == null) {
+            visitSilentCarriageReturn(n, arg);
+        } else if ("silentLineFeed".equals(n.getName())
+                && n.getScope() == null) {
+            visitSilentLineFeed(n, arg);
         } else if ("arraycopy".equals(n.getName())
                 && "System".equals(n.getScope().toString())) {
             printer.print(cppTypes.arrayCopy());
@@ -1364,6 +1383,10 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
                 printer.print(cppTypes.stateLoopPolicies()[stateLoopCallCount]);
                 printer.print(">");
                 stateLoopCallCount++;
+            } else if (cppTypes.requiresTemplateParameter(n.getName())
+                    && "Tokenizer".equals(javaClassName)
+                    && cppTypes.stateLoopPolicies().length > 0) {
+                printer.print("<P>");                
             }
             printer.print("(");
             if (n.getArgs() != null) {
@@ -1582,7 +1605,7 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
             printModifiers(n.getModifiers());
         }
 
-        if ("stateLoop".equals(currentMethod)
+        if (cppTypes.requiresTemplateParameter(currentMethod)
                 && "Tokenizer".equals(javaClassName)
                 && cppTypes.stateLoopPolicies().length > 0) {
             printer.print("template<class P>");
@@ -1882,6 +1905,26 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
         }
     }
 
+    private void visitCheckChar(MethodCallExpr call, LocalSymbolTable arg) {
+        List<Expression> args = call.getArgs();
+        printer.print(cppTypes.checkChar());
+        printer.print("(this, ");
+        args.get(0).accept(this, arg);
+        printer.print(", ");
+        args.get(1).accept(this, arg);
+        printer.print(")");
+    }
+
+    private void visitSilentLineFeed(MethodCallExpr call, LocalSymbolTable arg) {
+        printer.print(cppTypes.silentLineFeed());
+        printer.print("(this)");
+    }
+
+    private void visitSilentCarriageReturn(MethodCallExpr call, LocalSymbolTable arg) {
+        printer.print(cppTypes.silentCarriageReturn());
+        printer.print("(this)");
+    }
+    
     private boolean isTokenizerErrorReportingExpression(Expression e) {
         if (!reportTransitions) {
             return false;

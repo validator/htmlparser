@@ -96,7 +96,7 @@ public class CppTypes {
             "nsHtml5ArrayCopy", "nsHtml5AtomTable", "nsHtml5DocumentMode",
             "nsHtml5Highlighter", "nsHtml5Macros", "nsHtml5NamedCharacters",
             "nsHtml5NamedCharactersAccel", "nsHtml5String",
-            "nsHtml5TokenizerLoopPolicies", "nsIContent", "nsTraceRefcnt" };
+            "nsIContent", "nsTraceRefcnt" };
 
     private static final String[] STACK_NODE_INCLUDES = { "nsAtom", "nsHtml5AtomTable",
             "nsHtml5HtmlAttributes", "nsHtml5String", "nsNameSpaceManager", "nsIContent",
@@ -125,7 +125,7 @@ public class CppTypes {
             "Tokenizer", "TreeBuilder", "UTF16Buffer", };
 
     private static final String[] STATE_LOOP_POLICIES = {
-            "nsHtml5ViewSourcePolicy", "nsHtml5SilentPolicy" };
+            "nsHtml5ViewSourcePolicy", "nsHtml5LineColPolicy", "nsHtml5FastestPolicy" };
 
     private final Map<String, String> atomMap = new HashMap<String, String>();
 
@@ -394,6 +394,17 @@ public class CppTypes {
     public String[] boilerplateForwardDeclarations() {
         return FORWARD_DECLARATIONS;
     }
+    
+    public boolean requiresTemplateParameter(String methodName) {
+        return "stateLoop".equals(methodName)
+                || "adjustDoubleHyphenAndAppendToStrBufCarriageReturn".equals(
+                        methodName)
+                || "adjustDoubleHyphenAndAppendToStrBufLineFeed".equals(
+                        methodName)
+                || "appendStrBufLineFeed".equals(methodName)
+                || "appendStrBufCarriageReturn".equals(methodName)
+                || "emitCarriageReturn".equals(methodName);
+    }
 
     public String documentModeHandlerType() {
         return "nsHtml5TreeBuilder*";
@@ -467,6 +478,18 @@ public class CppTypes {
         return "P::transition";
     }
 
+    public String checkChar() {
+        return "P::checkChar";
+    }
+
+    public String silentLineFeed() {
+        return "P::silentLineFeed";
+    }
+    
+    public String silentCarriageReturn() {
+        return "P::silentCarriageReturn";
+    }
+    
     public String tokenizerErrorCondition() {
         return "P::reportErrors";
     }
@@ -501,5 +524,9 @@ public class CppTypes {
 
     public String crashMacro() {
         return "MOZ_CRASH";
+    }
+    
+    public String loopPolicyInclude() {
+     return "nsHtml5TokenizerLoopPolicies";
     }
 }
