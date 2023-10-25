@@ -1444,8 +1444,11 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
 
         if ("AttributeName".equals(n.getType().getName())) {
             List<Expression> args = n.getArgs();
-            while (args != null && args.size() > 3) {
-                args.remove(3);
+            if (args != null) {
+                assert args.size() == 7;
+                // Remove flags, and htmlLang from AttributeName constructor.
+                args.remove(6);
+                args.remove(4);
             }
         }
 
@@ -1541,6 +1544,18 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
     protected void printConstructorExplicit(List<Parameter> params) {
     }
 
+    protected boolean isMemberAssignment(Statement statement) {
+        if (!(statement instanceof ExpressionStmt)) {
+            return false;
+        }
+        Expression expr = ((ExpressionStmt) statement).getExpression();
+        if (!(expr instanceof AssignExpr)) {
+            return false;
+        }
+        Expression target = ((AssignExpr)expr).getTarget();
+        return target instanceof FieldAccessExpr;
+    }
+
     protected void printConstructorBody(BlockStmt block, LocalSymbolTable arg) {
         inConstructorBody = true;
         List<Statement> statements = block.getStmts();
@@ -1548,8 +1563,7 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
         int i = 0;
         boolean needOutdent = false;
         for (Statement statement : statements) {
-            if (statement instanceof ExpressionStmt
-                    && ((ExpressionStmt) statement).getExpression() instanceof AssignExpr) {
+            if (isMemberAssignment(statement)) {
                 printer.printLn();
                 if (i == 0) {
                     // : firstMember(arg)
