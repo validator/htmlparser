@@ -472,7 +472,11 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
         }
         String name = n.getName();
         if ("String".equals(name)) {
-            if (local()) {
+            if (weakLocal()) {
+                name = cppTypes.weakLocalType();
+            } else if (staticLocal()) {
+                name = cppTypes.staticLocalType();
+            } else if (local()) {
                 name = inField || inArray ? cppTypes.localType() : cppTypes.weakLocalType();
             } else if (prefix()) {
                 name = cppTypes.prefixType();
@@ -570,11 +574,22 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
             inArray = true;
         }
         if (noLength()) {
+            final int inlineLength = inlineLength();
+            if (inlineLength > 0) {
+                printer.print("jInlineArray<");
+            }
             n.getType().accept(this, arg);
-            for (int i = 0; i < n.getArrayCount(); i++) {
-                if (!inPrimitiveNoLengthFieldDeclarator) {
+            if (!inPrimitiveNoLengthFieldDeclarator) {
+                int count = n.getArrayCount();
+                if (inlineLength > 0) {
+                    count -= 1;
+                }
+                for (int i = 0; i < count; i++) {
                     printer.print("*");
                 }
+            }
+            if (inlineLength > 0) {
+                printer.print(", " + inlineLength + ">");
             }
         } else {
             for (int i = 0; i < n.getArrayCount(); i++) {
@@ -1276,6 +1291,18 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
                 && "Portability".equals(n.getScope().toString())) {
             n.getArgs().get(0).accept(this, arg);
             printer.print(".Release()");
+        } else if ("addrefIfNonNull".equals(n.getName())
+                && "Portability".equals(n.getScope().toString())) {
+            printer.print(cppTypes.addrefIfNonNull());
+            printer.print("(");
+            n.getArgs().get(0).accept(this, arg);
+            printer.print(")");
+        } else if ("releaseIfNonNull".equals(n.getName())
+                && "Portability".equals(n.getScope().toString())) {
+            printer.print(cppTypes.releaseIfNonNull());
+            printer.print("(");
+            n.getArgs().get(0).accept(this, arg);
+            printer.print(")");
         } else if ("deleteArray".equals(n.getName())
                 && "Portability".equals(n.getScope().toString())) {
             printer.print("delete[] ");

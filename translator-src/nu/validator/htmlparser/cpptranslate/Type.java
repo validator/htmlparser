@@ -43,20 +43,24 @@ public class Type {
      * @param type
      * @param arrayCount
      * @param noLength
+     * @param inlineLength
      * @param modifiers
      */
-    public Type(String type, int arrayCount, boolean noLength, int modifiers) {
+    public Type(String type, int arrayCount, boolean noLength, int inlineLength, int modifiers) {
         this.type = type;
         this.arrayCount = arrayCount;
         this.noLength = noLength;
+        this.inlineLength = inlineLength;
         this.modifiers = modifiers;
     }
 
     private final String type;
     
     private final int arrayCount;
-    
+
     private final boolean noLength;
+
+    private final int inlineLength;
     
     private final int modifiers;
 
@@ -76,6 +80,10 @@ public class Type {
      */
     public int getArrayCount() {
         return arrayCount;
+    }
+
+    public int inlineLength() {
+        return inlineLength;
     }
 
     /**

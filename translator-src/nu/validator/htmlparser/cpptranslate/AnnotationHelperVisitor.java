@@ -39,8 +39,11 @@ package nu.validator.htmlparser.cpptranslate;
 
 import java.util.List;
 
+import japa.parser.ast.expr.Expression;
+import japa.parser.ast.expr.IntegerLiteralExpr;
 import japa.parser.ast.expr.AnnotationExpr;
 import japa.parser.ast.expr.MarkerAnnotationExpr;
+import japa.parser.ast.expr.SingleMemberAnnotationExpr;
 import japa.parser.ast.type.ReferenceType;
 import japa.parser.ast.visitor.VoidVisitorAdapter;
 
@@ -54,6 +57,14 @@ public class AnnotationHelperVisitor<T> extends VoidVisitorAdapter<T> {
 
     protected boolean prefix() {
         return hasAnnotation("Prefix");
+    }
+
+    protected boolean staticLocal() {
+        return hasAnnotation("StaticLocal");
+    }
+
+    protected boolean weakLocal() {
+        return hasAnnotation("WeakLocal");
     }
 
     protected boolean local() {
@@ -108,32 +119,59 @@ public class AnnotationHelperVisitor<T> extends VoidVisitorAdapter<T> {
         return hasAnnotation("SvgCreator");
     }
 
+    protected int inlineLength() {
+        AnnotationExpr anno = findAnnotation("CppInlineLength");
+        if (anno == null || !(anno instanceof SingleMemberAnnotationExpr)) {
+            return 0;
+        }
+        Expression expr = ((SingleMemberAnnotationExpr)anno).getMemberValue();
+        if (!(expr instanceof IntegerLiteralExpr)) {
+            return 0;
+        }
+        return Integer.parseInt(((IntegerLiteralExpr)expr).getValue());
+    }
+
     private boolean hasAnnotation(String anno) {
+        AnnotationExpr expr = findAnnotation(anno);
+        return expr != null && expr instanceof MarkerAnnotationExpr;
+    }
+
+    private AnnotationExpr findAnnotation(String anno) {
         if (currentAnnotations == null) {
-            return false;
+            return null;
         }
         for (AnnotationExpr ann : currentAnnotations) {
             if (ann instanceof MarkerAnnotationExpr) {
-                MarkerAnnotationExpr marker = (MarkerAnnotationExpr) ann;
-                if (marker.getName().getName().equals(anno)) {
-                    return true;
+                if (((MarkerAnnotationExpr)ann).getName().getName().equals(anno)) {
+                    return ann;
+                }
+            }
+            if (ann instanceof SingleMemberAnnotationExpr) {
+                if (((SingleMemberAnnotationExpr)ann).getName().getName().equals(anno)) {
+                    return ann;
                 }
             }
         }
-        return false;
+        return null;
     }
 
     protected Type convertType(japa.parser.ast.type.Type type, int modifiers) {
         if (type instanceof ReferenceType) {
             ReferenceType referenceType = (ReferenceType) type;
-            return new Type(convertTypeName(referenceType.getType().toString()), referenceType.getArrayCount(), noLength(), modifiers);
+            return new Type(convertTypeName(referenceType.getType().toString()), referenceType.getArrayCount(), noLength(), inlineLength(), modifiers);
         } else {
-            return new Type(convertTypeName(type.toString()), 0, false, modifiers);
+            return new Type(convertTypeName(type.toString()), 0, false, 0, modifiers);
         }
     }
 
     private String convertTypeName(String name) {
         if ("String".equals(name)) {
+            if (staticLocal()) {
+                return "@StaticLocal";
+            }
+            if (weakLocal()) {
+                return "@WeakLocal";
+            }
             if (local()) {
                 return "@Local";
             }
