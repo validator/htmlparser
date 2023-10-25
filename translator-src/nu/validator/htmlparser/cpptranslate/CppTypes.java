@@ -250,6 +250,10 @@ public class CppTypes {
         return "RefPtr<nsAtom>";
     }
 
+    public String staticLocalType() {
+        return "nsStaticAtom*";
+    }
+
     public String prefixType() {
         return "nsStaticAtom*";
     }
@@ -512,6 +516,14 @@ public class CppTypes {
 
     public String[] stateLoopPolicies() {
         return STATE_LOOP_POLICIES;
+    }
+
+    public String releaseIfNonNull() {
+        return "NS_IF_RELEASE";
+    }
+
+    public String addrefIfNonNull() {
+        return "NS_IF_ADDREF";
     }
 
     public String assertionMacro() {
