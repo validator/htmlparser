@@ -64,7 +64,9 @@ public class SymbolTable {
         return !("ATTRIBUTE_HASHES".equals(field)
                 || "ATTRIBUTE_NAMES".equals(field)
                 || "ELEMENT_HASHES".equals(field)
-                || "ELEMENT_NAMES".equals(field) || "ALL_NO_NS".equals(field));
+                || "ELEMENT_NAMES".equals(field)
+                || "ALL_NO_NS".equals(field)
+                || "SAME_LOCAL_NULL".equals(field));
     }
 
     public void addPrimitiveConstant(String klazz, String field) {
