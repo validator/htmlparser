@@ -158,9 +158,9 @@ public class AnnotationHelperVisitor<T> extends VoidVisitorAdapter<T> {
     protected Type convertType(japa.parser.ast.type.Type type, int modifiers) {
         if (type instanceof ReferenceType) {
             ReferenceType referenceType = (ReferenceType) type;
-            return new Type(convertTypeName(referenceType.getType().toString()), referenceType.getArrayCount(), noLength(), inlineLength(), modifiers);
+            return new Type(convertTypeName(referenceType.getType().toString()));
         } else {
-            return new Type(convertTypeName(type.toString()), 0, false, 0, modifiers);
+            return new Type(convertTypeName(type.toString()));
         }
     }
 
