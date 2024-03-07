@@ -184,7 +184,8 @@ public final class HtmlAttributes implements Attributes {
 
     public int getIndex(String qName) {
         for (int i = 0; i < length; i++) {
-            if (names[i].getQName(mode).equals(qName)) {
+            if (names[i].getQName(mode) != null &&
+                    names[i].getQName(mode).equals(qName)) {
                 return i;
             }
         }
