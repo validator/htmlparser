@@ -455,7 +455,7 @@ public class CppTypes {
     }
 
     public String arrayLengthMacro() {
-        return "MOZ_ARRAY_LENGTH";
+        return "std::size";
     }
 
     public String staticAssert() {
