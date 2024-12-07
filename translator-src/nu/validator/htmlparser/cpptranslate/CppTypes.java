@@ -96,7 +96,7 @@ public class CppTypes {
             "nsHtml5ArrayCopy", "nsHtml5AtomTable", "nsHtml5DocumentMode",
             "nsHtml5Highlighter", "nsHtml5Macros", "nsHtml5NamedCharacters",
             "nsHtml5NamedCharactersAccel", "nsHtml5String",
-            "nsIContent", "nsTraceRefcnt" };
+            "nsIContent", "nsTraceRefcnt", "mozilla/parser/htmlaccel_enabled" };
 
     private static final String[] STACK_NODE_INCLUDES = { "nsAtom", "nsHtml5AtomTable",
             "nsHtml5HtmlAttributes", "nsHtml5String", "nsNameSpaceManager", "nsIContent",
@@ -486,6 +486,10 @@ public class CppTypes {
         return "P::checkChar";
     }
 
+    public String accelerateData() {
+        return "P::accelerateData";
+    }
+    
     public String silentLineFeed() {
         return "P::silentLineFeed";
     }
@@ -540,5 +544,9 @@ public class CppTypes {
     
     public String loopPolicyInclude() {
      return "nsHtml5TokenizerLoopPolicies";
+    }
+
+    public String alwaysInline() {
+        return "MOZ_ALWAYS_INLINE_EVEN_DEBUG";
     }
 }
