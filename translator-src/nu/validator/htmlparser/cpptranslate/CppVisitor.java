@@ -1320,6 +1320,9 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
         } else if ("checkChar".equals(n.getName())
                 && n.getScope() == null) {
             visitCheckChar(n, arg);
+        } else if ("accelerateData".equals(n.getName())
+                && n.getScope() == null) {
+            visitAccelerateData(n, arg);
         } else if ("silentCarriageReturn".equals(n.getName())
                 && n.getScope() == null) {
             visitSilentCarriageReturn(n, arg);
@@ -1650,6 +1653,10 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
                 && "Tokenizer".equals(javaClassName)
                 && cppTypes.stateLoopPolicies().length > 0) {
             printer.print("template<class P>");
+            if ("stateLoop".equals(n.getName())) {
+                printer.print(" ");                
+                printer.print(cppTypes.alwaysInline());
+            }
             if (inHeader()) {
                 printer.print(" ");
             } else {
@@ -1953,6 +1960,22 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
         args.get(0).accept(this, arg);
         printer.print(", ");
         args.get(1).accept(this, arg);
+        printer.print(")");
+    }
+
+    private void visitAccelerateData(MethodCallExpr call, LocalSymbolTable arg) {
+        List<Expression> args = call.getArgs();
+        printer.print(cppTypes.accelerateData());
+        printer.print("(this, ");
+        if (call.getArgs() != null) {
+            for (Iterator<Expression> i = call.getArgs().iterator(); i.hasNext();) {
+                Expression e = i.next();
+                e.accept(this, arg);
+                if (i.hasNext()) {
+                    printer.print(", ");
+                }
+            }
+        }
         printer.print(")");
     }
 
