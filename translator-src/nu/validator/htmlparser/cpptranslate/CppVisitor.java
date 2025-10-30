@@ -1310,9 +1310,9 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
         } else if ("checkChar".equals(n.getName())
                 && n.getScope() == null) {
             visitCheckChar(n, arg);
-        } else if ("accelerateAdvancementData".equals(n.getName())
+        } else if (n.getName().startsWith("accelerateAdvancement")
                 && n.getScope() == null) {
-            visitAccelerateAdvancementData(n, arg);
+            visitAccelerateAdvancement(n, arg);
         } else if ("silentCarriageReturn".equals(n.getName())
                 && n.getScope() == null) {
             visitSilentCarriageReturn(n, arg);
@@ -1945,9 +1945,10 @@ public class CppVisitor extends AnnotationHelperVisitor<LocalSymbolTable> {
         printer.print(")");
     }
 
-    private void visitAccelerateAdvancementData(MethodCallExpr call, LocalSymbolTable arg) {
+    private void visitAccelerateAdvancement(MethodCallExpr call, LocalSymbolTable arg) {
         List<Expression> args = call.getArgs();
-        printer.print(cppTypes.accelerateData());
+        printer.print(cppTypes.policyPrefix());
+        printer.print(call.getName());
         printer.print("(this, ");
         if (call.getArgs() != null) {
             for (Iterator<Expression> i = call.getArgs().iterator(); i.hasNext();) {

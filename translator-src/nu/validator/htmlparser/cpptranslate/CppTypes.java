@@ -88,7 +88,7 @@ public class CppTypes {
     }
     
     private static final String[] TREE_BUILDER_INCLUDES = { "jArray",
-            "mozilla/ImportScanner", "mozilla/Likely", 
+            "mozilla/ImportScanner",
             "nsAHtml5TreeBuilderState", "nsAtom", "nsContentUtils", "nsGkAtoms",
             "nsHtml5ArrayCopy", "nsHtml5AtomTable", "nsHtml5DocumentMode",
             "nsHtml5Highlighter", "nsHtml5OplessBuilder", "nsHtml5Parser",
@@ -500,8 +500,8 @@ public class CppTypes {
         return "P::checkChar";
     }
 
-    public String accelerateData() {
-        return "P::accelerateAdvancementData";
+    public String policyPrefix() {
+        return "P::";
     }
     
     public String silentLineFeed() {
