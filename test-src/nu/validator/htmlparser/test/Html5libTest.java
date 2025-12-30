@@ -102,12 +102,6 @@ public class Html5libTest {
 
         private final TestConsumer runner;
 
-        // Files to skip due to known failures unrelated to this parser
-        // (e.g., error reporting differences in foreign content parsing)
-        private static final java.util.Set<String> SKIP_FILES = java.util.Set.of(
-                "foreign-fragment.dat"
-        );
-
         private TestVisitor(boolean skipScripted, String requiredTestExtension,
                 TestConsumer runner) {
             this.skipScripted = skipScripted;
@@ -129,9 +123,7 @@ public class Html5libTest {
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
                 throws IOException {
-            String fileName = file.getFileName().toString();
-            if (fileName.endsWith(requiredTestExtension)
-                    && !SKIP_FILES.contains(fileName)) {
+            if (file.getFileName().toString().endsWith(requiredTestExtension)) {
                 runner.accept(file);
             }
             return FileVisitResult.CONTINUE;
