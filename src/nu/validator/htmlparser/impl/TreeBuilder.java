@@ -1531,12 +1531,19 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                             if (!(group == FONT && !(attributes.contains(AttributeName.COLOR)
                                     || attributes.contains(AttributeName.FACE) || attributes.contains(AttributeName.SIZE)))) {
                                 errHtmlStartTagInForeignContext(name);
-                                if (!fragment) {
-                                    while (!isSpecialParentInForeign(stack[currentPtr])) {
-                                        popForeign(-1, -1);
-                                    }
+                                // Pop until we reach an HTML namespace element,
+                                // HTML integration point, or MathML text integration point.
+                                // In fragment case, stop before popping the context element.
+                                while (currentPtr > 0 && !isSpecialParentInForeign(stack[currentPtr])) {
+                                    popForeign(-1, -1);
+                                }
+                                if (currentPtr > 0 || isSpecialParentInForeign(stack[currentPtr])) {
+                                    // Popped to an HTML element or integration point
                                     continue starttagloop;
-                                } // else fall thru
+                                }
+                                // In fragment case with foreign context, fall through
+                                // to let switch(mode) handle the token in HTML namespace
+                                break;
                             }
                             // CPPONLY: MOZ_FALLTHROUGH;
                         default:
@@ -3220,6 +3227,11 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                 for (;;) {
                     if (eltPos == 0) {
                         assert fragment: "We can get this close to the root of the stack in foreign content only in the fragment case.";
+                        // For </p> and </br>, continue to mode handling
+                        // which will create implied start tags
+                        if (group == P || group == BR) {
+                            break; // break from inner loop, continue to switch(mode)
+                        }
                         break endtagloop;
                     }
                     if (stack[eltPos].name == name) {
@@ -3564,12 +3576,10 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                             eltPos = findLastInButtonScope("p");
                             if (eltPos == TreeBuilder.NOT_FOUND_ON_STACK) {
                                 errNoElementToCloseButEndTagSeen("p");
-                                // XXX Can the 'in foreign' case happen anymore?
                                 if (isInForeign()) {
                                     errHtmlStartTagInForeignContext(name);
-                                    // Check for currentPtr for the fragment
-                                    // case.
-                                    while (currentPtr >= 0 && stack[currentPtr].ns != "http://www.w3.org/1999/xhtml") {
+                                    // Pop foreign elements, but keep context element in fragment case
+                                    while (currentPtr > 0 && stack[currentPtr].ns != "http://www.w3.org/1999/xhtml") {
                                         pop();
                                     }
                                 }
@@ -3650,11 +3660,9 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                         case BR:
                             errEndTagBr();
                             if (isInForeign()) {
-                                // XXX can this happen anymore?
                                 errHtmlStartTagInForeignContext(name);
-                                // Check for currentPtr for the fragment
-                                // case.
-                                while (currentPtr >= 0 && stack[currentPtr].ns != "http://www.w3.org/1999/xhtml") {
+                                // Pop foreign elements, but keep context element in fragment case
+                                while (currentPtr > 0 && stack[currentPtr].ns != "http://www.w3.org/1999/xhtml") {
                                     pop();
                                 }
                             }
