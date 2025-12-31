@@ -2928,9 +2928,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         if (selfClosing) {
             errSelfClosing();
         // [NOCPP[
-        } else if (wasSelfClosing && voidElement
-                && tokenizer.getErrorProfile() != null
-                && tokenizer.getErrorProfile().get("html-strict") != null) {
+        } else if (wasSelfClosing && voidElement) {
             warn("Trailing slash on void elements has no effect and interacts"
                     + " badly with unquoted attribute values.");
         // ]NOCPP]
