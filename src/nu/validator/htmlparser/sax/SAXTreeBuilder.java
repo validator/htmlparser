@@ -236,8 +236,9 @@ class SAXTreeBuilder extends TreeBuilder<Element> {
                 break;
             case CHARACTERS:
                 // Clone the characters
-                String text = node.toString();
-                Characters cloneChars = new Characters(null, text.toCharArray(), 0, text.length());
+                Characters srcChars = (Characters) node;
+                char[] buf = srcChars.getBuffer();
+                Characters cloneChars = new Characters(null, buf, 0, buf.length);
                 destination.appendChild(cloneChars);
                 break;
             default:
