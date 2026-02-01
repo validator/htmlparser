@@ -474,4 +474,21 @@ class BrowserTreeBuilder extends CoalescingTreeBuilder<JavaScriptObject> {
             fatal(e);
         }
     }
+
+    @Override
+    protected void cloneOptionContentToSelectedContent(
+            JavaScriptObject option, JavaScriptObject selectedContent)
+            throws SAXException {
+        try {
+            while (hasChildNodes(selectedContent)) {
+                removeChild(selectedContent, getFirstChild(selectedContent));
+            }
+            JavaScriptObject clone = cloneNodeDeep(option);
+            while (hasChildNodes(clone)) {
+                appendChild(selectedContent, getFirstChild(clone));
+            }
+        } catch (JavaScriptException e) {
+            fatal(e);
+        }
+    }
 }

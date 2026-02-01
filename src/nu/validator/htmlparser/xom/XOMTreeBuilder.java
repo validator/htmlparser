@@ -348,4 +348,17 @@ class XOMTreeBuilder extends CoalescingTreeBuilder<Element> {
         cachedTableIndex = -1;
         cachedTable = null;
     }
+
+    @Override
+    protected void cloneOptionContentToSelectedContent(Element option,
+            Element selectedContent) throws SAXException {
+        try {
+            selectedContent.removeChildren();
+            for (int i = 0; i < option.getChildCount(); i++) {
+                selectedContent.appendChild(option.getChild(i).copy());
+            }
+        } catch (XMLException e) {
+            fatal(e);
+        }
+    }
 }
