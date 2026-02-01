@@ -557,8 +557,6 @@ public final class ElementName
 //                return "ANNOTATION_XML";
 //            case TreeBuilder.FOREIGNOBJECT_OR_DESC:
 //                return "FOREIGNOBJECT_OR_DESC";
-//            case TreeBuilder.SELECTEDCONTENT:
-//                return "SELECTEDCONTENT";
 //        }
 //        return null;
 //    }
