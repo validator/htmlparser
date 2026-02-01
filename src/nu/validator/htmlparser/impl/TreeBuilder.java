@@ -35,7 +35,6 @@
 
 package nu.validator.htmlparser.impl;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -443,10 +442,6 @@ public abstract class TreeBuilder<T> implements TokenHandler,
 
     // Tracks if we've already had an active option (first option was selected for cloning)
     private boolean hadActiveOption = false;
-
-    // Stack to track the current parent in selectedcontent for element cloning
-    // When we're inside an active option, we push cloned elements here
-    private ArrayList<T> selectedContentCloneStack = new ArrayList<T>();
 
     protected @Auto char[] charBuffer;
 
@@ -2362,10 +2357,6 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                     if (selectedContentPointer != null) {
                                         if (hasSelected) {
                                             // Option with selected attr becomes active
-                                            // Clear previous selectedcontent content if we had a different active option
-                                            if (hadActiveOption && !seenSelectedOption) {
-                                                clearSelectedContentChildren();
-                                            }
                                             seenSelectedOption = true;
                                             shouldBeActive = true;
                                         } else if (!seenSelectedOption && !hadActiveOption) {
@@ -2379,9 +2370,6 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                     if (shouldBeActive) {
                                         activeOptionStackPos = currentPtr;
                                         hadActiveOption = true;
-                                        // Initialize the clone stack with selectedcontent as the root parent
-                                        selectedContentCloneStack.clear();
-                                        selectedContentCloneStack.add(selectedContentPointer);
                                     }
                                     attributes = null; // CPP
                                     break starttagloop;
@@ -5346,14 +5334,9 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         // This handles adoption agency restructuring correctly
         if (currentPtr == activeOptionStackPos) {
             if (selectedContentPointer != null) {
-                clearSelectedContentChildren();
-                deepCloneChildren(node.node, selectedContentPointer);
+                cloneOptionContentToSelectedContent(node.node, selectedContentPointer);
             }
             activeOptionStackPos = -1;
-            selectedContentCloneStack.clear();
-        } else if (activeOptionStackPos >= 0 && currentPtr > activeOptionStackPos && selectedContentCloneStack.size() > 1) {
-            // Pop from clone stack when popping an element inside active option
-            selectedContentCloneStack.remove(selectedContentCloneStack.size() - 1);
         }
         // Clear selectedcontent tracking if we're popping the select element
         // (not when popping selectedcontent itself - the DOM node is still valid)
@@ -5363,7 +5346,6 @@ public abstract class TreeBuilder<T> implements TokenHandler,
             seenSelectedOption = false;
             activeOptionStackPos = -1;
             hadActiveOption = false;
-            selectedContentCloneStack.clear();
         }
         currentPtr--;
         elementPopped(node.ns, node.popName, node.node);
@@ -5379,14 +5361,9 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         // When active option closes, deep-clone its content to selectedcontent
         if (currentPtr == activeOptionStackPos) {
             if (selectedContentPointer != null) {
-                clearSelectedContentChildren();
-                deepCloneChildren(node.node, selectedContentPointer);
+                cloneOptionContentToSelectedContent(node.node, selectedContentPointer);
             }
             activeOptionStackPos = -1;
-            selectedContentCloneStack.clear();
-        } else if (activeOptionStackPos >= 0 && currentPtr > activeOptionStackPos && selectedContentCloneStack.size() > 1) {
-            // Pop from clone stack when popping an element inside active option
-            selectedContentCloneStack.remove(selectedContentCloneStack.size() - 1);
         }
         // Clear selectedcontent tracking if we're popping the select element
         if (node.getGroup() == SELECT) {
@@ -5395,7 +5372,6 @@ public abstract class TreeBuilder<T> implements TokenHandler,
             seenSelectedOption = false;
             activeOptionStackPos = -1;
             hadActiveOption = false;
-            selectedContentCloneStack.clear();
         }
         currentPtr--;
         elementPopped(node.ns, node.popName, node.node);
@@ -5408,14 +5384,9 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         // When active option closes, deep-clone its content to selectedcontent
         if (currentPtr == activeOptionStackPos) {
             if (selectedContentPointer != null) {
-                clearSelectedContentChildren();
-                deepCloneChildren(node.node, selectedContentPointer);
+                cloneOptionContentToSelectedContent(node.node, selectedContentPointer);
             }
             activeOptionStackPos = -1;
-            selectedContentCloneStack.clear();
-        } else if (activeOptionStackPos >= 0 && currentPtr > activeOptionStackPos && selectedContentCloneStack.size() > 1) {
-            // Pop from clone stack when popping an element inside active option
-            selectedContentCloneStack.remove(selectedContentCloneStack.size() - 1);
         }
         // Clear selectedcontent tracking if we're popping the select element
         if (node.getGroup() == SELECT) {
@@ -5424,7 +5395,6 @@ public abstract class TreeBuilder<T> implements TokenHandler,
             seenSelectedOption = false;
             activeOptionStackPos = -1;
             hadActiveOption = false;
-            selectedContentCloneStack.clear();
         }
         currentPtr--;
         node.release(this);
@@ -5436,14 +5406,9 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         // When active option closes, deep-clone its content to selectedcontent
         if (currentPtr == activeOptionStackPos) {
             if (selectedContentPointer != null) {
-                clearSelectedContentChildren();
-                deepCloneChildren(node.node, selectedContentPointer);
+                cloneOptionContentToSelectedContent(node.node, selectedContentPointer);
             }
             activeOptionStackPos = -1;
-            selectedContentCloneStack.clear();
-        } else if (activeOptionStackPos >= 0 && currentPtr > activeOptionStackPos && selectedContentCloneStack.size() > 1) {
-            // Pop from clone stack when popping an element inside active option
-            selectedContentCloneStack.remove(selectedContentCloneStack.size() - 1);
         }
         // Clear selectedcontent tracking if we're popping the select element
         if (node.getGroup() == SELECT) {
@@ -5452,7 +5417,6 @@ public abstract class TreeBuilder<T> implements TokenHandler,
             seenSelectedOption = false;
             activeOptionStackPos = -1;
             hadActiveOption = false;
-            selectedContentCloneStack.clear();
         }
         currentPtr--;
         markMalformedIfScript(node.node);
@@ -5643,8 +5607,6 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         // ]NOCPP]
         // This method can't be called for custom elements
         HtmlAttributes clone = attributes.cloneAttributes();
-        // Clone to selectedcontent if inside active option (must be before createElement due to C++ attribute ownership)
-        cloneElementToSelectedContent("http://www.w3.org/1999/xhtml", elementName.getName(), attributes);
         // Attributes must not be read after calling createElement, because
         // createElement may delete attributes in C++.
         T elt;
@@ -5694,8 +5656,6 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         } else {
             appendElement(elt, currentNode);
         }
-        // Clone to selectedcontent if inside active option
-        cloneElementToSelectedContent("http://www.w3.org/1999/xhtml", elementName.getName(), attributes);
         StackNode<T> node = createStackNode(elementName, elt
                 // [NOCPP[
                 , errorHandler == null ? null : new TaintableLocatorImpl(tokenizer)
@@ -5728,8 +5688,6 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                     );
             appendElement(elt, currentNode);
         }
-        // Clone to selectedcontent if inside active option
-        cloneElementToSelectedContent("http://www.w3.org/1999/xhtml", popName, attributes);
         StackNode<T> node = createStackNode(elementName, elt, popName
                 // [NOCPP[
                 , errorHandler == null ? null : new TaintableLocatorImpl(tokenizer)
@@ -5753,8 +5711,6 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                 && annotationXmlEncodingPermitsHtml(attributes)) {
             markAsHtmlIntegrationPoint = true;
         }
-        // Clone to selectedcontent if inside active option (must be before createElement due to C++ attribute ownership)
-        cloneElementToSelectedContent("http://www.w3.org/1998/Math/MathML", popName, attributes);
         // Attributes must not be read after calling createElement(), since
         // createElement may delete the object in C++.
         T elt;
@@ -5820,8 +5776,6 @@ public abstract class TreeBuilder<T> implements TokenHandler,
             popName = checkPopName(popName);
         }
         // ]NOCPP]
-        // Clone to selectedcontent if inside active option
-        cloneElementToSelectedContent("http://www.w3.org/2000/svg", popName, attributes);
         T elt;
         StackNode<T> current = stack[currentPtr];
         if (current.isFosterParenting()) {
@@ -5851,8 +5805,6 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         checkAttributes(attributes, "http://www.w3.org/1999/xhtml");
         // ]NOCPP]
         // Can't be called for custom elements
-        // Clone to selectedcontent if inside active option
-        cloneElementToSelectedContent("http://www.w3.org/1999/xhtml", elementName.getName(), attributes);
         T elt;
         T formOwner = form == null || fragment || isTemplateContents() ? null : form;
         StackNode<T> current = stack[currentPtr];
@@ -6041,55 +5993,6 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         elementPopped("http://www.w3.org/1999/xhtml", "form", elt);
     }
 
-    /**
-     * Clones an element to the selectedcontent hierarchy when inside an active option.
-     * This is used for the customizable select feature.
-     *
-     * @param ns The namespace URI
-     * @param name The element name
-     * @param attributes The attributes (will be cloned)
-     */
-    private void cloneElementToSelectedContent(@NsUri String ns, @Local String name,
-            HtmlAttributes attributes) throws SAXException {
-        if (activeOptionStackPos < 0 || selectedContentCloneStack.isEmpty()) {
-            return;
-        }
-        // Clone the attributes
-        HtmlAttributes clonedAttrs = attributes.cloneAttributes();
-        // Get the current parent in the selectedcontent hierarchy
-        T selectedContentParent = selectedContentCloneStack.get(selectedContentCloneStack.size() - 1);
-        // Create a clone element
-        T clone = createElement(ns, name, clonedAttrs, selectedContentParent
-                // CPPONLY: , htmlCreator(null)
-                );
-        // Append the clone to the selectedcontent parent
-        appendElement(clone, selectedContentParent);
-        // Push the clone to the stack so nested content goes into it
-        selectedContentCloneStack.add(clone);
-    }
-
-    /**
-     * Clones a void element to the selectedcontent hierarchy when inside an active option.
-     * Void elements don't need to be pushed to the stack since they have no children.
-     */
-    private void cloneVoidElementToSelectedContent(@NsUri String ns, @Local String name,
-            HtmlAttributes attributes) throws SAXException {
-        if (activeOptionStackPos < 0 || selectedContentCloneStack.isEmpty()) {
-            return;
-        }
-        // Clone the attributes
-        HtmlAttributes clonedAttrs = attributes.cloneAttributes();
-        // Get the current parent in the selectedcontent hierarchy
-        T selectedContentParent = selectedContentCloneStack.get(selectedContentCloneStack.size() - 1);
-        // Create a clone element
-        T clone = createElement(ns, name, clonedAttrs, selectedContentParent
-                // CPPONLY: , htmlCreator(null)
-                );
-        // Append the clone to the selectedcontent parent
-        appendElement(clone, selectedContentParent);
-        // Void elements don't need to be pushed to the stack
-    }
-
     // [NOCPP[
 
     private final void accumulateCharactersForced(@Const @NoLength char[] buf,
@@ -6125,10 +6028,6 @@ public abstract class TreeBuilder<T> implements TokenHandler,
     protected void accumulateCharacters(@Const @NoLength char[] buf, int start,
             int length) throws SAXException {
         appendCharacters(stack[currentPtr].node, buf, start, length);
-        // Also clone to selectedcontent if in active option
-        if (activeOptionStackPos >= 0 && !selectedContentCloneStack.isEmpty()) {
-            appendCharacters(selectedContentCloneStack.get(selectedContentCloneStack.size() - 1), buf, start, length);
-        }
     }
 
     // ------------------------------- //
@@ -6157,12 +6056,14 @@ public abstract class TreeBuilder<T> implements TokenHandler,
     protected abstract void detachFromParent(T element) throws SAXException;
 
     /**
-     * Deep clones the children of the source element to the destination element.
-     * Used for cloning option content to selectedcontent.
-     * Default implementation does nothing. Subclasses should override.
+     * Called when the active option is popped from the stack, to clone
+     * the option's children into selectedcontent. Subclasses that support
+     * DOM operations should override this to clear selectedcontent and
+     * deep-clone the option's children into it.
      */
-    protected void deepCloneChildren(T source, T destination) throws SAXException {
-        // Default implementation does nothing
+    protected void cloneOptionContentToSelectedContent(T option, T selectedContent)
+            throws SAXException {
+        // Default: no-op (streaming SAX mode ignores cloning)
     }
 
     protected abstract boolean hasChildren(T element) throws SAXException;
@@ -6207,16 +6108,6 @@ public abstract class TreeBuilder<T> implements TokenHandler,
 
     protected abstract void addAttributesToElement(T element,
             HtmlAttributes attributes) throws SAXException;
-
-    /**
-     * Clears all children from the selectedcontent element.
-     * Used when an option with 'selected' attribute is seen after
-     * content has already been cloned from a previous option.
-     */
-    protected void clearSelectedContentChildren() throws SAXException {
-        // Default implementation does nothing. Subclasses that support
-        // selectedcontent cloning can override this.
-    }
 
     protected void markMalformedIfScript(T elt) throws SAXException {
 
@@ -6423,10 +6314,6 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                     // reconstructing gave us a new current node
                     appendCharacters(currentNode(), charBuffer, 0,
                             charBufferLen);
-                    // Also clone to selectedcontent if in active option
-                    if (activeOptionStackPos >= 0 && !selectedContentCloneStack.isEmpty()) {
-                        appendCharacters(selectedContentCloneStack.get(selectedContentCloneStack.size() - 1), charBuffer, 0, charBufferLen);
-                    }
                     charBufferLen = 0;
                     return;
                 }
@@ -6436,10 +6323,6 @@ public abstract class TreeBuilder<T> implements TokenHandler,
 
                 if (templatePos >= tablePos) {
                     appendCharacters(stack[templatePos].node, charBuffer, 0, charBufferLen);
-                    // Also clone to selectedcontent if in active option
-                    if (activeOptionStackPos >= 0 && !selectedContentCloneStack.isEmpty()) {
-                        appendCharacters(selectedContentCloneStack.get(selectedContentCloneStack.size() - 1), charBuffer, 0, charBufferLen);
-                    }
                     charBufferLen = 0;
                     return;
                 }
@@ -6447,18 +6330,10 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                 StackNode<T> tableElt = stack[tablePos];
                 insertFosterParentedCharacters(charBuffer, 0, charBufferLen,
                         tableElt.node, stack[tablePos - 1].node);
-                // Also clone to selectedcontent if in active option
-                if (activeOptionStackPos >= 0 && !selectedContentCloneStack.isEmpty()) {
-                    appendCharacters(selectedContentCloneStack.get(selectedContentCloneStack.size() - 1), charBuffer, 0, charBufferLen);
-                }
                 charBufferLen = 0;
                 return;
             }
             appendCharacters(currentNode(), charBuffer, 0, charBufferLen);
-            // Also clone to selectedcontent if in active option
-            if (activeOptionStackPos >= 0 && !selectedContentCloneStack.isEmpty()) {
-                appendCharacters(selectedContentCloneStack.get(selectedContentCloneStack.size() - 1), charBuffer, 0, charBufferLen);
-            }
             charBufferLen = 0;
         }
     }

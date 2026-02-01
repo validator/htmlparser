@@ -200,14 +200,13 @@ class SAXTreeBuilder extends TreeBuilder<Element> {
     }
 
     @Override
-    protected void clearSelectedContentChildren() throws SAXException {
-        if (selectedContentPointer != null) {
-            ((ParentNode) selectedContentPointer).clearChildren();
-        }
+    protected void cloneOptionContentToSelectedContent(Element option, Element selectedContent)
+            throws SAXException {
+        ((ParentNode) selectedContent).clearChildren();
+        deepCloneChildren(option, selectedContent);
     }
 
-    @Override
-    protected void deepCloneChildren(Element source, Element destination) throws SAXException {
+    private void deepCloneChildren(Element source, Element destination) throws SAXException {
         Node child = source.getFirstChild();
         while (child != null) {
             deepCloneNode(child, destination);
