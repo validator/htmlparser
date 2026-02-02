@@ -54,7 +54,9 @@ public class ChardetSniffer implements nsICharsetDetectionObserver {
         detector.Init(this);
         detector.DoIt(source, length, false);
         detector.DataEnd();
-        if (returnValue != null && returnValue != Encoding.WINDOWS1252 && returnValue.isAsciiSuperset()) {
+        if (returnValue != null && returnValue != Encoding.WINDOWS1252
+                && returnValue != Encoding.UTF16BE
+                && returnValue != Encoding.UTF16LE) {
             return returnValue;
         } else {
             return null;
@@ -72,10 +74,6 @@ public class ChardetSniffer implements nsICharsetDetectionObserver {
     public void Notify(String charsetName) {
         try {
             Encoding enc = Encoding.forName(charsetName);
-            Encoding actual = enc.getActualHtmlEncoding();
-            if (actual != null) {
-                enc = actual;
-            }
             returnValue = enc;
         } catch (UnsupportedCharsetException e) {
             returnValue = null;
