@@ -354,4 +354,21 @@ class DOMTreeBuilder extends CoalescingTreeBuilder<Element> {
             fatal(e);
         }
     }
+
+    @Override
+    protected void cloneOptionContentToSelectedContent(Element option,
+            Element selectedContent) throws SAXException {
+        try {
+            while (selectedContent.hasChildNodes()) {
+                selectedContent.removeChild(selectedContent.getFirstChild());
+            }
+            Node child = option.getFirstChild();
+            while (child != null) {
+                selectedContent.appendChild(child.cloneNode(true));
+                child = child.getNextSibling();
+            }
+        } catch (DOMException e) {
+            fatal(e);
+        }
+    }
 }

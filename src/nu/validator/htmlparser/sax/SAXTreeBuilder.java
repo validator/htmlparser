@@ -34,6 +34,7 @@ import nu.validator.saxtree.Document;
 import nu.validator.saxtree.DocumentFragment;
 import nu.validator.saxtree.Element;
 import nu.validator.saxtree.Node;
+import nu.validator.saxtree.NodeType;
 import nu.validator.saxtree.ParentNode;
 
 class SAXTreeBuilder extends TreeBuilder<Element> {
@@ -196,5 +197,53 @@ class SAXTreeBuilder extends TreeBuilder<Element> {
     @Override protected void detachFromParent(Element element)
             throws SAXException {
         element.detach();
+    }
+
+    @Override
+    protected void cloneOptionContentToSelectedContent(Element option, Element selectedContent)
+            throws SAXException {
+        ((ParentNode) selectedContent).clearChildren();
+        deepCloneChildren(option, selectedContent);
+    }
+
+    private void deepCloneChildren(Element source, Element destination) throws SAXException {
+        Node child = source.getFirstChild();
+        while (child != null) {
+            deepCloneNode(child, destination);
+            child = child.getNextSibling();
+        }
+    }
+
+    private void deepCloneNode(Node node, ParentNode destination) throws SAXException {
+        switch (node.getNodeType()) {
+            case ELEMENT:
+                Element srcElem = (Element) node;
+                // Create a clone element with copied attributes
+                Element cloneElem = new Element(null,
+                        srcElem.getUri(),
+                        srcElem.getLocalName(),
+                        srcElem.getQName(),
+                        srcElem.getAttributes(),
+                        false,  // copy attributes
+                        srcElem.getPrefixMappings());
+                destination.appendChild(cloneElem);
+                // Recursively clone children
+                Node child = srcElem.getFirstChild();
+                while (child != null) {
+                    deepCloneNode(child, cloneElem);
+                    child = child.getNextSibling();
+                }
+                break;
+            case CHARACTERS:
+                // Clone the characters
+                Characters srcChars = (Characters) node;
+                char[] buf = srcChars.getBuffer();
+                Characters cloneChars = new Characters(null, buf, 0, buf.length);
+                destination.appendChild(cloneChars);
+                break;
+            default:
+                // Ignore other node types for now
+                break;
+        }
     }
 }

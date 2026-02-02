@@ -200,6 +200,8 @@ public abstract class TreeBuilder<T> implements TokenHandler,
 
     final static int IMG = 67;
 
+    final static int SELECTEDCONTENT = 68;
+
     // start insertion modes
 
     private static final int IN_ROW = 0;
@@ -426,6 +428,21 @@ public abstract class TreeBuilder<T> implements TokenHandler,
 
     private T headPointer;
 
+    // For customizable select: tracks the selectedcontent element to clone option content into
+    protected T selectedContentPointer;
+
+    // Tracks the position in stack where selectedcontent was found
+    private int selectedContentStackPos = -1;
+
+    // Tracks if we're inside an option that should have its content cloned to selectedcontent
+    private int activeOptionStackPos = -1;
+
+    // Tracks if we've seen an option with the 'selected' attribute in the current select
+    private boolean seenSelectedOption = false;
+
+    // Tracks if we've already had an active option (first option was selected for cloning)
+    private boolean hadActiveOption = false;
+
     protected @Auto char[] charBuffer;
 
     protected int charBufferLen = 0;
@@ -606,6 +623,11 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         listPtr = -1;
         formPointer = null;
         headPointer = null;
+        selectedContentPointer = null;
+        selectedContentStackPos = -1;
+        activeOptionStackPos = -1;
+        seenSelectedOption = false;
+        hadActiveOption = false;
         // [NOCPP[
         idLocations.clear();
         wantingComments = wantsComments();
@@ -1436,6 +1458,11 @@ public abstract class TreeBuilder<T> implements TokenHandler,
     public final void endTokenization() throws SAXException {
         formPointer = null;
         headPointer = null;
+        selectedContentPointer = null;
+        selectedContentStackPos = -1;
+        activeOptionStackPos = -1;
+        seenSelectedOption = false;
+        hadActiveOption = false;
         contextName = null;
         contextNode = null;
         templateModeStack = null;
@@ -2169,6 +2196,23 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                 attributes = null; // CPP
                                 break starttagloop;
                             case HR:
+                                // Check if select is in scope
+                                if (findLastInScope("select") != TreeBuilder.NOT_FOUND_ON_STACK) {
+                                    // Close any open option or optgroup first
+                                    if (isCurrent("option")) {
+                                        pop();
+                                    }
+                                    if (isCurrent("optgroup")) {
+                                        pop();
+                                    }
+                                    appendVoidElementToCurrent(elementName, attributes);
+                                    selfClosing = false;
+                                    // [NOCPP[
+                                    voidElement = true;
+                                    // ]NOCPP]
+                                    attributes = null; // CPP
+                                    break starttagloop;
+                                }
                                 implicitlyCloseP();
                                 appendVoidElementToCurrentMayFoster(
                                         elementName,
@@ -2184,7 +2228,27 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                 elementName = ElementName.IMG;
                                 continue starttagloop;
                             case IMG:
+                                reconstructTheActiveFormattingElements();
+                                appendVoidElementToCurrentMayFoster(
+                                        elementName, attributes,
+                                        formPointer);
+                                selfClosing = false;
+                                // [NOCPP[
+                                voidElement = true;
+                                // ]NOCPP]
+                                attributes = null; // CPP
+                                break starttagloop;
                             case INPUT:
+                                // Check if select is in scope and close it (for compatibility)
+                                eltPos = findLastInScope("select");
+                                if (eltPos != TreeBuilder.NOT_FOUND_ON_STACK) {
+                                    errStartTagWithSelectOpen(name);
+                                    while (currentPtr >= eltPos) {
+                                        pop();
+                                    }
+                                    resetTheInsertionMode();
+                                    continue starttagloop;
+                                }
                                 reconstructTheActiveFormattingElements();
                                 appendVoidElementToCurrentMayFoster(
                                         elementName, attributes,
@@ -2196,6 +2260,16 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                 attributes = null; // CPP
                                 break starttagloop;
                             case TEXTAREA:
+                                // Check if select is in scope and close it (for compatibility)
+                                eltPos = findLastInScope("select");
+                                if (eltPos != TreeBuilder.NOT_FOUND_ON_STACK) {
+                                    errStartTagWithSelectOpen(name);
+                                    while (currentPtr >= eltPos) {
+                                        pop();
+                                    }
+                                    resetTheInsertionMode();
+                                    continue starttagloop;
+                                }
                                 appendToCurrentNodeAndPushElementMayFoster(
                                         elementName,
                                         attributes, formPointer);
@@ -2235,27 +2309,103 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                 attributes = null; // CPP
                                 break starttagloop;
                             case SELECT:
+                                // Check if select is already in scope (nested select)
+                                eltPos = findLastInScope(name);
+                                if (eltPos != TreeBuilder.NOT_FOUND_ON_STACK) {
+                                    // Nested select acts like </select> - close the existing one
+                                    // but do NOT insert a new select element
+                                    errStartSelectWhereEndSelectExpected();
+                                    generateImpliedEndTags();
+                                    if (errorHandler != null
+                                            && !isCurrent(name)) {
+                                        errUnclosedElementsImplied(eltPos, name);
+                                    }
+                                    while (currentPtr >= eltPos) {
+                                        pop();
+                                    }
+                                    resetTheInsertionMode();
+                                    break starttagloop;
+                                } else {
+                                    reconstructTheActiveFormattingElements();
+                                    appendToCurrentNodeAndPushElementMayFoster(
+                                            elementName,
+                                            attributes, formPointer);
+                                    // No longer switch to IN_SELECT mode
+                                    attributes = null; // CPP
+                                    break starttagloop;
+                                }
+                            case OPTION:
+                                // Check if select is in scope
+                                if (findLastInScope("select") != TreeBuilder.NOT_FOUND_ON_STACK) {
+                                    // Reconstruct active formatting elements first
+                                    reconstructTheActiveFormattingElements();
+                                    // Generate implied end tags except for optgroup
+                                    generateImpliedEndTagsExceptFor("optgroup");
+                                    // Check if option is in scope and close it
+                                    eltPos = findLastInScope("option");
+                                    if (eltPos != TreeBuilder.NOT_FOUND_ON_STACK) {
+                                        if (errorHandler != null && !isCurrent("option")) {
+                                            errUnclosedElementsImplied(eltPos, "option");
+                                        }
+                                        while (currentPtr >= eltPos) {
+                                            pop();
+                                        }
+                                    }
+                                    // Check if this option should be active for selectedcontent cloning
+                                    boolean hasSelected = attributes.contains(AttributeName.SELECTED);
+                                    boolean shouldBeActive = false;
+                                    if (selectedContentPointer != null) {
+                                        if (hasSelected) {
+                                            // Option with selected attr becomes active
+                                            seenSelectedOption = true;
+                                            shouldBeActive = true;
+                                        } else if (!seenSelectedOption && !hadActiveOption) {
+                                            // First option without selected - tentatively active
+                                            shouldBeActive = true;
+                                        }
+                                    }
+                                    appendToCurrentNodeAndPushElement(
+                                            elementName,
+                                            attributes);
+                                    if (shouldBeActive) {
+                                        activeOptionStackPos = currentPtr;
+                                        hadActiveOption = true;
+                                    }
+                                    attributes = null; // CPP
+                                    break starttagloop;
+                                }
+                                // Outside select, fall through to old behavior
+                                if (isCurrent("option")) {
+                                    pop();
+                                }
                                 reconstructTheActiveFormattingElements();
                                 appendToCurrentNodeAndPushElementMayFoster(
                                         elementName,
-                                        attributes, formPointer);
-                                switch (mode) {
-                                    case IN_TABLE:
-                                    case IN_CAPTION:
-                                    case IN_COLUMN_GROUP:
-                                    case IN_TABLE_BODY:
-                                    case IN_ROW:
-                                    case IN_CELL:
-                                        mode = IN_SELECT_IN_TABLE;
-                                        break;
-                                    default:
-                                        mode = IN_SELECT;
-                                        break;
-                                }
+                                        attributes);
                                 attributes = null; // CPP
                                 break starttagloop;
                             case OPTGROUP:
-                            case OPTION:
+                                // Check if select is in scope
+                                if (findLastInScope("select") != TreeBuilder.NOT_FOUND_ON_STACK) {
+                                    // Generate implied end tags
+                                    generateImpliedEndTags();
+                                    // Check if optgroup is in scope and close it
+                                    eltPos = findLastInScope("optgroup");
+                                    if (eltPos != TreeBuilder.NOT_FOUND_ON_STACK) {
+                                        if (errorHandler != null && !isCurrent("optgroup")) {
+                                            errUnclosedElementsImplied(eltPos, "optgroup");
+                                        }
+                                        while (currentPtr >= eltPos) {
+                                            pop();
+                                        }
+                                    }
+                                    appendToCurrentNodeAndPushElement(
+                                            elementName,
+                                            attributes);
+                                    attributes = null; // CPP
+                                    break starttagloop;
+                                }
+                                // Outside select, fall through to old behavior
                                 if (isCurrent("option")) {
                                     pop();
                                 }
@@ -2329,11 +2479,25 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                 attributes = null; // CPP
                                 break starttagloop;
                             case CAPTION:
-                            case COL:
-                            case COLGROUP:
                             case TBODY_OR_THEAD_OR_TFOOT:
                             case TR:
                             case TD_OR_TH:
+                                // Check if we're inside a select inside a table
+                                // If so, close the select and reprocess
+                                if (findLastInScope("select") != TreeBuilder.NOT_FOUND_ON_STACK
+                                        && findLastInTableScope("table") != TreeBuilder.NOT_FOUND_ON_STACK) {
+                                    errStartTagWithSelectOpen(name);
+                                    eltPos = findLastInScope("select");
+                                    while (currentPtr >= eltPos) {
+                                        pop();
+                                    }
+                                    resetTheInsertionMode();
+                                    continue starttagloop;
+                                }
+                                errStrayStartTag(name);
+                                break starttagloop;
+                            case COL:
+                            case COLGROUP:
                             case FRAME:
                             case FRAMESET:
                             case HEAD:
@@ -2344,6 +2508,26 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                 appendToCurrentNodeAndPushElementMayFoster(
                                         elementName,
                                         attributes, formPointer);
+                                attributes = null; // CPP
+                                break starttagloop;
+                            case SELECTEDCONTENT:
+                                // Track selectedcontent for cloning option content
+                                if (findLastInScope("select") != TreeBuilder.NOT_FOUND_ON_STACK) {
+                                    reconstructTheActiveFormattingElements();
+                                    appendToCurrentNodeAndPushElement(
+                                            elementName,
+                                            attributes);
+                                    // Save pointer for content cloning
+                                    selectedContentPointer = stack[currentPtr].node;
+                                    selectedContentStackPos = currentPtr;
+                                    attributes = null; // CPP
+                                    break starttagloop;
+                                }
+                                // Outside select, treat as normal element
+                                reconstructTheActiveFormattingElements();
+                                appendToCurrentNodeAndPushElementMayFoster(
+                                        elementName,
+                                        attributes);
                                 attributes = null; // CPP
                                 break starttagloop;
                             default:
@@ -3627,6 +3811,51 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                 }
                             }
                             break endtagloop;
+                        case OPTION:
+                            // Handle option end tag when select is in scope
+                            if (findLastInScope("select") != TreeBuilder.NOT_FOUND_ON_STACK) {
+                                eltPos = findLastInScope("option");
+                                if (eltPos == TreeBuilder.NOT_FOUND_ON_STACK) {
+                                    errStrayEndTag(name);
+                                } else {
+                                    generateImpliedEndTagsExceptFor("option");
+                                    if (errorHandler != null && !isCurrent("option")) {
+                                        errUnclosedElements(eltPos, name);
+                                    }
+                                    while (currentPtr >= eltPos) {
+                                        pop();
+                                    }
+                                }
+                                break endtagloop;
+                            }
+                            // Outside select, treat as stray end tag
+                            errStrayEndTag(name);
+                            break endtagloop;
+                        case OPTGROUP:
+                            // Handle optgroup end tag when select is in scope
+                            if (findLastInScope("select") != TreeBuilder.NOT_FOUND_ON_STACK) {
+                                // If current node is option and previous is optgroup, close option first
+                                if (isCurrent("option") && currentPtr >= 1
+                                        && "optgroup" == stack[currentPtr - 1].name) {
+                                    pop();
+                                }
+                                eltPos = findLastInScope("optgroup");
+                                if (eltPos == TreeBuilder.NOT_FOUND_ON_STACK) {
+                                    errStrayEndTag(name);
+                                } else {
+                                    generateImpliedEndTagsExceptFor("optgroup");
+                                    if (errorHandler != null && !isCurrent("optgroup")) {
+                                        errUnclosedElements(eltPos, name);
+                                    }
+                                    while (currentPtr >= eltPos) {
+                                        pop();
+                                    }
+                                }
+                                break endtagloop;
+                            }
+                            // Outside select, treat as stray end tag
+                            errStrayEndTag(name);
+                            break endtagloop;
                         case H1_OR_H2_OR_H3_OR_H4_OR_H5_OR_H6:
                             eltPos = findLastInScopeHn();
                             if (eltPos == TreeBuilder.NOT_FOUND_ON_STACK) {
@@ -3674,6 +3903,22 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                         case TEMPLATE:
                             // fall through to IN_HEAD;
                             break;
+                        case SELECT:
+                            // Handle select end tag when select is in scope
+                            eltPos = findLastInScope("select");
+                            if (eltPos == TreeBuilder.NOT_FOUND_ON_STACK) {
+                                errStrayEndTag(name);
+                                break endtagloop;
+                            }
+                            generateImpliedEndTags();
+                            if (errorHandler != null && !isCurrent("select")) {
+                                errUnclosedElements(eltPos, name);
+                            }
+                            while (currentPtr >= eltPos) {
+                                pop();
+                            }
+                            resetTheInsertionMode();
+                            break endtagloop;
                         case AREA_OR_WBR:
                         case KEYGEN: // XXX??
                         case PARAM_OR_SOURCE_OR_TRACK:
@@ -3685,7 +3930,6 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                         case IFRAME:
                         case NOEMBED: // XXX???
                         case NOFRAMES: // XXX??
-                        case SELECT:
                         case TABLE:
                         case TEXTAREA: // XXX??
                             errStrayEndTag(name);
@@ -4321,20 +4565,9 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                 }
             }
             if ("select" == name) {
-                int ancestorIndex = i;
-                while (ancestorIndex > 0) {
-                    StackNode<T> ancestor = stack[ancestorIndex--];
-                    if ("http://www.w3.org/1999/xhtml" == ancestor.ns) {
-                        if ("template" == ancestor.name) {
-                            break;
-                        }
-                        if ("table" == ancestor.name) {
-                            mode = IN_SELECT_IN_TABLE;
-                            return;
-                        }
-                    }
-                }
-                mode = IN_SELECT;
+                // With select parser relaxation, we no longer enter IN_SELECT mode
+                // Instead, stay in IN_BODY mode and handle select content there
+                mode = framesetOk ? FRAMESET_OK : IN_BODY;
                 return;
             } else if ("td" == name || "th" == name) {
                 mode = IN_CELL;
@@ -5097,6 +5330,23 @@ public abstract class TreeBuilder<T> implements TokenHandler,
     private void pop() throws SAXException {
         StackNode<T> node = stack[currentPtr];
         assert debugOnlyClearLastStackSlot();
+        // When active option closes, deep-clone its content to selectedcontent
+        // This handles adoption agency restructuring correctly
+        if (currentPtr == activeOptionStackPos) {
+            if (selectedContentPointer != null) {
+                cloneOptionContentToSelectedContent(node.node, selectedContentPointer);
+            }
+            activeOptionStackPos = -1;
+        }
+        // Clear selectedcontent tracking if we're popping the select element
+        // (not when popping selectedcontent itself - the DOM node is still valid)
+        if (node.getGroup() == SELECT) {
+            selectedContentPointer = null;
+            selectedContentStackPos = -1;
+            seenSelectedOption = false;
+            activeOptionStackPos = -1;
+            hadActiveOption = false;
+        }
         currentPtr--;
         elementPopped(node.ns, node.popName, node.node);
         node.release(this);
@@ -5108,6 +5358,21 @@ public abstract class TreeBuilder<T> implements TokenHandler,
             markMalformedIfScript(node.node);
         }
         assert debugOnlyClearLastStackSlot();
+        // When active option closes, deep-clone its content to selectedcontent
+        if (currentPtr == activeOptionStackPos) {
+            if (selectedContentPointer != null) {
+                cloneOptionContentToSelectedContent(node.node, selectedContentPointer);
+            }
+            activeOptionStackPos = -1;
+        }
+        // Clear selectedcontent tracking if we're popping the select element
+        if (node.getGroup() == SELECT) {
+            selectedContentPointer = null;
+            selectedContentStackPos = -1;
+            seenSelectedOption = false;
+            activeOptionStackPos = -1;
+            hadActiveOption = false;
+        }
         currentPtr--;
         elementPopped(node.ns, node.popName, node.node);
         node.release(this);
@@ -5116,6 +5381,21 @@ public abstract class TreeBuilder<T> implements TokenHandler,
     private void silentPop() throws SAXException {
         StackNode<T> node = stack[currentPtr];
         assert debugOnlyClearLastStackSlot();
+        // When active option closes, deep-clone its content to selectedcontent
+        if (currentPtr == activeOptionStackPos) {
+            if (selectedContentPointer != null) {
+                cloneOptionContentToSelectedContent(node.node, selectedContentPointer);
+            }
+            activeOptionStackPos = -1;
+        }
+        // Clear selectedcontent tracking if we're popping the select element
+        if (node.getGroup() == SELECT) {
+            selectedContentPointer = null;
+            selectedContentStackPos = -1;
+            seenSelectedOption = false;
+            activeOptionStackPos = -1;
+            hadActiveOption = false;
+        }
         currentPtr--;
         node.release(this);
     }
@@ -5123,6 +5403,21 @@ public abstract class TreeBuilder<T> implements TokenHandler,
     private void popOnEof() throws SAXException {
         StackNode<T> node = stack[currentPtr];
         assert debugOnlyClearLastStackSlot();
+        // When active option closes, deep-clone its content to selectedcontent
+        if (currentPtr == activeOptionStackPos) {
+            if (selectedContentPointer != null) {
+                cloneOptionContentToSelectedContent(node.node, selectedContentPointer);
+            }
+            activeOptionStackPos = -1;
+        }
+        // Clear selectedcontent tracking if we're popping the select element
+        if (node.getGroup() == SELECT) {
+            selectedContentPointer = null;
+            selectedContentStackPos = -1;
+            seenSelectedOption = false;
+            activeOptionStackPos = -1;
+            hadActiveOption = false;
+        }
         currentPtr--;
         markMalformedIfScript(node.node);
         elementPopped(node.ns, node.popName, node.node);
@@ -5759,6 +6054,17 @@ public abstract class TreeBuilder<T> implements TokenHandler,
             throws SAXException;
 
     protected abstract void detachFromParent(T element) throws SAXException;
+
+    /**
+     * Called when the active option is popped from the stack, to clone
+     * the option's children into selectedcontent. Subclasses that support
+     * DOM operations should override this to clear selectedcontent and
+     * deep-clone the option's children into it.
+     */
+    protected void cloneOptionContentToSelectedContent(T option, T selectedContent)
+            throws SAXException {
+        // Default: no-op (streaming SAX mode ignores cloning)
+    }
 
     protected abstract boolean hasChildren(T element) throws SAXException;
 

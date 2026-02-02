@@ -202,7 +202,22 @@ public abstract class ParentNode extends Node {
             prev.setNextSibling(node.getNextSibling());
             if (lastChild == node) {
                 lastChild = prev;
-            }            
+            }
         }
+    }
+
+    /**
+     * Remove all children from this node.
+     */
+    public void clearChildren() {
+        Node child = firstChild;
+        while (child != null) {
+            Node next = child.getNextSibling();
+            child.setParentNode(null);
+            child.setNextSibling(null);
+            child = next;
+        }
+        firstChild = null;
+        lastChild = null;
     }
 }
