@@ -354,4 +354,89 @@ class DOMTreeBuilder extends CoalescingTreeBuilder<Element> {
             fatal(e);
         }
     }
+
+    @Override
+    // https://html.spec.whatwg.org/multipage/form-elements.html#maybe-clone-an-option-into-selectedcontent
+    // Implements "maybe clone an option into selectedcontent"
+    protected void optionElementPopped(Element option) throws SAXException {
+        try {
+            // Find the nearest ancestor <select> element
+            Node ancestor = option.getParentNode();
+            Element select = null;
+            while (ancestor != null) {
+                if (ancestor.getNodeType() == Node.ELEMENT_NODE) {
+                    Element elt = (Element) ancestor;
+                    if ("select".equals(elt.getLocalName())
+                            && "http://www.w3.org/1999/xhtml".equals(
+                                    elt.getNamespaceURI())) {
+                        select = elt;
+                        break;
+                    }
+                }
+                ancestor = ancestor.getParentNode();
+            }
+            if (select == null) {
+                return;
+            }
+            if (select.hasAttribute("multiple")) {
+                return;
+            }
+
+            // Find the first <selectedcontent> descendant of <select>
+            Element selectedContent = findSelectedContent(select);
+            if (selectedContent == null) {
+                return;
+            }
+
+            // Check option selectedness
+            boolean hasSelected = option.hasAttribute("selected");
+            if (!hasSelected && selectedContent.hasChildNodes()) {
+                // Not the first option and no explicit selected attr
+                return;
+            }
+
+            // Clear selectedcontent children and deep-clone option children
+            while (selectedContent.hasChildNodes()) {
+                selectedContent.removeChild(selectedContent.getFirstChild());
+            }
+            for (Node child = option.getFirstChild(); child != null;
+                    child = child.getNextSibling()) {
+                selectedContent.appendChild(child.cloneNode(true));
+            }
+        } catch (DOMException e) {
+            fatal(e);
+        }
+    }
+
+    private Element findSelectedContent(Element root) {
+        Node current = root.getFirstChild();
+        if (current == null) {
+            return null;
+        }
+        Node next;
+        for (;;) {
+            if (current.getNodeType() == Node.ELEMENT_NODE) {
+                Element elt = (Element) current;
+                if ("selectedcontent".equals(elt.getLocalName())
+                        && "http://www.w3.org/1999/xhtml".equals(
+                                elt.getNamespaceURI())) {
+                    return elt;
+                }
+            }
+            if ((next = current.getFirstChild()) != null) {
+                current = next;
+                continue;
+            }
+            for (;;) {
+                if (current == root) {
+                    return null;
+                }
+                if ((next = current.getNextSibling()) != null) {
+                    current = next;
+                    break;
+                }
+                current = current.getParentNode();
+            }
+        }
+    }
 }
