@@ -51,6 +51,14 @@ public abstract class CharBufferNode extends Node {
     }
 
     /**
+     * Returns the buffer.
+     * @return the buffer
+     */
+    public char[] getBuffer() {
+        return buffer;
+    }
+
+    /**
      * Returns the wrapped buffer as a string.
      * 
      * @see java.lang.Object#toString()

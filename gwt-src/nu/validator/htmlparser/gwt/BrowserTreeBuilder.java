@@ -474,4 +474,107 @@ class BrowserTreeBuilder extends CoalescingTreeBuilder<JavaScriptObject> {
             fatal(e);
         }
     }
+
+    private static native JavaScriptObject getNextSibling(
+            JavaScriptObject node) /*-{
+                        return node.nextSibling;
+                    }-*/;
+
+    private static native String getLocalName(
+            JavaScriptObject node) /*-{
+                        return node.localName;
+                    }-*/;
+
+    private static native String getNamespaceURI(
+            JavaScriptObject node) /*-{
+                        return node.namespaceURI;
+                    }-*/;
+
+    private static native boolean hasAttribute(
+            JavaScriptObject node, String name) /*-{
+                        return node.hasAttribute(name);
+                    }-*/;
+
+    @Override
+    // https://html.spec.whatwg.org/multipage/form-elements.html#maybe-clone-an-option-into-selectedcontent
+    // Implements "maybe clone an option into selectedcontent"
+    protected void optionElementPopped(JavaScriptObject option)
+            throws SAXException {
+        try {
+            // Find the nearest ancestor <select> element
+            JavaScriptObject ancestor = getParentNode(option);
+            JavaScriptObject select = null;
+            while (ancestor != null && getNodeType(ancestor) == 1) {
+                if ("select".equals(getLocalName(ancestor))
+                        && "http://www.w3.org/1999/xhtml".equals(
+                                getNamespaceURI(ancestor))) {
+                    select = ancestor;
+                    break;
+                }
+                ancestor = getParentNode(ancestor);
+            }
+            if (select == null) {
+                return;
+            }
+            if (hasAttribute(select, "multiple")) {
+                return;
+            }
+
+            // Find the first <selectedcontent> descendant of <select>
+            JavaScriptObject selectedContent = findSelectedContent(
+                    select);
+            if (selectedContent == null) {
+                return;
+            }
+
+            // Check option selectedness
+            boolean hasSelectedAttr = hasAttribute(option, "selected");
+            if (!hasSelectedAttr && hasChildNodes(selectedContent)) {
+                // Not the first option and no explicit selected attr
+                return;
+            }
+
+            // Clear selectedcontent children and deep-clone option children
+            while (hasChildNodes(selectedContent)) {
+                removeChild(selectedContent, getFirstChild(selectedContent));
+            }
+            for (JavaScriptObject child = getFirstChild(option);
+                    child != null; child = getNextSibling(child)) {
+                appendChild(selectedContent, cloneNodeDeep(child));
+            }
+        } catch (JavaScriptException e) {
+            fatal(e);
+        }
+    }
+
+    private JavaScriptObject findSelectedContent(
+            JavaScriptObject root) {
+        JavaScriptObject current = getFirstChild(root);
+        if (current == null) {
+            return null;
+        }
+        JavaScriptObject next;
+        for (;;) {
+            if (getNodeType(current) == 1
+                    && "selectedcontent".equals(getLocalName(current))
+                    && "http://www.w3.org/1999/xhtml".equals(
+                            getNamespaceURI(current))) {
+                return current;
+            }
+            if ((next = getFirstChild(current)) != null) {
+                current = next;
+                continue;
+            }
+            for (;;) {
+                if (current == root) {
+                    return null;
+                }
+                if ((next = getNextSibling(current)) != null) {
+                    current = next;
+                    break;
+                }
+                current = getParentNode(current);
+            }
+        }
+    }
 }

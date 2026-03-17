@@ -23,6 +23,8 @@
 
 package nu.validator.htmlparser.xom;
 
+import java.util.ArrayDeque;
+
 import nu.validator.htmlparser.common.DocumentMode;
 import nu.validator.htmlparser.impl.CoalescingTreeBuilder;
 import nu.validator.htmlparser.impl.HtmlAttributes;
@@ -347,5 +349,80 @@ class XOMTreeBuilder extends CoalescingTreeBuilder<Element> {
     @Override protected void end() throws SAXException {
         cachedTableIndex = -1;
         cachedTable = null;
+    }
+
+    @Override
+    // https://html.spec.whatwg.org/multipage/form-elements.html#maybe-clone-an-option-into-selectedcontent
+    // Implements "maybe clone an option into selectedcontent"
+    protected void optionElementPopped(Element option) throws SAXException {
+        try {
+            // Find the nearest ancestor <select> element
+            ParentNode ancestor = option.getParent();
+            Element select = null;
+            while (ancestor != null) {
+                if (ancestor instanceof Element) {
+                    Element elt = (Element) ancestor;
+                    if ("select".equals(elt.getLocalName())
+                            && "http://www.w3.org/1999/xhtml".equals(
+                                    elt.getNamespaceURI())) {
+                        select = elt;
+                        break;
+                    }
+                }
+                ancestor = ancestor.getParent();
+            }
+            if (select == null) {
+                return;
+            }
+            if (select.getAttribute("multiple") != null) {
+                return;
+            }
+
+            // Find the first <selectedcontent> descendant of <select>
+            Element selectedContent = findSelectedContent(select);
+            if (selectedContent == null) {
+                return;
+            }
+
+            // Check option selectedness
+            boolean hasSelected = option.getAttribute("selected") != null;
+            if (!hasSelected && selectedContent.getChildCount() > 0) {
+                // Not the first option and no explicit selected attr
+                return;
+            }
+
+            // Clear selectedcontent children and deep-clone option children
+            selectedContent.removeChildren();
+            for (int i = 0; i < option.getChildCount(); i++) {
+                selectedContent.appendChild(option.getChild(i).copy());
+            }
+        } catch (XMLException e) {
+            fatal(e);
+        }
+    }
+
+    private Element findSelectedContent(Element root) {
+        ArrayDeque<Element> stack = new ArrayDeque<>();
+        for (int i = root.getChildCount() - 1; i >= 0; i--) {
+            Node child = root.getChild(i);
+            if (child instanceof Element) {
+                stack.push((Element) child);
+            }
+        }
+        while (!stack.isEmpty()) {
+            Element current = stack.pop();
+            if ("selectedcontent".equals(current.getLocalName())
+                    && "http://www.w3.org/1999/xhtml".equals(
+                            current.getNamespaceURI())) {
+                return current;
+            }
+            for (int i = current.getChildCount() - 1; i >= 0; i--) {
+                Node child = current.getChild(i);
+                if (child instanceof Element) {
+                    stack.push((Element) child);
+                }
+            }
+        }
+        return null;
     }
 }

@@ -34,6 +34,7 @@ import nu.validator.saxtree.Document;
 import nu.validator.saxtree.DocumentFragment;
 import nu.validator.saxtree.Element;
 import nu.validator.saxtree.Node;
+import nu.validator.saxtree.NodeType;
 import nu.validator.saxtree.ParentNode;
 
 class SAXTreeBuilder extends TreeBuilder<Element> {
@@ -196,5 +197,141 @@ class SAXTreeBuilder extends TreeBuilder<Element> {
     @Override protected void detachFromParent(Element element)
             throws SAXException {
         element.detach();
+    }
+
+    @Override
+    // https://html.spec.whatwg.org/multipage/form-elements.html#maybe-clone-an-option-into-selectedcontent
+    // Implements "maybe clone an option into selectedcontent"
+    protected void optionElementPopped(Element option) throws SAXException {
+        // Find the nearest ancestor <select> element
+        Element select = findAncestor(option, "select");
+        if (select == null) {
+            return;
+        }
+        if (select.getAttributes().getIndex("", "multiple") >= 0) {
+            return;
+        }
+
+        // Find the first <selectedcontent> descendant of <select>
+        Element selectedContent = findDescendant(select, "selectedcontent");
+        if (selectedContent == null) {
+            return;
+        }
+
+        // Check option selectedness
+        boolean hasSelected = option.getAttributes().getIndex("", "selected") >= 0;
+        if (!hasSelected && selectedContent.getFirstChild() != null) {
+            // Not the first option and no explicit selected attr
+            return;
+        }
+
+        // Clear selectedcontent children and deep-clone option children
+        selectedContent.clearChildren();
+        deepCloneChildren(option, selectedContent);
+    }
+
+    private Element findAncestor(Element element, String localName) {
+        ParentNode parent = element.getParentNode();
+        while (parent != null) {
+            if (parent.getNodeType() == NodeType.ELEMENT) {
+                Element elt = (Element) parent;
+                if (localName.equals(elt.getLocalName())
+                        && "http://www.w3.org/1999/xhtml".equals(elt.getUri())) {
+                    return elt;
+                }
+            }
+            if (parent instanceof Node) {
+                parent = ((Node) parent).getParentNode();
+            } else {
+                break;
+            }
+        }
+        return null;
+    }
+
+    private Element findDescendant(Element root, String localName) {
+        Node current = root.getFirstChild();
+        if (current == null) {
+            return null;
+        }
+        Node next;
+        for (;;) {
+            if (current.getNodeType() == NodeType.ELEMENT) {
+                Element elt = (Element) current;
+                if (localName.equals(elt.getLocalName())
+                        && "http://www.w3.org/1999/xhtml".equals(
+                                elt.getUri())) {
+                    return elt;
+                }
+            }
+            if ((next = current.getFirstChild()) != null) {
+                current = next;
+                continue;
+            }
+            for (;;) {
+                if (current.getParentNode() == root) {
+                    if ((next = current.getNextSibling()) != null) {
+                        current = next;
+                        break;
+                    }
+                    return null;
+                }
+                if ((next = current.getNextSibling()) != null) {
+                    current = next;
+                    break;
+                }
+                current = (Node) current.getParentNode();
+            }
+        }
+    }
+
+    private void deepCloneChildren(Element source, Element destination)
+            throws SAXException {
+        Node current = source.getFirstChild();
+        if (current == null) {
+            return;
+        }
+        ParentNode destParent = destination;
+        Node next;
+        outer:
+        for (;;) {
+            switch (current.getNodeType()) {
+                case ELEMENT:
+                    Element srcElem = (Element) current;
+                    Element cloneElem = new Element(null,
+                            srcElem.getUri(),
+                            srcElem.getLocalName(),
+                            srcElem.getQName(),
+                            srcElem.getAttributes(),
+                            false,
+                            srcElem.getPrefixMappings());
+                    destParent.appendChild(cloneElem);
+                    if ((next = srcElem.getFirstChild()) != null) {
+                        destParent = cloneElem;
+                        current = next;
+                        continue outer;
+                    }
+                    break;
+                case CHARACTERS:
+                    Characters srcChars = (Characters) current;
+                    char[] buf = srcChars.getBuffer();
+                    destParent.appendChild(
+                            new Characters(null, buf, 0, buf.length));
+                    break;
+                default:
+                    break;
+            }
+            for (;;) {
+                if ((next = current.getNextSibling()) != null) {
+                    current = next;
+                    break;
+                }
+                if (current.getParentNode() == source) {
+                    return;
+                }
+                current = (Node) current.getParentNode();
+                destParent = (ParentNode) destParent.getParentNode();
+            }
+        }
     }
 }
