@@ -44,422 +44,358 @@ public class Encoding {
 
     public static final Encoding UTF8;
 
-    public static final Encoding UTF16;
-
     public static final Encoding UTF16LE;
 
     public static final Encoding UTF16BE;
 
     public static final Encoding WINDOWS1252;
 
-    private static String[] SHOULD_NOT = { "jisx02121990", "xjis0208" };
+    private static Map<String, Encoding> encodingByLabel =
+        new HashMap<String, Encoding>();
 
-    private static String[] BANNED = { "bocu1", "cesu8", "compoundtext",
-            "iscii91", "macarabic", "maccentraleurroman", "maccroatian",
-            "maccyrillic", "macdevanagari", "macfarsi", "macgreek",
-            "macgujarati", "macgurmukhi", "machebrew", "macicelandic",
-            "macroman", "macromanian", "macthai", "macturkish", "macukranian",
-            "scsu", "utf32", "utf32be", "utf32le", "utf7", "ximapmailboxname",
-            "xjisautodetect", "xutf16bebom", "xutf16lebom", "xutf32bebom",
-            "xutf32lebom", "xutf16oppositeendian", "xutf16platformendian",
-            "xutf32oppositeendian", "xutf32platformendian" };
+    private static void createEncoding(String name, String[] labels) {
+        if (!Charset.isSupported(name)) {
+            return;
+        }
+        Charset cs = Charset.forName(name);
+        Encoding enc = new Encoding(name.toLowerCase().intern(), cs);
+        for (String label : labels) {
+            encodingByLabel.put(label, enc);
+        }
+    }
 
-    /* From the table at https://encoding.spec.whatwg.org/#names-and-labels,
-     * everything in the Labels column, sorted */
-    private static String[] NOT_OBSCURE = { //
-            "866", //
-            "ansi_x3.4-1968", //
-            "arabic", //
-            "ascii", //
-            "asmo-708", //
-            "big5", //
-            "big5-hkscs", //
-            "chinese", //
-            "cn-big5", //
-            "cp1250", //
-            "cp1251", //
-            "cp1252", //
-            "cp1253", //
-            "cp1254", //
-            "cp1255", //
-            "cp1256", //
-            "cp1257", //
-            "cp1258", //
-            "cp819", //
-            "cp866", //
-            "csbig5", //
-            "cseuckr", //
-            "cseucpkdfmtjapanese", //
-            "csgb2312", //
-            "csibm866", //
-            "csiso2022jp", //
-            "csiso2022kr", //
-            "csiso58gb231280", //
-            "csiso88596e", //
-            "csiso88596i", //
-            "csiso88598e", //
-            "csiso88598i", //
-            "csisolatin1", //
-            "csisolatin2", //
-            "csisolatin3", //
-            "csisolatin4", //
-            "csisolatin5", //
-            "csisolatin6", //
-            "csisolatin9", //
-            "csisolatinarabic", //
-            "csisolatincyrillic", //
-            "csisolatingreek", //
-            "csisolatinhebrew", //
-            "cskoi8r", //
-            "csksc56011987", //
-            "csmacintosh", //
-            "csshiftjis", //
-            "csunicode", //
-            "cyrillic", //
-            "dos-874", //
-            "ecma-114", //
-            "ecma-118", //
-            "elot_928", //
-            "euc-jp", //
-            "euc-kr", //
-            "gb18030", //
-            "gb2312", //
-            "gb_2312", //
-            "gb_2312-80", //
-            "gbk", //
-            "greek", //
-            "greek8", //
-            "hebrew", //
-            "hz-gb-2312", //
-            "ibm819", //
-            "ibm866", //
-            "iso-10646-ucs-2", //
-            "iso-2022-cn", //
-            "iso-2022-cn-ext", //
-            "iso-2022-jp", //
-            "iso-2022-kr", //
-            "iso-8859-1", //
-            "iso-8859-10", //
-            "iso-8859-11", //
-            "iso-8859-13", //
-            "iso-8859-14", //
-            "iso-8859-15", //
-            "iso-8859-16", //
-            "iso-8859-2", //
-            "iso-8859-3", //
-            "iso-8859-4", //
-            "iso-8859-5", //
-            "iso-8859-6", //
-            "iso-8859-6-e", //
-            "iso-8859-6-i", //
-            "iso-8859-7", //
-            "iso-8859-8", //
-            "iso-8859-8-e", //
-            "iso-8859-8-i", //
-            "iso-8859-9", //
-            "iso-ir-100", //
-            "iso-ir-101", //
-            "iso-ir-109", //
-            "iso-ir-110", //
-            "iso-ir-126", //
-            "iso-ir-127", //
-            "iso-ir-138", //
-            "iso-ir-144", //
-            "iso-ir-148", //
-            "iso-ir-149", //
-            "iso-ir-157", //
-            "iso-ir-58", //
-            "iso8859-1", //
-            "iso8859-10", //
-            "iso8859-11", //
-            "iso8859-13", //
-            "iso8859-14", //
-            "iso8859-15", //
-            "iso8859-2", //
-            "iso8859-3", //
-            "iso8859-4", //
-            "iso8859-5", //
-            "iso8859-6", //
-            "iso8859-7", //
-            "iso8859-8", //
-            "iso8859-9", //
-            "iso88591", //
-            "iso885910", //
-            "iso885911", //
-            "iso885913", //
-            "iso885914", //
-            "iso885915", //
-            "iso88592", //
-            "iso88593", //
-            "iso88594", //
-            "iso88595", //
-            "iso88596", //
-            "iso88597", //
-            "iso88598", //
-            "iso88599", //
-            "iso_8859-1", //
-            "iso_8859-15", //
-            "iso_8859-1:1987", //
-            "iso_8859-2", //
-            "iso_8859-2:1987", //
-            "iso_8859-3", //
-            "iso_8859-3:1988", //
-            "iso_8859-4", //
-            "iso_8859-4:1988", //
-            "iso_8859-5", //
-            "iso_8859-5:1988", //
-            "iso_8859-6", //
-            "iso_8859-6:1987", //
-            "iso_8859-7", //
-            "iso_8859-7:1987", //
-            "iso_8859-8", //
-            "iso_8859-8:1988", //
-            "iso_8859-9", //
-            "iso_8859-9:1989", //
-            "koi", //
-            "koi8", //
-            "koi8-r", //
-            "koi8-ru", //
-            "koi8-u", //
-            "koi8_r", //
-            "korean", //
-            "ks_c_5601-1987", //
-            "ks_c_5601-1989", //
-            "ksc5601", //
-            "ksc_5601", //
-            "l1", //
-            "l2", //
-            "l3", //
-            "l4", //
-            "l5", //
-            "l6", //
-            "l9", //
-            "latin1", //
-            "latin2", //
-            "latin3", //
-            "latin4", //
-            "latin5", //
-            "latin6", //
-            "logical", //
-            "mac", //
-            "macintosh", //
-            "ms932", //
-            "ms_kanji", //
-            "replacement", //
-            "shift-jis", //
-            "shift_jis", //
-            "sjis", //
-            "sun_eu_greek", //
-            "tis-620", //
-            "ucs-2", //
-            "unicode", //
-            "unicode-1-1-utf-8", //
-            "unicode11utf8", //
-            "unicode20utf8", //
-            "unicodefeff", //
-            "unicodefffe", //
-            "us-ascii", //
-            "utf-16", //
-            "utf-16be", //
-            "utf-16le", //
-            "utf-8", //
-            "utf8", //
-            "visual", //
-            "windows-1250", //
-            "windows-1251", //
-            "windows-1252", //
-            "windows-1253", //
-            "windows-1254", //
-            "windows-1255", //
-            "windows-1256", //
-            "windows-1257", //
-            "windows-1258", //
-            "windows-31j", //
-            "windows-874", //
-            "windows-949", //
-            "x-cp1250", //
-            "x-cp1251", //
-            "x-cp1252", //
-            "x-cp1253", //
-            "x-cp1254", //
-            "x-cp1255", //
-            "x-cp1256", //
-            "x-cp1257", //
-            "x-cp1258", //
-            "x-euc-jp", //
-            "x-gbk", //
-            "x-mac-cyrillic", //
-            "x-mac-roman", //
-            "x-mac-ukrainian", //
-            "x-sjis", //
-            "x-unicode20utf8", //
-            "x-user-defined", //
-            "x-x-big5", //
-    };
-    private static Map<String, Encoding> encodingByCookedName = new HashMap<String, Encoding>();
+    static {
+        /* See https://encoding.spec.whatwg.org/#names-and-labels */
+        createEncoding( //
+                "UTF-8", new String[] { //
+                        "unicode-1-1-utf-8", //
+                        "unicode11utf8", //
+                        "unicode20utf8", //
+                        "utf-8", //
+                        "utf8", //
+                        "x-unicode20utf8" });
+        createEncoding( //
+                "IBM866", new String[] { //
+                        "866", //
+                        "cp866", //
+                        "csibm866", //
+                        "ibm866" });
+        createEncoding( //
+                "ISO-8859-2", new String[] { //
+                        "csisolatin2", //
+                        "iso-8859-2", //
+                        "iso-ir-101", //
+                        "iso8859-2", //
+                        "iso88592", //
+                        "iso_8859-2", //
+                        "iso_8859-2:1987", //
+                        "l2", //
+                        "latin2" });
+        createEncoding( //
+                "ISO-8859-3", new String[] { //
+                        "csisolatin3", //
+                        "iso-8859-3", //
+                        "iso-ir-109", //
+                        "iso8859-3", //
+                        "iso88593", //
+                        "iso_8859-3", //
+                        "iso_8859-3:1988", //
+                        "l3", //
+                        "latin3" });
+        createEncoding( //
+                "ISO-8859-4", new String[] { //
+                        "csisolatin4", //
+                        "iso-8859-4", //
+                        "iso-ir-110", //
+                        "iso8859-4", //
+                        "iso88594", //
+                        "iso_8859-4", //
+                        "iso_8859-4:1988", //
+                        "l4", //
+                        "latin4" });
+        createEncoding( //
+                "ISO-8859-5", new String[] { //
+                        "csisolatincyrillic", //
+                        "cyrillic", //
+                        "iso-8859-5", //
+                        "iso-ir-144", //
+                        "iso8859-5", //
+                        "iso88595", //
+                        "iso_8859-5", //
+                        "iso_8859-5:1988" });
+        createEncoding( //
+                "ISO-8859-6", new String[] { //
+                        "arabic", //
+                        "asmo-708", //
+                        "csiso88596e", //
+                        "csiso88596i", //
+                        "csisolatinarabic", //
+                        "ecma-114", //
+                        "iso-8859-6", //
+                        "iso-8859-6-e", //
+                        "iso-8859-6-i", //
+                        "iso-ir-127", //
+                        "iso8859-6", //
+                        "iso88596", //
+                        "iso_8859-6", //
+                        "iso_8859-6:1987" });
+        createEncoding( //
+                "ISO-8859-7", new String[] { //
+                        "csisolatingreek", //
+                        "ecma-118", //
+                        "elot_928", //
+                        "greek", //
+                        "greek8", //
+                        "iso-8859-7", //
+                        "iso-ir-126", //
+                        "iso8859-7", //
+                        "iso88597", //
+                        "iso_8859-7", //
+                        "iso_8859-7:1987", //
+                        "sun_eu_greek" });
+        createEncoding( //
+                "ISO-8859-8", new String[] { //
+                        "csiso88598e", //
+                        "csisolatinhebrew", //
+                        "hebrew", //
+                        "iso-8859-8", //
+                        "iso-8859-8-e", //
+                        "iso-ir-138", //
+                        "iso8859-8", //
+                        "iso88598", //
+                        "iso_8859-8", //
+                        "iso_8859-8:1988", //
+                        "visual" });
+        createEncoding( //
+                // Unsupported in Java
+                "ISO-8859-8-I", new String[] { //
+                        "csiso88598i", //
+                        "iso-8859-8-i", //
+                        "logical" });
+        createEncoding( //
+                // Unsupported in Java
+                "ISO-8859-10", new String[] { //
+                        "csisolatin6", //
+                        "iso-8859-10", //
+                        "iso-ir-157", //
+                        "iso8859-10", //
+                        "iso885910", //
+                        "l6", //
+                        "latin6" });
+        createEncoding( //
+                "ISO-8859-13", new String[] { //
+                        "iso-8859-13", //
+                        "iso8859-13", //
+                        "iso885913" });
+        createEncoding( //
+                // Unsupported in Java
+                "ISO-8859-14", new String[] { //
+                        "iso-8859-14", //
+                        "iso8859-14", //
+                        "iso885914" });
+        createEncoding( //
+                "ISO-8859-15", new String[] { //
+                        "csisolatin9", //
+                        "iso-8859-15", //
+                        "iso8859-15", //
+                        "iso885915", //
+                        "iso_8859-15", //
+                        "l9" });
+        createEncoding( //
+                "ISO-8859-16", new String[] { //
+                        "iso-8859-16" });
+        createEncoding( //
+                "KOI8-R", new String[] { //
+                        "cskoi8r", //
+                        "koi", //
+                        "koi8", //
+                        "koi8-r", //
+                        "koi8_r" });
+        createEncoding( //
+                "KOI8-U", new String[] { //
+                        "koi8-ru", //
+                        "koi8-u" });
+        createEncoding( //
+                // Unsupported in Java
+                "macintosh", new String[] { //
+                        "csmacintosh", //
+                        "mac", //
+                        "macintosh", //
+                        "x-mac-roman" });
+        createEncoding( //
+                "windows-874", new String[] { //
+                        "dos-874", //
+                        "iso-8859-11", //
+                        "iso8859-11", //
+                        "iso885911", //
+                        "tis-620", //
+                        "windows-874" });
+        createEncoding( //
+                "windows-1250", new String[] { //
+                        "cp1250", //
+                        "windows-1250", //
+                        "x-cp1250" });
+        createEncoding( //
+                "windows-1251", new String[] { //
+                        "cp1251", //
+                        "windows-1251", //
+                        "x-cp1251" });
+        createEncoding( //
+                "windows-1252", new String[] { //
+                        "ansi_x3.4-1968", //
+                        "ascii", //
+                        "cp1252", //
+                        "cp819", //
+                        "csisolatin1", //
+                        "ibm819", //
+                        "iso-8859-1", //
+                        "iso-ir-100", //
+                        "iso8859-1", //
+                        "iso88591", //
+                        "iso_8859-1", //
+                        "iso_8859-1:1987", //
+                        "l1", //
+                        "latin1", //
+                        "us-ascii", //
+                        "windows-1252", //
+                        "x-cp1252" });
+        createEncoding( //
+                "windows-1253", new String[] { //
+                        "cp1253", //
+                        "windows-1253", //
+                        "x-cp1253" });
+        createEncoding( //
+                "windows-1254", new String[] { //
+                        "cp1254", //
+                        "csisolatin5", //
+                        "iso-8859-9", //
+                        "iso-ir-148", //
+                        "iso8859-9", //
+                        "iso88599", //
+                        "iso_8859-9", //
+                        "iso_8859-9:1989", //
+                        "l5", //
+                        "latin5", //
+                        "windows-1254", //
+                        "x-cp1254" });
+        createEncoding( //
+                "windows-1255", new String[] { //
+                        "cp1255", //
+                        "windows-1255", //
+                        "x-cp1255" });
+        createEncoding( //
+                "windows-1256", new String[] { //
+                        "cp1256", //
+                        "windows-1256", //
+                        "x-cp1256" });
+        createEncoding( //
+                "windows-1257", new String[] { //
+                        "cp1257", //
+                        "windows-1257", //
+                        "x-cp1257" });
+        createEncoding( //
+                "windows-1258", new String[] { //
+                        "cp1258", //
+                        "windows-1258", //
+                        "x-cp1258" });
+        createEncoding( //
+                // Unsupported in Java
+                "x-mac-cyrillic", new String[] { //
+                        "x-mac-cyrillic", //
+                        "x-mac-ukrainian" });
+        createEncoding( //
+                "GBK", new String[] { //
+                        "chinese", //
+                        "csgb2312", //
+                        "csiso58gb231280", //
+                        "gb2312", //
+                        "gb_2312", //
+                        "gb_2312-80", //
+                        "gbk", //
+                        "iso-ir-58", //
+                        "x-gbk" });
+        createEncoding( //
+                "gb18030", new String[] { //
+                        "gb18030" });
+        createEncoding( //
+                "Big5", new String[] { //
+                        "big5", //
+                        "big5-hkscs", //
+                        "cn-big5", //
+                        "csbig5", //
+                        "x-x-big5" });
+        createEncoding( //
+                "EUC-JP", new String[] { //
+                        "cseucpkdfmtjapanese", //
+                        "euc-jp", //
+                        "x-euc-jp" });
+        createEncoding( //
+                "ISO-2022-JP", new String[] { //
+                        "csiso2022jp", //
+                        "iso-2022-jp" });
+        createEncoding( //
+                "Shift_JIS", new String[] { //
+                        "csshiftjis", //
+                        "ms932", //
+                        "ms_kanji", //
+                        "shift-jis", //
+                        "shift_jis", //
+                        "sjis", //
+                        "windows-31j", //
+                        "x-sjis" });
+        createEncoding( //
+                "EUC-KR", new String[] { //
+                        "cseuckr", //
+                        "csksc56011987", //
+                        "euc-kr", //
+                        "iso-ir-149", //
+                        "korean", //
+                        "ks_c_5601-1987", //
+                        "ks_c_5601-1989", //
+                        "ksc5601", //
+                        "ksc_5601", //
+                        "windows-949" });
+        createEncoding( //
+                // Special case
+                "replacement", new String[] { //
+                        "csiso2022kr", //
+                        "hz-gb-2312", //
+                        "iso-2022-cn", //
+                        "iso-2022-cn-ext", //
+                        "iso-2022-kr", //
+                        "replacement" });
+        createEncoding( //
+                "UTF-16BE", new String[] { //
+                        "unicodefffe", //
+                        "utf-16be" });
+        createEncoding( //
+                "UTF-16LE", new String[] { //
+                        "csunicode", //
+                        "iso-10646-ucs-2", //
+                        "ucs-2", //
+                        "unicode", //
+                        "unicodefeff", //
+                        "utf-16", //
+                        "utf-16le" });
+        createEncoding( //
+                // Special case
+                "x-user-defined", new String[] { //
+                        "x-user-defined" });
+    }
 
     private final String canonName;
 
     private final Charset charset;
 
-    private final boolean asciiSuperset;
-
-    private final boolean obscure;
-
-    private final boolean shouldNot;
-
-    private final boolean likelyEbcdic;
-
-    private Encoding actualHtmlEncoding = null;
-
     static {
-        byte[] testBuf = new byte[0x7F];
-        for (int i = 0; i < 0x7F; i++) {
-            if (isAsciiSupersetnessSensitive(i)) {
-                testBuf[i] = (byte) i;
-            } else {
-                testBuf[i] = (byte) 0x20;
-            }
-        }
-
-        Set<Encoding> encodings = new HashSet<Encoding>();
-
-        SortedMap<String, Charset> charsets = Charset.availableCharsets();
-        for (Map.Entry<String, Charset> entry : charsets.entrySet()) {
-            Charset cs = entry.getValue();
-            String name = toNameKey(cs.name());
-            String canonName = toAsciiLowerCase(cs.name());
-            if (!isBanned(stripDashAndUnderscore(name))) {
-                name = name.intern();
-                boolean asciiSuperset = asciiMapsToBasicLatin(testBuf, cs);
-                Encoding enc = new Encoding(canonName.intern(), cs,
-                        asciiSuperset, isObscure(name),
-                        isShouldNot(stripDashAndUnderscore(name)),
-                        isLikelyEbcdic(name, asciiSuperset));
-                encodings.add(enc);
-                Set<String> aliases = cs.aliases();
-                for (String alias : aliases) {
-                    encodingByCookedName.put(toNameKey(alias).intern(), enc);
-                }
-            }
-        }
-        // Overwrite possible overlapping aliases with the real things--just in
-        // case
-        for (Encoding encoding : encodings) {
-            encodingByCookedName.put(toNameKey(encoding.getCanonName()),
-                    encoding);
-        }
         UTF8 = forName("utf-8");
-        UTF16 = forName("utf-16");
         UTF16BE = forName("utf-16be");
         UTF16LE = forName("utf-16le");
         WINDOWS1252 = forName("windows-1252");
-        try {
-            forName("iso-8859-1").actualHtmlEncoding = forName("windows-1252");
-        } catch (UnsupportedCharsetException e) {
-        }
-        try {
-            forName("iso-8859-9").actualHtmlEncoding = forName("windows-1254");
-        } catch (UnsupportedCharsetException e) {
-        }
-        try {
-            forName("iso-8859-11").actualHtmlEncoding = forName("windows-874");
-        } catch (UnsupportedCharsetException e) {
-        }
-        try {
-            forName("x-iso-8859-11").actualHtmlEncoding = forName("windows-874");
-        } catch (UnsupportedCharsetException e) {
-        }
-        try {
-            forName("tis-620").actualHtmlEncoding = forName("windows-874");
-        } catch (UnsupportedCharsetException e) {
-        }
-        try {
-            forName("gb_2312-80").actualHtmlEncoding = forName("gbk");
-        } catch (UnsupportedCharsetException e) {
-        }
-        try {
-            forName("gb2312").actualHtmlEncoding = forName("gbk");
-        } catch (UnsupportedCharsetException e) {
-        }
-        try {
-            encodingByCookedName.put("x-x-big5", forName("big5"));
-        } catch (UnsupportedCharsetException e) {
-        }
-        try {
-            encodingByCookedName.put("euc-kr", forName("windows-949"));
-        } catch (UnsupportedCharsetException e) {
-        }
-        try {
-            encodingByCookedName.put("ks_c_5601-1987", forName("windows-949"));
-        } catch (UnsupportedCharsetException e) {
-        }
-    }
-
-    private static boolean isAsciiSupersetnessSensitive(int c) {
-        return (c >= 0x09 && c <= 0x0D) || (c >= 0x20 && c <= 0x22)
-                || (c >= 0x26 && c <= 0x27) || (c >= 0x2C && c <= 0x3F)
-                || (c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A);
-    }
-
-    private static boolean isObscure(String lowerCasePreferredIanaName) {
-        return !(Arrays.binarySearch(NOT_OBSCURE, lowerCasePreferredIanaName) > -1);
-    }
-
-    private static boolean isBanned(String lowerCasePreferredIanaName) {
-        if (lowerCasePreferredIanaName.startsWith("xibm")) {
-            return true;
-        }
-        return (Arrays.binarySearch(BANNED, lowerCasePreferredIanaName) > -1);
-    }
-
-    private static boolean isShouldNot(String lowerCasePreferredIanaName) {
-        return (Arrays.binarySearch(SHOULD_NOT, lowerCasePreferredIanaName) > -1);
-    }
-
-    /**
-     * @param testBuf
-     * @param cs
-     */
-    private static boolean asciiMapsToBasicLatin(byte[] testBuf, Charset cs) {
-        CharsetDecoder dec = cs.newDecoder();
-        dec.onMalformedInput(CodingErrorAction.REPORT);
-        dec.onUnmappableCharacter(CodingErrorAction.REPORT);
-        Reader r = new InputStreamReader(new ByteArrayInputStream(testBuf), dec);
-        try {
-            for (int i = 0; i < 0x7F; i++) {
-                if (isAsciiSupersetnessSensitive(i)) {
-                    if (r.read() != i) {
-                        return false;
-                    }
-                } else {
-                    if (r.read() != 0x20) {
-                        return false;
-                    }
-                }
-            }
-        } catch (IOException e) {
-            return false;
-        } catch (Exception e) {
-            return false;
-        } catch (CoderMalfunctionError e) {
-            return false;
-        }
-
-        return true;
-    }
-
-    private static boolean isLikelyEbcdic(String canonName,
-            boolean asciiSuperset) {
-        if (!asciiSuperset) {
-            return (canonName.startsWith("cp") || canonName.startsWith("ibm") || canonName.startsWith("xibm"));
-        } else {
-            return false;
-        }
     }
 
     public static Encoding forName(String name) {
-        Encoding rv = encodingByCookedName.get(toNameKey(name));
+        Encoding rv = encodingByLabel.get(toNameKey(name));
         if (rv == null) {
             throw new UnsupportedCharsetException(name);
         } else {
@@ -486,61 +422,13 @@ public class Encoding {
         return new String(buf, 0, j);
     }
 
-    public static String stripDashAndUnderscore(String str) {
-        if (str == null) {
-            return null;
-        }
-        char[] buf = new char[str.length()];
-        for (int i = 0; i < str.length(); i++) {
-            char c = str.charAt(i);
-            if (c == '-' || c == '_') {
-                buf[i] = c;
-            }
-        }
-        return new String(buf);
-    }
-
-    public static String toAsciiLowerCase(String str) {
-        if (str == null) {
-            return null;
-        }
-        char[] buf = new char[str.length()];
-        for (int i = 0; i < str.length(); i++) {
-            char c = str.charAt(i);
-            if (c >= 'A' && c <= 'Z') {
-                c += 0x20;
-            }
-            buf[i] = c;
-        }
-        return new String(buf);
-    }
-
     /**
      * @param canonName
      * @param charset
-     * @param asciiSuperset
-     * @param obscure
-     * @param shouldNot
-     * @param likelyEbcdic
      */
-    private Encoding(final String canonName, final Charset charset,
-            final boolean asciiSuperset, final boolean obscure,
-            final boolean shouldNot, final boolean likelyEbcdic) {
+    private Encoding(final String canonName, final Charset charset) {
         this.canonName = canonName;
         this.charset = charset;
-        this.asciiSuperset = asciiSuperset;
-        this.obscure = obscure;
-        this.shouldNot = shouldNot;
-        this.likelyEbcdic = likelyEbcdic;
-    }
-
-    /**
-     * Returns the asciiSuperset.
-     * 
-     * @return the asciiSuperset
-     */
-    public boolean isAsciiSuperset() {
-        return asciiSuperset;
     }
 
     /**
@@ -550,37 +438,6 @@ public class Encoding {
      */
     public String getCanonName() {
         return canonName;
-    }
-
-    /**
-     * Returns the likelyEbcdic.
-     * 
-     * @return the likelyEbcdic
-     */
-    public boolean isLikelyEbcdic() {
-        return likelyEbcdic;
-    }
-
-    /**
-     * Returns the obscure.
-     * 
-     * @return the obscure
-     */
-    public boolean isObscure() {
-        return obscure;
-    }
-
-    /**
-     * Returns the shouldNot.
-     * 
-     * @return the shouldNot
-     */
-    public boolean isShouldNot() {
-        return shouldNot;
-    }
-
-    public boolean isRegistered() {
-        return !canonName.startsWith("x-");
     }
 
     /**
@@ -607,24 +464,36 @@ public class Encoding {
         return charset.newEncoder();
     }
 
-    /**
-     * Returns the actualHtmlEncoding.
-     * 
-     * @return the actualHtmlEncoding
-     */
-    public Encoding getActualHtmlEncoding() {
-        return actualHtmlEncoding;
+    protected static String msgLegacyEncoding(String name) {
+        return "Legacy encoding \u201C" + name + "\u201D used. Documents must"
+                + " use UTF-8.";
+    }
+
+    protected static String msgIgnoredCharset(String ignored, String name) {
+        return "Internal encoding declaration specified \u201C" + ignored
+                + "\u201D. Continuing as if the encoding had been \u201C"
+                + name + "\u201D.";
+    }
+    protected static String msgNotCanonicalName(String label, String name) {
+        return "The encoding \u201C" + label + "\u201D is not the canonical"
+                + " name of the character encoding in use. The canonical name"
+                + " is \u201C" + name + "\u201D. (Charmod C024)";
+    }
+
+    protected static String msgBadInternalCharset(String internalCharset) {
+        return "Internal encoding declaration named an unsupported character"
+            + " encoding \u201C" + internalCharset + "\u201D.";
+    }
+
+    protected static String msgBadEncoding(String name) {
+        return "Unsupported character encoding name: \u201C" + name + "\u201D.";
     }
 
     public static void main(String[] args) {
-        for (Map.Entry<String, Encoding> entry : encodingByCookedName.entrySet()) {
+        for (Map.Entry<String, Encoding> entry : encodingByLabel.entrySet()) {
             String name = entry.getKey();
             Encoding enc = entry.getValue();
-            System.out.printf(
-                    "%21s: canon %21s, obs %5s, reg %5s, asc %5s, ebc %5s\n",
-                    name, enc.getCanonName(), enc.isObscure(),
-                    enc.isRegistered(), enc.isAsciiSuperset(),
-                    enc.isLikelyEbcdic());
+            System.out.printf("%21s: canon %13s\n", name, enc.getCanonName());
         }
     }
 
