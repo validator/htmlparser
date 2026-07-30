@@ -4426,7 +4426,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         for (;;) {
             StackNode<T> node = stack[eltPos];
             if (node.ns == "http://www.w3.org/1999/xhtml" && node.name == name) {
-                generateImpliedEndTags();
+                generateImpliedEndTagsExceptFor(name);
                 if (errorHandler != null
                         && !isCurrent(name)) {
                     errUnclosedElements(eltPos, name);
