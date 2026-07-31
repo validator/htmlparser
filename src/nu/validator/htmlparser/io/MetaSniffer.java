@@ -159,55 +159,28 @@ public class MetaSniffer extends MetaScanner implements Locator, Locator2 {
     }
     
     protected boolean tryCharset(String encoding) throws SAXException {
-        encoding = Encoding.toAsciiLowerCase(encoding);
+        encoding = encoding.toLowerCase();
         try {
-            // XXX spec says only UTF-16
-            if ("utf-16".equals(encoding) || "utf-16be".equals(encoding) || "utf-16le".equals(encoding) || "utf-32".equals(encoding) || "utf-32be".equals(encoding) || "utf-32le".equals(encoding)) {
+            if ("utf-16be".equals(encoding) || "utf-16le".equals(encoding)) {
                 this.characterEncoding = Encoding.UTF8;
-                err("The internal character encoding declaration specified \u201C" + encoding + "\u201D which is not a rough superset of ASCII. Using \u201CUTF-8\u201D instead.");
+                err(Encoding.msgIgnoredCharset(encoding, "utf-8"));
+                return true;
+            } else if ("x-user-defined".equals(encoding)) {
+                this.characterEncoding = Encoding.WINDOWS1252;
+                err(Encoding.msgIgnoredCharset("x-user-defined", "windows-1252"));
                 return true;
             } else {
                 Encoding cs = Encoding.forName(encoding);
                 String canonName = cs.getCanonName();
-                if (!cs.isAsciiSuperset()) {
-                    err("The encoding \u201C"
-                                + encoding
-                                + "\u201D is not an ASCII superset and, therefore, cannot be used in an internal encoding declaration. Continuing the sniffing algorithm.");
-                    return false;
-                }
-                if (!cs.isRegistered()) {
-                    if (encoding.startsWith("x-")) {
-                        err("The encoding \u201C"
-                                + encoding
-                                + "\u201D is not an IANA-registered encoding. (Charmod C022)");                    
-                    } else {
-                        err("The encoding \u201C"
-                                + encoding
-                                + "\u201D is not an IANA-registered encoding and did not use the \u201Cx-\u201D prefix. (Charmod C023)");
-                    }
-                } else if (!cs.getCanonName().equals(encoding)) {
-                    err("The encoding \u201C" + encoding
-                            + "\u201D is not the preferred name of the character encoding in use. The preferred name is \u201C"
-                            + canonName + "\u201D. (Charmod C024)");
-                }
-                if (cs.isShouldNot()) {
-                    warn("Authors should not use the character encoding \u201C"
-                            + encoding
-                            + "\u201D. It is recommended to use \u201CUTF-8\u201D.");                
-                } else if (cs.isObscure()) {
-                    warn("The character encoding \u201C" + encoding + "\u201D is not widely supported. Better interoperability may be achieved by using \u201CUTF-8\u201D.");
-                }
-                Encoding actual = cs.getActualHtmlEncoding();
-                if (actual == null) {
+                if (!cs.getCanonName().equals(encoding)) {
+                    err(Encoding.msgNotCanonicalName(encoding, canonName));
                     this.characterEncoding = cs;
-                } else {
-                    warn("Using \u201C" + actual.getCanonName() + "\u201D instead of the declared encoding \u201C" + encoding + "\u201D.");
-                    this.characterEncoding = actual;
                 }
                 return true;
             }
         } catch (UnsupportedCharsetException e) {
-            err("Unsupported character encoding name: \u201C" + encoding + "\u201D. Will continue sniffing.");
+            err(Encoding.msgBadInternalCharset(encoding)
+                    + " Will continue sniffing.");
         }
         return false;
     }
