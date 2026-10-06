@@ -26,6 +26,7 @@ import nu.xom.Attribute;
 import nu.xom.Comment;
 import nu.xom.Document;
 import nu.xom.Element;
+import nu.xom.ProcessingInstruction;
 import nu.xom.Text;
 import nu.xom.Attribute.Type;
 
@@ -65,6 +66,17 @@ public class SimpleNodeFactory {
      */
     public Comment makeComment(String string) {
         return new Comment(string);
+    }
+
+    /**
+     * <code>return new ProcessingInstruction(target, data);</code>
+     * @param target
+     * @param data
+     * @return
+     */
+    public ProcessingInstruction makeProcessingInstruction(String target,
+            String data) {
+        return new ProcessingInstruction(target, data);
     }
 
     /**

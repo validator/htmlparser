@@ -35,6 +35,7 @@ import nu.validator.saxtree.DocumentFragment;
 import nu.validator.saxtree.Element;
 import nu.validator.saxtree.Node;
 import nu.validator.saxtree.NodeType;
+import nu.validator.saxtree.ProcessingInstruction;
 import nu.validator.saxtree.ParentNode;
 
 class SAXTreeBuilder extends TreeBuilder<Element> {
@@ -57,6 +58,20 @@ class SAXTreeBuilder extends TreeBuilder<Element> {
     @Override
     protected void appendCommentToDocument(char[] buf, int start, int length) {
         document.appendChild(new Comment(tokenizer, buf, start, length));
+    }
+
+    @Override
+    protected void appendProcessingInstruction(Element parent, String target,
+            char[] buf, int start, int length) {
+        parent.appendChild(new ProcessingInstruction(tokenizer, target,
+                new String(buf, start, length)));
+    }
+
+    @Override
+    protected void appendProcessingInstructionToDocument(String target,
+            char[] buf, int start, int length) {
+        document.appendChild(new ProcessingInstruction(tokenizer, target,
+                new String(buf, start, length)));
     }
 
     @Override
