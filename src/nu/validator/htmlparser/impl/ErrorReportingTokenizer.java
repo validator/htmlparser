@@ -492,6 +492,25 @@ public class ErrorReportingTokenizer extends Tokenizer {
         err("Saw \u201C<?\u201D. Probable cause: Attempt to use an XML processing instruction in HTML. (XML processing instructions are not supported in HTML.)");
     }
 
+    @Override protected void errEofInProcessingInstruction() throws SAXException {
+        err("End of file inside processing instruction.");
+    }
+
+    @Override protected void errInvalidFirstCharacterOfProcessingInstructionTarget()
+            throws SAXException {
+        err("Invalid first character of processing instruction target. Treating the processing instruction as a comment.");
+    }
+
+    @Override protected void errInvalidProcessingInstructionTarget()
+            throws SAXException {
+        err("Invalid character in processing instruction target. Treating the processing instruction as a comment.");
+    }
+
+    @Override protected void errDisallowedProcessingInstructionTarget()
+            throws SAXException {
+        err("Processing instruction targets \u201Cxml\u201D and \u201Cxml-stylesheet\u201D are not allowed. Treating the processing instruction as a comment.");
+    }
+
     @Override protected void errUnescapedAmpersandInterpretedAsCharacterReference()
             throws SAXException {
         if (errorHandler == null) {

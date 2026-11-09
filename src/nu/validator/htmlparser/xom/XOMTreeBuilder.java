@@ -130,6 +130,35 @@ class XOMTreeBuilder extends CoalescingTreeBuilder<Element> {
     }
 
     @Override
+    protected void appendProcessingInstruction(Element parent, String target,
+            String data) throws SAXException {
+        try {
+            parent.appendChild(
+                    nodeFactory.makeProcessingInstruction(target, data));
+        } catch (XMLException e) {
+            fatal(e);
+        }
+    }
+
+    @Override
+    protected void appendProcessingInstructionToDocument(String target,
+            String data) throws SAXException {
+        try {
+            Element root = document.getRootElement();
+            if ("http://www.xom.nu/fakeRoot".equals(root.getNamespaceURI())) {
+                document.insertChild(
+                        nodeFactory.makeProcessingInstruction(target, data),
+                        document.indexOf(root));
+            } else {
+                document.appendChild(
+                        nodeFactory.makeProcessingInstruction(target, data));
+            }
+        } catch (XMLException e) {
+            fatal(e);
+        }
+    }
+
+    @Override
  protected Element createElement(String ns, String name,
             HtmlAttributes attributes, Element intendedParent) throws SAXException {
         try {
