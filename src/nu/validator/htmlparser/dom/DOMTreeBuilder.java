@@ -151,6 +151,36 @@ class DOMTreeBuilder extends CoalescingTreeBuilder<Element> {
 
     /**
      * 
+     * @see nu.validator.htmlparser.impl.CoalescingTreeBuilder#appendProcessingInstruction(java.lang.Object,
+     *      java.lang.String, java.lang.String)
+     */
+    @Override protected void appendProcessingInstruction(Element parent,
+            String target, String data) throws SAXException {
+        try {
+            parent.appendChild(
+                    document.createProcessingInstruction(target, data));
+        } catch (DOMException e) {
+            fatal(e);
+        }
+    }
+
+    /**
+     * 
+     * @see nu.validator.htmlparser.impl.CoalescingTreeBuilder#appendProcessingInstructionToDocument(java.lang.String,
+     *      java.lang.String)
+     */
+    @Override protected void appendProcessingInstructionToDocument(
+            String target, String data) throws SAXException {
+        try {
+            document.appendChild(
+                    document.createProcessingInstruction(target, data));
+        } catch (DOMException e) {
+            fatal(e);
+        }
+    }
+
+    /**
+     * 
      * @see nu.validator.htmlparser.impl.TreeBuilder#createElement(String, String, nu.validator.htmlparser.impl.HtmlAttributes, Object)
      */
     @Override protected Element createElement(String ns, String name,

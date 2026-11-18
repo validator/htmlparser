@@ -72,6 +72,32 @@ public abstract class CoalescingTreeBuilder<T> extends TreeBuilder<T> {
     protected abstract void appendCommentToDocument(String comment) throws SAXException;
 
     /**
+     * @see nu.validator.htmlparser.impl.TreeBuilder#appendProcessingInstruction(java.lang.Object, java.lang.String, char[], int, int)
+     */
+    @Override final protected void appendProcessingInstruction(T parent,
+            String target, char[] buf, int start, int length)
+            throws SAXException {
+        appendProcessingInstruction(parent, target,
+                new String(buf, start, length));
+    }
+
+    protected abstract void appendProcessingInstruction(T parent,
+            String target, String data) throws SAXException;
+
+    /**
+     * @see nu.validator.htmlparser.impl.TreeBuilder#appendProcessingInstructionToDocument(java.lang.String, char[], int, int)
+     */
+    @Override protected final void appendProcessingInstructionToDocument(
+            String target, char[] buf, int start, int length)
+            throws SAXException {
+        appendProcessingInstructionToDocument(target,
+                new String(buf, start, length));
+    }
+
+    protected abstract void appendProcessingInstructionToDocument(
+            String target, String data) throws SAXException;
+
+    /**
      * @see nu.validator.htmlparser.impl.TreeBuilder#insertFosterParentedCharacters(char[], int, int, java.lang.Object, java.lang.Object)
      */
     @Override protected final void insertFosterParentedCharacters(char[] buf, int start,

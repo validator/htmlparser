@@ -78,6 +78,21 @@ class SAXStreamer extends TreeBuilder<Attributes>{
     }
 
     @Override
+    protected void appendProcessingInstruction(Attributes parent,
+            String target, char[] buf, int start, int length)
+            throws SAXException {
+        contentHandler.processingInstruction(target,
+                new String(buf, start, length));
+    }
+
+    @Override
+    protected void appendProcessingInstructionToDocument(String target,
+            char[] buf, int start, int length) throws SAXException {
+        contentHandler.processingInstruction(target,
+                new String(buf, start, length));
+    }
+
+    @Override
     protected Attributes createElement(String ns, String name, HtmlAttributes attributes, Attributes intendedParent) throws SAXException {
         return attributes;
     }

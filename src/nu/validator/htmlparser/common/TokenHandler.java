@@ -120,6 +120,22 @@ public interface TokenHandler {
     public void comment(@NoLength char[] buf, int start, int length) throws SAXException;
 
     /**
+     * Receive a processing instruction token.
+     * 
+     * @param target
+     *            the target of the processing instruction
+     * @param buf
+     *            a buffer holding the data
+     * @param start the offset into the buffer
+     * @param length
+     *            the number of code units to read
+     * @throws SAXException
+     *             if something went wrong
+     */
+    public void processingInstruction(String target, @NoLength char[] buf,
+            int start, int length) throws SAXException;
+
+    /**
      * Receive character tokens. This method has the same semantics as the SAX
      * method of the same name.
      * 
